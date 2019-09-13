@@ -13,6 +13,7 @@
  */
 import { Command, executeCommand } from "./commands/command";
 import { projectCommand } from "./commands/project";
+import { infraCommand } from "./commands/infra";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Instantiate core command object
@@ -25,7 +26,7 @@ const rootCommand = Command(
       c.version(require("../package.json").version);
     }
   ],
-  [projectCommand]
+  [projectCommand, infraCommand]
 );
 
 ////////////////////////////////////////////////////////////////////////////////
