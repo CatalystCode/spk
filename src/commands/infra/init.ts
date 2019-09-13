@@ -23,7 +23,9 @@ export const initCommand = (command: commander.Command): void => {
     )
     .action(() => {
       logger.info(
-        emoji.emojify(":sparkles: VERIFYING INSTALLATION OF PREREQUISITES")
+        emoji.emojify(
+          ":sparkles: VERIFYING INSTALLATION OF PREREQUISITES :sparkles:"
+        )
       );
       // Verify the executable in PATH
       for (let i of binaries) {
@@ -41,7 +43,9 @@ export const initCommand = (command: commander.Command): void => {
     .action(opts => {
       // Validate authentication with Azure
       logger.info(
-        emoji.emojify(":sparkles: VALIDATING AUTHENTICATION WITH AZURE")
+        emoji.emojify(
+          ":sparkles: VALIDATING AUTHENTICATION WITH AZURE :sparkles:"
+        )
       );
       const { output } = opts;
       shell.exec(
@@ -52,7 +56,7 @@ export const initCommand = (command: commander.Command): void => {
             fs.writeFileSync(output, stdout, { encoding: "utf8" });
           }
           if (stderr) {
-            logger.error(emoji.emojify(stderr));
+            logger.error(emoji.emojify(":no_entry_sign: " + stderr));
           } else {
             logger.info("Azure CLI account:");
             logger.info(stdout);
