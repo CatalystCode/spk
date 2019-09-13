@@ -19,8 +19,8 @@ export const initCommand = (command: commander.Command): void => {
     .description(
       "Initialize will verify that all infrastructure deployment prerequisites have been correctly installed."
     )
-    .action(async opts => {
-      const { silent = false, output } = opts;
+    .action(() => {
+      // Verify the executable in PATH
       for (let i of binaries) {
         if (!shell.which(i)) {
           logger.error("'" + i + "'" + " not installed");
@@ -30,5 +30,23 @@ export const initCommand = (command: commander.Command): void => {
         }
       }
       logger.info("Validation complete.");
+    })
+    .action(opts => {
+      // Validate authentication with Azure
+      const { output } = opts;
+      shell.exec(
+        "az account show",
+        { silent: true },
+        (code, stdout, stderr) => {
+          if (output) {
+            fs.writeFileSync(output, stdout, { encoding: "utf8" });
+          }
+          if (stderr) {
+            logger.error(stderr);
+          } else {
+            logger.info(stdout);
+          }
+        }
+      );
     });
 };
