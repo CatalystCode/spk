@@ -2,6 +2,8 @@ import commander from "commander";
 import fs from "fs";
 import shell from "shelljs";
 import { logger } from "../../logger";
+import emoji from "node-emoji";
+
 //import hasbin from "hasbin";
 
 /**
@@ -20,19 +22,27 @@ export const initCommand = (command: commander.Command): void => {
       "Initialize will verify that all infrastructure deployment prerequisites have been correctly installed."
     )
     .action(() => {
+      logger.info(
+        emoji.emojify(":sparkles: VERIFYING INSTALLATION OF PREREQUISITES")
+      );
       // Verify the executable in PATH
       for (let i of binaries) {
         if (!shell.which(i)) {
-          logger.error("'" + i + "'" + " not installed");
+          logger.error(
+            emoji.emojify(":no_entry_sign: '" + i + "'" + " not installed")
+          );
           shell.exit(1);
         } else {
-          logger.info(i + " VERIFIED");
+          logger.info(emoji.emojify(":white_check_mark: " + i));
         }
       }
-      logger.info("Validation complete.");
+      logger.info(emoji.emojify("Verification complete :white_check_mark:"));
     })
     .action(opts => {
       // Validate authentication with Azure
+      logger.info(
+        emoji.emojify(":sparkles: VALIDATING AUTHENTICATION WITH AZURE")
+      );
       const { output } = opts;
       shell.exec(
         "az account show",
@@ -42,9 +52,13 @@ export const initCommand = (command: commander.Command): void => {
             fs.writeFileSync(output, stdout, { encoding: "utf8" });
           }
           if (stderr) {
-            logger.error(stderr);
+            logger.error(emoji.emojify(stderr));
           } else {
+            logger.info("Azure CLI account:");
             logger.info(stdout);
+            logger.info(
+              emoji.emojify("Verification complete :white_check_mark:")
+            );
           }
         }
       );
