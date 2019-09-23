@@ -103,7 +103,8 @@ export class Helper {
     imageTag?: string,
     p1Id?: string,
     commitId?: string,
-    service?: string
+    service?: string,
+    deploymentId?: string
   ) => {
     Deployment.getDeploymentsBasedOnFilters(
       config.STORAGE_ACCOUNT_NAME,
@@ -136,6 +137,7 @@ export class Helper {
       let row = [];
       row.push("Start Time");
       row.push("Service");
+      row.push("Deployment");
       row.push("Commit");
       row.push("Src to ACR");
       row.push("Image Tag");
@@ -161,6 +163,7 @@ export class Helper {
             : ""
         );
         row.push(deployment.service);
+        row.push(deployment.deploymentId);
         row.push(deployment.commitId);
         row.push(
           deployment.srcToDockerBuild ? deployment.srcToDockerBuild.id : ""
