@@ -47,8 +47,10 @@
   },
   "dependencies": {
     "cli-table": "^0.3.1",
+    "@types/node-emoji": "^1.8.1",
     "commander": "^3.0.1",
     "js-yaml": "^3.13.1",
+    "node-emoji": "^1.10.0",
     "shelljs": "^0.8.3",
     "spektate": "^0.1.2",
     "uuid": "^3.3.3",
