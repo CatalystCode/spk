@@ -1,8 +1,8 @@
 import commander from "commander";
 import fs from "fs";
 import emoji from "node-emoji";
-import process from "process";
 import shell from "shelljs";
+import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
 
 /**
@@ -23,10 +23,8 @@ export const initCommand = (command: commander.Command): void => {
     )
     .action(opts => {
       validatePrereqs();
-      validateAzure();
-      if (isDone === true) {
-        validateEnvVariables();
-      }
+      validateAzure2();
+      validateEnvVariables();
     });
 };
 
@@ -73,6 +71,15 @@ const validateAzure = () => {
   );
 };
 
+const validateAzure2 = async () => {
+  try {
+    const azureAuth = await exec("az account show -o none");
+    return azureAuth;
+  } catch (_) {
+    logger.warn(`Unable to authenticate with Azure. Please run 'az login'.`);
+    return "";
+  }
+};
 const validateEnvVariables = () => {
   // Check for environment variables
   logger.info(
