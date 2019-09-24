@@ -11,7 +11,7 @@ import { logger } from "../../logger";
 export const versionCommandDecorator = (command: commander.Command): void => {
   command
     .command("version")
-    .alias("i")
+    .alias("v")
     .description(
       "Initialize will verify that all infrastructure deployment prerequisites have been correctly installed."
     )
