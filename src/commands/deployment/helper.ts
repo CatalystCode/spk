@@ -153,6 +153,7 @@ export class Helper {
       p1Id,
       commitId,
       service,
+      deploymentId,
       (deployments: Deployment[]) => {
         if (outputFormat === OUTPUT_FORMAT.JSON) {
           logger.info(JSON.stringify(deployments));
