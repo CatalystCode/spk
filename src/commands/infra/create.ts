@@ -1,9 +1,10 @@
 import commander from "commander";
-import fs from "fs";
+import fs, { chmod } from "fs";
 import shell from "shelljs";
 import { logger } from "../../logger";
 import { exec } from "../../lib/shell";
 import path from "path";
+import { promisify } from "util";
 
 /**
  * Adds the init command to the commander command object
@@ -11,6 +12,7 @@ import path from "path";
  * @param command Commander command object to decorate
  */
 
+// Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
 let InitIsDone: boolean = true;
 let bedrockDir: string = `${process.cwd()}/../.bedrock/bedrock/cluster/environments`;
 export const createCommandDecorator = (command: commander.Command): void => {
@@ -25,16 +27,18 @@ export const createCommandDecorator = (command: commander.Command): void => {
       "Deploy an Infra Environment from Bedrock"
     )
     .option(
-      "--resourcegroup <rg_name>",
+      "--resource-group <rg_name>",
       "Name of resource group to deploy Bedrock Environment to"
     )
     .option(
       "--cluster-name <cluster-name>",
-      "Name of the AKS cluster to deploy in environment"
+      "Name of the AKS cluster to deploy in environment",
+      "spk-AKScluster"
     )
     .option(
       "--gitops-url <url_gitops>",
-      "URL to HLD gitops manifests to apply to AKS cluster"
+      "URL to HLD gitops manifests to apply to AKS cluster",
+      "git@github.com:timfpark/fabrikate-cloud-native-manifests.git"
     )
     .option(
       "--serviceprincipalid <sp-id>",
@@ -45,23 +49,31 @@ export const createCommandDecorator = (command: commander.Command): void => {
       "Service Principal Secret for Azure Subscription"
     )
     .action(async opts => {
+      console.log(opts.environment);
       try {
         if (
           opts.environment &&
           opts.serviceprincipalid &&
           opts.serviceprincipalsecret
         ) {
+          const {
+            templateEnv = "azure-simple",
+            resourceGroup = "",
+            cluster = "defaultCluster",
+            spID = "",
+            spSecret = ""
+          } = opts;
         } else {
           logger.warn(
             "You need to specify each of the config settings in order to run any command."
           );
         }
-        validateInit();
-        await templateInit();
+        await validateInit();
+        await templateInit(opts.environment);
         //await templateConfig();
         //await templateDeploy();
       } catch (err) {
-        logger.error("Error occured while initializing");
+        logger.error("Error occurred while initializing");
         logger.error(err);
       }
     });
@@ -69,6 +81,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
 
 const validateInit = async () => {
   try {
+    // TODO: Use this function to check the state of spk infra init and attain bedrock source location
     if (InitIsDone) {
       logger.info(
         "`spk infra init` has been successfully executed, you may now proceed to deploy Bedrock environments."
@@ -78,38 +91,30 @@ const validateInit = async () => {
         "`spk infra init` has not been successfully executed, please run this command to assure all Bedrock prerequisites are installed. "
       );
     }
-  } finally {
     logger.info(bedrockDir);
     process.chdir(bedrockDir);
     // Debugging
     const out = await exec("ls");
-    //logger.info(out);
+    logger.info(
+      `SPK Bedrock source contains the following infrastructure environment templates : : ${out}`
+    );
+  } catch (_) {
+    logger.error(`Unable to Validate Infra Init.`);
   }
 };
 
-const templateInit = async () => {
+const templateInit = async (templateEnvironment: string) => {
   try {
-    // Identify which environment the user selected (hardcoded to azure-single)
-    // logger.info(opts.environment)
-    const EnvironmentPath = path.join(bedrockDir, "azure-simple");
-    const silent = false;
-    const output = "";
+    // Identify which environment the user selected
+    const EnvironmentPath = path.join(bedrockDir, templateEnvironment);
+    logger.warn(
+      `Initializing Bedrock Template Environment : ${templateEnvironment}`
+    );
+    logger.info(EnvironmentPath);
     process.chdir(EnvironmentPath);
     // Terraform init in environment directory
-    shell.exec(
-      "terraform init",
-      { silent: !!silent },
-      (code, stdout, stderr) => {
-        logger.info("Exit code:", code);
-        logger.info(stdout);
-        if (output) {
-          fs.writeFileSync(output, stdout, { encoding: "utf8" });
-        }
-        if (stderr) {
-          logger.error(stderr);
-        }
-      }
-    );
+    const init = await exec("terraform", ["init"]);
+    logger.info(init);
   } catch (_) {
     logger.warn(`Unable to run Terraform Init on the environment directory.`);
     return "";
