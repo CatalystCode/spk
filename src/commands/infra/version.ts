@@ -2,9 +2,9 @@ import commander from "commander";
 import fs from "fs";
 import shell from "shelljs";
 import { logger } from "../../logger";
-
+let bedrockDir: string = `${__dirname}/../../.bedrock/bedrock`;
 /**
- * Adds the init command to the commander command object
+ * Adds the version command to the commander command object
  *
  * @param command Commander command object to decorate
  */
