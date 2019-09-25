@@ -12,7 +12,15 @@ import { logger } from "../../logger";
  * @param command Commander command object to decorate
  */
 
-let binaries: string[] = ["terraform", "git", "az", "helm"];
+// Check for versions for each executable
+let binaries: string[] = [
+  "terraform",
+  "git",
+  "ydawgie",
+  "az",
+  "diggie",
+  "helm"
+];
 let envVar: string[] = [
   "ARM_SUBSCRIPTION_ID",
   "ARM_CLIENT_ID",
@@ -29,62 +37,68 @@ export const initCommand = (command: commander.Command): void => {
     )
     .action(async opts => {
       try {
-        await validatePrereqs();
+        await validatePrereqs(binaries);
         await validateAzure();
-        await validateEnvVariables();
+        await validateEnvVariables(envVar);
       } catch (err) {
         logger.error(`Error validating init prerequisites`);
         logger.error(err);
+        //process.exit(1)
       }
     });
 };
 
-const validatePrereqs = async (): Promise<void> => {
+export const validatePrereqs = async (
+  executables: string[]
+): Promise<boolean> => {
   // Validate executables in PATH
-  for (let i of binaries) {
+  for (let i of executables) {
     try {
-      const checkBinaries = await promisify(child_process.exec)("which " + i);
+      await promisify(child_process.exec)("which " + i);
     } catch (err) {
       logger.error(
         emoji.emojify(":no_entry_sign: '" + i + "'" + " not installed")
       );
-      process.exit(1);
+      //process.exit(1);
+      return false;
     }
   }
   logger.info(
     emoji.emojify("Installation of Prerequisites verified: :white_check_mark:")
   );
-  return;
+  return true;
 };
 
-const validateAzure = async (): Promise<void> => {
+export const validateAzure = async (): Promise<boolean> => {
   // Validate authentication with Azure
   try {
-    const checkAzure = await promisify(child_process.exec)(
-      "az account show -o none"
-    );
+    await promisify(child_process.exec)("az account show -o none");
   } catch (err) {
     logger.error(emoji.emojify(":no_entry_sign: " + err));
-    process.exit(1);
+    //process.exit(1);
+    return false;
   }
   logger.info(emoji.emojify("Azure account verified: :white_check_mark:"));
-  return;
+  return true;
 };
 
-const validateEnvVariables = async (): Promise<void> => {
+export const validateEnvVariables = async (
+  variables: string[]
+): Promise<boolean> => {
   // Validate environment variables
-  for (let i of envVar) {
+  for (let i of variables) {
     if (!process.env[i] && !null) {
       logger.error(
         emoji.emojify(
           ":no_entry_sign: " + i + " not set as environment variable."
         )
       );
-      process.exit(1);
+      //process.exit(1);
+      return false;
     }
   }
   logger.info(
     emoji.emojify("Environment variables verified: :white_check_mark:")
   );
-  return;
+  return true;
 };

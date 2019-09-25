@@ -6,3 +6,4 @@ export const infraCommand = Command(
   "infra",
   "Deploy and modify your Bedrock infrastructure.",
   [initCommand, versionCommandDecorator]
+);
