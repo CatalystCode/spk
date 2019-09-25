@@ -56,16 +56,9 @@ export const createCommandDecorator = (command: commander.Command): void => {
           opts.serviceprincipalid &&
           opts.serviceprincipalsecret
         ) {
-          const {
-            templateEnv = "azure-simple",
-            resourceGroup = "",
-            cluster = "defaultCluster",
-            spID = "",
-            spSecret = ""
-          } = opts;
         } else {
           logger.warn(
-            "You need to specify each of the config settings in order to run any command."
+            "You need to specify each of the config settings in order to run any command. Please verify you have passed an Environment, Service Principal ID, and Service Principal Secret"
           );
         }
         await validateInit();
