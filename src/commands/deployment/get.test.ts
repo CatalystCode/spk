@@ -4,7 +4,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { Helper, OUTPUT_FORMAT } from "./helper";
+import * as Helper from "./helper";
 
 // tslint:disable-next-line: no-var-requires
 const data = require("./mocks/data.json");
@@ -49,7 +49,7 @@ afterAll(() => {
 let deployments: Deployment[];
 describe("Get deployments", () => {
   test("get some basic deployments", async () => {
-    deployments = await Helper.getDeployments(OUTPUT_FORMAT.WIDE);
+    deployments = await Helper.getDeployments(Helper.OUTPUT_FORMAT.WIDE);
     expect(deployments).not.toBeUndefined();
     expect(deployments.length).not.toBeUndefined();
     logger.info("Got " + deployments.length + " deployments");
