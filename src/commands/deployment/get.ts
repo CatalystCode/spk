@@ -2,8 +2,13 @@ import Table from "cli-table";
 import commander from "commander";
 import Deployment from "spektate/lib/Deployment";
 import { logger } from "../../logger";
-import { verifyAppConfiguration } from "./init";
-import { clusterPipeline, config, hldPipeline, srcPipeline } from "./init";
+import {
+  clusterPipeline,
+  config,
+  hldPipeline,
+  srcPipeline,
+  verifyAppConfiguration
+} from "./init";
 
 /**
  * Output formats to display service details
@@ -100,6 +105,13 @@ function processOutputFormat(outputFormat: string): OUTPUT_FORMAT {
 
 /**
  * Gets a list of deployments for the specified filters
+ * @param outputFormat output format: normal | wide | json
+ * @param environment release environment, such as Dev, Staging, Prod etc.
+ * @param imageTag docker image tag name
+ * @param p1Id identifier of the first build pipeline (src to ACR)
+ * @param commitId commit Id into the source repo
+ * @param service name of the service that was modified
+ * @param deploymentId unique identifier for the deployment
  */
 export const getDeployments = (
   outputFormat: OUTPUT_FORMAT,
@@ -136,6 +148,8 @@ export const getDeployments = (
 
 /**
  * Prints deployments in a terminal table
+ * @param deployments list of deployments to print in terminal
+ * @param outputFormat output format: normal | wide | json
  */
 export const printDeployments = (
   deployments: Deployment[],
