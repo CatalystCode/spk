@@ -1,8 +1,6 @@
 import child_process from "child_process";
 import commander from "commander";
-import fs from "fs";
 import emoji from "node-emoji";
-import shell from "shelljs";
 import { promisify } from "util";
 import { logger } from "../../logger";
 
@@ -14,12 +12,7 @@ import { logger } from "../../logger";
 
 // Check for versions for each executable
 
-let binaries: string[] = [
-  "terraform",
-  "git",
-  "az",
-  "helm"
-];
+let binaries: string[] = ["terraform", "git", "az", "helm"];
 let envVar: string[] = [
   "ARM_SUBSCRIPTION_ID",
   "ARM_CLIENT_ID",
@@ -38,9 +31,9 @@ export const initCommand = (command: commander.Command): void => {
       try {
         if (await validatePrereqs(binaries)) {
           if (await validateAzure()) {
-            await validateEnvVariables(envVar)
+            await validateEnvVariables(envVar);
           }
-        };
+        }
       } catch (err) {
         logger.error(`Error validating init prerequisites`);
         logger.error(err);
@@ -54,7 +47,7 @@ export const validatePrereqs = async (
   // Validate executables in PATH
   for (let i of executables) {
     try {
-      const foo = await promisify(child_process.exec)("which " + i);
+      await promisify(child_process.exec)("which " + i);
     } catch (err) {
       logger.error(
         emoji.emojify(":no_entry_sign: '" + i + "'" + " not installed")
