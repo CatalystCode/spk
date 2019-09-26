@@ -48,7 +48,6 @@
   "dependencies": {
     "azure-devops-node-api": "^9.0.1",
     "cli-table": "^0.3.1",
-    "@types/node-emoji": "^1.8.1",
     "commander": "^3.0.1",
     "js-yaml": "^3.13.1",
     "node-emoji": "^1.10.0",
