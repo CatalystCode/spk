@@ -162,7 +162,27 @@ export const printDeployments = (
       row.push("Manifest Commit");
       row.push("End Time");
     }
-    const table = new Table({ head: row });
+    const table = new Table({
+      head: row,
+      chars: {
+        top: "",
+        "top-mid": "",
+        "top-left": "",
+        "top-right": "",
+        bottom: "",
+        "bottom-mid": "",
+        "bottom-left": "",
+        "bottom-right": "",
+        left: "",
+        "left-mid": "",
+        mid: "",
+        "mid-mid": "",
+        right: "",
+        "right-mid": "",
+        middle: " "
+      },
+      style: { "padding-left": 0, "padding-right": 0 }
+    });
     deployments.forEach(deployment => {
       row = [];
       row.push(
@@ -215,7 +235,7 @@ export const printDeployments = (
       table.push(row);
     });
 
-    logger.info(table.toString());
+    logger.info("\n" + table.toString());
   } else {
     logger.info("No deployments found for specified filters.");
   }
