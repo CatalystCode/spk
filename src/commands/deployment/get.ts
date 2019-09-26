@@ -1,6 +1,10 @@
 import commander from "commander";
 import { logger } from "../../logger";
-import { Helper, OUTPUT_FORMAT } from "./helper";
+import {
+  getDeployments,
+  OUTPUT_FORMAT,
+  verifyAppConfiguration
+} from "./helper";
 
 /**
  * Adds the get command to the commander command object
@@ -43,8 +47,8 @@ export const getCommandDecorator = (command: commander.Command): void => {
     )
     .action(async opts => {
       try {
-        Helper.verifyAppConfiguration(() => {
-          Helper.getDeployments(
+        verifyAppConfiguration(() => {
+          getDeployments(
             processOutputFormat(opts.output),
             opts.env,
             opts.imageTag,

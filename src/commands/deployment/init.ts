@@ -1,6 +1,6 @@
 import commander from "commander";
 import { logger } from "../../logger";
-import { config, Helper } from "./helper";
+import { config, writeConfigToFile } from "./helper";
 
 /**
  * Adds the init command to the commander command object
@@ -68,7 +68,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
           config.STORAGE_TABLE_NAME = opts.storageTableName;
           config.AZURE_PIPELINE_ACCESS_TOKEN = opts.azurePipelineAccessToken;
           config.MANIFEST_ACCESS_TOKEN = opts.manifestAccessToken;
-          Helper.writeConfigToFile(config);
+          writeConfigToFile(config);
         } else {
           logger.info(
             "You need to specify each of the config settings in order to run any command."
