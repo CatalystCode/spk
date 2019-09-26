@@ -19,6 +19,14 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - name: install az cli
+      run: |
+        apt-get update
+        apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
+        AZ_REPO=$(lsb_release -cs)
+        echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+        apt-get update
+        apt-get install azure-cli
     - name: yarn install, build, and test
       run: |
         yarn
