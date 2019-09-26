@@ -63,7 +63,7 @@ export class Helper {
   /**
    * Performs verification of config values to make sure subsequent commands can be run
    */
-  public static verifyAppConfiguration = (callback?: () => void) => {
+  public static verifyAppConfiguration = async (callback?: () => void) => {
     if (
       config.STORAGE_TABLE_NAME === "" ||
       config.STORAGE_TABLE_NAME === undefined ||
@@ -82,7 +82,7 @@ export class Helper {
       config.AZURE_ORG === "" ||
       config.AZURE_ORG === undefined
     ) {
-      Helper.configureAppFromFile(callback);
+      await Helper.configureAppFromFile(callback);
     } else {
       Helper.initializePipelines();
       if (callback) {
@@ -94,8 +94,8 @@ export class Helper {
   /**
    * Loads configuration from a file
    */
-  public static configureAppFromFile = (callback?: () => void) => {
-    fs.readFile(fileLocation, "utf8", (error, data) => {
+  public static configureAppFromFile = async (callback?: () => void) => {
+    await fs.readFile(fileLocation, "utf8", (error, data) => {
       if (error) {
         logger.error(error);
         throw error;
@@ -116,12 +116,12 @@ export class Helper {
   /**
    * Writes configuration to a file
    */
-  public static writeConfigToFile = (configMap: any) => {
+  public static writeConfigToFile = async (configMap: any) => {
     let data = "";
     Object.keys(configMap).forEach(key => {
       data += "\n" + key + "=" + configMap[key];
     });
-    fs.writeFile(fileLocation, data, (error: any) => {
+    await fs.writeFile(fileLocation, data, (error: any) => {
       if (error) {
         logger.error(error);
       }
@@ -139,8 +139,8 @@ export class Helper {
     commitId?: string,
     service?: string,
     deploymentId?: string
-  ) => {
-    Deployment.getDeploymentsBasedOnFilters(
+  ): Promise<void | Deployment[]> => {
+    return Deployment.getDeploymentsBasedOnFilters(
       config.STORAGE_ACCOUNT_NAME,
       config.STORAGE_ACCOUNT_KEY,
       config.STORAGE_TABLE_NAME,
@@ -153,15 +153,14 @@ export class Helper {
       p1Id,
       commitId,
       service,
-      deploymentId,
-      (deployments: Deployment[]) => {
-        if (outputFormat === OUTPUT_FORMAT.JSON) {
-          logger.info(JSON.stringify(deployments, null, 2));
-        } else {
-          Helper.printDeployments(deployments, outputFormat);
-        }
+      deploymentId
+    ).then((deployments: Deployment[]) => {
+      if (outputFormat === OUTPUT_FORMAT.JSON) {
+        logger.info(JSON.stringify(deployments, null, 2));
+      } else {
+        Helper.printDeployments(deployments, outputFormat);
       }
-    );
+    });
   };
 
   /**
@@ -262,4 +261,6 @@ export class Helper {
     }
     return "\u0445";
   };
+
+  public getModuleName = (): string => "Helper";
 }
