@@ -175,16 +175,6 @@
       "service": "hello-bedrock"
     },
     {
-      "deploymentId": "2493b6abc4ec",
-      "commitId": "b3d4243",
-      "hldCommitId": "3be44c2",
-      "imageTag": "hello-bedrock-master-5765",
-      "timeStamp": "2019-09-10T20:22:27.538Z",
-      "manifestCommitId": "8d2aa3e",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
       "srcToDockerBuild": {
         "URL": "https://dev.azure.com/epicstuff/f8a98d9c-8f11-46ef-89e4-07b4a56d1ad5/_build/results?buildId=6074",
         "author": "GitHub",
@@ -239,16 +229,6 @@
       "imageTag": "hello-bedrock-master-6074",
       "timeStamp": "2019-09-10T20:24:44.047Z",
       "manifestCommitId": "e9bca18",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "2d2ce850962b",
-      "commitId": "b3d4243",
-      "hldCommitId": "49ac7e6",
-      "imageTag": "hello-bedrock-master-5678",
-      "timeStamp": "2019-09-10T20:22:34.347Z",
-      "manifestCommitId": "d081c2b",
       "environment": "dev",
       "service": "hello-bedrock"
     },
@@ -623,46 +603,6 @@
       "service": "hello-bedrock"
     },
     {
-      "deploymentId": "3dfbb7f3bf94",
-      "commitId": "65d30ef",
-      "hldCommitId": "326ee6f",
-      "imageTag": "hello-bedrock-master-5888",
-      "timeStamp": "2019-09-10T20:22:58.905Z",
-      "manifestCommitId": "eef4108",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "5769fd850ed4",
-      "commitId": "b3d4243",
-      "hldCommitId": "04e74e7",
-      "imageTag": "hello-bedrock-master-5577",
-      "timeStamp": "2019-09-10T20:23:19.920Z",
-      "manifestCommitId": "2331deb",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "70bebcff0027",
-      "commitId": "b3d4243",
-      "hldCommitId": "901e6f9",
-      "imageTag": "hello-bedrock-master-5675",
-      "timeStamp": "2019-09-10T20:23:25.349Z",
-      "manifestCommitId": "8cc3cc9",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "78502e7c8f62",
-      "commitId": "65d30ef",
-      "hldCommitId": "0214253",
-      "imageTag": "hello-bedrock-master-5881",
-      "timeStamp": "2019-09-10T20:24:00.611Z",
-      "manifestCommitId": "b871524",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
       "srcToDockerBuild": {
         "URL": "https://dev.azure.com/epicstuff/f8a98d9c-8f11-46ef-89e4-07b4a56d1ad5/_build/results?buildId=6006",
         "author": "Samiya Akhtar",
@@ -739,86 +679,6 @@
       "imageTag": "hello-bedrock-master-5471",
       "timeStamp": "2019-09-10T20:23:42.310Z",
       "manifestCommitId": "b3f34c1",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "94c4ff94f9db",
-      "commitId": "b3d4243",
-      "hldCommitId": "e013ff8",
-      "imageTag": "hello-bedrock-master-5475",
-      "timeStamp": "2019-09-10T20:23:48.221Z",
-      "manifestCommitId": "95424e4",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "a9b713ad4f67",
-      "commitId": "b3d4243",
-      "hldCommitId": "caa5e25",
-      "imageTag": "hello-bedrock-master-5767",
-      "timeStamp": "2019-09-10T20:23:55.203Z",
-      "manifestCommitId": "8eb709a",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "aff11e213d1a",
-      "commitId": "65d30ef",
-      "hldCommitId": "36d98bf",
-      "imageTag": "hello-bedrock-master-5885",
-      "timeStamp": "2019-09-10T20:22:08.139Z",
-      "manifestCommitId": "36d98bf",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "b63102135fb0",
-      "commitId": "b3d4243",
-      "hldCommitId": "00c18ac",
-      "imageTag": "hello-bedrock-master-5773",
-      "timeStamp": "2019-09-10T20:24:06.003Z",
-      "manifestCommitId": "7537160",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "c9c96e03975d",
-      "commitId": "b3d4243",
-      "hldCommitId": "e038f40",
-      "imageTag": "hello-bedrock-master-5498",
-      "timeStamp": "2019-09-10T20:24:10.513Z",
-      "manifestCommitId": "eb6acdd",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "d359849ccf63",
-      "commitId": "b3d4243",
-      "hldCommitId": "3716ce1",
-      "imageTag": "hello-bedrock-master-5545",
-      "timeStamp": "2019-09-10T20:24:15.025Z",
-      "manifestCommitId": "3da253a",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "d570a285f12f",
-      "commitId": "b3d4243",
-      "hldCommitId": "e74595f",
-      "imageTag": "hello-bedrock-master-5671",
-      "timeStamp": "2019-09-10T20:24:19.641Z",
-      "manifestCommitId": "ca440a8",
-      "environment": "dev",
-      "service": "hello-bedrock"
-    },
-    {
-      "deploymentId": "e729913eea34",
-      "commitId": "b3d4243",
-      "hldCommitId": "4d84ad4",
-      "imageTag": "hello-bedrock-master-5683",
-      "timeStamp": "2019-09-10T20:22:46.800Z",
-      "manifestCommitId": "451a5ea",
       "environment": "dev",
       "service": "hello-bedrock"
     }
