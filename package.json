@@ -47,7 +47,6 @@
   },
   "dependencies": {
     "@types/node-emoji": "^1.8.1",
-    "azure-cli": "^0.10.20",
     "cli-table": "^0.3.1",
     "commander": "^3.0.1",
     "js-yaml": "^3.13.1",
