@@ -13,12 +13,11 @@ import { logger } from "../../logger";
  */
 
 // Check for versions for each executable
+
 let binaries: string[] = [
   "terraform",
   "git",
-  "ydawgie",
   "az",
-  "diggie",
   "helm"
 ];
 let envVar: string[] = [
@@ -37,13 +36,14 @@ export const initCommand = (command: commander.Command): void => {
     )
     .action(async opts => {
       try {
-        await validatePrereqs(binaries);
-        await validateAzure();
-        await validateEnvVariables(envVar);
+        if (await validatePrereqs(binaries)) {
+          if (await validateAzure()) {
+            await validateEnvVariables(envVar)
+          }
+        };
       } catch (err) {
         logger.error(`Error validating init prerequisites`);
         logger.error(err);
-        //process.exit(1)
       }
     });
 };
@@ -54,12 +54,11 @@ export const validatePrereqs = async (
   // Validate executables in PATH
   for (let i of executables) {
     try {
-      await promisify(child_process.exec)("which " + i);
+      const foo = await promisify(child_process.exec)("which " + i);
     } catch (err) {
       logger.error(
         emoji.emojify(":no_entry_sign: '" + i + "'" + " not installed")
       );
-      //process.exit(1);
       return false;
     }
   }
@@ -75,7 +74,6 @@ export const validateAzure = async (): Promise<boolean> => {
     await promisify(child_process.exec)("az account show -o none");
   } catch (err) {
     logger.error(emoji.emojify(":no_entry_sign: " + err));
-    //process.exit(1);
     return false;
   }
   logger.info(emoji.emojify("Azure account verified: :white_check_mark:"));
@@ -93,7 +91,6 @@ export const validateEnvVariables = async (
           ":no_entry_sign: " + i + " not set as environment variable."
         )
       );
-      //process.exit(1);
       return false;
     }
   }
