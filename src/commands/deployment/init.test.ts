@@ -3,7 +3,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { config, verifyAppConfiguration, writeConfigToFile } from "./helper";
+import { config, verifyAppConfiguration, writeConfigToFile } from "./init";
 
 beforeAll(() => {
   enableVerboseLogging();
