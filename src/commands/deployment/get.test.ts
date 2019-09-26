@@ -33,10 +33,8 @@ describe("Get deployments", () => {
     logger.info("Getting deployments");
     const deployments = await Helper.getDeployments(OUTPUT_FORMAT.WIDE);
     expect(deployments).not.toBeUndefined();
-    if (deployments) {
-      expect(deployments.length).not.toBeUndefined();
-      logger.info("Got " + deployments.length + " deployments");
-      expect(deployments).toHaveLength(27);
-    }
+    expect(deployments.length).not.toBeUndefined();
+    logger.info("Got " + deployments.length + " deployments");
+    expect(deployments).toHaveLength(27);
   });
 });
