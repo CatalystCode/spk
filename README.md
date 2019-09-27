@@ -8,6 +8,7 @@
 
 - Node@>=LTS
 - [Yarn](https://yarnpkg.com/)@Stable
+- Azure CLI
 
 ### Installation
 
