@@ -60,6 +60,14 @@ export const createCommandDecorator = (command: commander.Command): void => {
             "You need to specify each of the config settings in order to run any command. Please verify you have passed an Environment, Service Principal ID, and Service Principal Secret"
           );
         }
+        // If Bedrock is not found, install a working path for Bedrock
+        if (!fs.existsSync(bedrockDir)) {
+          const cloneBedrock = await exec("git", [
+            "clone",
+            "https://github.com/microsoft/bedrock.git",
+            ".bedrock"
+          ]);
+        }
         await validateInit(bedrockDir);
         await templateInit(bedrockDir, opts.environment);
         //await templateConfig();
