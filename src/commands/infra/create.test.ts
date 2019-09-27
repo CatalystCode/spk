@@ -20,7 +20,7 @@ describe("Validating Bedrock source repo path", () => {
     // Pass a static path to Bedrock source
     const bedrockTestDir = path.join(
       process.cwd(),
-      "/../.bedrock/bedrock/cluster/environments"
+      ".bedrock/bedrock/cluster/environments"
     );
     logger.info(`Using test Bedrock Source Template Path : ${bedrockTestDir}`);
     const test1 = await validateInit(bedrockTestDir);
@@ -32,7 +32,7 @@ describe("Validating Bedrock source repo path with invalid test", () => {
     // Pass an invalid static path to Bedrock source
     const bedrockTestDir = path.join(
       process.cwd(),
-      "/../.bedrock/bedrock/invalid/path"
+      ".bedrock/bedrock/invalid/path"
     );
     logger.info(`Using test Bedrock Source Template Path : ${bedrockTestDir}`);
     const test2 = await validateInit(bedrockTestDir);
@@ -44,11 +44,11 @@ describe("Validating Bedrock environment template with Terraform init", () => {
     // Pass a Bedrock template to run terraform init
     const bedrockTestDir = path.join(
       process.cwd(),
-      "/../.bedrock/bedrock/invalid/path"
+      ".bedrock/bedrock/cluster/environments"
     );
     const bedrockTestEnv = "azure-simple";
     logger.info(`Using test Bedrock Template Environment : ${bedrockTestEnv}`);
-    const test3 = await templateInit(bedrockTestDir, bedrockTestDir);
+    const test3 = await templateInit(bedrockTestDir, bedrockTestEnv);
     expect(test3).toContain("Terraform has been successfully initialized!");
   });
 });

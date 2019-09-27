@@ -13,7 +13,7 @@ import { promisify } from "util";
 
 // Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
 let InitIsDone: boolean = true;
-let bedrockDir: string = `${process.cwd()}/../.bedrock/bedrock/cluster/environments`;
+let bedrockDir: string = `${process.cwd()}/.bedrock/bedrock/cluster/environments`;
 export const createCommandDecorator = (command: commander.Command): void => {
   command
     .command("create")
@@ -89,7 +89,9 @@ export const validateInit = async (bedrockPath: string): Promise<boolean> => {
         return false;
       }
     } else {
-      logger.error("Provided Bedrock path is invalid or can not be found");
+      logger.error(
+        `Provided Bedrock path is invalid or can not be found: ${bedrockPath}`
+      );
       return false;
     }
   } catch (_) {
@@ -116,9 +118,7 @@ export const templateInit = async (
       logger.info(init);
       return init;
     } else {
-      logger.error(
-        `Template Environment : ${templateEnvironment} cannot be found`
-      );
+      logger.error(`Template Environment : ${EnvironmentPath} cannot be found`);
       return "";
     }
   } catch (_) {
