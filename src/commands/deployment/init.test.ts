@@ -24,7 +24,7 @@ describe("Initializing a project to use service introspection for the first time
     testConfig.STORAGE_TABLE_NAME = "storageTableName";
     await writeConfigToFile(testConfig);
 
-    await verifyAppConfiguration(() => {
+    await verifyAppConfiguration().then(() => {
       expect(config.AZURE_ORG).toBe("testOrg");
       expect(config.AZURE_PROJECT).toBe("testProject");
       expect(config.STORAGE_ACCOUNT_KEY).toBe("storageAccountKey");

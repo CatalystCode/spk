@@ -71,7 +71,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
     )
     .action(async opts => {
       try {
-        verifyAppConfiguration(() => {
+        verifyAppConfiguration().then(() => {
           getDeployments(
             processOutputFormat(opts.output),
             opts.env,

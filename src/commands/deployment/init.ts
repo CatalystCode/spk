@@ -117,7 +117,7 @@ export const initializePipelines = () => {
 /**
  * Performs verification of config values to make sure subsequent commands can be run
  */
-export const verifyAppConfiguration = async (callback?: () => void) => {
+export const verifyAppConfiguration = async (): Promise<void> => {
   if (
     config.STORAGE_TABLE_NAME === "" ||
     config.STORAGE_TABLE_NAME === undefined ||
@@ -132,34 +132,35 @@ export const verifyAppConfiguration = async (callback?: () => void) => {
     config.AZURE_ORG === "" ||
     config.AZURE_ORG === undefined
   ) {
-    await configureAppFromFile(callback);
+    return new Promise(async resolve => {
+      await configureAppFromFile();
+      resolve();
+    });
   } else {
     initializePipelines();
-    if (callback) {
-      callback();
-    }
   }
 };
 
 /**
  * Loads configuration from a file
  */
-export const configureAppFromFile = async (callback?: () => void) => {
-  await fs.readFile(fileLocation, "utf8", (error, data) => {
-    if (error) {
-      logger.error(error);
-      throw error;
-    }
-    const array = data.split(/\r?\n/);
-    array.forEach((row: string) => {
-      const key = row.split(/=(.+)/)[0];
-      const value = row.split(/=(.+)/)[1];
-      config[key] = value;
+export const configureAppFromFile = async (): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    await fs.readFile(fileLocation, "utf8", (error, data) => {
+      if (error) {
+        logger.error(error);
+        reject();
+        throw error;
+      }
+      const array = data.split(/\r?\n/);
+      array.forEach((row: string) => {
+        const key = row.split(/=(.+)/)[0];
+        const value = row.split(/=(.+)/)[1];
+        config[key] = value;
+      });
+      initializePipelines();
+      resolve();
     });
-    initializePipelines();
-    if (callback) {
-      callback();
-    }
   });
 };
 
