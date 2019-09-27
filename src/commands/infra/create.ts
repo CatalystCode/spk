@@ -82,6 +82,13 @@ export const createCommandDecorator = (command: commander.Command): void => {
 export const validateInit = async (bedrockPath: string): Promise<boolean> => {
   try {
     // TODO: Use this function to check the state of spk infra init and attain bedrock source location
+    if (!fs.existsSync(bedrockDir)) {
+      const cloneBedrock = await exec("git", [
+        "clone",
+        "https://github.com/microsoft/bedrock.git",
+        ".bedrock"
+      ]);
+    }
     if (fs.existsSync(bedrockPath)) {
       if (InitIsDone) {
         logger.info(
@@ -115,6 +122,13 @@ export const templateInit = async (
   try {
     // Identify which environment the user selected
     const EnvironmentPath = path.join(bedrockPath, templateEnvironment);
+    if (!fs.existsSync(bedrockDir)) {
+      const cloneBedrock = await exec("git", [
+        "clone",
+        "https://github.com/microsoft/bedrock.git",
+        ".bedrock"
+      ]);
+    }
     if (fs.existsSync(EnvironmentPath)) {
       logger.info(
         `Initializing Bedrock Template Environment : ${templateEnvironment}`
