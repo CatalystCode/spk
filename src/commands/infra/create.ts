@@ -1,6 +1,5 @@
 import commander from "commander";
 import fs, { chmod } from "fs";
-import shell from "shelljs";
 import { logger } from "../../logger";
 import { exec } from "../../lib/shell";
 import path from "path";
@@ -61,8 +60,8 @@ export const createCommandDecorator = (command: commander.Command): void => {
             "You need to specify each of the config settings in order to run any command. Please verify you have passed an Environment, Service Principal ID, and Service Principal Secret"
           );
         }
-        await validateInit();
-        await templateInit(opts.environment);
+        await validateInit(bedrockDir);
+        await templateInit(bedrockDir, opts.environment);
         //await templateConfig();
         //await templateDeploy();
       } catch (err) {
@@ -72,65 +71,58 @@ export const createCommandDecorator = (command: commander.Command): void => {
     });
 };
 
-const validateInit = async () => {
+export const validateInit = async (bedrockPath: string): Promise<boolean> => {
   try {
     // TODO: Use this function to check the state of spk infra init and attain bedrock source location
-    if (InitIsDone) {
-      logger.info(
-        "`spk infra init` has been successfully executed, you may now proceed to deploy Bedrock environments."
-      );
+    if (fs.existsSync(bedrockPath)) {
+      if (InitIsDone) {
+        logger.info(
+          "`spk infra init` has been successfully executed, you may now proceed to deploy Bedrock environments."
+        );
+        return true;
+        logger.info(bedrockPath);
+        process.chdir(bedrockPath);
+      } else {
+        logger.error(
+          "`spk infra init` has not been successfully executed, please run this command to assure all Bedrock prerequisites are installed. "
+        );
+        return false;
+      }
     } else {
-      logger.info(
-        "`spk infra init` has not been successfully executed, please run this command to assure all Bedrock prerequisites are installed. "
-      );
+      logger.error("Provided Bedrock path is invalid or can not be found");
+      return false;
     }
-    logger.info(bedrockDir);
-    process.chdir(bedrockDir);
-    // Debugging
-    const out = await exec("ls");
-    logger.info(
-      `SPK Bedrock source contains the following infrastructure environment templates : : ${out}`
-    );
   } catch (_) {
     logger.error(`Unable to Validate Infra Init.`);
+    return false;
   }
 };
 
-const templateInit = async (templateEnvironment: string) => {
+export const templateInit = async (
+  bedrockPath: string,
+  templateEnvironment: string
+): Promise<string> => {
   try {
     // Identify which environment the user selected
-    const EnvironmentPath = path.join(bedrockDir, templateEnvironment);
-    logger.warn(
-      `Initializing Bedrock Template Environment : ${templateEnvironment}`
-    );
-    logger.info(EnvironmentPath);
-    process.chdir(EnvironmentPath);
-    // Terraform init in environment directory
-    const init = await exec("terraform", ["init"]);
-    logger.info(init);
+    const EnvironmentPath = path.join(bedrockPath, templateEnvironment);
+    if (fs.existsSync(EnvironmentPath)) {
+      logger.info(
+        `Initializing Bedrock Template Environment : ${templateEnvironment}`
+      );
+      logger.info(EnvironmentPath);
+      process.chdir(EnvironmentPath);
+      // Terraform init in environment directory
+      const init = await exec("terraform", ["init"]);
+      logger.info(init);
+      return init;
+    } else {
+      logger.error(
+        `Template Environment : ${templateEnvironment} cannot be found`
+      );
+      return "";
+    }
   } catch (_) {
     logger.warn(`Unable to run Terraform Init on the environment directory.`);
     return "";
   }
 };
-
-//     }
-// const templateConfig = async () => {
-//     try {
-//         const infraInit = await validateInit();
-//         const infraInit = await templateInit()
-//         return azureAuth;
-//         } catch (_) {
-//         logger.warn(`Unable to authenticate with Azure. Please run 'az login'.`);
-//         return "";
-//         }
-// }
-// const templateDeploy = async () => {
-//     try {
-//         const infraInit = await validateInit();
-//         return azureAuth;
-//       } catch (_) {
-//         logger.warn(`Unable to authenticate with Azure. Please run 'az login'.`);
-//         return "";
-//       }
-// }
