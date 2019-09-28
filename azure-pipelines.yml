@@ -6,13 +6,17 @@
 trigger:
 - master
 
+strategy:
+  matrix:
+    node-version: [8.x, 10.x, 12.x]
+
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '10.x'
+    versionSpec: $(node-version)
   displayName: 'Install Node.js'
 
 - script: |
