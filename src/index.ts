@@ -8,36 +8,29 @@
  * - Number.isInteger()
  * - if (typeof var === 'boolean') {}
  * - if (typeof var === 'undefined') {}
+ * - if (typeof var === 'number') {}
  * - etc...
  */
-import commander from "commander";
-import { addCommand } from "./commands/add";
-import { shellCommand } from "./commands/shell";
-import { logger } from "./logger";
+import { Command, executeCommand } from "./commands/command";
+import { deploymentCommand } from "./commands/deployment";
+import { projectCommand } from "./commands/project";
+import { serviceCommand } from "./commands/service";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Instantiate core command object
 ////////////////////////////////////////////////////////////////////////////////
-const command = new commander.Command()
-  .version((() => require("../package.json").version)())
-  .option("-v, --verbose", "verbose logging");
+const rootCommand = Command(
+  "spk",
+  "The missing Bedrock CLI",
+  [
+    c => {
+      c.version(require("../package.json").version);
+    }
+  ],
+  [deploymentCommand, projectCommand, serviceCommand]
+);
 
 ////////////////////////////////////////////////////////////////////////////////
-// Add decorators here
+// Main
 ////////////////////////////////////////////////////////////////////////////////
-shellCommand(command);
-addCommand(command);
-
-////////////////////////////////////////////////////////////////////////////////
-// Catch-all for unknown commands
-////////////////////////////////////////////////////////////////////////////////
-command.command("*").action(cmd => {
-  logger.error(`Unknown command "${cmd}"`);
-  cmd.outputHelp();
-});
-
-////////////////////////////////////////////////////////////////////////////////
-// If no command passed (first 2 args in process.argv are the node executable
-// and the script called) output help
-////////////////////////////////////////////////////////////////////////////////
-process.argv.length <= 2 ? command.outputHelp() : command.parse(process.argv);
+executeCommand(rootCommand, [...process.argv]);
