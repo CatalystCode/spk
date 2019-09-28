@@ -18,42 +18,64 @@ strategy:
 pool:
   vmImage: 'ubuntu-latest'
 
-stages:
-- stage: Install Node
-  jobs:
-  - job: install_node
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: $(node-version)
-      displayName: 'Install Node.js'
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: $(node-version)
+  displayName: 'Install Node.js'
 
-- stage: Build
-  jobs:
-  - job: build
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - script: |
-        yarn
-        yarn build
-        yarn test
+- script: |
+    # npm install
+    # npm run build
+    yarn
+    yarn build
+    yarn test
+  displayName: 'npm install and build'
 
-- stage: Test
-  jobs:
-  - job: build
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - script: |
-        yarn test
-    - task: PublishCodeCoverageResults@1
-      inputs: 
-        codeCoverageTool: Cobertura
-        summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/*coverage.xml'
-        reportDirectory: '$(System.DefaultWorkingDirectory)/**/coverage'
+- task: PublishCodeCoverageResults@1
+  inputs: 
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/*coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/**/coverage'
+
+
+
+# stages:
+# - stage: Install Node
+#   jobs:
+#   - job: install_node
+#     pool:
+#       vmImage: 'ubuntu-latest'
+#     steps:
+#     - task: NodeTool@0
+#       inputs:
+#         versionSpec: $(node-version)
+#       displayName: 'Install Node.js'
+
+# - stage: Build
+#   jobs:
+#   - job: build
+#     pool:
+#       vmImage: 'ubuntu-latest'
+#     steps:
+#     - script: |
+#         yarn
+#         yarn build
+#         yarn test
+
+# - stage: Test
+#   jobs:
+#   - job: build
+#     pool:
+#       vmImage: 'ubuntu-latest'
+#     steps:
+#     - script: |
+#         yarn test
+#     - task: PublishCodeCoverageResults@1
+#       inputs: 
+#         codeCoverageTool: Cobertura
+#         summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/*coverage.xml'
+#         reportDirectory: '$(System.DefaultWorkingDirectory)/**/coverage'
 
 
 # steps:
