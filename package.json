@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "shx rm -rf dist && webpack && pkg dist/spk.js && shx mv spk-{linux,macos,win.exe} dist",
-    "test": "jest --coverage",
+    "test": "jest --coverage --collect-coverage",
     "test-watch": "jest --watchAll"
   },
   "devDependencies": {
