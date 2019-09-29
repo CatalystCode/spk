@@ -1,4 +1,5 @@
 import child_process from "child_process";
+import fs, { chmod } from "fs";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
@@ -6,13 +7,24 @@ import {
 } from "../../logger";
 import path from "path";
 import { validateInit, templateInit } from "./create";
+import { exec } from "../../lib/shell";
 
-beforeAll(() => {
+beforeAll(async () => {
   enableVerboseLogging();
+  // Remove once check for Bedrock source is integrated with `spk infra init`
+  if (!fs.existsSync(".bedrock")) {
+    const cloneBedrock = await exec("git", [
+      "clone",
+      "https://github.com/microsoft/bedrock.git",
+      ".bedrock"
+    ]);
+  }
+  // Increasing time for Terraform Init
+  jest.setTimeout(99999);
 });
-
 afterAll(() => {
   disableVerboseLogging();
+  jest.setTimeout(5000);
 });
 
 describe("Validating Bedrock source repo path", () => {
@@ -20,7 +32,7 @@ describe("Validating Bedrock source repo path", () => {
     // Pass a static path to Bedrock source
     const bedrockTestDir = path.join(
       process.cwd(),
-      ".bedrock/bedrock/cluster/environments"
+      ".bedrock/cluster/environments"
     );
     logger.info(`Using test Bedrock Source Template Path : ${bedrockTestDir}`);
     const test1 = await validateInit(bedrockTestDir);
@@ -30,10 +42,7 @@ describe("Validating Bedrock source repo path", () => {
 describe("Validating Bedrock source repo path with invalid test", () => {
   test("Static bedrock path to spk root is passed that is invalid", async () => {
     // Pass an invalid static path to Bedrock source
-    const bedrockTestDir = path.join(
-      process.cwd(),
-      ".bedrock/bedrock/invalid/path"
-    );
+    const bedrockTestDir = path.join(process.cwd(), ".bedrock/invalid/path");
     logger.info(`Using test Bedrock Source Template Path : ${bedrockTestDir}`);
     const test2 = await validateInit(bedrockTestDir);
     expect(test2).toBe(false);
@@ -44,7 +53,7 @@ describe("Validating Bedrock environment template with Terraform init", () => {
     // Pass a Bedrock template to run terraform init
     const bedrockTestDir = path.join(
       process.cwd(),
-      ".bedrock/bedrock/cluster/environments"
+      ".bedrock/cluster/environments"
     );
     const bedrockTestEnv = "azure-simple";
     logger.info(`Using test Bedrock Template Environment : ${bedrockTestEnv}`);
