@@ -4,9 +4,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { validatePrereqs } from "./init";
-import { validateAzure } from "./init";
-import { validateEnvVariables } from "./init";
+import { validatePrereqs, validateAzure, validateEnvVariables } from "./init";
 
 beforeAll(() => {
   enableVerboseLogging();
