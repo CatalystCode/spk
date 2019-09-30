@@ -4,14 +4,6 @@ import emoji from "node-emoji";
 import { promisify } from "util";
 import { logger } from "../../logger";
 
-/**
- * Adds the init command to the commander command object
- *
- * @param command Commander command object to decorate
- */
-
-// Check for versions for each executable
-
 let binaries: string[] = ["terraform", "git", "az", "helm"];
 let envVar: string[] = [
   "ARM_SUBSCRIPTION_ID",
@@ -20,6 +12,11 @@ let envVar: string[] = [
   "ARM_TENANT_ID"
 ];
 
+/**
+ * Adds the init command to the commander command object
+ *
+ * @param command Commander command object to decorate
+ */
 export const initCommand = (command: commander.Command): void => {
   command
     .command("init")
@@ -41,6 +38,11 @@ export const initCommand = (command: commander.Command): void => {
     });
 };
 
+/**
+ * Validates that prerequisites are installed
+ *
+ * @param executables Array of exectuables to check for in PATH
+ */
 export const validatePrereqs = async (
   executables: string[]
 ): Promise<boolean> => {
@@ -61,6 +63,9 @@ export const validatePrereqs = async (
   return true;
 };
 
+/**
+ * Validates that user is logged into Azure CLI
+ */
 export const validateAzure = async (): Promise<boolean> => {
   // Validate authentication with Azure
   try {
@@ -73,6 +78,11 @@ export const validateAzure = async (): Promise<boolean> => {
   return true;
 };
 
+/**
+ * Validates that environment variables are set and not null
+ *
+ * @param variables Array of environment vairables to check for
+ */
 export const validateEnvVariables = async (
   variables: string[]
 ): Promise<boolean> => {
