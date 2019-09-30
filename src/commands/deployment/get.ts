@@ -30,6 +30,8 @@ export enum OUTPUT_FORMAT {
   JSON = 2
 }
 
+const timeInterval = 5000;
+
 /**
  * Adds the get command to the commander command object
  * @param command Commander command object to decorate
@@ -178,8 +180,6 @@ export const watchGetDeployments = (
   service?: string,
   deploymentId?: string
 ): void => {
-  const timeInterval = 5000;
-
   setInterval(() => {
     getDeployments(
       outputFormat,
