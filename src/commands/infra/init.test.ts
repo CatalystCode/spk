@@ -8,10 +8,12 @@ import { validatePrereqs, validateAzure, validateEnvVariables } from "./init";
 
 beforeAll(() => {
   enableVerboseLogging();
+  jest.setTimeout(30000);
 });
 
 afterAll(() => {
   disableVerboseLogging();
+  jest.setTimeout(5000);
 });
 
 describe("Validating executable prerequisites", () => {
