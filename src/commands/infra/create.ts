@@ -6,7 +6,7 @@ import path from "path";
 import { promisify } from "util";
 
 // Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
-let InitIsDone: boolean = true; //Holder until spk infra init integration
+let initValidated: boolean = true; //Holder until spk infra init integration
 let bedrockDir: string = `${process.cwd()}/.bedrock/cluster/environments`;
 let rootDir: string = `${process.cwd()}`;
 
@@ -78,7 +78,7 @@ export const validateInit = async (bedrockPath: string): Promise<boolean> => {
   try {
     // TODO: Use this function to check the state of spk infra init and attain bedrock source location
     if (fs.existsSync(bedrockPath)) {
-      if (InitIsDone) {
+      if (initValidated) {
         logger.info(
           "`spk infra init` has been successfully executed, you may now proceed to deploy Bedrock environments."
         );
@@ -113,13 +113,13 @@ export const templateInit = async (
 ): Promise<string> => {
   try {
     // Identify which environment the user selected
-    const EnvironmentPath = path.join(bedrockPath, templateEnvironment);
-    if (fs.existsSync(EnvironmentPath)) {
+    const environmentPath = path.join(bedrockPath, templateEnvironment);
+    if (fs.existsSync(environmentPath)) {
       logger.info(
         `Initializing Bedrock Template Environment : ${templateEnvironment}`
       );
-      logger.info(EnvironmentPath);
-      process.chdir(EnvironmentPath);
+      logger.info(environmentPath);
+      process.chdir(environmentPath);
       // Terraform init in environment directory
       const init = await exec("terraform", ["init"]);
       logger.info(init);
@@ -127,7 +127,7 @@ export const templateInit = async (
       process.chdir(rootDir);
       return init;
     } else {
-      logger.error(`Template Environment : ${EnvironmentPath} cannot be found`);
+      logger.error(`Template Environment : ${environmentPath} cannot be found`);
       return "";
     }
   } catch (_) {
