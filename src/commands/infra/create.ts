@@ -6,9 +6,9 @@ import path from "path";
 import { promisify } from "util";
 
 // Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
-let initValidated: boolean = true; //Holder until spk infra init integration
-let bedrockDir: string = `${process.cwd()}/.bedrock/cluster/environments`;
-let rootDir: string = `${process.cwd()}`;
+const initValidated: boolean = true; //Holder until spk infra init integration
+const bedrockDir: string = `${process.cwd()}/.bedrock/cluster/environments`;
+const rootDir: string = `${process.cwd()}`;
 
 /**
  * Adds the init command to the commander command object
