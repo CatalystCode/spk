@@ -1,10 +1,8 @@
 import { logger } from "../../logger";
 import { promisify } from "util";
 import { exec } from "child_process";
-import {
-  getManagementCredentials,
-  AZURE_SUBSCRIPTION_ID
-} from "./azurecredentials";
+import { getManagementCredentials } from "./azurecredentials";
+import { azureSubscriptionId } from "../../../config";
 import { StorageManagementClient } from "@azure/arm-storage";
 import {
   StorageAccountsCheckNameAvailabilityResponse,
@@ -12,8 +10,7 @@ import {
   SkuName,
   Kind,
   StorageAccountsListByResourceGroupResponse,
-  StorageAccountsListKeysResponse,
-  StorageAccountKey
+  StorageAccountsListKeysResponse
 } from "@azure/arm-storage/esm/models";
 
 /**
@@ -25,7 +22,7 @@ import {
  */
 const getStorageClient = async (): Promise<StorageManagementClient> => {
   const creds = await getManagementCredentials();
-  return new StorageManagementClient(creds, AZURE_SUBSCRIPTION_ID);
+  return new StorageManagementClient(creds, azureSubscriptionId);
 };
 
 /**
