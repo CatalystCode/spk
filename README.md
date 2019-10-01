@@ -1,4 +1,5 @@
 # SPK
+[![Build Status](https://dev.azure.com/epicstuff/bedrock/_apis/build/status/CatalystCode.spk?branchName=master)](https://dev.azure.com/epicstuff/bedrock/_build/latest?definitionId=128&branchName=master)
 
 > This missing Bedrock CLI
 
@@ -63,6 +64,26 @@ To run do a production build, just run:
 yarn build
 ```
 
+### IDE Configuration
+
+This project uses [TSLint](https://palantir.github.io/tslint/) for linting and
+[Prettier](https://prettier.io/) for code formatting. For best integration with
+these tools, VSCode is recommended along with the corresponding extensions:
+
+- https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode
+- https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-typescript-tslint-plugin
+
+Note: the Prettier VSCode extension will overwrite the existing formatting
+hot-key (`alt`+`shift`+`f`)
+
+#### Pre-commit Prettier Hook
+
+A pre-commit hook will automatically get installed when running `yarn` on the
+project. This hook will automatically format all staged files with Prettier
+before committing them. Although useful, make sure to format your code regularly
+throughout your dev cycle (`alt`+`shift`+`f` in VSCode) to make sure that no
+unintended format changes happen.
+
 ## Testing
 
 We use a [TypeScript variant](https://github.com/kulshekhar/ts-jest) of
@@ -89,6 +110,12 @@ or
 
 ```sh
 yarn add react@^16.9.0 # you can specify target semver's as well
+```
+
+We also want to keep all @types in devDependencies instead of dependencies.
+
+```sh
+$ yarn add -D @types/node-emoji
 ```
 
 ### Removing a dependency

@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "shx rm -rf dist && webpack && pkg dist/spk.js && shx mv spk-{linux,macos,win.exe} dist",
-    "test": "jest",
+    "test": "jest --coverage --coverageReporters=cobertura",
     "test-watch": "jest --watchAll"
   },
   "devDependencies": {
@@ -15,11 +15,13 @@
     "@types/jest": "^24.0.18",
     "@types/js-yaml": "^3.12.1",
     "@types/node": "^12.7.4",
+    "@types/node-emoji": "^1.8.1",
     "@types/shelljs": "^0.8.5",
     "@types/uuid": "^3.4.5",
     "husky": ">=1",
     "jest": "^24.9.0",
     "lint-staged": ">=8",
+    "nyc": "^14.1.1",
     "pkg": "^4.4.0",
     "prettier": "^1.18.2",
     "shx": "^0.3.2",
@@ -48,7 +50,6 @@
   "dependencies": {
     "azure-devops-node-api": "^9.0.1",
     "cli-table": "^0.3.1",
-    "@types/node-emoji": "^1.8.1",
     "commander": "^3.0.1",
     "js-yaml": "^3.13.1",
     "node-emoji": "^1.10.0",
