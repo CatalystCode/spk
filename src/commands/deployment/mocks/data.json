@@ -472,7 +472,7 @@
         "finishTime": "2019-08-29T20:40:48.297Z",
         "id": 6009,
         "queueTime": "2019-08-29T20:38:40.223Z",
-        "result": "succeeded",
+        "result": "failed",
         "sourceBranch": "refs/heads/master",
         "sourceVersion": "8028a158bd2b3a7df2e498fa59dfdf44476c5d4d",
         "sourceVersionURL": "https://dev.azure.com/epicstuff/f8a98d9c-8f11-46ef-89e4-07b4a56d1ad5/_apis/build/builds/6009/sources",

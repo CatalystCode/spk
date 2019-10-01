@@ -93,7 +93,10 @@ describe("Introspect deployments", () => {
 
 describe("Print deployments", () => {
   test("verify print deployments", () => {
-    const table = Get.printDeployments(deployments, Get.OUTPUT_FORMAT.JSON);
+    const table = Get.printDeployments(
+      deployments,
+      Get.processOutputFormat("json")
+    );
     expect(table).not.toBeUndefined();
     const deployment = [
       "",
