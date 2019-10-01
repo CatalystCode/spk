@@ -4,6 +4,8 @@ import * as os from "os";
 import AzureDevOpsPipeline from "spektate/lib/pipeline/AzureDevOpsPipeline";
 import IPipeline from "spektate/lib/pipeline/Pipeline";
 import { logger } from "../../logger";
+import * as kv from "../../lib/azure/keyvault";
+import * as storage from "../../lib/azure/storage";
 
 export let config: { [id: string]: string } = {};
 const fileLocation = os.homedir() + "/.Spektate";
@@ -78,6 +80,13 @@ export const initCommandDecorator = (command: commander.Command): void => {
           config.AZURE_PIPELINE_ACCESS_TOKEN = opts.azurePipelineAccessToken;
           config.MANIFEST_ACCESS_TOKEN = opts.manifestAccessToken;
           writeConfigToFile(config);
+          //await azure.createStorageAccount(opts.storageAccountName, opts.storageAccountKey, opts.storagePartitionKey);
+          //await kv.isKeyVaultExist(opts.storageAccountName, "sarathp-rg");
+          await storage.createStorageAccountIfNotExists(
+            "epi-test",
+            opts.storageTableName,
+            "westus2"
+          );
         } else {
           logger.info(
             "You need to specify each of the config settings in order to run any command."
