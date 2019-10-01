@@ -4,8 +4,8 @@ import emoji from "node-emoji";
 import { promisify } from "util";
 import { logger } from "../../logger";
 
-let binaries: string[] = ["terraform", "git", "az", "helm"];
-let envVar: string[] = [
+const binaries: string[] = ["terraform", "git", "az", "helm"];
+const envVar: string[] = [
   "ARM_SUBSCRIPTION_ID",
   "ARM_CLIENT_ID",
   "ARM_CLIENT_SECRET",
@@ -47,7 +47,7 @@ export const validatePrereqs = async (
   executables: string[]
 ): Promise<boolean> => {
   // Validate executables in PATH
-  for (let i of executables) {
+  for (const i of executables) {
     try {
       await promisify(child_process.exec)("which " + i);
     } catch (err) {
@@ -87,7 +87,7 @@ export const validateEnvVariables = async (
   variables: string[]
 ): Promise<boolean> => {
   // Validate environment variables
-  for (let i of variables) {
+  for (const i of variables) {
     if (!process.env[i] && !null) {
       logger.error(
         emoji.emojify(
