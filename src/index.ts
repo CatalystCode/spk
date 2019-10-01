@@ -13,6 +13,7 @@
  */
 import { Command, executeCommand } from "./commands/command";
 import { deploymentCommand } from "./commands/deployment";
+import { initCommandDecorator } from "./commands/init";
 import { projectCommand } from "./commands/project";
 import { serviceCommand } from "./commands/service";
 
@@ -25,7 +26,8 @@ const rootCommand = Command(
   [
     c => {
       c.version(require("../package.json").version);
-    }
+    },
+    initCommandDecorator
   ],
   [deploymentCommand, projectCommand, serviceCommand]
 );
