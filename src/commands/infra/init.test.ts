@@ -4,7 +4,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { validatePrereqs, validateAzure, validateEnvVariables } from "./init";
+import { validateAzure, validateEnvVariables, validatePrereqs } from "./init";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -38,7 +38,7 @@ describe("Validating environment variables", () => {
   test("Test whether environment variables are set and not null", async () => {
     // Set environment variables to null, and create a force fail scenario
     const variables: string[] = ["ydawgie"];
-    process.env["ydawgie"] = "";
+    process.env.ydawgie = "";
     const value = await validateEnvVariables(variables);
     expect(value).toBe(false);
   });

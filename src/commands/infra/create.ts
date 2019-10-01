@@ -1,12 +1,12 @@
 import commander from "commander";
 import fs, { chmod } from "fs";
-import { logger } from "../../logger";
-import { exec } from "../../lib/shell";
 import path from "path";
 import { promisify } from "util";
+import { exec } from "../../lib/shell";
+import { logger } from "../../logger";
 
 // Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
-const initValidated: boolean = true; //Holder until spk infra init integration
+const initValidated: boolean = true; // Holder until spk infra init integration
 const bedrockDir: string = `${process.cwd()}/.bedrock/cluster/environments`;
 const rootDir: string = `${process.cwd()}`;
 
@@ -55,6 +55,9 @@ export const createCommandDecorator = (command: commander.Command): void => {
           opts.serviceprincipalid &&
           opts.serviceprincipalsecret
         ) {
+          logger.info(
+            "All required options are configured to a template deployment. Proceed to spk infra deploy."
+          );
         } else {
           logger.warn(
             "You need to specify each of the config settings in order to run any command. Please verify you have passed an Environment, Service Principal ID, and Service Principal Secret"

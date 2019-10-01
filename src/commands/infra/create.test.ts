@@ -1,13 +1,13 @@
 import child_process from "child_process";
 import fs, { chmod } from "fs";
+import path from "path";
+import { exec } from "../../lib/shell";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
-import path from "path";
-import { validateInit, templateInit } from "./create";
-import { exec } from "../../lib/shell";
+import { templateInit, validateInit } from "./create";
 
 beforeAll(async () => {
   enableVerboseLogging();

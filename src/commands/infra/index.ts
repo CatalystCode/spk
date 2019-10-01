@@ -1,6 +1,6 @@
 import { Command } from "../command";
-import { initCommand } from "./init";
 import { createCommandDecorator } from "./create";
+import { initCommand } from "./init";
 
 export const infraCommand = Command(
   "infra",
