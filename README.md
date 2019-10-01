@@ -91,6 +91,12 @@ or
 yarn add react@^16.9.0 # you can specify target semver's as well
 ```
 
+We also want to keep all @types in devDependencies instead of dependencies.
+
+```sh
+$ yarn add -D @types/node-emoji
+```
+
 ### Removing a dependency
 
 ```sh

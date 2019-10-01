@@ -5,15 +5,16 @@ import { exec } from "../../lib/shell";
 import path from "path";
 import { promisify } from "util";
 
+// Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
+let InitIsDone: boolean = true; //Holder until spk infra init integration
+let bedrockDir: string = `${process.cwd()}/.bedrock/cluster/environments`;
+let rootDir: string = `${process.cwd()}`;
+
 /**
  * Adds the init command to the commander command object
  *
  * @param command Commander command object to decorate
  */
-
-// Global vars that attain if spk infra init has been executed and the path to a bedrock template directory
-let InitIsDone: boolean = true;
-let bedrockDir: string = `${process.cwd()}/.bedrock/bedrock/cluster/environments`;
 export const createCommandDecorator = (command: commander.Command): void => {
   command
     .command("create")
@@ -48,7 +49,6 @@ export const createCommandDecorator = (command: commander.Command): void => {
       "Service Principal Secret for Azure Subscription"
     )
     .action(async opts => {
-      console.log(opts.environment);
       try {
         if (
           opts.environment &&
@@ -60,18 +60,8 @@ export const createCommandDecorator = (command: commander.Command): void => {
             "You need to specify each of the config settings in order to run any command. Please verify you have passed an Environment, Service Principal ID, and Service Principal Secret"
           );
         }
-        // If Bedrock is not found, install a working path for Bedrock
-        if (!fs.existsSync(bedrockDir)) {
-          const cloneBedrock = await exec("git", [
-            "clone",
-            "https://github.com/microsoft/bedrock.git",
-            ".bedrock"
-          ]);
-        }
         await validateInit(bedrockDir);
         await templateInit(bedrockDir, opts.environment);
-        //await templateConfig();
-        //await templateDeploy();
       } catch (err) {
         logger.error("Error occurred while initializing");
         logger.error(err);
@@ -79,6 +69,11 @@ export const createCommandDecorator = (command: commander.Command): void => {
     });
 };
 
+/**
+ * Checks if working bedrock path has been added and infra init command has been ran
+ *
+ * @param bedrockPath Source directory to working bedrock templates
+ */
 export const validateInit = async (bedrockPath: string): Promise<boolean> => {
   try {
     // TODO: Use this function to check the state of spk infra init and attain bedrock source location
@@ -88,8 +83,6 @@ export const validateInit = async (bedrockPath: string): Promise<boolean> => {
           "`spk infra init` has been successfully executed, you may now proceed to deploy Bedrock environments."
         );
         return true;
-        logger.info(bedrockPath);
-        process.chdir(bedrockPath);
       } else {
         logger.error(
           "`spk infra init` has not been successfully executed, please run this command to assure all Bedrock prerequisites are installed. "
@@ -108,6 +101,12 @@ export const validateInit = async (bedrockPath: string): Promise<boolean> => {
   }
 };
 
+/**
+ * Obtains a template from a bedrock source and runs a terraform init
+ *
+ * @param bedrockPath Source directory to working bedrock templates
+ * @param templateEnvironment local sample template user wishes to deploy infrastructure from
+ */
 export const templateInit = async (
   bedrockPath: string,
   templateEnvironment: string
@@ -124,6 +123,8 @@ export const templateInit = async (
       // Terraform init in environment directory
       const init = await exec("terraform", ["init"]);
       logger.info(init);
+      // Return to original working directory
+      process.chdir(rootDir);
       return init;
     } else {
       logger.error(`Template Environment : ${EnvironmentPath} cannot be found`);

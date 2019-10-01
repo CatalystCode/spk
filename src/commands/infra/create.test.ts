@@ -20,7 +20,7 @@ beforeAll(async () => {
     ]);
   }
   // Increasing time for Terraform Init
-  jest.setTimeout(99999);
+  jest.setTimeout(9999);
 });
 afterAll(() => {
   disableVerboseLogging();
