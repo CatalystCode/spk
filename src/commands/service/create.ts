@@ -50,8 +50,8 @@ export const createCommandDecorator = (command: commander.Command): void => {
           );
         }
         await createService(projectPath, serviceName, {
-          maintainerName,
-          maintainerEmail
+          maintainerEmail,
+          maintainerName
         });
       } catch (err) {
         logger.error(

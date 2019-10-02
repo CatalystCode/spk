@@ -7,6 +7,8 @@
   "license": "MIT",
   "scripts": {
     "build": "shx rm -rf dist && webpack && pkg dist/spk.js && shx mv spk-{linux,macos,win.exe} dist",
+    "lint": "tslint 'src/**/*.ts{,x}'",
+    "lint-fix": "tslint --fix 'src/**/*.ts{,x}'",
     "test": "jest --coverage --coverageReporters=cobertura",
     "test-watch": "jest --watchAll"
   },
@@ -16,6 +18,7 @@
     "@types/jest": "^24.0.18",
     "@types/js-yaml": "^3.12.1",
     "@types/node": "^12.7.8",
+    "@types/node-emoji": "^1.8.1",
     "@types/shelljs": "^0.8.5",
     "@types/uuid": "^3.4.5",
     "dotenv": "^8.1.0",
@@ -56,6 +59,7 @@
     "cli-table": "^0.3.1",
     "commander": "^3.0.1",
     "js-yaml": "^3.13.1",
+    "node-emoji": "^1.10.0",
     "shelljs": "^0.8.3",
     "spektate": "^0.1.5",
     "uuid": "^3.3.3",
