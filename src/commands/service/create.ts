@@ -7,6 +7,7 @@ import {
   addNewServiceToMaintainersFile,
   generateAzurePipelinesYaml
 } from "../../lib/fileutils";
+import { guardNotEmpty, guardTypeOf } from "../../lib/guard";
 import { IUser } from "../../types";
 
 /**
@@ -41,26 +42,12 @@ export const createCommandDecorator = (command: commander.Command): void => {
       const projectPath = process.cwd();
       try {
         // Type check all parsed command line args here.
-        if (typeof serviceName !== "string") {
-          throw new Error(
-            `serviceName must be of type 'string', ${typeof serviceName} given.`
-          );
-        }
-        if (typeof packagesDir !== "string") {
-          throw new Error(
-            `packagesDir must be of type 'string', ${typeof packagesDir} given.`
-          );
-        }
-        if (typeof maintainerName !== "string") {
-          throw new Error(
-            `maintainerName must be of type 'string', ${typeof maintainerName} given.`
-          );
-        }
-        if (typeof maintainerEmail !== "string") {
-          throw new Error(
-            `maintainerEmail must be of type 'string', ${typeof maintainerEmail} given.`
-          );
-        }
+        const stringType = "string";
+        guardTypeOf(serviceName, stringType);
+        guardTypeOf(packagesDir, stringType);
+        guardTypeOf(maintainerName, stringType);
+        guardTypeOf(maintainerEmail, stringType);
+
         await createService(projectPath, serviceName, packagesDir, {
           maintainerEmail,
           maintainerName
