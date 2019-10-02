@@ -3,11 +3,12 @@ import dotenv = require("dotenv");
 import * as fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
-import * as env from "../config";
 import { logger } from "../logger";
 import { Command } from "./command";
 
 const defaultFileLocation = os.homedir() + "/.spk-config.yml";
+export let config: { [id: string]: any } = {};
+
 /**
  * Adds the init command to the commander command object
  * @param command Commander command object to decorate
@@ -24,17 +25,8 @@ export const initCommandDecorator = (command: commander.Command): void => {
     )
     .action(async opts => {
       try {
-        fs.stat(opts.file, exists => {
-          if (exists == null) {
-            logger.info(`Initializing from config file ${opts.file}`);
-            readYamlFile(opts.file).then((data: string) => {
-              dotenv.config();
-              initialize(data);
-            });
-          } else if (exists.code === "ENOENT") {
-            logger.info(`File ${opts.file} does not exist.`);
-          }
-        });
+        loadConfiguration(opts.file);
+        await writeConfigToFile(opts.file);
       } catch (err) {
         logger.error(`Error occurred while initializing`);
         logger.error(err);
@@ -42,38 +34,76 @@ export const initCommandDecorator = (command: commander.Command): void => {
     });
 };
 
-export const initialize = (config: any) => {
-  logger.info(config);
-  logger.info(config.infra.git_check);
-  logger.info(env.introspectionStorageAccessKey);
-  logger.info(env.introspectionStorageAccountName);
-  logger.info(env.introspectionStoragePartitionKey);
-  logger.info(env.introspectionStorageTableName);
+/**
+ * Loads configuration from a given filename, if provided, otherwise
+ * uses the default file location ~/.spk-config.yml
+ * @param fileName file to load configuration from
+ */
+export const loadConfiguration = (fileName?: string) => {
+  if (!fileName) {
+    fileName = defaultFileLocation;
+  }
+  try {
+    fs.statSync(fileName);
+    dotenv.config();
+    const data = readYamlFile(fileName!);
+    loadConfigurationFromLocalEnv(data);
+  } catch (err) {
+    logger.error(`File ${fileName} does not exist.`);
+  }
+};
+
+/**
+ * Loads configuration from local env
+ * @param configYaml configuration in object form
+ */
+export const loadConfigurationFromLocalEnv = (configObj: any) => {
+  const iterate = (obj: any) => {
+    if (obj != null && obj !== undefined) {
+      Object.keys(obj).forEach(key => {
+        // logger.info(`key: ${key}, value: ${obj[key]}`)
+        const regexp = /\${env:([a-zA-Z_$][a-zA-Z_$0-9]+)}/g;
+        const match = regexp.exec(obj[key]);
+        if (match && match.length >= 2) {
+          // logger.info(match);
+          obj[key] = process.env[match[1]];
+          logger.info(`Setting key ${key} to ${obj[key]}`);
+        }
+        if (typeof obj[key] === "object") {
+          iterate(obj[key]);
+        }
+      });
+    }
+  };
+
+  iterate(configObj);
+  // Set the global config so env vars are loaded into it
+  config = configObj;
+  logger.info(config.deployment.storage.table_name);
+  logger.info(config.deployment.storage.account_name);
+  logger.info(config.deployment.storage.key);
+  logger.info(config.deployment.storage.partition_key);
 };
 
 /**
  * Reads a YAML file and loads it into an object
  * @param fileLocation path to the config file to read
  */
-const readYamlFile = async (fileLocation: string): Promise<string> => {
-  return new Promise(async (resolve, reject) => {
-    await fs.readFile(fileLocation, "utf8", (error, data) => {
-      if (error) {
-        logger.error(error);
-        reject();
-        throw error;
-      }
-      const response = yaml.load(data);
-      const json = response;
-      resolve(json);
-      return json;
-    });
-  });
+const readYamlFile = (fileLocation: string): string => {
+  const data: string = fs.readFileSync(fileLocation, "utf-8");
+  const response = yaml.load(data);
+  const json = response;
+  return json;
 };
 
 /**
- * `root` command
+ * Writes configuration to a file
  */
-export const initCommand = Command("init", "Initialize spk", [
-  initCommandDecorator
-]);
+export const writeConfigToFile = async (fileName?: string) => {
+  if (fileName && fileName !== defaultFileLocation) {
+    logger.info(`Saving config file`);
+    fs.createReadStream(fileName).pipe(
+      fs.createWriteStream(defaultFileLocation)
+    );
+  }
+};
