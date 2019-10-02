@@ -52,6 +52,7 @@ export const getSecret = async (
     // Get the secret
     logger.info(`Getting ${message}`);
     const secret = await client.getSecret(secretName);
+    logger.info(`Got ${message}`);
     logger.debug(`Found ${message} and the value is ${secret.value}`);
     return secret.value;
   } catch (err) {
