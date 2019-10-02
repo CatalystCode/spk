@@ -1,10 +1,6 @@
 import { ClientSecretCredential } from "@azure/identity";
 import * as msRestNodeAuth from "@azure/ms-rest-nodeauth";
-import {
-  azureTenantId,
-  azureClientId,
-  azureClientSecret
-} from "../../../config";
+import { azureClientId, azureClientSecret, azureTenantId } from "../../config";
 
 /**
  * Create an instance of `ClientSecretCredential` and returns for Azure data plane activities

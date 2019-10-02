@@ -1,17 +1,17 @@
-import { logger } from "../../logger";
-import { promisify } from "util";
-import { exec } from "child_process";
-import { getManagementCredentials } from "./azurecredentials";
-import { azureSubscriptionId } from "../../../config";
 import { StorageManagementClient } from "@azure/arm-storage";
 import {
+  Kind,
+  SkuName,
   StorageAccountsCheckNameAvailabilityResponse,
   StorageAccountsCreateResponse,
-  SkuName,
-  Kind,
   StorageAccountsListByResourceGroupResponse,
   StorageAccountsListKeysResponse
 } from "@azure/arm-storage/esm/models";
+import { exec } from "child_process";
+import { promisify } from "util";
+import { azureSubscriptionId } from "../../config";
+import { logger } from "../../logger";
+import { getManagementCredentials } from "./azurecredentials";
 
 /**
  * Creates  Azure storate account `name` in resource group `resourceGroup` in 1ocation `location`
@@ -29,15 +29,15 @@ const getStorageClient = async (): Promise<StorageManagementClient> => {
  * Creates Azure storate account `name` in resource group `resourceGroup` in 1ocation `location` if it is not exist
  *
  * @param resourceGroup Name of Azure reesource group
- * @param name The Azure storage account name
+ * @param accountName The Azure storage account name
  * @param location The Azure storage account location
  */
 export const createStorageAccountIfNotExists = async (
   resourceGroup: string,
-  name: string,
+  accountName: string,
   location: string
 ) => {
-  const message = `Azure storage account ${name} in resource group ${resourceGroup}.`;
+  const message = `Azure storage account ${accountName} in resource group ${resourceGroup}`;
   try {
     logger.info(`Finding ${message}`);
     const client = await getStorageClient();
@@ -49,9 +49,9 @@ export const createStorageAccountIfNotExists = async (
     logger.debug(
       `${accounts.length} storage accounts found in ${resourceGroup}`
     );
-    for (let account of accounts) {
+    for (const account of accounts) {
       logger.debug(`Found ${account.name} so far`);
-      if (account.name === name) {
+      if (account.name === accountName) {
         exists = true;
         break;
       }
@@ -64,7 +64,7 @@ export const createStorageAccountIfNotExists = async (
     }
     logger.info(`${message} does not exist`);
     // Storage account does not exist so create it.
-    createStorageAccount(name, resourceGroup, location);
+    await createStorageAccount(resourceGroup, accountName, location);
   } catch (err) {
     logger.error(err);
   }
@@ -73,46 +73,48 @@ export const createStorageAccountIfNotExists = async (
 /**
  * Creates Azure storate account `name` in resource group `resourceGroup` in 1ocation `location`
  *
- * @param name The Azure storage account name
  * @param resourceGroup Name of Azure reesource group
+ * @param accountName The Azure storage account name
  * @param location The Azure storage account location
  */
 export const createStorageAccount = async (
-  name: string,
   resourceGroup: string,
+  accountName: string,
   location: string
 ) => {
-  const message = `Azure storage account ${name} in resource group ${resourceGroup} in ${location} location.`;
+  const message = `Azure storage account ${accountName} in resource group ${resourceGroup} in ${location} location.`;
   try {
+    logger.verbose(`Create storage client object.`);
     const client = await getStorageClient();
     logger.verbose(
-      `Checking for storage account name ${name} availability to create it`
+      `Checking for storage account name ${accountName} availability`
     );
     const response: StorageAccountsCheckNameAvailabilityResponse = await client.storageAccounts.checkNameAvailability(
-      name
+      accountName
     );
-    if (response.nameAvailable == false) {
+
+    if (response.nameAvailable === false) {
       logger.error(
-        `Storage account ${name} is not available. Please choose different name.`
+        `Storage account name ${accountName} is not available. Please choose a different name.`
       );
       return;
     }
 
-    logger.verbose(`Storage account name ${name} is availabile`);
+    logger.verbose(`Storage account name ${accountName} is availabile`);
 
-    //Proceed to create a storage account
+    // Proceed to create a storage account
     const createParameters = {
-      location: location,
-      kind: <Kind>"Storage",
+      kind: "Storage" as Kind,
+      location,
       sku: {
-        name: <SkuName>"Standard_LRS"
+        name: "Standard_LRS" as SkuName
       }
     };
 
     logger.info(`Creating ${message}`);
     const resp: StorageAccountsCreateResponse = await client.storageAccounts.create(
       resourceGroup,
-      name,
+      accountName,
       createParameters
     );
     logger.info(`Created ${message}`);
@@ -123,26 +125,26 @@ export const createStorageAccount = async (
 };
 
 /**
- * Get storage account `name` primary key in resource group `resourceGroup` nd returns the primary key `Promise<string>`
+ * Get storage account `accountName` primary key in resource group `resourceGroup` nd returns the primary key `Promise<string>`
  *
- * @param name The Azure storage account name
  * @param resourceGroup Name of Azure reesource group
+ * @param accountName The Azure storage account name
+ *
  */
 export const getStorageAccountKey = async (
-  name: string,
-  resourceGroup: string
+  resourceGroup: string,
+  accountName: string
 ): Promise<string | undefined> => {
-  const message = `Azure storage account ${name} in resource group ${resourceGroup} in ${location} location.`;
   try {
     const client = await getStorageClient();
-    logger.verbose(`Reading storage account ${name} access keys`);
+    logger.verbose(`Reading storage account ${accountName} access keys`);
 
     const keyResults: StorageAccountsListKeysResponse = await client.storageAccounts.listKeys(
       resourceGroup,
-      name
+      accountName
     );
-    if (keyResults.keys == undefined) {
-      logger.verbose(`Storage account ${name} access keys do not exist`);
+    if (keyResults.keys === undefined) {
+      logger.verbose(`Storage account ${accountName} access keys do not exist`);
       return undefined;
     }
 
@@ -150,10 +152,12 @@ export const getStorageAccountKey = async (
       `${keyResults.keys.length} Storage account access keys exist`
     );
     const key = keyResults.keys![0].value;
-    logger.verbose(`key: ${key}`);
+    logger.verbose(`Returning key: ${key}`);
     return key;
   } catch (err) {
-    logger.error(`Error occurred while getting the key ${message}`);
+    logger.error(
+      `Error occurred while getting the access keys for storage account ${accountName}`
+    );
     logger.error(err);
   }
 };
