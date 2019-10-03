@@ -9,7 +9,7 @@ infra:
   git: "2.17.1"
   bedrock:
     source: "git@github.com:microsoft/bedrock.git"
-    tag: 
+    tag:
     repo_type: "Public"
     private_repo_key:
   azure:
@@ -27,8 +27,8 @@ infra:
       key: "prod.terraform.tf-state"
 deployment:
   storage:
-    account_name: '${env:test_name}'
-    key: '${env:test_key}'
+    account_name: "${env:test_name}"
+    key: "${env:test_key}"
 services:
   project_name:
   PAT:

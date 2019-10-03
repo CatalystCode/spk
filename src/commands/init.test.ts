@@ -17,16 +17,18 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-const mockFileName = "./src/commands/mocks/spk-config.yml";
+const mockFileName = "./src/commands/mocks/spk-config.yaml";
 describe("Initializing a project to use spk with a config file", () => {
   test("init command basic file test", async () => {
     process.env.test_name = "testStorageName";
     process.env.test_key = "testStorageKey";
     const filename = path.resolve(mockFileName);
     loadConfiguration(filename);
-    expect(config.deployment.storage.account_name).toBe(process.env.test_name);
-    expect(config.deployment.storage.key).toBe(process.env.test_key);
-    expect(config.infra.bedrock.repo_type).toBe("Public");
+    expect(config.deployment!).toBeDefined();
+    expect(config.deployment!.storage!.account_name).toBe(
+      process.env.test_name
+    );
+    expect(config.deployment!.storage!.key).toBe(process.env.test_key);
   });
 });
 
@@ -47,7 +49,7 @@ describe("Initializing a project a config file but no env vars", () => {
 
 describe("Initializing a project with a non-existent file", () => {
   test("Non-existent file test", async () => {
-    const filename = path.resolve("./spk-config-test.yml");
+    const filename = path.resolve("./spk-config-test.yaml");
     try {
       loadConfiguration(filename);
       // Make sure execution does not get here:

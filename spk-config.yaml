@@ -10,7 +10,7 @@ infra:
   bedrock:
     # Releases are through tags / branches
     source: "git@github.com:microsoft/bedrock.git"
-    tag: 
+    tag:
     repo_type: "Public"
     private_repo_key:
   azure:
@@ -31,10 +31,10 @@ infra:
       key: "prod.terraform.tf-state"
 deployment:
   storage:
-    account_name: '${env:INTROSPECTION_STORAGE_ACCOUNT_NAME}'
-    table_name: '${env:INTROSPECTION_STORAGE_TABLE_NAME}' # Will be autofilled later
-    key: '${env:INTROSPECTION_STORAGE_ACCESS_KEY}' # Will be filled from keyvault later
-    partition_key: '${env:INTROSPECTION_STORAGE_PARTITION_KEY}' # Will be autofilled later
+    account_name: "${env:INTROSPECTION_STORAGE_ACCOUNT_NAME}"
+    table_name: "${env:INTROSPECTION_STORAGE_TABLE_NAME}" # Will be autofilled later
+    key: "${env:INTROSPECTION_STORAGE_ACCESS_KEY}" # Will be filled from keyvault later
+    partition_key: "${env:INTROSPECTION_STORAGE_PARTITION_KEY}" # Will be autofilled later
   pipeline:
     org: "epicstuff"
     project: "hellobedrock"
