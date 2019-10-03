@@ -1,4 +1,4 @@
-import { StorageManagementClient } from "@azure/arm-storage";
+import { StorageAccounts, StorageManagementClient } from "@azure/arm-storage";
 import {
   Kind,
   SkuName,
@@ -117,6 +117,7 @@ export const createStorageAccount = async (
       accountName,
       createParameters
     );
+
     logger.info(`Created ${message}`);
   } catch (err) {
     logger.error(`Error occurred while creating ${message}`);

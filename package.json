@@ -10,6 +10,7 @@
     "lint": "tslint 'src/**/*.ts{,x}'",
     "lint-fix": "tslint --fix 'src/**/*.ts{,x}'",
     "test": "jest --coverage --coverageReporters=cobertura",
+    "test-coverage-html": "jest --coverage --coverageReporters=html",
     "test-watch": "jest --watchAll"
   },
   "devDependencies": {
