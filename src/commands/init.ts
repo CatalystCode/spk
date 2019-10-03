@@ -6,7 +6,7 @@ import * as os from "os";
 import { logger } from "../logger";
 import { Command } from "./command";
 
-const defaultFileLocation = os.homedir() + "/.spk-config.yml";
+export const defaultFileLocation = os.homedir() + "/.spk-config.yml";
 export let config: { [id: string]: any } = {};
 
 /**
@@ -26,7 +26,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
     .action(async opts => {
       try {
         loadConfiguration(opts.file);
-        await writeConfigToFile(opts.file);
+        await writeConfigToDefaultLocation(opts.file);
       } catch (err) {
         logger.error(`Error occurred while initializing`);
         logger.error(err);
@@ -50,6 +50,7 @@ export const loadConfiguration = (fileName?: string) => {
     loadConfigurationFromLocalEnv(data);
   } catch (err) {
     logger.error(`File ${fileName} does not exist.`);
+    throw err;
   }
 };
 
@@ -89,7 +90,7 @@ export const loadConfigurationFromLocalEnv = (configObj: any) => {
  * Reads a YAML file and loads it into an object
  * @param fileLocation path to the config file to read
  */
-const readYamlFile = (fileLocation: string): string => {
+export const readYamlFile = (fileLocation: string): string => {
   const data: string = fs.readFileSync(fileLocation, "utf-8");
   const response = yaml.load(data);
   const json = response;
@@ -99,11 +100,10 @@ const readYamlFile = (fileLocation: string): string => {
 /**
  * Writes configuration to a file
  */
-export const writeConfigToFile = async (fileName?: string) => {
-  if (fileName && fileName !== defaultFileLocation) {
-    logger.info(`Saving config file`);
-    fs.createReadStream(fileName).pipe(
-      fs.createWriteStream(defaultFileLocation)
-    );
+export const writeConfigToDefaultLocation = async (fileName: string) => {
+  if (fileName !== defaultFileLocation) {
+    await fs
+      .createReadStream(fileName)
+      .pipe(fs.createWriteStream(defaultFileLocation));
   }
 };
