@@ -1,9 +1,10 @@
 import fs from "fs";
 import yaml from "js-yaml";
+
 import path from "path";
 import { promisify } from "util";
 import { logger } from "../logger";
-import { IAzurePipelinesYaml, IBedrockFile, IMaintainersFile } from "../types";
+import { IAzurePipelinesYaml, IMaintainersFile, IUser } from "../types";
 
 /**
  * Writes out the starter azure-pipelines.yaml file to `targetPath`
@@ -116,4 +117,30 @@ const starterAzurePipelines = async (opts: {
   // tslint:enable: object-literal-sort-keys
 
   return yaml.safeDump(starter, { lineWidth: Number.MAX_SAFE_INTEGER });
+};
+
+/**
+ * Update maintainers.yml with new service
+ *
+ * TODO: support for contributors(?)
+ *
+ * @param maintainersFilePath
+ * @param newServicePath
+ * @param serviceMaintainers
+ */
+export const addNewServiceToMaintainersFile = (
+  maintainersFilePath: string,
+  newServicePath: string,
+  serviceMaintainers: IUser[]
+) => {
+  const maintainersFile = yaml.safeLoad(
+    fs.readFileSync(maintainersFilePath, "utf8")
+  ) as IMaintainersFile;
+
+  maintainersFile.services["./" + newServicePath] = {
+    maintainers: serviceMaintainers
+  };
+
+  logger.info("Updating maintainers.yaml");
+  fs.writeFileSync(maintainersFilePath, yaml.safeDump(maintainersFile), "utf8");
 };
