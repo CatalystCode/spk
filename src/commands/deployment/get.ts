@@ -1,12 +1,10 @@
 import Table from "cli-table";
 import commander from "commander";
 import Deployment from "spektate/lib/Deployment";
-import { logger } from "../../logger";
-import { config } from "../init";
-
 import AzureDevOpsPipeline from "spektate/lib/pipeline/AzureDevOpsPipeline";
 import IPipeline from "spektate/lib/pipeline/Pipeline";
-
+import { logger } from "../../logger";
+import { config } from "../init";
 export let hldPipeline: IPipeline;
 export let clusterPipeline: IPipeline;
 export let srcPipeline: IPipeline;
@@ -72,7 +70,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
     .option("-w, --watch", "Watch the deployments for a live view")
     .action(async opts => {
       try {
-        initializePipelines();
+        initialize();
         if (opts.watch) {
           watchGetDeployments(
             processOutputFormat(opts.output),
@@ -159,42 +157,9 @@ export const getDeployments = (
 };
 
 /**
- * Gets a list of deployments for the specified filters every 5 seconds
- * @param outputFormat output format: normal | wide | json
- * @param environment release environment, such as Dev, Staging, Prod etc.
- * @param imageTag docker image tag name
- * @param p1Id identifier of the first build pipeline (src to ACR)
- * @param commitId commit Id into the source repo
- * @param service name of the service that was modified
- * @param deploymentId unique identifier for the deployment
- */
-export const watchGetDeployments = (
-  outputFormat: OUTPUT_FORMAT,
-  environment?: string,
-  imageTag?: string,
-  p1Id?: string,
-  commitId?: string,
-  service?: string,
-  deploymentId?: string
-): void => {
-  const timeInterval = 5000;
-  setInterval(() => {
-    getDeployments(
-      outputFormat,
-      environment,
-      imageTag,
-      p1Id,
-      commitId,
-      service,
-      deploymentId
-    );
-  }, timeInterval);
-};
-
-/**
  * Initializes the pipelines assuming that the configuration has been loaded
  */
-export const initializePipelines = () => {
+const initialize = () => {
   if (
     !config.deployment ||
     !config.deployment.pipeline ||
@@ -229,6 +194,39 @@ export const initializePipelines = () => {
     false,
     config.deployment.pipeline.access_token
   );
+};
+
+/**
+ * Gets a list of deployments for the specified filters every 5 seconds
+ * @param outputFormat output format: normal | wide | json
+ * @param environment release environment, such as Dev, Staging, Prod etc.
+ * @param imageTag docker image tag name
+ * @param p1Id identifier of the first build pipeline (src to ACR)
+ * @param commitId commit Id into the source repo
+ * @param service name of the service that was modified
+ * @param deploymentId unique identifier for the deployment
+ */
+export const watchGetDeployments = (
+  outputFormat: OUTPUT_FORMAT,
+  environment?: string,
+  imageTag?: string,
+  p1Id?: string,
+  commitId?: string,
+  service?: string,
+  deploymentId?: string
+): void => {
+  const timeInterval = 5000;
+  setInterval(() => {
+    getDeployments(
+      outputFormat,
+      environment,
+      imageTag,
+      p1Id,
+      commitId,
+      service,
+      deploymentId
+    );
+  }, timeInterval);
 };
 
 /**
