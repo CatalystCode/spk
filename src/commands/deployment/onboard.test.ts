@@ -1,5 +1,5 @@
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-import { createStorageAccount } from "./init";
+import { createStorageAccount } from "./onboard";
 
 jest.mock("../../lib/azure/storage");
 jest.mock("../../lib/azure/keyvault");

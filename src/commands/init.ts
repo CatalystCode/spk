@@ -48,10 +48,7 @@ export const loadConfiguration = (fileName?: string) => {
   }
   try {
     fs.statSync(fileName);
-    const configOutput = dotenv.config();
-    if (configOutput.error) {
-      throw configOutput.error;
-    }
+    dotenv.config();
     const data: IConfigYaml = readYamlFile<IConfigYaml>(fileName!);
     loadConfigurationFromLocalEnv<IConfigYaml>(data);
   } catch (err) {

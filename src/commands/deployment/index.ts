@@ -1,5 +1,6 @@
 import { Command } from "../command";
 import { getCommandDecorator } from "./get";
+import { onboardCommandDecorator } from "./onboard";
 
 /**
  * `deployment` command
@@ -7,5 +8,5 @@ import { getCommandDecorator } from "./get";
 export const deploymentCommand = Command(
   "deployment",
   "Introspect your deployments",
-  [getCommandDecorator]
+  [getCommandDecorator, onboardCommandDecorator]
 );
