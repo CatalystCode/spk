@@ -1,4 +1,5 @@
 # SPK
+
 [![Build Status](https://dev.azure.com/epicstuff/bedrock/_apis/build/status/CatalystCode.spk?branchName=master)](https://dev.azure.com/epicstuff/bedrock/_build/latest?definitionId=128&branchName=master)
 
 > This missing Bedrock CLI
@@ -9,6 +10,7 @@
 
 - Node@>=LTS
 - [Yarn](https://yarnpkg.com/)@Stable
+- Azure CLI
 
 ### Installation
 
@@ -109,6 +111,12 @@ or
 
 ```sh
 yarn add react@^16.9.0 # you can specify target semver's as well
+```
+
+We also want to keep all @types in devDependencies instead of dependencies.
+
+```sh
+$ yarn add -D @types/node-emoji
 ```
 
 ### Removing a dependency

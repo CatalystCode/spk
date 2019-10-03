@@ -13,6 +13,7 @@
  */
 import { Command, executeCommand } from "./commands/command";
 import { deploymentCommand } from "./commands/deployment";
+import { infraCommand } from "./commands/infra";
 import { initCommandDecorator } from "./commands/init";
 import { projectCommand } from "./commands/project";
 import { serviceCommand } from "./commands/service";
@@ -29,7 +30,7 @@ const rootCommand = Command(
     },
     initCommandDecorator
   ],
-  [deploymentCommand, projectCommand, serviceCommand]
+  [deploymentCommand, projectCommand, serviceCommand, infraCommand]
 );
 
 ////////////////////////////////////////////////////////////////////////////////
