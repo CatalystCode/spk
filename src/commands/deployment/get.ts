@@ -135,10 +135,10 @@ export const getDeployments = (
   deploymentId?: string
 ): Promise<Deployment[]> => {
   return Deployment.getDeploymentsBasedOnFilters(
-    config.deployment.storage.account_name,
-    config.deployment.storage.key,
-    config.deployment.storage.table_name,
-    config.deployment.storage.partition_key,
+    config.deployment!.storage!.account_name!,
+    config.deployment!.storage!.key!,
+    config.deployment!.storage!.table_name!,
+    config.deployment!.storage!.partition_key!,
     srcPipeline,
     hldPipeline,
     clusterPipeline,
@@ -196,6 +196,7 @@ export const watchGetDeployments = (
  */
 export const initializePipelines = () => {
   if (
+    !config.deployment ||
     !config.deployment.pipeline ||
     !config.deployment.storage ||
     !config.deployment.pipeline.org ||
@@ -206,6 +207,7 @@ export const initializePipelines = () => {
     !config.deployment.storage.partition_key
   ) {
     logger.error("You need to run `spk init` to initialize.");
+    process.exit(1);
     return;
   }
 
