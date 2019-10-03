@@ -40,6 +40,6 @@ describe("get storage account key", () => {
   it("should create storage account", async () => {
     logger.info(`called mock get key`);
     const key = await getStorageAccountKey("epi-test", "testsarathp3");
-    logger.info(`Got ${key}`);
+    expect(key).toBe("mock access key");
   });
 });

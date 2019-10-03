@@ -28,5 +28,5 @@ export const getStorageAccountKey = async (
   logger.info(
     `called mock with resource group ${resourceGroup} and account name ${accountName}"`
   );
-  return "mock key";
+  return "mock access key";
 };

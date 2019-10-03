@@ -94,10 +94,9 @@ export const createStorageAccount = async (
     );
 
     if (response.nameAvailable === false) {
-      logger.error(
-        `Storage account name ${accountName} is not available. Please choose a different name.`
-      );
-      return;
+      const nameErrorMessage: string = `Storage account name ${accountName} is not available. Please choose a different name.`;
+      logger.error(nameErrorMessage);
+      throw new Error(nameErrorMessage);
     }
 
     logger.verbose(`Storage account name ${accountName} is availabile`);
@@ -122,6 +121,7 @@ export const createStorageAccount = async (
   } catch (err) {
     logger.error(`Error occurred while creating ${message}`);
     logger.error(err);
+    throw new Error(err);
   }
 };
 
@@ -160,6 +160,7 @@ export const getStorageAccountKey = async (
       `Error occurred while getting the access keys for storage account ${accountName}`
     );
     logger.error(err);
+    throw new Error(err);
   }
 };
 
@@ -191,5 +192,6 @@ export const createResourceGroupIfNotExists = async (
   } catch (err) {
     logger.error(`Error occurred while creating ${message}`);
     logger.error(err);
+    throw new Error(err);
   }
 };

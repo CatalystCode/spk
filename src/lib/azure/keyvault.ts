@@ -30,6 +30,7 @@ export const setSecret = async (
   } catch (err) {
     logger.error(`Unable to set ${messageWithNoValue}`);
     logger.error(err);
+    throw new Error(err);
   }
 };
 
@@ -58,5 +59,6 @@ export const getSecret = async (
   } catch (err) {
     logger.error(`Unable to read ${message}`);
     logger.error(err);
+    throw new Error(err);
   }
 };
