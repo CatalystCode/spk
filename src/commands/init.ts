@@ -52,7 +52,7 @@ export const loadConfiguration = (fileName?: string) => {
     const data: IConfigYaml = readYamlFile<IConfigYaml>(fileName!);
     loadConfigurationFromLocalEnv<IConfigYaml>(data);
   } catch (err) {
-    logger.error(`File ${fileName} does not exist.`);
+    logger.error(`An error occurred while loading configuration\n ${err}`);
     throw err;
   }
 };

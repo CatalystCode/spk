@@ -17,7 +17,7 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-const mockFileName = "./src/commands/mocks/spk-config.yaml";
+const mockFileName = "src/commands/mocks/spk-config.yaml";
 describe("Initializing a project to use spk with a config file", () => {
   test("init command basic file test", async () => {
     process.env.test_name = "testStorageName";
@@ -29,6 +29,7 @@ describe("Initializing a project to use spk with a config file", () => {
       process.env.test_name
     );
     expect(config.deployment!.storage!.key).toBe(process.env.test_key);
+    logger.info("Able to initialize a basic config file");
   });
 });
 
@@ -43,6 +44,9 @@ describe("Initializing a project a config file but no env vars", () => {
       expect(true).toBeFalsy();
     } catch (err) {
       expect(err).toBeDefined();
+      logger.info(
+        "Error is being thrown on undefined env vars being referenced"
+      );
     }
   });
 });
@@ -56,6 +60,7 @@ describe("Initializing a project with a non-existent file", () => {
       expect(true).toBeFalsy();
     } catch (e) {
       expect(e.code).toBe("ENOENT");
+      logger.info("Error is being thrown on trying to use a non-existent file");
     }
   });
 });
@@ -73,5 +78,7 @@ describe("Writing to default config location", () => {
         expect(data1).toEqual(data2);
       });
     });
+
+    logger.info("Able to write to default config location");
   });
 });
