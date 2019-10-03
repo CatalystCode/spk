@@ -195,7 +195,6 @@ export const watchGetDeployments = (
  * Initializes the pipelines assuming that the configuration has been loaded
  */
 export const initializePipelines = () => {
-  logger.info(config.pipeline);
   if (
     !config.deployment.pipeline ||
     !config.deployment.storage ||

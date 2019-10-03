@@ -4,7 +4,6 @@ import * as fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
 import { logger } from "../logger";
-import { Command } from "./command";
 
 export const defaultFileLocation = os.homedir() + "/.spk-config.yml";
 export let config: { [id: string]: any } = {};
@@ -18,15 +17,18 @@ export const initCommandDecorator = (command: commander.Command): void => {
     .command("init")
     .alias("i")
     .description("Initialize the spk tool for the first time")
-    .option(
-      "-f, --file <config-file-path>",
-      "Path to the config file",
-      defaultFileLocation
-    )
+    .option("-f, --file <config-file-path>", "Path to the config file")
     .action(async opts => {
       try {
+        if (!opts.file) {
+          logger.error(
+            "You need to specify a file that stores configuration. "
+          );
+          return;
+        }
         loadConfiguration(opts.file);
         await writeConfigToDefaultLocation(opts.file);
+        logger.info("Successfully initialized the spk tool!");
       } catch (err) {
         logger.error(`Error occurred while initializing`);
         logger.error(err);
@@ -62,13 +64,17 @@ export const loadConfigurationFromLocalEnv = (configObj: any) => {
   const iterate = (obj: any) => {
     if (obj != null && obj !== undefined) {
       Object.keys(obj).forEach(key => {
-        // logger.info(`key: ${key}, value: ${obj[key]}`)
         const regexp = /\${env:([a-zA-Z_$][a-zA-Z_$0-9]+)}/g;
         const match = regexp.exec(obj[key]);
         if (match && match.length >= 2) {
-          // logger.info(match);
-          obj[key] = process.env[match[1]];
-          logger.info(`Setting key ${key} to ${obj[key]}`);
+          if (process.env[match[1]]) {
+            obj[key] = process.env[match[1]];
+          } else {
+            logger.error(`Env variable needs to be defined for ${match[1]}`);
+            throw new Error(
+              `Environment variable needs to be defined for ${match[1]} since it's referenced in the config file.`
+            );
+          }
         }
         if (typeof obj[key] === "object") {
           iterate(obj[key]);
@@ -80,10 +86,6 @@ export const loadConfigurationFromLocalEnv = (configObj: any) => {
   iterate(configObj);
   // Set the global config so env vars are loaded into it
   config = configObj;
-  logger.info(config.deployment.storage.table_name);
-  logger.info(config.deployment.storage.account_name);
-  logger.info(config.deployment.storage.key);
-  logger.info(config.deployment.storage.partition_key);
 };
 
 /**

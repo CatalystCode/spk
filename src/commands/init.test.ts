@@ -1,14 +1,11 @@
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import * as util from "util";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
-import { executeCommand } from "./command";
 import {
   config,
   defaultFileLocation,
   loadConfiguration,
-  readYamlFile,
   writeConfigToDefaultLocation
 } from "./init";
 
@@ -30,6 +27,21 @@ describe("Initializing a project to use spk with a config file", () => {
     expect(config.deployment.storage.account_name).toBe(process.env.test_name);
     expect(config.deployment.storage.key).toBe(process.env.test_key);
     expect(config.infra.bedrock.repo_type).toBe("Public");
+  });
+});
+
+describe("Initializing a project a config file but no env vars", () => {
+  test("init command basic file without env vars", async () => {
+    const filename = path.resolve(mockFileName);
+    process.env.test_name = "";
+    process.env.test_key = "";
+    try {
+      loadConfiguration(filename);
+      // Make sure execution does not get here:
+      expect(true).toBeFalsy();
+    } catch (err) {
+      expect(err).toBeDefined();
+    }
   });
 });
 
