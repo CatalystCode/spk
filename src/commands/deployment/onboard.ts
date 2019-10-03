@@ -7,7 +7,7 @@ import {
 import { logger } from "../../logger";
 
 /**
- * Adds the get command to the commander command object
+ * Adds the onboard command to the commander command object
  * @param command Commander command object to decorate
  */
 export const onboardCommandDecorator = (command: commander.Command): void => {
