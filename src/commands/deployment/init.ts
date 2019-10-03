@@ -144,9 +144,9 @@ export const initialize = async (
   const key = await getStorageAccountKey(resourceGroup, accountName);
 
   if (key === undefined) {
-    logger.error(
-      `Storage account ${accountName} access keys in resource group ${resourceGroup}is not available`
-    );
+    const errorMessage: string = `Storage account ${accountName} access keys in resource group ${resourceGroup}is not available`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   logger.debug(
