@@ -33,6 +33,13 @@ export const guardNotNull = (
   }
 };
 
+/**
+ * Validates the value is of the desired type, otherwise throw an exception
+ *
+ * @param value the value to validate
+ * @param type the type we want to validate
+ * @param [message] The error message to return on invalid value
+ */
 export const guardTypeOf = (value: any, type: string, message?: string) => {
   if (typeof value !== type) {
     message =
