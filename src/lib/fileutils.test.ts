@@ -70,24 +70,24 @@ describe("Adding a new service", () => {
 });
 
 describe("generating service gitignore file", () => {
+  const targetDirectory = "my-new-service";
+
   beforeEach(() => {
     mockFs({
-      packages: {
-        "my-new-service": {}
-      }
+      "my-new-service": {}
     });
   });
   afterEach(() => {
     mockFs.restore();
   });
 
-  const targetDirectory = "packages/my-new-service";
   const content = "hello world";
 
   it("should not do anything if file exist", async () => {
-    mockFs({
-      "packages/my-new-service/.gitignore": "fooBar"
-    });
+    const mockFsOptions = {
+      [`${targetDirectory}/.gitignore`]: "foobar"
+    };
+    mockFs(mockFsOptions);
 
     const writeSpy = jest.spyOn(fs, "writeFileSync");
     generateGitIgnoreFile(targetDirectory, content);
