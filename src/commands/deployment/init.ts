@@ -207,9 +207,9 @@ export const verifyAppConfiguration = async (): Promise<void> => {
     config.KEY_VAULT_NAME === "" ||
     config.KEY_VAULT_NAME === undefined
   ) {
-    return new Promise(async resolve => {
+    return new Promise(async resolvePromise => {
       await configureAppFromFile();
-      resolve();
+      resolvePromise();
     });
   } else {
     initializePipelines();
@@ -220,7 +220,7 @@ export const verifyAppConfiguration = async (): Promise<void> => {
  * Loads configuration from a file
  */
 export const configureAppFromFile = async (): Promise<void> => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolvePromise, reject) => {
     await fs.readFile(fileLocation, "utf8", (error, data) => {
       if (error) {
         logger.error(error);
@@ -234,7 +234,7 @@ export const configureAppFromFile = async (): Promise<void> => {
         config[key] = value;
       });
       initializePipelines();
-      resolve();
+      resolvePromise();
     });
   });
 };
