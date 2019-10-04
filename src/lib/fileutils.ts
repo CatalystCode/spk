@@ -149,7 +149,7 @@ export const addNewServiceToMaintainersFile = (
  * Writes out a default .gitignore file if one doesn't exist
  *
  * @param targetDirectory directory to generate the .gitignore file
- *  * @param content content of file
+ * @param content content of file
  */
 export const generateGitIgnoreFile = (
   targetDirectory: string,
