@@ -9,10 +9,20 @@ import {
   generateAzurePipelinesYaml,
   generateGitIgnoreFile
 } from "../../lib/fileutils";
+import {
+  checkoutBranch,
+  checkoutNewBranch,
+  commitDir,
+  deleteBranch,
+  getCurrentBranch,
+  getOriginUrl,
+  getPullRequestLink,
+  pushBranch
+} from "../../lib/gitutils";
 import { IHelmConfig, IUser } from "../../types";
 
 /**
- * Adds the init command to the commander command object
+ * Adds the create command to the service command object
  *
  * @param command Commander command object to decorate
  */
@@ -63,6 +73,11 @@ export const createCommandDecorator = (command: commander.Command): void => {
       "The email of the primary maintainer for this service.",
       "maintainer email"
     )
+    .option(
+      "--git-push",
+      "SPK CLI will try to commit and push these changes to a new origin/branch named after the service.",
+      false
+    )
     .action(async (serviceName, opts) => {
       const {
         helmChartChart,
@@ -72,7 +87,8 @@ export const createCommandDecorator = (command: commander.Command): void => {
         helmConfigGit,
         packagesDir,
         maintainerName,
-        maintainerEmail
+        maintainerEmail,
+        gitPush
       } = opts;
       const projectPath = process.cwd();
 
@@ -123,7 +139,12 @@ export const createCommandDecorator = (command: commander.Command): void => {
             `maintainerEmail must be of type 'string', ${typeof maintainerEmail} given.`
           );
         }
-        await createService(projectPath, serviceName, packagesDir, {
+        if (typeof gitPush !== "boolean") {
+          throw new Error(
+            `gitPush must be of type 'boolean', ${typeof gitPush} given.`
+          );
+        }
+        await createService(projectPath, serviceName, packagesDir, gitPush, {
           helmChartChart,
           helmChartRepository,
           helmConfigBranch,
@@ -152,6 +173,7 @@ export const createService = async (
   rootProjectPath: string,
   serviceName: string,
   packagesDir: string,
+  gitPush: boolean,
   opts?: {
     helmChartChart: string;
     helmChartRepository: string;
@@ -241,4 +263,18 @@ export const createService = async (
   );
 
   // If requested, create new git branch, commit, and push
+  if (gitPush) {
+    const currentBranch = await getCurrentBranch();
+    await checkoutNewBranch(serviceName);
+    await commitDir(newServiceDir, serviceName);
+    await pushBranch(serviceName);
+    await checkoutBranch(currentBranch);
+    await deleteBranch(serviceName);
+    const pullRequestLink = await getPullRequestLink(
+      currentBranch,
+      serviceName,
+      await getOriginUrl()
+    );
+    logger.info(`Link to create PR: ${pullRequestLink}`);
+  }
 };
