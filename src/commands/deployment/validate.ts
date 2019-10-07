@@ -22,7 +22,7 @@ export const validateCommandDecorator = (command: commander.Command): void => {
  * Validates that the deployment configuration is specified.
  */
 export const isValidConfig = (): boolean => {
-  var missingConfig = "";
+  let missingConfig = "";
 
   if (!config.deployment) {
     missingConfig = missingConfig + "deployment";
