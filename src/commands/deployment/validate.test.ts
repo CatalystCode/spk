@@ -1,10 +1,5 @@
 import * as path from "path";
-import {
-  config,
-  defaultFileLocation,
-  loadConfiguration,
-  writeConfigToDefaultLocation
-} from "./../init";
+import { config, loadConfiguration } from "./../init";
 import { isValidConfig } from "./validate";
 
 beforeEach(() => {

@@ -1,7 +1,6 @@
 import commander from "commander";
 import { logger } from "../../logger";
 import { config } from "../init";
-import { validate } from "@babel/types";
 
 /**
  * Adds the validate command to the commander command object
