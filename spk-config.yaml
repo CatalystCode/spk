@@ -1,45 +1,52 @@
-infra:
-  terraform_check: true
-  git_check: true
-  helm_check: true
-  az_cli_check: true
-  env_var_check: true
-  terraform: "v0.12.6"
-  helm: "v2.14.3"
-  git: "2.17.1"
-  bedrock:
-    # Releases are through tags / branches
-    source: "git@github.com:microsoft/bedrock.git"
-    tag:
-    repo_type: "Public"
-    private_repo_key:
-  azure:
-    az_cli:
-      azure_cli: "2.0.70"
-      Extensions:
-        aks_preview: "0.4.14"
-        # Support for Key vault / AzDO var groups / .env
-    az_auth:
-      service_principal_id: "client-id"
-      service_principal_secret: "client-secret"
-      subscription_id: "subscription-id"
-      tenant_id: "tenant-id"
-    az_backend:
-      resource_group_name: "StorageAccount-ResourceGroup"
-      storage_account_name: "abcd1234"
-      container_name: "tf-state"
-      key: "prod.terraform.tf-state"
-deployment:
-  storage:
-    account_name: "storagename"
-    table_name: "deployments"
-    partition_key: "partitionname"
-    key: "private-access-key"
-  pipeline:
-    org: "epicstuff"
-    project: "hellobedrock"
-    access_token: "test-token"
-services:
-  project_name:
-  PAT:
-  Devops_org:
+# Configurations organized by resource
+# Azure Specific Configuration
+azure:
+  service_principal_id: "${env:SERVICE_PRINCIPAL_ID}"
+  service_principal_secret: "${env:SERVICE_PRINCIPAL_SECRET}"
+  subscription_id: "subscription-id"
+  tenant_id: "tenant-id"
+
+# Azure CLI Specific Configuration
+azure-cli:
+  version: "2.0.70"
+  Extensions:
+    aks-preview: "0.4.14"
+
+# Azure DevOps Configuration
+azure-devops: # Should this live under the `spk` configuration?
+  org: "my-az-do-org"
+  project: "my-mono-repo-project"
+  repository: "my-projecy-repository"
+  access_token: "AZDO_PERSONAL_ACCESS_TOKEN" # This is your Personal Access Token with permission to modify and access this private repo. Ex. "${env:AZDO_PERSONAL_ACCESS_TOKEN}". Leave this empty if project is public
+
+# Terraform Configuration
+terraform:
+  backend:
+    resource_group_name: "StorageAccount-ResourceGroup"
+    storage_account_name: "abcd1234"
+    container_name: "tf-state"
+    key: "prod.terraform.tf-state"
+
+# SPK Configuration
+spk:
+  infra:
+    terraform_check: true
+    git_check: true
+    helm_check: true
+    az_cli_check: true
+    env_var_check: true
+    terraform: "v0.12.6"
+    helm: "v2.14.3"
+    git: "2.17.1"
+    bedrock:
+      # Releases are through tags / branches
+      source: "git@github.com:microsoft/bedrock.git"
+      tag:
+      repo_type: "Public"
+      access_token: "BEDROCK_PERSONAL_ACCESS_TOKEN" # This is your Personal Access Token with permission to modify and access this private repo. Ex. "${env:BEDROCK_PERSONAL_ACCESS_TOKEN}". Leave this empty if project is public
+  deployment:
+    azure-storage: # This is the storage account for the service introspection tool
+      account_name: "saakhtacjteststorage"
+      table_name: "deployments"
+      partition_key: "hello-bedrock"
+      key: "${env:INTROSPECTION_STORAGE_ACCESS_KEY}"
