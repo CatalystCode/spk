@@ -57,10 +57,11 @@ export const isValidConfig = (): boolean => {
     }
   }
 
-  if (missingConfig != "") {
+  if (missingConfig !== "") {
     logger.error("Validation failed. Missing configuration: " + missingConfig);
     return false;
   }
 
+  logger.info("Validation passed.");
   return true;
 };

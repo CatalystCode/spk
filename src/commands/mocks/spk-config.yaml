@@ -27,8 +27,13 @@ infra:
       key: "prod.terraform.tf-state"
 deployment:
   storage:
-    account_name: "${env:test_name}"
-    key: "${env:test_key}"
+    account_name: "my_storage_account"
+    key: "my_storage_key"
+    table_name: "deployments"
+    partition_key: "hello-bedrock"
+  pipeline:
+    org: "epicstuff"
+    project: "hellobedrock"
 services:
   project_name:
   PAT:
