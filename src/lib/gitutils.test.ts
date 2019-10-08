@@ -1,7 +1,6 @@
 import { when } from "jest-when";
 import {
   checkoutBranch,
-  checkoutNewBranch,
   commitDir,
   deleteBranch,
   getCurrentBranch,
@@ -47,18 +46,16 @@ describe("checkoutBranch", () => {
     (exec as jest.Mock).mockClear();
 
     const branchName = "mynewbranch";
-    await checkoutBranch(branchName);
+    await checkoutBranch(branchName, false);
 
     expect(exec).toHaveBeenCalledTimes(1);
     expect(exec).toHaveBeenCalledWith("git", ["checkout", `${branchName}`]);
   });
-});
 
-describe("checkoutNewBranch", () => {
-  it("should call exec with the proper git arguments", async () => {
+  it("should call exec with the proper git arguments; creating a new branch", async () => {
     (exec as jest.Mock).mockClear();
     const branchName = "mynewbranch";
-    await checkoutNewBranch(branchName);
+    await checkoutBranch(branchName, true);
 
     expect(exec).toHaveBeenCalledTimes(1);
     expect(exec).toHaveBeenCalledWith("git", [

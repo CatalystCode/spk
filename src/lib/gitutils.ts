@@ -10,34 +10,29 @@ export const getCurrentBranch = async () => {
     const branch = await exec("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
     return branch;
   } catch (_) {
-    logger.warn("Unable to determine current branch.");
+    logger.error("Unable to determine current branch.");
     return "";
   }
 };
 
 /**
- * Checkout the given branch.
+ * Checkout the given branch; optionally create a new branch first.
  *
  * @param branchName
+ * @param createNewBranch
  */
-export const checkoutBranch = async (branchName: string) => {
+export const checkoutBranch = async (
+  branchName: string,
+  createNewBranch: boolean
+) => {
   try {
-    await exec("git", ["checkout", `${branchName}`]);
+    if (createNewBranch) {
+      await exec("git", ["checkout", "-b", `${branchName}`]);
+    } else {
+      await exec("git", ["checkout", `${branchName}`]);
+    }
   } catch (_) {
-    logger.warn(`unable to checkout git branch ${branchName}.`);
-  }
-};
-
-/**
- * Create and checkout a new branch.
- *
- * @param branchName
- */
-export const checkoutNewBranch = async (branchName: string) => {
-  try {
-    await exec("git", ["checkout", "-b", `${branchName}`]);
-  } catch (_) {
-    logger.warn(`unable to create and checkout new git branch ${branchName}.`);
+    logger.error(`unable to checkout git branch ${branchName}.`);
   }
 };
 
@@ -50,7 +45,7 @@ export const deleteBranch = async (branchName: string) => {
   try {
     await exec("git", ["branch", "-D", `${branchName}`]);
   } catch (_) {
-    logger.warn(`unable to delete git branch ${branchName}.`);
+    logger.error(`unable to delete git branch ${branchName}.`);
   }
 };
 
@@ -65,7 +60,9 @@ export const commitDir = async (directory: string, branchName: string) => {
     await exec("git", ["add", `${directory}`]);
     await exec("git", ["commit", "-m", `Adding new service: ${branchName}`]);
   } catch (_) {
-    logger.warn(`unable to push git branch ${branchName}.`);
+    logger.error(
+      `unable to commit changes in ${directory} to git branch ${branchName}.`
+    );
   }
 };
 
@@ -78,7 +75,7 @@ export const pushBranch = async (branchName: string) => {
   try {
     await exec("git", ["push", "-u", "origin", `${branchName}`]);
   } catch (_) {
-    logger.warn(`unable to push git branch ${branchName}.`);
+    logger.error(`unable to push git branch ${branchName}.`);
   }
 };
 
@@ -95,7 +92,7 @@ export const getOriginUrl = async () => {
     logger.debug(`Got git origin url ${originUrl}`);
     return originUrl;
   } catch (_) {
-    logger.warn(`unable to git origin URL.`);
+    logger.error(`unable to git origin URL.`);
   }
   return "";
 };
@@ -122,7 +119,7 @@ export const getPullRequestLink = async (
     logger.debug("github repo found.");
     return `https://github.com/${gitComponents.organization}/${gitComponents.name}/compare/${baseBranch}...${newBranch}?expand=1`;
   } else {
-    logger.warn(
+    logger.error(
       "Could not determine origin repository, or it is not a supported type."
     );
     return "Could not determine origin repository. Please check for the newly pushed branch and open a PR manually.";

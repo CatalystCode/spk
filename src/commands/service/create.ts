@@ -11,7 +11,6 @@ import {
 } from "../../lib/fileutils";
 import {
   checkoutBranch,
-  checkoutNewBranch,
   commitDir,
   deleteBranch,
   getCurrentBranch,
@@ -265,10 +264,10 @@ export const createService = async (
   // If requested, create new git branch, commit, and push
   if (gitPush) {
     const currentBranch = await getCurrentBranch();
-    await checkoutNewBranch(serviceName);
+    await checkoutBranch(serviceName, true);
     await commitDir(newServiceDir, serviceName);
     await pushBranch(serviceName);
-    await checkoutBranch(currentBranch);
+    await checkoutBranch(currentBranch, false);
     await deleteBranch(serviceName);
     const pullRequestLink = await getPullRequestLink(
       currentBranch,
