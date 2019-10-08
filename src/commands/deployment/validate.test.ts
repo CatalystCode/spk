@@ -3,8 +3,8 @@ import { config, loadConfiguration } from "./../init";
 import { isValidConfig } from "./validate";
 
 beforeEach(() => {
-  process.env.test_name = "testStorageName";
-  process.env.test_key = "testStorageKey";
+  process.env.test_name = "my_storage_account";
+  process.env.test_key = "my_storage_key";
   const mockFileName = "src/commands/mocks/spk-config.yaml";
   const filename = path.resolve(mockFileName);
   loadConfiguration(filename);
