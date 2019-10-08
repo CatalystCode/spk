@@ -28,7 +28,9 @@ export const initCommandDecorator = (command: commander.Command): void => {
           return;
         }
         loadConfiguration(opts.file);
-        await writeConfigToDefaultLocation(opts.file);
+
+        await writeConfigToDefaultLocation();
+
         logger.info("Successfully initialized the spk tool!");
       } catch (err) {
         logger.error(`Error occurred while initializing`);
