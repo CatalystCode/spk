@@ -50,6 +50,18 @@ Install the project dependencies with Yarn:
 yarn install
 ```
 
+### Running the linter
+
+```sh
+yarn lint
+```
+
+To run the tslint autofixer:
+
+```sh
+ yarn lint-fix
+```
+
 ### Running The Code
 
 Install `ts-node` to make your development cycle easier:
