@@ -1,6 +1,6 @@
 import { Command } from "../command";
 import { createCommandDecorator } from "./create";
-import { infraValidateCommand } from "./init";
+import { infraValidateCommand } from "./vaildate";
 
 export const infraCommand = Command(
   "infra",

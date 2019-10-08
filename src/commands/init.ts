@@ -3,13 +3,13 @@ import dotenv = require("dotenv");
 import * as fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
+import { logger } from "../logger";
+import { IConfigYaml } from "../types";
 import {
   validateAzure,
   validateEnvVariables,
   validatePrereqs
-} from "./infra/init";
-import { logger } from "../logger";
-import { IConfigYaml } from "../types";
+} from "./infra/vaildate";
 
 export const defaultFileLocation = os.homedir() + "/.spk-config.yaml";
 export let config: IConfigYaml = {};
