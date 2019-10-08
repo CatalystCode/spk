@@ -3,6 +3,11 @@ import dotenv = require("dotenv");
 import * as fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
+import {
+  validateAzure,
+  validateEnvVariables,
+  validatePrereqs
+} from "./infra/init";
 import { logger } from "../logger";
 import { IConfigYaml } from "../types";
 
@@ -28,6 +33,17 @@ export const initCommandDecorator = (command: commander.Command): void => {
           return;
         }
         loadConfiguration(opts.file);
+        await validatePrereqs(["terraform", "git", "az", "helm"], true);
+        await validateAzure(true);
+        await validateEnvVariables(
+          [
+            "ARM_SUBSCRIPTION_ID",
+            "ARM_CLIENT_ID",
+            "ARM_CLIENT_SECRET",
+            "ARM_TENANT_ID"
+          ],
+          true
+        );
         await writeConfigToDefaultLocation(opts.file);
         logger.info("Successfully initialized the spk tool!");
       } catch (err) {
