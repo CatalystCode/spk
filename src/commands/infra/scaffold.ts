@@ -9,7 +9,7 @@ import { logger } from "../../logger";
  *
  * @param command Commander command object to decorate
  */
-export const createCommandDecorator = (command: commander.Command): void => {
+export const scaffoldCommandDecorator = (command: commander.Command): void => {
   command
     .command("scaffold")
     .alias("s")
@@ -87,7 +87,7 @@ export const validateVariablesTf = async (
  *
  * @param {string} data string containing the contents of a variable.tf file
  */
-function parse_variables_tf(data: string) {
+export const parse_variables_tf = (data: string) => {
   // split the input on the keyword 'variable'
   const splitRegex = /^variable/gm;
   const blocks = data.split(splitRegex);
@@ -117,14 +117,14 @@ function parse_variables_tf(data: string) {
     }
   });
   return fields;
-}
+};
 
-function generate_cluster_definition(
+export const generate_cluster_definition = (
   name: string,
   source: string,
   version: string,
   vartfData: string
-) {
+) => {
   const fields: { [name: string]: string | null } = parse_variables_tf(
     vartfData
   );
@@ -138,11 +138,10 @@ function generate_cluster_definition(
     Object.keys(fields).forEach(key => {
       fieldDict[key] = fields[key] ? fields[key] : "<insert value>";
     });
-    const varkey: string = "variables";
-    def[varkey] = fieldDict;
+    def.variables = fieldDict;
   }
   return def;
-}
+};
 
 /**
  * Given a Bedrock template, source URL, and version, this function creates a
@@ -162,7 +161,7 @@ export const scaffoldInit = async (
   try {
     // Identify which environment the user selected
     if (fs.existsSync(tfVariableFile)) {
-      logger.info("variable.tf file found : ${tfVariableFile}");
+      logger.info(`variable.tf file found : ${tfVariableFile}`);
       const data: string = fs.readFileSync(tfVariableFile, "utf8");
       if (data) {
         const baseDef: {
@@ -176,7 +175,7 @@ export const scaffoldInit = async (
         if (baseDef) {
           fs.mkdir(name, (e: any) => {
             if (e) {
-              logger.error("unable to create directory: ${name}");
+              logger.error(`unable to create directory: ${name}`);
               return false;
             } else {
               const confPath: string = path.format({
@@ -184,7 +183,7 @@ export const scaffoldInit = async (
                 dir: name,
                 root: "/ignored"
               });
-              fs.writeFileSync(confPath, JSON.stringify(data));
+              fs.writeFileSync(confPath, JSON.stringify(baseDef));
               return true;
             }
           });
@@ -192,7 +191,7 @@ export const scaffoldInit = async (
           logger.error("unable to generate cluster definition");
         }
       } else {
-        logger.error("unable to read variable file: ${tfVariableFile}");
+        logger.error(`unable to read variable file: ${tfVariableFile}`);
       }
     }
   } catch (_) {
