@@ -1,9 +1,7 @@
 import child_process from "child_process";
-import {
-  disableVerboseLogging,
-  enableVerboseLogging,
-  logger
-} from "../../logger";
+import * as path from "path";
+import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
+import { config, loadConfiguration } from "../init";
 import {
   validateAzure,
   validateEnvVariables,
@@ -29,12 +27,43 @@ describe("Validating executable prerequisites", () => {
   });
 });
 
+describe("Validating executable prerequisites in spk-config", () => {
+  test("Validate that exectuable boolean matches in spk-config", async () => {
+    // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
+    const mockFileName = "src/commands/mocks/spk-config.yaml";
+    const filename = path.resolve(mockFileName);
+    process.env.test_name = "my_storage_account";
+    process.env.test_key = "my_storage_key";
+    loadConfiguration(filename);
+    const fakeBinaries: string[] = ["ydawgie"];
+    await validatePrereqs(fakeBinaries, true);
+    expect(config.infra!).toBeDefined();
+    expect(config.infra!.checks!).toBeDefined();
+    expect(config.infra!.checks!.ydawgie!).toBe(false);
+  });
+});
+
 describe("Validating Azure authentication", () => {
   test("Validate that a logged out user produces a force fail", async () => {
     // Produce an error that requires user to login
     child_process.exec("az logout");
     const value = await validateAzure(false);
     expect(value).toBe(false);
+  });
+});
+
+describe("Validating Azure login in spk-config", () => {
+  test("Validate that az_login_check boolean matches in spk-config", async () => {
+    // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
+    const mockFileName = "src/commands/mocks/spk-config.yaml";
+    const filename = path.resolve(mockFileName);
+    process.env.test_name = "my_storage_account";
+    process.env.test_key = "my_storage_key";
+    loadConfiguration(filename);
+    await validateAzure(true);
+    expect(config.infra!).toBeDefined();
+    expect(config.infra!.checks!).toBeDefined();
+    expect(config.infra!.checks!.az_login_check!).toBe(false);
   });
 });
 
@@ -45,5 +74,21 @@ describe("Validating environment variables", () => {
     process.env.ydawgie = "";
     const value = await validateEnvVariables(variables, false);
     expect(value).toBe(false);
+  });
+});
+
+describe("Validating environment variables in spk-config", () => {
+  test("Validate that env_var_check boolean matches in spk-config", async () => {
+    // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
+    const variables: string[] = ["ydawgie"];
+    const mockFileName = "src/commands/mocks/spk-config.yaml";
+    const filename = path.resolve(mockFileName);
+    process.env.test_name = "my_storage_account";
+    process.env.test_key = "my_storage_key";
+    loadConfiguration(filename);
+    await validateEnvVariables(variables, true);
+    expect(config.infra!).toBeDefined();
+    expect(config.infra!.checks!).toBeDefined();
+    expect(config.infra!.checks!.env_var_check!).toBe(false);
   });
 });

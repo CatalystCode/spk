@@ -109,6 +109,7 @@ export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
     } else {
       logger.error(emoji.emojify(":no_entry_sign: " + err));
     }
+    config.infra.checks.az_login_check = false;
     return false;
   }
   config.infra.checks.az_login_check = true;
@@ -132,7 +133,7 @@ export const validateEnvVariables = async (
   }
   // Validate environment variables
   for (const i of variables) {
-    if (!process.env[i] && !null) {
+    if (!process.env[i]) {
       if (globalInit === true) {
         logger.warn(i + " not set as an environment variable");
       } else {
@@ -142,6 +143,17 @@ export const validateEnvVariables = async (
           )
         );
       }
+      config.infra.checks.env_var_check = false;
+      return false;
+    } else if (process.env[i] && process.env[i] === "") {
+      if (globalInit === true) {
+        logger.warn(i + " cannot be null.");
+      } else {
+        logger.error(
+          emoji.emojify(":no_entry_sign: " + i + " cannot be null.")
+        );
+      }
+      config.infra.checks.env_var_check = false;
       return false;
     }
   }
