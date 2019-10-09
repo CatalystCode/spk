@@ -33,8 +33,11 @@ export const initCommandDecorator = (command: commander.Command): void => {
           return;
         }
         loadConfiguration(opts.file);
+
         await validatePrereqs(["terraform", "git", "az", "helm"], true);
+
         await validateAzure(true);
+
         await validateEnvVariables(
           [
             "ARM_SUBSCRIPTION_ID",
@@ -44,6 +47,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
           ],
           true
         );
+
         await writeConfigToDefaultLocation();
 
         logger.info("Successfully initialized the spk tool!");

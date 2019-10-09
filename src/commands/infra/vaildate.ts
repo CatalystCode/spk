@@ -3,6 +3,7 @@ import commander from "commander";
 import emoji from "node-emoji";
 import { promisify } from "util";
 import { logger } from "../../logger";
+import { config } from "../init";
 
 const binaries: string[] = ["terraform", "git", "az", "helm"];
 const envVar: string[] = [
@@ -61,10 +62,17 @@ export const validatePrereqs = async (
   executables: string[],
   globalInit: boolean
 ): Promise<boolean> => {
+  if (!config.infra) {
+    config.infra = {};
+  }
+  if (!config.infra.checks) {
+    config.infra.checks = {};
+  }
   // Validate executables in PATH
   for (const i of executables) {
     try {
       await promisify(child_process.exec)("which " + i);
+      config.infra.checks[i] = true;
     } catch (err) {
       if (globalInit === true) {
         logger.warn(i + " not installed.");
@@ -72,8 +80,9 @@ export const validatePrereqs = async (
         logger.error(
           emoji.emojify(":no_entry_sign: '" + i + "'" + " not installed")
         );
+        return false;
       }
-      return false;
+      config.infra.checks[i] = false;
     }
   }
   return true;
@@ -84,6 +93,12 @@ export const validatePrereqs = async (
  */
 export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
   // Validate authentication with Azure
+  if (!config.infra) {
+    config.infra = {};
+  }
+  if (!config.infra.checks) {
+    config.infra.checks = {};
+  }
   try {
     await promisify(child_process.exec)("az account show -o none");
   } catch (err) {
@@ -96,6 +111,7 @@ export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
     }
     return false;
   }
+  config.infra.checks.az_login_check = true;
   return true;
 };
 
@@ -108,6 +124,12 @@ export const validateEnvVariables = async (
   variables: string[],
   globalInit: boolean
 ): Promise<boolean> => {
+  if (!config.infra) {
+    config.infra = {};
+  }
+  if (!config.infra.checks) {
+    config.infra.checks = {};
+  }
   // Validate environment variables
   for (const i of variables) {
     if (!process.env[i] && !null) {
@@ -123,5 +145,6 @@ export const validateEnvVariables = async (
       return false;
     }
   }
+  config.infra.checks.env_var_check = true;
   return true;
 };
