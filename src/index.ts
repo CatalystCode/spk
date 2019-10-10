@@ -11,6 +11,7 @@
  * - if (typeof var === 'number') {}
  * - etc...
  */
+import "isomorphic-fetch";
 import { Command, executeCommand } from "./commands/command";
 import { deploymentCommand } from "./commands/deployment";
 import { infraCommand } from "./commands/infra";
