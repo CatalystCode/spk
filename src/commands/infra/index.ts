@@ -1,10 +1,10 @@
 import { Command } from "../command";
 import { createCommandDecorator } from "./create";
-import { initCommand } from "./init";
 import { scaffoldCommandDecorator } from "./scaffold";
+import { infraValidateCommand } from "./vaildate";
 
 export const infraCommand = Command(
   "infra",
   "Deploy and modify your Bedrock infrastructure.",
-  [initCommand, createCommandDecorator, scaffoldCommandDecorator]
+  [infraValidateCommand, createCommandDecorator, scaffoldCommandDecorator]
 );

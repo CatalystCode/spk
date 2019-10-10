@@ -49,6 +49,7 @@ Install the project dependencies with Yarn:
 ```sh
 yarn install
 ```
+
 ### Running the linter
 
 ```sh
@@ -56,11 +57,10 @@ yarn lint
 ```
 
 To run the tslint autofixer:
- 
- 
+
 ```sh
  yarn lint-fix
- ```
+```
 
 ### Running The Code
 
@@ -87,6 +87,38 @@ newly created tests and code:
 
 ```sh
 yarn test-watch
+```
+
+### Running the Debugger
+
+To debug on [Visual Studio Code](https://code.visualstudio.com/):
+
+1. On the top menu select Debug > Start Debugging
+2. It will prompt you to create a `launch.json` file for the go language,
+   proceed to create it.
+3. Add the settings found below to the `launch.json` file. Change the `args`
+   with the command and options that you want to debug. In this case, it will
+   debug `deployment get`.
+
+Sample `launch.json`:
+
+```
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug index.ts",
+            "cwd": "${workspaceFolder}",
+            "runtimeArgs": ["-r", "ts-node/register"],​
+            "args": ["${workspaceRoot}/src/index.ts", "deployment", "get"]​
+        }
+    ]
+}
 ```
 
 ### Production Builds
