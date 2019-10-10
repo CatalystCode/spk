@@ -10,8 +10,8 @@ export const getCurrentBranch = async () => {
     const branch = await exec("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
     return branch;
   } catch (_) {
-    logger.error("Unable to determine current branch.");
-    return "";
+    logger.error("Unable to determine current branch: " + _);
+    throw Error("Unable to determine current branch: " + _);
   }
 };
 
@@ -32,7 +32,7 @@ export const checkoutBranch = async (
       await exec("git", ["checkout", `${branchName}`]);
     }
   } catch (_) {
-    logger.error(`unable to checkout git branch ${branchName}.`);
+    throw new Error(`Unable to checkout git branch ${branchName}: ` + _);
   }
 };
 
@@ -45,7 +45,7 @@ export const deleteBranch = async (branchName: string) => {
   try {
     await exec("git", ["branch", "-D", `${branchName}`]);
   } catch (_) {
-    logger.error(`unable to delete git branch ${branchName}.`);
+    throw new Error(`Unable to delete git branch ${branchName}: ` + _);
   }
 };
 
@@ -60,8 +60,9 @@ export const commitDir = async (directory: string, branchName: string) => {
     await exec("git", ["add", `${directory}`]);
     await exec("git", ["commit", "-m", `Adding new service: ${branchName}`]);
   } catch (_) {
-    logger.error(
-      `unable to commit changes in ${directory} to git branch ${branchName}.`
+    throw new Error(
+      `Unable to commit changes in ${directory} to git branch ${branchName}: ` +
+        _
     );
   }
 };
@@ -75,7 +76,7 @@ export const pushBranch = async (branchName: string) => {
   try {
     await exec("git", ["push", "-u", "origin", `${branchName}`]);
   } catch (_) {
-    logger.error(`unable to push git branch ${branchName}.`);
+    throw new Error(`Unable to push git branch ${branchName}: ` + _);
   }
 };
 
@@ -92,7 +93,7 @@ export const getOriginUrl = async () => {
     logger.debug(`Got git origin url ${originUrl}`);
     return originUrl;
   } catch (_) {
-    logger.error(`unable to git origin URL.`);
+    throw new Error(`Unable to get git origin URL.: ` + _);
   }
   return "";
 };
@@ -110,18 +111,23 @@ export const getPullRequestLink = async (
   newBranch: string,
   originUrl: string
 ) => {
-  const gitComponents = GitUrlParse(originUrl);
-
-  if (gitComponents.resource.includes("dev.azure.com")) {
-    logger.debug("azure devops repo found.");
-    return `https://dev.azure.com/${gitComponents.organization}/${gitComponents.owner}/_git/${gitComponents.name}/pullrequestcreate?sourceRef=${newBranch}&targetRef=${baseBranch}`;
-  } else if (gitComponents.resource === "github.com") {
-    logger.debug("github repo found.");
-    return `https://github.com/${gitComponents.organization}/${gitComponents.name}/compare/${baseBranch}...${newBranch}?expand=1`;
-  } else {
-    logger.error(
-      "Could not determine origin repository, or it is not a supported type."
+  try {
+    const gitComponents = GitUrlParse(originUrl);
+    if (gitComponents.resource.includes("dev.azure.com")) {
+      logger.debug("azure devops repo found.");
+      return `https://dev.azure.com/${gitComponents.organization}/${gitComponents.owner}/_git/${gitComponents.name}/pullrequestcreate?sourceRef=${newBranch}&targetRef=${baseBranch}`;
+    } else if (gitComponents.resource === "github.com") {
+      logger.debug("github repo found.");
+      return `https://github.com/${gitComponents.organization}/${gitComponents.name}/compare/${baseBranch}...${newBranch}?expand=1`;
+    } else {
+      logger.error(
+        "Could not determine origin repository, or it is not a supported type."
+      );
+      return "Could not determine origin repository, or it is not a supported provider. Please check for the newly pushed branch and open a PR manually.";
+    }
+  } catch (_) {
+    throw new Error(
+      `"Could not determine git provider, or it is not a supported type.": ` + _
     );
-    return "Could not determine origin repository. Please check for the newly pushed branch and open a PR manually.";
   }
 };

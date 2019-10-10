@@ -8,8 +8,10 @@ import {
   getPullRequestLink,
   pushBranch
 } from "../lib/gitutils";
-import { disableVerboseLogging, enableVerboseLogging } from "../logger";
+import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
 import { exec } from "./shell";
+
+import GitUrlParse from "git-url-parse";
 
 jest.mock("./shell");
 
@@ -39,6 +41,21 @@ describe("getCurrentBranch", () => {
       "HEAD"
     ]);
   });
+
+  it("should return an error when exec throws an error", async () => {
+    (exec as jest.Mock).mockImplementation(() => {
+      throw new Error("sample error.");
+    });
+
+    let error: Error | undefined;
+    try {
+      const currentBranch = await getCurrentBranch();
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
+  });
 });
 
 describe("checkoutBranch", () => {
@@ -64,6 +81,21 @@ describe("checkoutBranch", () => {
       `${branchName}`
     ]);
   });
+
+  it("should return an error when exec throws an error", async () => {
+    (exec as jest.Mock).mockImplementation(() => {
+      throw new Error("sample error.");
+    });
+
+    let error: Error | undefined;
+    try {
+      await checkoutBranch("branchName", false);
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
+  });
 });
 
 describe("deleteBranch", () => {
@@ -74,6 +106,21 @@ describe("deleteBranch", () => {
 
     expect(exec).toHaveBeenCalledTimes(1);
     expect(exec).toHaveBeenCalledWith("git", ["branch", "-D", `${branchName}`]);
+  });
+
+  it("should return an error when exec throws an error", async () => {
+    (exec as jest.Mock).mockImplementation(() => {
+      throw new Error("sample error.");
+    });
+
+    let error: Error | undefined;
+    try {
+      await deleteBranch("branchName");
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
   });
 });
 
@@ -92,6 +139,21 @@ describe("commitDir", () => {
       `Adding new service: ${branchName}`
     ]);
   });
+
+  it("should return an error when exec throws an error", async () => {
+    (exec as jest.Mock).mockImplementation(() => {
+      throw new Error("sample error.");
+    });
+
+    let error: Error | undefined;
+    try {
+      await commitDir("directory", "branchName");
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
+  });
 });
 
 describe("pushBranch", () => {
@@ -107,6 +169,21 @@ describe("pushBranch", () => {
       "origin",
       `${branchName}`
     ]);
+  });
+
+  it("should return an error when exec throws an error", async () => {
+    (exec as jest.Mock).mockImplementation(() => {
+      throw new Error("sample error.");
+    });
+
+    let error: Error | undefined;
+    try {
+      await pushBranch("branchName");
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
   });
 });
 
@@ -127,6 +204,21 @@ describe("getOriginUrl", () => {
       "--get",
       "remote.origin.url"
     ]);
+  });
+
+  it("should return an error when exec throws an error", async () => {
+    (exec as jest.Mock).mockImplementation(() => {
+      throw new Error("sample error.");
+    });
+
+    let error: Error | undefined;
+    try {
+      await getOriginUrl();
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
   });
 });
 
@@ -204,7 +296,7 @@ describe("getPullRequestLink", () => {
     );
 
     expect(pullRequestUrl).toEqual(
-      "Could not determine origin repository. Please check for the newly pushed branch and open a PR manually."
+      "Could not determine origin repository, or it is not a supported provider. Please check for the newly pushed branch and open a PR manually."
     );
   });
 });
