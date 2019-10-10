@@ -23,7 +23,7 @@ import { getManagementCredentials } from "./azurecredentials";
 const getStorageClient = async (): Promise<StorageManagementClient> => {
   const creds = await getManagementCredentials();
   return new StorageManagementClient(
-    creds,
+    creds!,
     config.introspection!.azure!.subscription_id!
   );
 };
