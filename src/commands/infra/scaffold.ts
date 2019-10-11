@@ -24,20 +24,20 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
       "A version or tag for the repository so a fixed version is referenced"
     )
     .option(
-      "--varfile <path to variables.tf> ",
+      "-t, --template <path to variables.tf> ",
       "The location of the variables.tf for the terraform deployment"
     )
     .action(async opts => {
       try {
-        if (opts.name && opts.source && opts.version && opts.varfile) {
+        if (opts.name && opts.source && opts.template) {
           logger.info("All required options are configured for scaffolding.");
         } else {
           logger.warn(
-            "You must specify each of the variables 'name', 'source', 'version', 'varfile' in order to scaffold out a deployment."
+            "You must specify each of the variables 'name', 'source', 'version', 'template' in order to scaffold out a deployment."
           );
         }
-        await validateVariablesTf(opts.varfile);
-        await scaffoldInit(opts.name, opts.source, opts.version, opts.varfile);
+        await validateVariablesTf(opts.template);
+        await scaffoldInit(opts.name, opts.source, opts.version, opts.template);
       } catch (err) {
         logger.error("Error occurred while generating scaffold");
         logger.error(err);
@@ -48,15 +48,15 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
 /**
  * Checks if working variables.tf is present
  *
- * @param varfilePath Path the variables.tf file
+ * @param templatePath Path the variables.tf file
  */
 export const validateVariablesTf = async (
-  varfilePath: string
+  templatePath: string
 ): Promise<boolean> => {
   try {
-    if (!fs.existsSync(varfilePath)) {
+    if (!fs.existsSync(templatePath)) {
       logger.error(
-        `Provided Terraform variables.tf path is invalid or can not be found: ${varfilePath}`
+        `Provided Terraform variables.tf path is invalid or can not be found: ${templatePath}`
       );
       return false;
     }
@@ -175,11 +175,11 @@ export const scaffoldInit = async (
         if (baseDef) {
           fs.mkdir(name, (e: any) => {
             if (e) {
-              logger.error(`unable to create directory: ${name}`);
+              logger.error(`Unable to create directory: ${name}`);
               return false;
             } else {
               const confPath: string = path.format({
-                base: name + "_config.json",
+                base: "definition.json",
                 dir: name,
                 root: "/ignored"
               });
@@ -188,14 +188,14 @@ export const scaffoldInit = async (
             }
           });
         } else {
-          logger.error("unable to generate cluster definition");
+          logger.error("Unable to generate cluster definition");
         }
       } else {
-        logger.error(`unable to read variable file: ${tfVariableFile}`);
+        logger.error(`Unable to read variable file: ${tfVariableFile}`);
       }
     }
   } catch (_) {
-    logger.warn("unable to create scaffold");
+    logger.warn("Unable to create scaffold");
   }
   return false;
 };
