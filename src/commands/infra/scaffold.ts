@@ -127,9 +127,9 @@ export const generateClusterDefinition = (
 ) => {
   const fields: { [name: string]: string | null } = parseVariablesTf(vartfData);
   const def: { [name: string]: string | null | any } = {
-    name: name,
-    source: source,
-    version: version
+    name,
+    source,
+    version
   };
   if (Object.keys(fields).length > 0) {
     const fieldDict: { [name: string]: string | null } = {};
