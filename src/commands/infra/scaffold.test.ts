@@ -3,7 +3,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { parse_variables_tf, generate_cluster_definition } from "./scaffold";
+import { generateClusterDefinition, parseVariablesTf } from "./scaffold";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -30,7 +30,7 @@ describe("Validate parsing of sample variables.tf file", () => {
       '   type    = "string"\n' +
       '    default = "5m"\n' +
       "} \n";
-    const fields: { [name: string]: string | null } = parse_variables_tf(
+    const fields: { [name: string]: string | null } = parseVariablesTf(
       sampleVarTf
     );
     expect(Object.keys(fields).length).toBe(3);
@@ -54,7 +54,7 @@ describe("Validate generation of sample scaffold definition", () => {
       '   type    = "string"\n' +
       '    default = "5m"\n' +
       "} \n";
-    const def = generate_cluster_definition(
+    const def = generateClusterDefinition(
       "test-scaffold",
       "https://github.com/microsoft/bedrock",
       "v1.0.0",

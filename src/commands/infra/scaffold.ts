@@ -87,7 +87,7 @@ export const validateVariablesTf = async (
  *
  * @param {string} data string containing the contents of a variable.tf file
  */
-export const parse_variables_tf = (data: string) => {
+export const parseVariablesTf = (data: string) => {
   // split the input on the keyword 'variable'
   const splitRegex = /^variable/gm;
   const blocks = data.split(splitRegex);
@@ -119,15 +119,13 @@ export const parse_variables_tf = (data: string) => {
   return fields;
 };
 
-export const generate_cluster_definition = (
+export const generateClusterDefinition = (
   name: string,
   source: string,
   version: string,
   vartfData: string
 ) => {
-  const fields: { [name: string]: string | null } = parse_variables_tf(
-    vartfData
-  );
+  const fields: { [name: string]: string | null } = parseVariablesTf(vartfData);
   const def: { [name: string]: string | null | any } = {
     name: name,
     source: source,
@@ -166,7 +164,7 @@ export const scaffoldInit = async (
       if (data) {
         const baseDef: {
           [name: string]: string | null | any;
-        } = generate_cluster_definition(
+        } = generateClusterDefinition(
           name,
           bedrockSource,
           bedrockVersion,
