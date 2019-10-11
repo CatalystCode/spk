@@ -28,6 +28,51 @@ const getStorageClient = async (): Promise<StorageManagementClient> => {
   );
 };
 
+export const storageAccountExists = async (
+  resourceGroup: string,
+  accountName: string,
+  key: string
+): Promise<boolean> => {
+  try {
+    logger.info(`Validating storage account ${accountName}.`);
+    const client = await getStorageClient();
+    const nameAvailabilityResult = await client.storageAccounts.checkNameAvailability(
+      accountName
+    );
+    const isNameAvailable = nameAvailabilityResult.nameAvailable;
+
+    if (isNameAvailable) {
+      logger.error(`Storage account ${accountName} does not exist.`);
+      return false;
+    }
+
+    const keysResponse = await client.storageAccounts.listKeys(
+      resourceGroup,
+      accountName
+    );
+
+    if (typeof keysResponse.keys !== "undefined") {
+      for (const storageKey of keysResponse.keys) {
+        if (storageKey.value === key) {
+          logger.info(
+            `Storage account validation for ${accountName} succeeded.`
+          );
+          return true;
+        }
+      }
+    }
+
+    logger.error(`Storage account ${accountName} access keys do not exist`);
+    logger.error(`Storage account key for ${accountName} not valid.`);
+    logger.error(`Storage account validation for ${accountName} failed.`);
+
+    return false;
+  } catch (error) {
+    logger.error(error);
+    throw error;
+  }
+};
+
 /**
  * Creates Azure storate account `name` in resource group `resourceGroup` in 1ocation `location` if it is not exist
  *

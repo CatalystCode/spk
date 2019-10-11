@@ -1,6 +1,7 @@
 import commander from "commander";
 import { logger } from "../../logger";
 import { config } from "../init";
+import { storageAccountExists } from "../../lib/azure/storage";
 
 /**
  * Adds the validate command to the commander command object
@@ -13,15 +14,15 @@ export const validateCommandDecorator = (command: commander.Command): void => {
     .description(
       "Validate deployment(s) for a service, release environment, build Id, commit Id, or image tag."
     )
-    .action(() => {
-      isValidConfig();
+    .action(async () => {
+      await isValidConfig();
     });
 };
 
 /**
  * Validates that the deployment configuration is specified.
  */
-export const isValidConfig = (): boolean => {
+export const isValidConfig = async (): Promise<boolean> => {
   const missingConfig = [];
 
   if (!config.introspection) {
@@ -59,6 +60,15 @@ export const isValidConfig = (): boolean => {
     logger.error(
       "Validation failed. Missing configuration: " + missingConfig.join(" ")
     );
+    return false;
+  }
+
+  const isValidStorageAccount = await storageAccountExists(
+    "edaena-rg",
+    config.introspection!.azure!.account_name!,
+    config.introspection!.azure!.key!
+  );
+  if (!isValidStorageAccount) {
     return false;
   }
 
