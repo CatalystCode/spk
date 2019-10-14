@@ -6,12 +6,17 @@
 
 ## Initialize
 
-In order to start using spk, you need to specify configuration in a yaml file.
-Please refer to the config file located [here](./spk-config.yaml) and follow the
+To start using spk, specify its configuration in a `yaml` file.
+Refer to the [spk-config.yaml](./spk-config.yaml) file and follow the
 same format.
 
-If you would like to specify private keys or access tokens that should **not be
-stored in raw text**, follow the steps below.
+### Environment Variables
+To specify private keys or access tokens that should **not be
+stored in raw text**, set the values in environment variables.
+
+You may refer to environment variables in your shell if you specify them in the
+format `env:{VARIABLE_NAME}`. `spk` will use them from your current
+shell. Below is an example of a setting that uses a value from an environment variable, `ACCESS_KEY`.
 
 ```yaml
 ---
@@ -21,11 +26,10 @@ key: "${env:ACCESS_KEY}"
 partition_key: "canBeStoredInRawTextKey"
 ```
 
-You may refer to environment variables in your shell if you specify them in the
-format "env:{VARIABLE_NAME}". `spk` will be able to use them from your current
-shell. Make sure that if you open a new shell window, these variables will have
-to be set again, otherwise, `spk` will throw an error on trying to use them.
+**Note:** If you open a new shell window, these variables will have
+to be set again, otherwise, `spk` will throw an error on trying to use them. To avoid setting them each time, specify them in the `.env` file. See below for more information.
 
+#### .env File
 A recommended approach is to have a `.env` file in your folder (make sure it's
 gitignored!) with all variables and their values. By default, the `spk` tool
 should be able to load these into your local env and use them to replace the
@@ -44,7 +48,7 @@ start using the `spk` tool!
 
 ### Installation
 
-Install the project dependencies with Yarn:
+Install the project dependencies:
 
 ```sh
 yarn install
