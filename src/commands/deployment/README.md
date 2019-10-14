@@ -20,7 +20,7 @@ Commands:
 Get deployment(s) for a service, release environment, build Id, commit Id, or
 image tag.
 
-Usage: `deployment get|g [options]`
+Usage: `spk deployment get|g [options]`
 
 ```
 Options:
@@ -41,7 +41,7 @@ Options:
 Onboard to use the service introspection tool. This will create a storage
 account in your subscription.
 
-Usage: deployment onboard|o [options]
+Usage: ``spk deployment onboard|o [options]`
 
 ```
 Options:
@@ -58,7 +58,7 @@ Options:
 Validate deployment(s) for a service, release environment, build Id, commit Id,
 or image tag.
 
-Usage: deployment validate|v [options]
+Usage: `spk deployment validate|v [options]`
 
 ```
 Options:
