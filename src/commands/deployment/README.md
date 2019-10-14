@@ -1,5 +1,11 @@
 # Service Introspection
 
+Service Introspection show information about Bedrock deployments:
+
+- Name of the person that changed the service
+- Time the service was changed or errored
+- Deployment state of the service is
+
 To use service introspection use the `spk deployment` commands. The following
 options and commands are supported:
 
