@@ -72,7 +72,6 @@ export const storageAccountExists = async (
     logger.error(
       `Storage account ${accountName} access keys is not valid or does not exist.`
     );
-    logger.error(`Storage account validation for ${accountName} failed.`);
 
     return false;
   } catch (error) {

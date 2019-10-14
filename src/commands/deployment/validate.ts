@@ -78,9 +78,10 @@ export const isValidStorageAccount = async (): Promise<boolean> => {
   );
 
   if (!isValid) {
+    logger.error("Storage account validation failed.");
     return false;
   }
 
-  logger.info("Validation passed.");
+  logger.info("Storage account validation passed.");
   return true;
 };
