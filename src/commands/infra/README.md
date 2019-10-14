@@ -67,13 +67,3 @@ deployments. The`spk infra scaffold` will do the following:
   }
 }
 ```
-
-#### `spk infra create --<environment>`
-
-Validates that a working bedrock source is available. The `spk infra create`
-will do the following:
-
-- Check if a working Bedrock source for infrastructure deployment is available
-- Checks if `spk infra init` has been run (Work in Progress)
-- Runs a `terraform init` on a Bedrock environment template (Defaults to Azure
-  Simple)

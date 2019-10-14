@@ -7,12 +7,10 @@ import { generateClusterDefinition, parseVariablesTf } from "./scaffold";
 
 beforeAll(() => {
   enableVerboseLogging();
-  jest.setTimeout(30000);
 });
 
 afterAll(() => {
   disableVerboseLogging();
-  jest.setTimeout(5000);
 });
 
 describe("Validate parsing of sample variables.tf file", () => {
