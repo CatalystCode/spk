@@ -181,7 +181,7 @@ export const scaffoldInit = async (
                 dir: name,
                 root: "/ignored"
               });
-              fs.writeFileSync(confPath, JSON.stringify(baseDef));
+              fs.writeFileSync(confPath, JSON.stringify(baseDef, null, 2));
               return true;
             }
           });
