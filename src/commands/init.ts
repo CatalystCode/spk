@@ -5,9 +5,15 @@ import yaml from "js-yaml";
 import * as os from "os";
 import { logger } from "../logger";
 import { IConfigYaml } from "../types";
+import {
+  validateAzure,
+  validateEnvVariables,
+  validatePrereqs
+} from "./infra/vaildate";
 
 export const defaultFileLocation = os.homedir() + "/.spk/config.yaml";
 export let config: IConfigYaml = {};
+export const Config = (): IConfigYaml => config;
 
 /**
  * Adds the init command to the commander command object
@@ -28,6 +34,20 @@ export const initCommandDecorator = (command: commander.Command): void => {
           return;
         }
         loadConfiguration(opts.file);
+
+        await validatePrereqs(["terraform", "git", "az", "helm"], true);
+
+        await validateAzure(true);
+
+        await validateEnvVariables(
+          [
+            "ARM_SUBSCRIPTION_ID",
+            "ARM_CLIENT_ID",
+            "ARM_CLIENT_SECRET",
+            "ARM_TENANT_ID"
+          ],
+          true
+        );
 
         await writeConfigToDefaultLocation();
 
