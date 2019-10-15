@@ -43,6 +43,11 @@ export interface IHelmConfig {
  * Used to capture service meta-information regarding how to deploy
  */
 export interface IBedrockFile {
+  rings?: {
+    [branchName: string]: {
+      default: boolean; // indicates the branch is a default branch to PR against when creating a service revision
+    };
+  };
   services: {
     [relativeDirectory: string]: {
       helm: IHelmConfig;
@@ -116,6 +121,7 @@ export interface IConfigYaml {
     manifest_repository?: string;
     access_token: string;
     variable_group?: IVariableGroupConfiguration;
+    server_url?: string;
   };
   infra?: {
     checks?: {
