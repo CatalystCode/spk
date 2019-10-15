@@ -4,6 +4,7 @@ import {
   createStorageAccountIfNotExists,
   getStorageAccountKey
 } from "../../lib/azure/storage";
+import { addVariableGroupWithKeyVaultMap } from "../../lib/pipelines/variablegroup";
 import { logger } from "../../logger";
 
 /**
@@ -35,6 +36,7 @@ export const onboardCommandDecorator = (command: commander.Command): void => {
     )
     .action(async opts => {
       try {
+        await addVariableGroupWithKeyVaultMap();
         if (
           opts.storageAccountName &&
           opts.storageResourceGroupName &&

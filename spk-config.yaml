@@ -6,11 +6,32 @@ azure_cli:
 
 # Azure DevOps Configuration
 azure_devops: # Should this live under the `spk` configuration?
-  org: "my-az-do-org"
-  project: "my-mono-repo-project"
+  org: "epicstuff"
+  orgUrl: "https://dev.azure.com/epicstuff"
+  project: "hellobedrock"
   hld_repository: "my-hld-repository"
   manifest_repository: "my-manifest-repository"
-  access_token: "access-token" # This is your Personal Access Token with permission to modify and access this private repo. Ex. "${env:AZDO_PERSONAL_ACCESS_TOKEN}". Leave this empty if project is public
+  access_token: "${env:AZDO_PERSONAL_ACCESS_TOKEN}" #Leave this empty if project is public
+  variable_group:
+    name: "myvg"
+    description: "myvg description"
+    variables: # Either this or Key Value provider should be configured for this variable group
+      var1:
+        value: value1
+        isSecret: true
+      var2:
+        value: value2
+        isSecret: false
+    key_vault_provider:
+      name: "sarathpvault" # name of the Azure Key Vaukt with Secrets
+      secrets: ["secret1", "secret2"] # Names of secrets from Azure Key Vault to map in Variable Group
+      service_connection: # service connection is required to authorize with Azure Key Vault
+        name: "Bedrock-GitOps-KeyVault" # if the service connection with this name does not exist, the following values are required to create a new service connection with this name
+        subscription_id: "${env:AZDO_SERVICE_CONNECTION_SUBSCRIPTION_ID}" # Azure Subscription id where Key Vault exist
+        subscription_name: "CSE Dev Crews Americas West" # Azure Subscription name where Key Vault exist
+        service_principal_id: "${env:AZDO_SERVICE_CONNECTION_CLIENT_ID}" # Service Principal Id that has 'Get' and 'List' in Key Vault Access Policy
+        service_principal_secret: "${env:AZDO_SERVICE_CONNECTION_CLIENT_SECRET}" # Service Principal secret for the above Service Principal Id
+        tenant_id: "${env:AZDO_SERVICE_CONNECTION_TENANT_ID}" # AAD Tenant Id for the above Service Principal
 
 infra:
   terraform: "v0.12.6"
@@ -24,12 +45,12 @@ infra:
 
 introspection:
   azure: # This is the storage account for the service introspection tool
-    account_name: "storage-account-name"
+    account_name: "testsarathp1"
     table_name: "table-name"
     partition_key: "partition-key"
-    key: "storage-access-key"
+    key: "${env:INTROSPECTION_STORAGE_ACCESS_KEY}"
     # Following is needed if using spk to onboard to use introspection tool
-    service_principal_id: "service-principal-id"
-    service_principal_secret: "service-principal-secret"
-    subscription_id: "subscription-id"
-    tenant_id: "tenant-id"
+    service_principal_id: "${env:AZURE_CLIENT_ID}"
+    service_principal_secret: "${env:AZURE_CLIENT_SECRET}"
+    subscription_id: "${env:AZURE_SUBSCRIPTION_ID}"
+    tenant_id: "${env:AZURE_TENANT_ID}"

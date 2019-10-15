@@ -1,3 +1,5 @@
+import { VariableValue } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
+
 /**
  * Maintainers file
  */
@@ -75,6 +77,30 @@ export interface IAzurePipelinesYaml {
   }>;
 }
 
+export interface IServiceConnectionConfiguration {
+  name: string;
+  subscription_id: string;
+  subscription_name: string;
+  service_principal_id: string;
+  service_principal_secret: string;
+  tenant_id: string;
+}
+
+export interface IVariableGroupConfiguration {
+  name: string;
+  description: string;
+  variables?: [
+    {
+      [key: string]: VariableValue;
+    }
+  ];
+  key_vault_provider?: {
+    name: string;
+    secrets: string[];
+    service_connection: IServiceConnectionConfiguration;
+  };
+}
+
 export interface IConfigYaml {
   azure_cli?: {
     version?: string;
@@ -83,13 +109,14 @@ export interface IConfigYaml {
     };
   };
   azure_devops?: {
-    org?: string;
-    project?: string;
+    org: string;
+    orgUrl: string;
+    project: string;
     hld_repository?: string;
     manifest_repository?: string;
-    access_token?: string;
+    access_token: string;
+    variable_group?: IVariableGroupConfiguration;
   };
-
   infra?: {
     checks?: {
       [toolName: string]: boolean;
