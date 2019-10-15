@@ -11,7 +11,6 @@ spk infra [command] [options]
 Commands:
 
 - [validate](#validate)
-- [create](#create)
 - [scaffold](#scaffold)
 
 ## Prerequisites
@@ -39,27 +38,6 @@ spk infra validate|v [options]
 Options:
    -h, --help  Usage information
 ```
-
-### create
-
-Create a Bedrock infra template based on the given `options` and deploy it to
-the given subscription.
-
-```
-Usage:
-spk infra create|c [options]
-
-Options:
-  -e, --environment <environment-name>   Deploy an Infra Environment from Bedrock
-  --resource-group <rg_name>             Resource group name to deploy Bedrock Environment to
-  --cluster-name <cluster-name>          AKS cluster name to deploy in environment (default: "spk-AKScluster")
-  --gitops-url <url_gitops>              URL to HLD gitops manifests to apply to AKS cluster (default: "git@github.com:timfpark/fabrikate-cloud-native-manifests.git")
-  --serviceprincipalid <sp-id>           Service Principal ID for Azure Subscription
-  --serviceprincipalsecret <sp-secret>   Service Principal Secret for Azure Subscription
-  -h, --help                             Usage information
-```
-
-#### `spk infra scaffold --<name> --<source> --<version> --<template>`
 
 ### scaffold
 
