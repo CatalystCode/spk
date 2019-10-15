@@ -42,7 +42,7 @@ introspection:
 
 ## Commands
 
-### get command
+### get
 
 Get the list of deployments by service name, release environment, build ID,
 commit ID, or container image tag.
@@ -63,7 +63,7 @@ Options:
   -h, --help                           Usage information
 ```
 
-### onboard command
+### onboard
 
 Onboard to use the service introspection tool. This will create a storage
 account in your subscription.
@@ -90,7 +90,7 @@ Options:
 
 ```
 
-### validate command
+### validate
 
 Validate the [requirements](#requirements)
 
