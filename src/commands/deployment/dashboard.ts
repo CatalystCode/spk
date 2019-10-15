@@ -2,6 +2,7 @@ import commander from "commander";
 import open = require("open");
 import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
+import { validatePrereqs } from "../infra/init";
 import { config } from "../init";
 
 /**
@@ -13,7 +14,7 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
     .command("dashboard")
     .alias("d")
     .description("Launch the service introspection dashboard")
-    .action(async opts => {
+    .action(async () => {
       if (
         !config.introspection ||
         !config.azure_devops ||
@@ -28,36 +29,44 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
         logger.error(
           "You need to specify configuration for your introspection storage account and DevOps pipeline to run this dashboard. Please initialize the spk tool with the right configuration"
         );
+        return;
       }
-      try {
-        logger.info("Launching dashboard");
-        const dockerRepository = config.introspection!.dashboard!.container!;
-        await exec("docker", ["pull", dockerRepository]);
-        exec("docker", [
-          "run",
-          "--rm",
-          "-e",
-          "REACT_APP_PIPELINE_ORG=" + config.azure_devops!.org!,
-          "-e",
-          "REACT_APP_PIPELINE_PROJECT=" + config.azure_devops!.project!,
-          "-e",
-          "REACT_APP_STORAGE_ACCOUNT_NAME=" +
-            config.introspection!.azure!.account_name!,
-          "-e",
-          "REACT_APP_STORAGE_PARTITION_KEY=" +
-            config.introspection!.azure!.partition_key!,
-          "-e",
-          "REACT_APP_STORAGE_TABLE_NAME=" +
-            config.introspection!.azure!.table_name!,
-          "-e",
-          "REACT_APP_STORAGE_ACCESS_KEY=" + config.introspection!.azure!.key!,
-          "-p",
-          "1010:80",
-          dockerRepository
-        ]);
-        await open("http://localhost:1010/");
-      } catch (err) {
-        logger.error(`Error occurred while launching dashboard ${err}`);
-      }
+      launchDashboard();
     });
+};
+
+export const launchDashboard = async () => {
+  try {
+    if (!(await validatePrereqs(["docker"]))) {
+      return;
+    }
+    logger.info("Launching dashboard");
+    const dockerRepository = config.introspection!.dashboard!.container!;
+    await exec("docker", ["pull", dockerRepository]);
+    exec("docker", [
+      "run",
+      "--rm",
+      "-e",
+      "REACT_APP_PIPELINE_ORG=" + config.azure_devops!.org!,
+      "-e",
+      "REACT_APP_PIPELINE_PROJECT=" + config.azure_devops!.project!,
+      "-e",
+      "REACT_APP_STORAGE_ACCOUNT_NAME=" +
+        config.introspection!.azure!.account_name!,
+      "-e",
+      "REACT_APP_STORAGE_PARTITION_KEY=" +
+        config.introspection!.azure!.partition_key!,
+      "-e",
+      "REACT_APP_STORAGE_TABLE_NAME=" +
+        config.introspection!.azure!.table_name!,
+      "-e",
+      "REACT_APP_STORAGE_ACCESS_KEY=" + config.introspection!.azure!.key!,
+      "-p",
+      "1010:80",
+      dockerRepository
+    ]);
+    await open("http://localhost:1010/");
+  } catch (err) {
+    logger.error(`Error occurred while launching dashboard ${err}`);
+  }
 };
