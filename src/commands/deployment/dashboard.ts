@@ -2,7 +2,7 @@ import commander from "commander";
 import open = require("open");
 import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
-import { validatePrereqs } from "../infra/init";
+import { validatePrereqs } from "../infra/vaildate";
 import { config } from "../init";
 
 /**
@@ -37,7 +37,7 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
 
 export const launchDashboard = async () => {
   try {
-    if (!(await validatePrereqs(["docker"]))) {
+    if (!(await validatePrereqs(["docker"], false))) {
       return;
     }
     logger.info("Launching dashboard");

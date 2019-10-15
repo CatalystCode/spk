@@ -5,7 +5,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { validatePrereqs } from "../infra/init";
+import { validatePrereqs } from "../infra/vaildate";
 import { config, loadConfiguration } from "./../init";
 import { launchDashboard } from "./dashboard";
 
@@ -25,7 +25,7 @@ afterAll(() => {
 describe("Validate dashboard container pull", () => {
   test("Pull dashboard container if docker is installed", async () => {
     launchDashboard();
-    const dockerInstalled = await validatePrereqs(["docker"]);
+    const dockerInstalled = await validatePrereqs(["docker"], false);
     if (dockerInstalled) {
       const dockerId = await exec("docker", [
         "images",
