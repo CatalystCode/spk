@@ -6,13 +6,17 @@ Service Introspection shows information about Bedrock deployments:
 - Time the service was changed or errored
 - Deployment state of the service is
 
-Usage: `spk deployment [command] [options]`
+Usage:
+
+```
+spk deployment [command] [options]
+```
 
 Commands:
 
+- [validate](#validate)
 - [get](#get)
 - [onboard](#onboard)
-- [validate](#validate)
 
 Global options:
 
@@ -41,6 +45,19 @@ introspection:
 ```
 
 ## Commands
+
+### validate
+
+Validate the [requirements](#requirements)
+
+```
+Usage:
+spk deployment validate|v [options]
+
+Options:
+  -h, --help  Usage information
+
+```
 
 ### get
 
@@ -88,19 +105,6 @@ Options:
   -r, --storage-resource-group-name <storage-resource-group-name>  Name of the resource group for the storage account
   -k, --key-vault-name <key-vault-name>                            Name of the Azure key vault
   -h, --help                                                       Usage information
-
-```
-
-### validate
-
-Validate the [requirements](#requirements)
-
-```
-Usage:
-spk deployment validate|v [options]
-
-Options:
-  -h, --help  Usage information
 
 ```
 

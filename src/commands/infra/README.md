@@ -1,11 +1,30 @@
-## `spk infra`
+# Infra
 
-Command used to generate, manage and update Bedrock infrastructure.
+Manage and update Bedrock infrastructure.
 
-#### `spk infra validate`
+Usage:
 
-Initializes the environment to deploy Bedrock infrastructure. The
-`spk infra validate` will do the following:
+```
+spk infra [command] [options]
+```
+
+Commands:
+
+- [validate](#validate)
+- [create](#create)
+- [scaffold](#scaffold)
+
+## Prerequisites
+
+Prerequisites are installed via the [`validate` command](#validate).
+
+## Commands
+
+### validate
+
+Initializes the environment to deploy Bedrock infrastructure.
+
+It will do the following:
 
 - Install prerequisites (e.g. terraform, git, helm, az cli) if not already
   installed.
@@ -13,24 +32,71 @@ Initializes the environment to deploy Bedrock infrastructure. The
 - Check for environment variables (e.g. ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID,
   ARM_CLIENT_SECRET, ARM_TENANT_ID)
 
+```
+Usage:
+spk infra validate|v [options]
+
+Options:
+   -h, --help  Usage information
+```
+
+### create
+
+Create a Bedrock infra template based on the given `options` and deploy it to
+the given subscription.
+
+```
+Usage:
+spk infra create|c [options]
+
+Options:
+  -e, --environment <environment-name>   Deploy an Infra Environment from Bedrock
+  --resource-group <rg_name>             Resource group name to deploy Bedrock Environment to
+  --cluster-name <cluster-name>          AKS cluster name to deploy in environment (default: "spk-AKScluster")
+  --gitops-url <url_gitops>              URL to HLD gitops manifests to apply to AKS cluster (default: "git@github.com:timfpark/fabrikate-cloud-native-manifests.git")
+  --serviceprincipalid <sp-id>           Service Principal ID for Azure Subscription
+  --serviceprincipalsecret <sp-secret>   Service Principal Secret for Azure Subscription
+  -h, --help                             Usage information
+```
+
 #### `spk infra scaffold --<name> --<source> --<version> --<template>`
+
+### scaffold
+
+Create initial scaffolding for cluster deployment.
 
 Builds a scaffold of an infrastructure deployment project containing a
 `definition.json` that enables a user to version, modify and organize terraform
-deployments. The`spk infra scaffold` will do the following:
+deployments.
 
-- Check if `spk infra validate` has already been successfully ran.
-- Creates a new folder with the `<name>` you provided.
-- Provides a scaffold of an infrastructure deployment based on a `<source>` git
-  url for a terraform deployment, `<version>` respective to the repository of
-  which tag to pull, and a `<template>` (LOCAL-ONLY) of the path to the
-  variables.tf file for which `spk` will embed into a definition json file.
+It will do the following:
 
-**Sample Command**:
+- Check if `spk infra validate` succeeded
+- Create a new folder with the `<name>` you provided.
+- Provide an infrastructure deployment scaffold based on a `<source>` git url
+  for a terraform deployment, `<version>` respective to the repository of which
+  tag to pull, and a `<template>` (LOCAL-ONLY) of the path to the variables.tf
+  file for which `spk` will embed into a definition json file.
 
-> `spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "0.0.1" --template .bedrock/cluster/environments/azure-simple/variables.tf`
+```
+Usage:
+spk infra scaffold|s [options]
 
-**Sample Definition**:
+Options:
+  -n, --name <name>                              Cluster name for scaffolding
+  -s, --source <cluster definition github repo>  Source URL for the repository containing the terraform deployment
+  -v, --version <repository version>             Version or tag for the repository so a fixed version is referenced
+  -t, --template <path to variables.tf>          Location of variables.tf for the terraform deployment
+  -h, --help                                     Usage information
+```
+
+#### scaffold sample
+
+```
+spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "0.0.1" --template .bedrock/cluster/environments/azure-simple/variables.tf
+```
+
+Output:
 
 ```
 {
