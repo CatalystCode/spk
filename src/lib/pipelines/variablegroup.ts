@@ -1,26 +1,28 @@
 import { DefinitionResourceReference } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import {
-  VariableGroup,
-  VariableValue
-} from "azure-devops-node-api/interfaces/ReleaseInterfaces";
-import {
   AzureKeyVaultVariableGroupProviderData,
   AzureKeyVaultVariableValue,
-  VariableGroupParameters
+  VariableGroup,
+  VariableGroupParameters,
+  VariableValue
 } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
-import { config } from "../../commands/init";
+import { getConfig } from "../../../src/config";
 import { logger } from "../../logger";
 import { getTaskAgentClient } from "./azDo";
 import { getBuildApiClient } from "./pipelines";
 import { createServiceConnectionIfNotExists } from "./serviceConnection";
 
+const config = getConfig();
+logger.debug(`Config: ${config}`);
+const gitOpsConfig = config.azure_devops!;
+const orgUrl = gitOpsConfig.orgUrl;
+const token = gitOpsConfig.access_token;
+const project = gitOpsConfig.project;
+
 /**
- * Creates  Azure storate account `name` in resource group `resourceGroup` in 1ocation `location`
+ * Adds Variable group `groupConfig` in Azure DevOps project `project` under org `orgUrl` and returns `VariableGroup` object
  *
- * @param resourceGroup Name of Azure reesource group
- * @param name The Azure storage account name
- * @param location The Azure storage account location
  */
 export const addVariableGroup = async (): Promise<VariableGroup> => {
   const groupConfig = config.azure_devops!.variable_group!;
@@ -32,17 +34,14 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
       throw new Error("Invalid input. Variable are not configured");
     }
 
+    // map variables from configuration
     const variablesMap: { [key: string]: VariableValue } = {};
-    const variables = JSON.stringify(groupConfig.variables!);
-
-    logger.info(`variable: ${variables}`);
-
     for (const [key, value] of Object.entries(groupConfig.variables!)) {
       logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
       variablesMap[key] = value;
     }
 
-    // creating variable group parameterts
+    // create variable group parameterts
     const params: VariableGroupParameters = {
       description: groupConfig.description,
       name: groupConfig.name,
@@ -59,19 +58,12 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
 };
 
 /**
- * Creates  Azure storate account `name` in resource group `resourceGroup` in 1ocation `location`
+ * * Adds Variable group `groupConfig` with Key Valut maopping in Azure DevOps project `project` under org `orgUrl` and returns `VariableGroup` object
  *
- * @param resourceGroup Name of Azure reesource group
- * @param name The Azure storage account name
- * @param location The Azure storage account location
  */
 export const addVariableGroupWithKeyVaultMap = async (): Promise<
   VariableGroup
 > => {
-  const gitOpsConfig = config.azure_devops!;
-  const orgUrl = gitOpsConfig.orgUrl;
-  const token = gitOpsConfig.access_token;
-  const project = gitOpsConfig.project;
   const groupConfig = gitOpsConfig.variable_group!;
   const groupKvConfig = groupConfig.key_vault_provider!;
 
@@ -89,12 +81,9 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
       );
     }
 
-    // When variable group is configured with key vault provier, handle service connection
+    // get service connection id
     logger.info(`Checking for Service connection`);
     serviceConnectionId = await createServiceConnectionIfNotExists(
-      orgUrl,
-      token,
-      project,
       groupKvConfig.service_connection
     );
 
@@ -102,20 +91,26 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
       `Using Service connection id: ${serviceConnectionId!} for Key Vault`
     );
 
-    // AzureKeyVaultVariableValue
+    // create AzureKeyVaultVariableValue object
     const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
       serviceEndpointId: serviceConnectionId!,
       vault: groupConfig.key_vault_provider!.name
     };
 
-    const secretsMap: { [key: string]: AzureKeyVaultVariableValue } = {};
+    // map secrets from config
+    // tslint:disable-next-line: prefer-const
+    let secretsMap: { [key: string]: AzureKeyVaultVariableValue } = {};
+    logger.info(`secrets: ${groupConfig.key_vault_provider!.secrets}`);
 
     for (const secret of groupConfig.key_vault_provider!.secrets) {
+      logger.debug(`secret name: ${secret}`);
       secretsMap[secret] = {
         enabled: true,
         isSecret: true
       };
     }
+
+    logger.info(`secrets: ${JSON.stringify(secretsMap)}`);
 
     // creating variable group parameterts
     const params: VariableGroupParameters = {
@@ -134,17 +129,17 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
   }
 };
 
+/**
+ * * Adds Variable group with `VariableGroupParameters` data and returns `VariableGroup` object.
+ *
+ * @param variableGroupdata The Variable group data
+ * @param accessToAllPipelines if true, enables authorization to access by all pipelines
+ */
 const doAddVariableGroup = async (
   variableGroupdata: VariableGroupParameters,
   accessToAllPipelines: boolean
 ): Promise<VariableGroup> => {
-  const gitOpsConfig = config.azure_devops!;
-  const orgUrl = gitOpsConfig.orgUrl;
-  const token = gitOpsConfig.access_token;
-  const project = gitOpsConfig.project;
-
   const message: string = `Variable Group ${variableGroupdata.name}`;
-
   try {
     logger.debug(
       `Creating new Variable Group ${JSON.stringify(variableGroupdata)}`
@@ -154,7 +149,7 @@ const doAddVariableGroup = async (
       variableGroupdata,
       project
     );
-    logger.debug(`Created new Variable Group. Id: ${JSON.stringify(group)}`);
+    logger.debug(`Created new Variable Group: ${JSON.stringify(group)}`);
     logger.info(`Created ${message} with id: ${group.id!}`);
 
     if (accessToAllPipelines) {
@@ -169,14 +164,15 @@ const doAddVariableGroup = async (
   }
 };
 
+/**
+ * * Enables authorization for all pipelines to access Variable group with `variableGroup` data and returns `true` if successful
+ *
+ * @param variableGroup The Variable group object
+ */
 const authorizeAccessToAllPipelines = async (
   variableGroup: VariableGroup
 ): Promise<boolean> => {
-  const gitOpsConfig = config.azure_devops!;
-  const orgUrl = gitOpsConfig.orgUrl;
-  const token = gitOpsConfig.access_token;
-  const project = gitOpsConfig.project;
-  const message: string = `Resource definition to access all pipelines for Variable Group ${variableGroup.name}`;
+  const message: string = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
 
   try {
     // authorize access to variable group from all pipelines
@@ -205,7 +201,7 @@ const authorizeAccessToAllPipelines = async (
       )}`
     );
     logger.info(
-      `Authorized access to Variable Group id: ${variableGroup.id} from all pipelines with a resource definition authorized set to ${resourceDefinitionResponse[0].authorized}`
+      `Authorized access ${message} authorized flag set to ${resourceDefinitionResponse[0].authorized}`
     );
 
     return true;
