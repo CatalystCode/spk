@@ -35,11 +35,16 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
     }
 
     // map variables from configuration
-    const variablesMap: { [key: string]: VariableValue } = {};
+    // tslint:disable-next-line: prefer-const
+    let variablesMap: { [key: string]: VariableValue } = {};
+    logger.debug(`variables: ${JSON.stringify(groupConfig.variables!)}`);
+
     for (const [key, value] of Object.entries(groupConfig.variables!)) {
       logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
       variablesMap[key] = value;
     }
+
+    logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
 
     // create variable group parameterts
     const params: VariableGroupParameters = {
@@ -100,7 +105,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
     // map secrets from config
     // tslint:disable-next-line: prefer-const
     let secretsMap: { [key: string]: AzureKeyVaultVariableValue } = {};
-    logger.info(`secrets: ${groupConfig.key_vault_provider!.secrets}`);
+    logger.debug(`secrets: ${groupConfig.key_vault_provider!.secrets}`);
 
     for (const secret of groupConfig.key_vault_provider!.secrets) {
       logger.debug(`secret name: ${secret}`);
@@ -110,7 +115,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
       };
     }
 
-    logger.info(`secrets: ${JSON.stringify(secretsMap)}`);
+    logger.debug(`secrets: ${JSON.stringify(secretsMap)}`);
 
     // creating variable group parameterts
     const params: VariableGroupParameters = {
