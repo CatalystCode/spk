@@ -7,8 +7,7 @@ Command used to generate, manage and update Bedrock infrastructure.
 Initializes the environment to deploy Bedrock infrastructure. The
 `spk infra validate` will do the following:
 
-- Install prerequisites (e.g. terraform, git, helm, az cli) if not already
-  installed.
+- Verifies if prerequisites (e.g. terraform, git, helm, az cli) are installed
 - Verifies that user is logged into Azure via CLI
 - Check for environment variables (e.g. ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID,
   ARM_CLIENT_SECRET, ARM_TENANT_ID)
@@ -36,6 +35,7 @@ deployments. The`spk infra scaffold` will do the following:
 {
   "name": "discovery-service",
   "source": "https://github.com/microsoft/bedrock",
+    "template": "bedrock/cluster/environments/azure-simple",
   "version": "0.0.1",
   "variables": {
     "agent_vm_count": "3",
