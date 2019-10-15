@@ -10,9 +10,7 @@ export const validateCommandDecorator = (command: commander.Command): void => {
   command
     .command("validate")
     .alias("v")
-    .description(
-      "Validate deployment(s) for a service, release environment, build Id, commit Id, or image tag."
-    )
+    .description("Validate the configuration and storage account are correct.")
     .action(() => {
       isValidConfig();
     });
