@@ -37,7 +37,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
     .command("get")
     .alias("g")
     .description(
-      "Get the list of deployments by service name, release environment, build ID, commit ID, or container image tag."
+      "Get the list of deployments and filter with these options: service name, environment, build ID, commit ID, container image tag."
     )
     .option(
       "-b, --build-id <build-id>",

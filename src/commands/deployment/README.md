@@ -66,7 +66,8 @@ Options:
 ### onboard
 
 Onboard to use the service introspection tool. This will create a storage
-account in your subscription.
+account if it does not already exist in your subscription in the given
+`resource-group`.
 
 Prerequisites:
 
