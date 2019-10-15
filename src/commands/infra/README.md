@@ -28,7 +28,7 @@ deployments. The`spk infra scaffold` will do the following:
 
 **Sample Command**:
 
-> `spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "0.0.1" --template .bedrock/cluster/environments/azure-simple/variables.tf`
+> `spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "0.0.1" --template .bedrock/cluster/environments/azure-simple`
 
 **Sample Definition**:
 
