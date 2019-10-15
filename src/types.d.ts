@@ -104,6 +104,9 @@ export interface IConfigYaml {
     };
   };
   introspection?: {
+    dashboard?: {
+      container?: string;
+    };
     azure?: {
       account_name?: string;
       table_name?: string;
