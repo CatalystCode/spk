@@ -10,9 +10,9 @@ Usage: `spk deployment [command] [options]`
 
 Commands:
 
-- [get](#get-command)
-- [onboard](#onboard-command)
-- [validate](#validate-command)
+- [get](#get)
+- [onboard](#onboard)
+- [validate](#validate)
 
 Global options:
 
