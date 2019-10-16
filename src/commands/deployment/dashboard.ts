@@ -35,10 +35,10 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
     });
 };
 
-export const launchDashboard = async () => {
+export const launchDashboard = async (): Promise<boolean> => {
   try {
     if (!(await validatePrereqs(["docker"], false))) {
-      return;
+      return false;
     }
     logger.info("Launching dashboard");
     const dockerRepository = config.introspection!.dashboard!.container!;
@@ -66,7 +66,9 @@ export const launchDashboard = async () => {
       dockerRepository
     ]);
     await open("http://localhost:1010/");
+    return true;
   } catch (err) {
     logger.error(`Error occurred while launching dashboard ${err}`);
+    return false;
   }
 };
