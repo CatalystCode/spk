@@ -105,6 +105,10 @@ export interface IConfigYaml {
     git?: string;
   };
   introspection?: {
+    dashboard?: {
+      image?: string;
+      name?: string;
+    };
     azure?: {
       account_name?: string;
       table_name?: string;
