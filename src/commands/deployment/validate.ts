@@ -1,4 +1,5 @@
 import commander from "commander";
+import { storageAccountExists } from "../../lib/azure/storage";
 import { logger } from "../../logger";
 import { config } from "../init";
 
@@ -11,8 +12,9 @@ export const validateCommandDecorator = (command: commander.Command): void => {
     .command("validate")
     .alias("v")
     .description("Validate the configuration and storage account are correct.")
-    .action(() => {
-      isValidConfig();
+    .action(async () => {
+      await isValidConfig();
+      await isValidStorageAccount();
     });
 };
 
@@ -60,6 +62,24 @@ export const isValidConfig = (): boolean => {
     return false;
   }
 
-  logger.info("Validation passed.");
+  return true;
+};
+
+/**
+ * Check is the configured storage account is valid
+ */
+export const isValidStorageAccount = async (): Promise<boolean> => {
+  const isValid = await storageAccountExists(
+    config.introspection!.azure!.resource_group!,
+    config.introspection!.azure!.account_name!,
+    config.introspection!.azure!.key!
+  );
+
+  if (!isValid) {
+    logger.error("Storage account validation failed.");
+    return false;
+  }
+
+  logger.info("Storage account validation passed.");
   return true;
 };
