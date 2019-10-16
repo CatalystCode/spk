@@ -6,11 +6,40 @@
 Kubernetes clusters with [Bedrock](https://github.com/microsoft/bedrock)
 principles.
 
-![spk](./images/spk.png)
+The three core areas of `spk` are:
 
-For more information on the end-to-en experience of using Bedrock principles
-refer
-to:[Bedrock Developer and Operations Experience](https://github.com/CatalystCode/bedrock-end-to-end-dx)
+- [Service Introspection](./docs/service-introspection.md)
+- Service Management
+- [Cloud Infra Management](./docs/cloud-infra-management.md)
+
+![spk](./docs/images/spk.png)
+
+For more information on the end-to-end experience of using Bedrock principles
+refer to:
+[Bedrock Developer and Operations Experience](https://github.com/CatalystCode/bedrock-end-to-end-dx)
+
+## CLI
+
+```
+Usage:
+spk [options] [command]
+
+Commands:
+  init|i [options]  Initialize the spk tool for the first time
+  deployment        Introspect your deployments
+  project           Initialize and manage your Bedrock project.
+  service           Create and manage services for a Bedrock project.
+  infra             Deploy and modify your Bedrock infrastructure.
+
+```
+
+## `spk` commands docs
+
+Refer to the links below for additional information on each command:
+
+- [deployment](./docs/service-introspection.md)
+- service
+- [infra](./docs/cloud-infra-management.md)
 
 ## Initialize
 
