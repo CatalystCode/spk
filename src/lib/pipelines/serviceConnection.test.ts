@@ -1,9 +1,6 @@
-import { generateUuid } from "@azure/core-http";
 import * as path from "path";
 import { config, loadConfiguration } from "../../commands/init";
-import { getConfig } from "../../config";
 import { logger } from "../../logger";
-import { IServiceConnectionConfiguration } from "../../types";
 import * as serviceConnection from "./serviceConnection";
 
 jest.spyOn(serviceConnection, "getServiceConnectionByName").mockImplementation(
@@ -48,8 +45,9 @@ jest.spyOn(serviceConnection, "getServiceConnectionByName").mockImplementation(
 // let serviceConnectionParams: JSON;
 
 beforeEach(() => {
-  // const config = getConfig();
-  const mockFileName = "./spk-config.yaml";
+  process.env.test_name = "my_storage_account";
+  process.env.test_key = "my_storage_key";
+  const mockFileName = "src/commands/mocks/spk-config.yaml";
   const filename = path.resolve(mockFileName);
   loadConfiguration(filename);
 });
@@ -99,6 +97,6 @@ describe("Validate service endpoint params", () => {
 
     expect(data.authorization.scheme).toBe("ServicePrincipal");
 
-    logger.info(`validated service endpoint data`);
+    logger.info(`validated service endpoint create parameters`);
   });
 });
