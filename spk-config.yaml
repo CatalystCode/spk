@@ -14,14 +14,11 @@ azure_devops: # Should this live under the `spk` configuration?
   server_url:
 
 infra:
+  # DO NOT MODIFY THE FOLLOWING
+  # Prerequisite versions are auto-generated upon executing `spk init` and/or `spk infra vlaidate`
   terraform: "v0.12.6"
   helm: "v2.14.3"
   git: "2.17.1"
-  bedrock: # If you would like to use a forked or custom version of bedrock
-    # Releases are through tags / branches
-    source: "https://github.com/microsoft/bedrock.git"
-    tag:
-    access_token: "" # This is your Personal Access Token with permission to modify and access this private repo. Ex. "${env:BEDROCK_PERSONAL_ACCESS_TOKEN}". Leave this empty if project is public
 
 introspection:
   azure: # This is the storage account for the service introspection tool
