@@ -37,11 +37,12 @@ describe("Validate dashboard container pull", () => {
         expect(dashboardLaunched).toBeTruthy();
         logger.info("Verified that docker image has been pulled.");
 
-        await exec("docker", [
-          "container",
-          "stop",
-          config.introspection!.dashboard!.name!
-        ]);
+        // await exec("docker", [
+        //   "container",
+        //   "stop",
+        //   config.introspection!.dashboard!.name!
+        // ]);
+        logger.info(await exec("docker", ["container", "ls"]));
       } else {
         expect(dashboardLaunched).toBeFalsy();
       }
