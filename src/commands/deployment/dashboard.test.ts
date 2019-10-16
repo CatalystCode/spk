@@ -16,12 +16,10 @@ beforeAll(() => {
   const filename = path.resolve(mockFileName);
   loadConfiguration(filename);
   enableVerboseLogging();
-  jest.setTimeout(30000);
 });
 
 afterAll(() => {
   disableVerboseLogging();
-  jest.setTimeout(5000);
 });
 
 describe("Validate dashboard container pull", () => {
@@ -40,5 +38,5 @@ describe("Validate dashboard container pull", () => {
     } else {
       expect(dashboardLaunched).toBeFalsy();
     }
-  });
+  }, 30000);
 });
