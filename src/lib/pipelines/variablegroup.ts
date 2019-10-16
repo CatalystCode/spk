@@ -16,8 +16,8 @@ import { createServiceConnectionIfNotExists } from "./serviceConnection";
 const config = getConfig();
 logger.debug(`Config: ${config}`);
 const gitOpsConfig = config.azure_devops!;
-const orgUrl = gitOpsConfig.orgUrl;
-const token = gitOpsConfig.access_token;
+const orgUrl = gitOpsConfig.org!;
+const token = gitOpsConfig.access_token!;
 const project = gitOpsConfig.project!;
 
 /**

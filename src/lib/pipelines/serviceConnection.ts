@@ -15,8 +15,8 @@ const apiVersion: string = "api-version=5.1-preview.2";
 const config = getConfig();
 logger.debug(`Config: ${JSON.stringify(config)}`);
 const gitOpsConfig = config.azure_devops!;
-const orgUrl = gitOpsConfig.orgUrl;
-const personalAccessToken = gitOpsConfig.access_token;
+const orgUrl = gitOpsConfig.org!;
+const personalAccessToken = gitOpsConfig.access_token!;
 const project = gitOpsConfig.project!;
 
 /**
