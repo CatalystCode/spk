@@ -18,7 +18,7 @@ logger.debug(`Config: ${config}`);
 const gitOpsConfig = config.azure_devops!;
 const orgUrl = gitOpsConfig.orgUrl;
 const token = gitOpsConfig.access_token;
-const project = gitOpsConfig.project;
+const project = gitOpsConfig.project!;
 
 /**
  * Adds Variable group `groupConfig` in Azure DevOps project `project` under org `orgUrl` and returns `VariableGroup` object

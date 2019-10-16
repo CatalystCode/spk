@@ -107,9 +107,9 @@ export interface IVariableGroupConfiguration {
 }
 
 export interface IAzureDevOpsConfiguration {
-  org: string;
+  org?: string;
   orgUrl: string;
-  project: string;
+  project?: string;
   hld_repository?: string;
   manifest_repository?: string;
   access_token: string;

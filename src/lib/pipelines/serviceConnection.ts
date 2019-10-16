@@ -17,7 +17,7 @@ logger.debug(`Config: ${JSON.stringify(config)}`);
 const gitOpsConfig = config.azure_devops!;
 const orgUrl = gitOpsConfig.orgUrl;
 const personalAccessToken = gitOpsConfig.access_token;
-const project = gitOpsConfig.project;
+const project = gitOpsConfig.project!;
 
 /**
  * Check for Azdo Service Connection by name `serviceConnectionConfig.name` and creates `serviceConnection` if it does not exist
@@ -131,29 +131,30 @@ export const getServiceConnectionByName = async (
 
     resp = await client.get(resource);
 
+    logger.debug(
+      `getServiceConnectionByName: Service Endpoint Response results: ${JSON.stringify(
+        resp.result
+      )}`
+    );
+
     // check for response conditions
-    if (resp === null || resp.result === null || resp.result.value === null) {
+    if (resp === null || resp.result === null || resp.result.count === 0) {
       logger.info(
         `NO Service Connection was found by name: ${serviceConnectionName}`
       );
       return null;
     }
 
-    logger.debug(`Service Endpoint Response: status code: ${resp.statusCode}`);
-
     if (resp.result.count > 1) {
       const errMessage = `Found ${resp.result.count} service connections by name ${serviceConnectionName}`;
-      logger.debug(errMessage);
       throw new Error(errMessage);
     }
 
-    if (resp.result.value.length > 0) {
-      logger.info(
-        `Found Service Connection by name ${serviceConnectionName} with a id ${resp.result.value[0].id}`
-      );
-    }
+    logger.info(
+      `Found Service Connection by name ${serviceConnectionName} with a id ${resp.result.value[0].id}`
+    );
 
-    return resp.result.value.length === 0 ? null : resp.result.value[0];
+    return resp.result.count === 0 ? null : resp.result.value[0];
   } catch (err) {
     throw err;
   }

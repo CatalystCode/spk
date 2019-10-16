@@ -54,16 +54,51 @@ beforeEach(() => {
   loadConfiguration(filename);
 });
 
-describe("Validate service endpoint data", () => {
-  test("valid service endpoint data", async () => {
-    logger.debug(`config: ${JSON.stringify(config)}`);
+describe("Validate service endpoint params", () => {
+  test("valid service endpoint params", async () => {
     const serviceConnectionConfig = config.azure_devops!.variable_group!
       .key_vault_provider!.service_connection;
-    const data = serviceConnection.createServiceEndPointParams(
+
+    const data = await serviceConnection.createServiceEndPointParams(
       serviceConnectionConfig
     );
 
-    expect(data).toBeDefined();
+    expect(data.name).toBe(
+      config.azure_devops!.variable_group!.key_vault_provider!
+        .service_connection.name
+    );
+
+    expect(data.type).toBe("azurerm");
+
+    expect(data.data.subscriptionId).toBe(
+      config.azure_devops!.variable_group!.key_vault_provider!
+        .service_connection.subscription_id
+    );
+
+    expect(data.data.subscriptionName).toBe(
+      config.azure_devops!.variable_group!.key_vault_provider!
+        .service_connection.subscription_name
+    );
+
+    expect(data.authorization.parameters.serviceprincipalid).toBe(
+      config.azure_devops!.variable_group!.key_vault_provider!
+        .service_connection.service_principal_id
+    );
+
+    expect(data.authorization.parameters.serviceprincipalkey).toBe(
+      config.azure_devops!.variable_group!.key_vault_provider!
+        .service_connection.service_principal_secret
+    );
+
+    expect(data.authorization.parameters.tenantid).toBe(
+      config.azure_devops!.variable_group!.key_vault_provider!
+        .service_connection.tenant_id
+    );
+
+    expect(data.authorization.parameters.authenticationType).toBe("spnKey");
+
+    expect(data.authorization.scheme).toBe("ServicePrincipal");
+
     logger.info(`validated service endpoint data`);
   });
 });
