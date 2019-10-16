@@ -106,6 +106,17 @@ export interface IVariableGroupConfiguration {
   };
 }
 
+export interface IAzureDevOpsConfiguration {
+  org: string;
+  orgUrl: string;
+  project: string;
+  hld_repository?: string;
+  manifest_repository?: string;
+  access_token: string;
+  variable_group?: IVariableGroupConfiguration;
+  server_url?: string;
+}
+
 export interface IConfigYaml {
   azure_cli?: {
     version?: string;
@@ -113,16 +124,7 @@ export interface IConfigYaml {
       aks_preview?: string;
     };
   };
-  azure_devops?: {
-    org: string;
-    orgUrl: string;
-    project: string;
-    hld_repository?: string;
-    manifest_repository?: string;
-    access_token: string;
-    variable_group?: IVariableGroupConfiguration;
-    server_url?: string;
-  };
+  azure_devops?: IAzureDevOpsConfiguration;
   infra?: {
     checks?: {
       [toolName: string]: boolean;
