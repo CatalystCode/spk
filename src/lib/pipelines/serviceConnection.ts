@@ -6,7 +6,7 @@ import { IServiceConnectionConfiguration } from "../../types";
 import { getRestClient } from "./azDo";
 import {
   IServiceEndPoint,
-  ServiceEndPointParams
+  IServiceEndPointParams
 } from "./serviceConnectionInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
@@ -73,7 +73,7 @@ export const addServiceConnection = async (
   let resp: IRestResponse<IServiceEndPoint>;
 
   try {
-    const endPointParams: ServiceEndPointParams = await createServiceEndPointParams(
+    const endPointParams: IServiceEndPointParams = await createServiceEndPointParams(
       serviceConnectionConfig
     );
 
@@ -161,8 +161,8 @@ export const getServiceConnectionByName = async (
 
 export const createServiceEndPointParams = async (
   serviceConnectionConfig: IServiceConnectionConfiguration
-): Promise<ServiceEndPointParams> => {
-  const endPointParams: ServiceEndPointParams = {
+): Promise<IServiceEndPointParams> => {
+  const endPointParams: IServiceEndPointParams = {
     authorization: {
       parameters: {
         authenticationType: "spnKey",
