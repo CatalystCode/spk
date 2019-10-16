@@ -44,11 +44,13 @@ export const launchDashboard = async (port: number): Promise<boolean> => {
       return false;
     }
     logger.info("Launching dashboard");
-    const dockerRepository = config.introspection!.dashboard!.container!;
+    const dockerRepository = config.introspection!.dashboard!.image!;
     await exec("docker", ["pull", dockerRepository]);
     exec("docker", [
       "run",
       "--rm",
+      "--name",
+      config.introspection!.dashboard!.name!,
       "-e",
       "REACT_APP_PIPELINE_ORG=" + config.azure_devops!.org!,
       "-e",

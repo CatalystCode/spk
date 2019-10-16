@@ -111,7 +111,8 @@ export interface IConfigYaml {
   };
   introspection?: {
     dashboard?: {
-      container?: string;
+      image?: string;
+      name?: string;
     };
     azure?: {
       account_name?: string;

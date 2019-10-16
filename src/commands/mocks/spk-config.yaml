@@ -24,7 +24,8 @@ infra:
 
 introspection:
   dashboard:
-    container: "samiyaakhtar/spektate:prod"
+    image: "samiyaakhtar/spektate:prod"
+    name: "spektate"
   azure: # This is the storage account for the service introspection tool
     account_name: "${env:test_name}"
     table_name: "table-name"
