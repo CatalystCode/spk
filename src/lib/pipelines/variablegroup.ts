@@ -212,7 +212,6 @@ export interface IKeyVaultVariableMap {
 export const buildKeyVaultVariablesMap = async (
   secrets: string[]
 ): Promise<IKeyVaultVariableMap> => {
-  // tslint:disable-next-line: prefer-const
   const secretsMap: IKeyVaultVariableMap = {};
   logger.debug(`secrets: ${secrets}`);
 
