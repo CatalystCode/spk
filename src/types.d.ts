@@ -103,11 +103,6 @@ export interface IConfigYaml {
     terraform?: string;
     helm?: string;
     git?: string;
-    bedrock?: {
-      source?: string;
-      tag?: string;
-      access_token?: string;
-    };
   };
   introspection?: {
     azure?: {
