@@ -7,6 +7,7 @@ azure_cli:
 # Azure DevOps Configuration
 azure_devops: # Should this live under the `spk` configuration?
   org: "epicstuff"
+  server_url:
   orgUrl: "https://dev.azure.com/epicstuff"
   project: "hellobedrock"
   hld_repository: "my-hld-repository"
@@ -32,8 +33,6 @@ azure_devops: # Should this live under the `spk` configuration?
         service_principal_id: "${env:AZDO_SERVICE_CONNECTION_CLIENT_ID}" # Service Principal Id that has 'Get' and 'List' in Key Vault Access Policy
         service_principal_secret: "${env:AZDO_SERVICE_CONNECTION_CLIENT_SECRET}" # Service Principal secret for the above Service Principal Id
         tenant_id: "${env:AZDO_SERVICE_CONNECTION_TENANT_ID}" # AAD Tenant Id for the above Service Principal
-  server_url:
-
 infra:
   terraform: "v0.12.6"
   helm: "v2.14.3"

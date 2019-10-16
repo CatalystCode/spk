@@ -30,21 +30,15 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
   try {
     logger.info(`Creating ${message}`);
 
-    if (groupConfig.variables === undefined || groupConfig.variables === null) {
+    if (
+      typeof groupConfig.variables === undefined ||
+      typeof groupConfig.variables === null
+    ) {
       throw new Error("Invalid input. Variable are not configured");
     }
 
     // map variables from configuration
-    // tslint:disable-next-line: prefer-const
-    let variablesMap: { [key: string]: VariableValue } = {};
-    logger.debug(`variables: ${JSON.stringify(groupConfig.variables!)}`);
-
-    for (const [key, value] of Object.entries(groupConfig.variables!)) {
-      logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
-      variablesMap[key] = value;
-    }
-
-    logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
+    const variablesMap = await buildVariablesMap(groupConfig.variables!);
 
     // create variable group parameterts
     const params: VariableGroupParameters = {
@@ -78,8 +72,8 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
     logger.info(`Creating ${message}`);
     let serviceConnectionId: string | null = null;
     if (
-      groupConfig.key_vault_provider === undefined ||
-      groupConfig.key_vault_provider === null
+      typeof groupConfig.key_vault_provider === undefined ||
+      typeof groupConfig.key_vault_provider === null
     ) {
       throw new Error(
         "Invalid input. Azure KeyVault Provider data is not configured"
@@ -103,19 +97,9 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
     };
 
     // map secrets from config
-    // tslint:disable-next-line: prefer-const
-    let secretsMap: { [key: string]: AzureKeyVaultVariableValue } = {};
-    logger.debug(`secrets: ${groupConfig.key_vault_provider!.secrets}`);
-
-    for (const secret of groupConfig.key_vault_provider!.secrets) {
-      logger.debug(`secret name: ${secret}`);
-      secretsMap[secret] = {
-        enabled: true,
-        isSecret: true
-      };
-    }
-
-    logger.debug(`secrets: ${JSON.stringify(secretsMap)}`);
+    const secretsMap: IKeyVaultVariableMap = await buildKeyVaultVariablesMap(
+      groupConfig.key_vault_provider!.secrets
+    );
 
     // creating variable group parameterts
     const params: VariableGroupParameters = {
@@ -215,4 +199,46 @@ const authorizeAccessToAllPipelines = async (
     logger.error(err);
     throw err;
   }
+};
+
+export interface IVariablesMap {
+  [key: string]: VariableValue;
+}
+
+export interface IKeyVaultVariableMap {
+  [key: string]: AzureKeyVaultVariableValue;
+}
+
+export const buildKeyVaultVariablesMap = async (
+  secrets: string[]
+): Promise<IKeyVaultVariableMap> => {
+  // tslint:disable-next-line: prefer-const
+  const secretsMap: IKeyVaultVariableMap = {};
+  logger.debug(`secrets: ${secrets}`);
+
+  for (const secret of secrets) {
+    logger.debug(`secret name: ${secret}`);
+    secretsMap[secret] = {
+      enabled: true,
+      isSecret: true
+    };
+  }
+
+  logger.debug(`secretsMap: ${JSON.stringify(secretsMap)}`);
+  return secretsMap;
+};
+
+export const buildVariablesMap = async (
+  variables: IVariablesMap[]
+): Promise<IVariablesMap> => {
+  const variablesMap: IVariablesMap = {};
+  logger.debug(`variables: ${JSON.stringify(variables)}`);
+
+  for (const [key, value] of Object.entries(variables)) {
+    logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
+    variablesMap[key] = value;
+  }
+
+  logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
+  return variablesMap;
 };

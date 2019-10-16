@@ -4,6 +4,10 @@ import { getConfig } from "../../../src/config";
 import { logger } from "../../logger";
 import { IServiceConnectionConfiguration } from "../../types";
 import { getRestClient } from "./azDo";
+import {
+  IServiceEndPoint,
+  ServiceEndPointParams
+} from "./serviceConnectionInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
 const apiVersion: string = "api-version=5.1-preview.2";
@@ -62,24 +66,29 @@ export const createServiceConnectionIfNotExists = async (
  */
 export const addServiceConnection = async (
   serviceConnectionConfig: IServiceConnectionConfiguration
-): Promise<string> => {
-  logger.info(`addServiceConnection method called`);
+): Promise<IServiceEndPoint> => {
+  const message = `service connection ${serviceConnectionConfig.name}`;
+  logger.info(`addServiceConnection method called with ${message}`);
 
-  let resp: IRestResponse<any>;
+  let resp: IRestResponse<IServiceEndPoint>;
 
   try {
-    // get service endpoint json data for post request
-    const endPointDataJson: JSON = await createServiceEndPointData(
+    const endPointParams: ServiceEndPointParams = await createServiceEndPointParams(
       serviceConnectionConfig
     );
 
+    logger.debug(
+      `Creating Service Endpoint with: ${JSON.stringify(endPointParams)}`
+    );
+    logger.info(`Creating ${message}`);
+
     const client: RestClient = await getRestClient(orgUrl, personalAccessToken);
     const resource: string = `${orgUrl}/${project}/${apiUrl}?${apiVersion}`;
-    logger.info(` addServiceConnection:Resource: ${resource}`);
+    logger.debug(` addServiceConnection:Resource: ${resource}`);
 
-    resp = await client.create(resource, endPointDataJson);
+    resp = await client.create(resource, endPointParams);
 
-    if (resp === null || resp.statusCode !== 200) {
+    if (resp === null || resp.statusCode !== 200 || resp.result === null) {
       const errMessage = "Creating Service Connection failed.";
       logger.error(`${errMessage}`);
       throw new Error(`${errMessage}`);
@@ -91,8 +100,9 @@ export const addServiceConnection = async (
     logger.debug(
       `Service Endpoint Response results: ${JSON.stringify(resp.result)}`
     );
-    logger.info(`Created Service Connection with id: ${resp.result.id}`);
-    return resp.result;
+    logger.info(`Created Service Connection with id: ${resp.result!.id}`);
+
+    return resp.result!;
   } catch (err) {
     logger.error(err);
     throw err;
@@ -139,7 +149,7 @@ export const getServiceConnectionByName = async (
 
     if (resp.result.value.length > 0) {
       logger.info(
-        `Found Service Connection by name: ${serviceConnectionName} and the id is ${resp.result.value[0].id}`
+        `Found Service Connection by name ${serviceConnectionName} with a id ${resp.result.value[0].id}`
       );
     }
 
@@ -149,10 +159,10 @@ export const getServiceConnectionByName = async (
   }
 };
 
-const createServiceEndPointData = async (
+export const createServiceEndPointParams = async (
   serviceConnectionConfig: IServiceConnectionConfiguration
-): Promise<JSON> => {
-  const endPointData: any = {
+): Promise<ServiceEndPointParams> => {
+  const endPointParams: ServiceEndPointParams = {
     authorization: {
       parameters: {
         authenticationType: "spnKey",
@@ -172,5 +182,5 @@ const createServiceEndPointData = async (
     type: "azurerm"
   };
 
-  return endPointData as JSON;
+  return endPointParams;
 };
