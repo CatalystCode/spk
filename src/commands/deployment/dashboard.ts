@@ -43,8 +43,8 @@ export const launchDashboard = async (port: number): Promise<boolean> => {
     if (!(await validatePrereqs(["docker"], false))) {
       return false;
     }
-    logger.info("Launching dashboard");
     const dockerRepository = config.introspection!.dashboard!.image!;
+    logger.info("Pulling dashboard docker image");
     await exec("docker", ["pull", dockerRepository]);
     exec("docker", [
       "run",
@@ -70,6 +70,7 @@ export const launchDashboard = async (port: number): Promise<boolean> => {
       port + ":80",
       dockerRepository
     ]);
+    logger.info("Launching dashboard on http://localhost:" + port);
     return true;
   } catch (err) {
     logger.error(`Error occurred while launching dashboard ${err}`);
