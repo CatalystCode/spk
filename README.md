@@ -9,7 +9,7 @@ principles.
 The three core areas of `spk` are:
 
 - [Service Introspection](./docs/service-introspection.md)
-- Service Management
+- [Service Management](./docs/service-management.md)
 - [Cloud Infra Management](./docs/cloud-infra-management.md)
 
 ![spk diagram](./docs/images/spk.png)
@@ -35,46 +35,67 @@ Commands:
 
 ## `spk` commands docs
 
-Refer to the links below for additional information on each command:
+- [spk deployment](./docs/service-introspection.md)
+- [spk service](./docs/service-management.md)
+- [spk infra](./docs/cloud-infra-management.md)
 
-- [deployment](./docs/service-introspection.md)
-- service
-- [infra](./docs/cloud-infra-management.md)
+## Getting started
 
-## Initialize
+To start using `spk` you'll need to:
 
-To start using spk, specify its configuration in a `yaml` file. Refer to the
-[spk-config.yaml](./spk-config.yaml) file and follow the same format.
+1. Configure `spk` in `spk-config.yaml`. Refer to [this](./spk-config.yaml)
+   template to get started.
+2. Run `spk init -f spk-config.yaml`
 
-### Environment Variables
+### spk-config.yaml
+
+The `spk-config.yaml` consists of three main sections:
+
+1. `introspection`
+2. `infra`
+3. `azure_devops`
+
+#### Environment Variables
 
 To specify private keys or access tokens that should **not be stored in raw
-text**, set the values in environment variables.
+text** in the `spk-config.yaml` file, set the values in environment variables.
 
-You may refer to environment variables in your shell if you specify them in the
-format `env:{VARIABLE_NAME}`. `spk` will use them from your current shell. Below
-is an example of a setting that uses a value from an environment variable,
-`ACCESS_KEY`.
+For example:
 
-```yaml
----
+```
 account_name: "someHardcodedValue"
 table_name: "anotherNonPrivateKey"
 key: "${env:ACCESS_KEY}"
 partition_key: "canBeStoredInRawTextKey"
 ```
 
-**Note:** If you open a new shell window, these variables will have to be set
-again, otherwise, `spk` will throw an error on trying to use them. To avoid
-setting them each time, specify them in the `.env` file. See below for more
-information.
+In this case, the value for `key` is taken from the environment variable
+`ACCESS_KEY`.
 
-#### .env File
+#### Creating environment variables
 
-A recommended approach is to have a `.env` file in your folder (make sure it's
-gitignored!) with all variables and their values. By default, the `spk` tool
-should be able to load these into your local env and use them to replace the
-placeholders in the config file you pass in.
+There are two options to create environment variables:
 
-Run the `spk init -f <filename>` command, and then you should be all set to
-start using the `spk` tool!
+1. In a `.env` file
+2. In your shell
+
+##### Option 1: .env File
+
+A recommended approach is to have a `.env` file in your folder **(make sure it's
+gitignored!)** with all variables and their values. By default, `spk` should be
+able to load these into your local env and use them to replace the placeholders
+in the config file you pass in.
+
+##### Option 2: shell
+
+To create an environment variable, run the `export` command.
+
+The following example creates the `ACCESS_KEY` environment variable.
+
+```
+export ACCESS_KEY="33DKHF933JID"
+```
+
+**Note:** Opening a new shell window erases the previously defined environment
+variables. Run the `export` command again to create them or use an `.env` file
+to define them instead.
