@@ -24,7 +24,7 @@ afterAll(() => {
 
 describe("Validate dashboard container pull", () => {
   test("Pull dashboard container if docker is installed", async () => {
-    const dashboardLaunched = await launchDashboard();
+    const dashboardLaunched = await launchDashboard(2020);
     const dockerInstalled = await validatePrereqs(["docker"], false);
     if (dockerInstalled) {
       const dockerId = await exec("docker", [

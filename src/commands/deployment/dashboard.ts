@@ -31,11 +31,14 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
         );
         return;
       }
-      launchDashboard();
+      const port = 1010;
+      if (await launchDashboard(port)) {
+        await open("http://localhost:" + port);
+      }
     });
 };
 
-export const launchDashboard = async (): Promise<boolean> => {
+export const launchDashboard = async (port: number): Promise<boolean> => {
   try {
     if (!(await validatePrereqs(["docker"], false))) {
       return false;
@@ -62,10 +65,9 @@ export const launchDashboard = async (): Promise<boolean> => {
       "-e",
       "REACT_APP_STORAGE_ACCESS_KEY=" + config.introspection!.azure!.key!,
       "-p",
-      "1010:80",
+      port + ":80",
       dockerRepository
     ]);
-    await open("http://localhost:1010/");
     return true;
   } catch (err) {
     logger.error(`Error occurred while launching dashboard ${err}`);
