@@ -21,6 +21,9 @@ infra:
   git: "2.17.1"
 
 introspection:
+  dashboard:
+    image: "samiyaakhtar/spektate:prod"
+    name: "spektate"
   azure: # This is the storage account for the service introspection tool
     account_name: "storage-account-name"
     table_name: "table-name"
