@@ -25,7 +25,7 @@ afterAll(() => {
 describe("Validate dashboard container pull", () => {
   test("Pull dashboard container if docker is installed", async () => {
     try {
-      const dashboardLaunched = await launchDashboard(2020);
+      const dashboardContainerId = await launchDashboard(2020);
       const dockerInstalled = await validatePrereqs(["docker"], false);
       if (dockerInstalled) {
         const dockerId = await exec("docker", [
@@ -34,17 +34,11 @@ describe("Validate dashboard container pull", () => {
           config.introspection!.dashboard!.image!
         ]);
         expect(dockerId).toBeDefined();
-        expect(dashboardLaunched).toBeTruthy();
+        expect(dashboardContainerId).not.toBe("");
         logger.info("Verified that docker image has been pulled.");
-
-        // await exec("docker", [
-        //   "container",
-        //   "stop",
-        //   config.introspection!.dashboard!.name!
-        // ]);
-        logger.info(await exec("docker", ["container", "ls"]));
+        await exec("docker", ["container", "stop", dashboardContainerId]);
       } else {
-        expect(dashboardLaunched).toBeFalsy();
+        expect(dashboardContainerId).toBe("");
       }
     } catch (err) {
       logger.error(err);

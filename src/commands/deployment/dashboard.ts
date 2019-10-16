@@ -38,19 +38,19 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
     });
 };
 
-export const launchDashboard = async (port: number): Promise<boolean> => {
+export const launchDashboard = async (port: number): Promise<string> => {
   try {
     if (!(await validatePrereqs(["docker"], false))) {
-      return false;
+      return "";
     }
     const dockerRepository = config.introspection!.dashboard!.image!;
     logger.info("Pulling dashboard docker image");
     await exec("docker", ["pull", dockerRepository]);
-    exec("docker", [
+    logger.info("Launching dashboard on http://localhost:" + port);
+    const containerId = await exec("docker", [
       "run",
+      "-d",
       "--rm",
-      "--name",
-      config.introspection!.dashboard!.name!,
       "-e",
       "REACT_APP_PIPELINE_ORG=" + config.azure_devops!.org!,
       "-e",
@@ -70,10 +70,9 @@ export const launchDashboard = async (port: number): Promise<boolean> => {
       port + ":80",
       dockerRepository
     ]);
-    logger.info("Launching dashboard on http://localhost:" + port);
-    return true;
+    return containerId;
   } catch (err) {
     logger.error(`Error occurred while launching dashboard ${err}`);
-    return false;
+    return "";
   }
 };
