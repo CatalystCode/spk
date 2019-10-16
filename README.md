@@ -12,7 +12,7 @@ The three core areas of `spk` are:
 - Service Management
 - [Cloud Infra Management](./docs/cloud-infra-management.md)
 
-![spk](./docs/images/spk.png)
+![spk diagram](./docs/images/spk.png)
 
 For more information on the end-to-end experience of using Bedrock principles
 refer to:
