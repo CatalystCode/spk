@@ -82,9 +82,17 @@ There are two options to create environment variables:
 ##### Option 1: .env File
 
 A recommended approach is to have a `.env` file in your folder **(make sure it's
-gitignored!)** with all variables and their values. By default, `spk` should be
-able to load these into your local env and use them to replace the placeholders
-in the config file you pass in.
+gitignored!)** with all variables and their values.
+
+[Sample `.env`](./.env.example):
+
+```
+INTROSPECTION_STORAGE_ACCESS_KEY="access key"
+AZURE_TENANT_ID="AAD tenant id"
+AZURE_CLIENT_ID="Azure service principal client Id"
+AZURE_CLIENT_SECRET="Azure service principal client secret/password"
+AZURE_SUBSCRIPTION_ID="Azure subscription id"
+```
 
 ##### Option 2: shell
 
