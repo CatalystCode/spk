@@ -9,9 +9,10 @@ import {
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { getConfig } from "../../../src/config";
 import { logger } from "../../logger";
-import { getTaskAgentClient } from "./azDo";
+import { getTaskAgentClient } from "./azdo";
 import { getBuildApiClient } from "./pipelines";
 import { createServiceConnectionIfNotExists } from "./serviceConnection";
+import { IServiceConnection } from "./azdoInterfaces";
 
 const config = getConfig();
 logger.debug(`Config: ${config}`);
@@ -70,7 +71,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
 
   try {
     logger.info(`Creating ${message}`);
-    let serviceConnectionId: string | null = null;
+    let serviceConnection: IServiceConnection;
     if (
       typeof groupConfig.key_vault_provider === undefined ||
       typeof groupConfig.key_vault_provider === null
@@ -82,17 +83,17 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
 
     // get service connection id
     logger.info(`Checking for Service connection`);
-    serviceConnectionId = await createServiceConnectionIfNotExists(
+    serviceConnection = await createServiceConnectionIfNotExists(
       groupKvConfig.service_connection
     );
 
     logger.info(
-      `Using Service connection id: ${serviceConnectionId!} for Key Vault`
+      `Using Service connection id: ${serviceConnection.id} for Key Vault`
     );
 
     // create AzureKeyVaultVariableValue object
     const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
-      serviceEndpointId: serviceConnectionId!,
+      serviceEndpointId: serviceConnection.id,
       vault: groupConfig.key_vault_provider!.name
     };
 
@@ -122,7 +123,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
  * * Adds Variable group with `VariableGroupParameters` data and returns `VariableGroup` object.
  *
  * @param variableGroupdata The Variable group data
- * @param accessToAllPipelines if true, enables authorization to access by all pipelines
+ * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
  */
 const doAddVariableGroup = async (
   variableGroupdata: VariableGroupParameters,

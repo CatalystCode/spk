@@ -3,11 +3,8 @@ import { IRestResponse, RestClient } from "typed-rest-client";
 import { getConfig } from "../../../src/config";
 import { logger } from "../../logger";
 import { IServiceConnectionConfiguration } from "../../types";
-import { getRestClient } from "./azDo";
-import {
-  IServiceEndPoint,
-  IServiceEndPointParams
-} from "./serviceConnectionInterfaces";
+import { getRestClient } from "./azdo";
+import { IServiceConnection, IServiceConnectionParams } from "./azdoInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
 const apiVersion: string = "api-version=5.1-preview.2";
@@ -26,7 +23,7 @@ const project = gitOpsConfig.project!;
  */
 export const createServiceConnectionIfNotExists = async (
   serviceConnectionConfig: IServiceConnectionConfiguration
-): Promise<string> => {
+): Promise<IServiceConnection> => {
   const serviceConnectionName = serviceConnectionConfig.name;
   const message = `service connection ${serviceConnectionName}`;
 
@@ -35,7 +32,7 @@ export const createServiceConnectionIfNotExists = async (
   }
 
   try {
-    let serviceConnection: any;
+    let serviceConnection: IServiceConnection | null;
 
     // get service connection by name that is configured in the config file
     serviceConnection = await getServiceConnectionByName(serviceConnectionName);
@@ -51,7 +48,7 @@ export const createServiceConnectionIfNotExists = async (
       );
     }
 
-    return serviceConnection.id;
+    return serviceConnection;
   } catch (err) {
     logger.error(`Error occurred while checking and creating ${message}`);
     logger.error(err);
@@ -66,14 +63,14 @@ export const createServiceConnectionIfNotExists = async (
  */
 export const addServiceConnection = async (
   serviceConnectionConfig: IServiceConnectionConfiguration
-): Promise<IServiceEndPoint> => {
+): Promise<IServiceConnection> => {
   const message = `service connection ${serviceConnectionConfig.name}`;
   logger.info(`addServiceConnection method called with ${message}`);
 
-  let resp: IRestResponse<IServiceEndPoint>;
+  let resp: IRestResponse<IServiceConnection>;
 
   try {
-    const endPointParams: IServiceEndPointParams = await createServiceEndPointParams(
+    const endPointParams: IServiceConnectionParams = await createServiceEndPointParams(
       serviceConnectionConfig
     );
 
@@ -116,7 +113,7 @@ export const addServiceConnection = async (
  */
 export const getServiceConnectionByName = async (
   serviceConnectionName: string
-): Promise<string | null> => {
+): Promise<IServiceConnection | null> => {
   logger.info(
     `getServiceConnectionByName called with ${serviceConnectionName}`
   );
@@ -140,7 +137,7 @@ export const getServiceConnectionByName = async (
     // check for response conditions
     if (resp === null || resp.result === null || resp.result.count === 0) {
       logger.info(
-        `NO Service Connection was found by name: ${serviceConnectionName}`
+        `Service Connection was not found by name: ${serviceConnectionName}`
       );
       return null;
     }
@@ -150,20 +147,26 @@ export const getServiceConnectionByName = async (
       throw new Error(errMessage);
     }
 
+    const endpoints = resp.result.value as IServiceConnection[];
     logger.info(
-      `Found Service Connection by name ${serviceConnectionName} with a id ${resp.result.value[0].id}`
+      `Found Service Connection by name ${serviceConnectionName} with a id ${endpoints[0].id}`
     );
 
-    return resp.result.count === 0 ? null : resp.result.value[0];
+    return resp.result.count === 0 ? null : endpoints[0];
   } catch (err) {
     throw err;
   }
 };
 
+/**
+ * Created `IServiceEndPointParams` from the argument `serviceConnectionConfig` received
+ *
+ * @param serviceConnectionConfig The service connection endpoint request data from configuration
+ */
 export const createServiceEndPointParams = async (
   serviceConnectionConfig: IServiceConnectionConfiguration
-): Promise<IServiceEndPointParams> => {
-  const endPointParams: IServiceEndPointParams = {
+): Promise<IServiceConnectionParams> => {
+  const endPointParams: IServiceConnectionParams = {
     authorization: {
       parameters: {
         authenticationType: "spnKey",

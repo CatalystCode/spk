@@ -1,4 +1,4 @@
-export interface IServiceEndPoint {
+export interface IServiceConnection {
   data: IData;
   id: string;
   name: string;
@@ -61,7 +61,7 @@ export interface IProjectReference {
   name?: null;
 }
 
-export interface IServiceEndPointParams {
+export interface IServiceConnectionParams {
   data: IDataParams;
   id: string;
   name: string;

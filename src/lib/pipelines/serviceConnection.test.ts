@@ -1,48 +1,15 @@
 import * as path from "path";
 import { config, loadConfiguration } from "../../commands/init";
-import { logger } from "../../logger";
 import * as serviceConnection from "./serviceConnection";
+
+const mockServiceConnectionId: string = "mock-service-endpoint-id";
+const mockServiceConnectionName: string = "mock-service_connection-name";
 
 jest.spyOn(serviceConnection, "getServiceConnectionByName").mockImplementation(
   async (): Promise<any> => {
     return undefined;
   }
 );
-
-// jest.spyOn(serviceConnection, "createServiceEndPointData").mockImplementation(
-//   async (
-//     serviceConnectionConfig: IServiceConnectionConfiguration
-//   ): Promise<JSON> => {
-//     if (serviceConnectionConfig.name === "mock-test") {
-//       const endPointData: any = {
-//         authorization: {
-//           parameters: {
-//             authenticationType: "spnKey",
-//             serviceprincipalid: serviceConnectionConfig.service_principal_id,
-//             serviceprincipalkey:
-//               serviceConnectionConfig.service_principal_secret,
-//             tenantid: serviceConnectionConfig.tenant_id
-//           },
-//           scheme: "ServicePrincipal"
-//         },
-//         data: {
-//           subscriptionId: serviceConnectionConfig.subscription_id,
-//           subscriptionName: serviceConnectionConfig.subscription_name
-//         },
-//         id: generateUuid(),
-//         isReady: false,
-//         name: serviceConnectionConfig.name,
-//         type: "azurerm"
-//       };
-
-//       return endPointData;
-//     }
-//     const ret: any = {};
-//     return ret as JSON;
-//   }
-// );
-
-// let serviceConnectionParams: JSON;
 
 beforeEach(() => {
   process.env.test_name = "my_storage_account";
@@ -52,7 +19,7 @@ beforeEach(() => {
   loadConfiguration(filename);
 });
 
-describe("Validate service endpoint params", () => {
+describe("Validate service connection endpoint", () => {
   test("valid service endpoint params", async () => {
     const serviceConnectionConfig = config.azure_devops!.variable_group!
       .key_vault_provider!.service_connection;
@@ -96,7 +63,5 @@ describe("Validate service endpoint params", () => {
     expect(data.authorization.parameters.authenticationType).toBe("spnKey");
 
     expect(data.authorization.scheme).toBe("ServicePrincipal");
-
-    logger.info(`validated service endpoint create parameters`);
   });
 });
