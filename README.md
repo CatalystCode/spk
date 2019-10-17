@@ -39,7 +39,7 @@ Commands:
 - [spk service](./docs/service-management.md)
 - [spk infra](./docs/cloud-infra-management.md)
 
-## Getting started
+## Getting Started
 
 To start using `spk` you'll need to:
 
@@ -49,7 +49,7 @@ To start using `spk` you'll need to:
 
 ### spk-config.yaml
 
-The `spk-config.yaml` consists of three main sections:
+The [`spk-config.yaml`](./spk-config.yaml) consists of three main sections:
 
 1. `introspection`
 2. `infra`
@@ -107,3 +107,7 @@ export ACCESS_KEY="33DKHF933JID"
 **Note:** Opening a new shell window erases the previously defined environment
 variables. Run the `export` command again to create them or use an `.env` file
 to define them instead.
+
+## Contributing
+
+[Contributing to spk](./docs/contributing.md).
