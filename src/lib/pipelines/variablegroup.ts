@@ -10,9 +10,9 @@ import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { getConfig } from "../../../src/config";
 import { logger } from "../../logger";
 import { getTaskAgentClient } from "./azdo";
+import { IServiceConnection } from "./azdoInterfaces";
 import { getBuildApiClient } from "./pipelines";
 import { createServiceConnectionIfNotExists } from "./serviceConnection";
-import { IServiceConnection } from "./azdoInterfaces";
 
 const config = getConfig();
 logger.debug(`Config: ${config}`);
