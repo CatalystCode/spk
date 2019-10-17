@@ -18,8 +18,8 @@ azure_devops: # Should this live under the `spk` configuration?
     key_vault_provider:
       name: "mykeyvault" # name of the Azure Key Vaukt with Secrets
       secrets: ["secret1", "secret2"] # Names of secrets from Azure Key Vault to map in Variable Group
-      service_connection: # service connection is required to authorize with Azure Key Vault
-        name: "Bedrock-GitOps-KeyVault" # if the service connection with this name does not exist, the following values are required to create a new service connection with this name
+      service_endpoint: # service endpoint is required to authorize with Azure Key Vault
+        name: "Bedrock-GitOps-KeyVault" # if the service endpoint with this name does not exist, the following values are required to create a new service connection with this name
         subscription_id: "subscription-id" # Azure Subscription id where Key Vault exist
         subscription_name: "subscription-name" # Azure Subscription name where Key Vault exist
         service_principal_id: "service-principal-id" # Service Principal Id that has 'Get' and 'List' in Key Vault Access Policy

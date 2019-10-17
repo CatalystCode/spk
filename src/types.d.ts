@@ -82,7 +82,7 @@ export interface IAzurePipelinesYaml {
   }>;
 }
 
-export interface IServiceConnectionConfiguration {
+export interface IServiceEndpointConfiguration {
   name: string;
   subscription_id: string;
   subscription_name: string;
@@ -102,7 +102,7 @@ export interface IVariableGroupConfiguration {
   key_vault_provider?: {
     name: string;
     secrets: string[];
-    service_connection: IServiceConnectionConfiguration;
+    service_endpoint: IServiceEndpointConfiguration;
   };
 }
 

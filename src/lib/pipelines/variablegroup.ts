@@ -10,9 +10,9 @@ import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { getConfig } from "../../../src/config";
 import { logger } from "../../logger";
 import { getTaskAgentClient } from "./azdo";
-import { IServiceConnection } from "./azdoInterfaces";
+import { IServiceEndpoint } from "./azdoInterfaces";
 import { getBuildApiClient } from "./pipelines";
-import { createServiceConnectionIfNotExists } from "./serviceConnection";
+import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
 
 const config = getConfig();
 logger.debug(`Config: ${config}`);
@@ -71,7 +71,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
 
   try {
     logger.info(`Creating ${message}`);
-    let serviceConnection: IServiceConnection;
+    let serviceEndpoint: IServiceEndpoint;
     if (
       typeof groupConfig.key_vault_provider === undefined ||
       typeof groupConfig.key_vault_provider === null
@@ -81,19 +81,19 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
       );
     }
 
-    // get service connection id
-    logger.info(`Checking for Service connection`);
-    serviceConnection = await createServiceConnectionIfNotExists(
-      groupKvConfig.service_connection
+    // get service endpoint id
+    logger.info(`Checking for Service endpoint`);
+    serviceEndpoint = await createServiceEndpointIfNotExists(
+      groupKvConfig.service_endpoint
     );
 
     logger.info(
-      `Using Service connection id: ${serviceConnection.id} for Key Vault`
+      `Using Service endpoint id: ${serviceEndpoint.id} for Key Vault`
     );
 
     // create AzureKeyVaultVariableValue object
     const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
-      serviceEndpointId: serviceConnection.id,
+      serviceEndpointId: serviceEndpoint.id,
       vault: groupConfig.key_vault_provider!.name
     };
 
