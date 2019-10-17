@@ -75,25 +75,35 @@ export interface IAzurePipelinesYaml {
     vmImage?: string;
   };
   steps?: Array<{
+    bash?: string;
+    clean?: boolean;
+    checkout?: string;
+    condition?: string;
     displayName?: string;
+    env?: {
+      ACCESS_TOKEN_SECRET?: string;
+      BEDROCK_BUILD_SCRIPT?: string;
+      BRANCH_NAME?: string;
+      COMMIT_MESSAGE?: string;
+      REPO?: string;
+      VERIFY_ONLY?: number;
+    };
+    inputs?: {
+      scriptPath: string;
+    };
+    persistCredentials?: boolean;
     script?: string;
+    task?: string;
   }>;
 }
 
 export interface IConfigYaml {
-  azure_cli?: {
-    version?: string;
-    Extensions?: {
-      aks_preview?: string;
-    };
-  };
   azure_devops?: {
     org?: string;
     project?: string;
     hld_repository?: string;
     manifest_repository?: string;
     access_token?: string;
-    server_url?: string;
   };
 
   infra?: {
@@ -103,11 +113,7 @@ export interface IConfigYaml {
     terraform?: string;
     helm?: string;
     git?: string;
-    bedrock?: {
-      source?: string;
-      tag?: string;
-      access_token?: string;
-    };
+    az?: string;
   };
   introspection?: {
     dashboard?: {

@@ -56,8 +56,7 @@ export const GitAPI = async (opts: IAzureDevOpsOpts = {}) => {
     const {
       personalAccessToken = config.azure_devops &&
         config.azure_devops.access_token,
-      orgUrl = config.azure_devops && config.azure_devops.org,
-      serverUrl = config.azure_devops && config.azure_devops.server_url
+      orgUrl = config.azure_devops && config.azure_devops.org
     } = opts;
 
     // PAT and devops URL are required
@@ -86,9 +85,7 @@ export const GitAPI = async (opts: IAzureDevOpsOpts = {}) => {
 
     // Instantiate the git API
     try {
-      gitApi = await (typeof serverUrl === "undefined"
-        ? connection.getGitApi()
-        : connection.getGitApi(serverUrl));
+      gitApi = await connection.getGitApi();
       logger.info(`Successfully connected to Azure DevOps Git API!`);
     } catch (err) {
       logger.error(`Error connecting Azure DevOps Git API`);
