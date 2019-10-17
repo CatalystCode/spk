@@ -38,6 +38,7 @@ Commands:
 - [spk deployment](./docs/service-introspection.md)
 - [spk service](./docs/service-management.md)
 - [spk infra](./docs/cloud-infra-management.md)
+- [spk project](./docs/project-management.md)
 
 ## Getting Started
 
