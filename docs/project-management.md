@@ -5,7 +5,7 @@ Create and manage components for a Bedrock project.
 Usage:
 
 ```
-spk project [options] [command]
+spk project [command] [options]
 ```
 
 Commands:
