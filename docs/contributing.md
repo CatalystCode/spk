@@ -109,6 +109,10 @@ To run do a production build, just run:
 yarn build
 ```
 
+### Cutting new release
+
+See [release doc](docs/RELEASE.md)
+
 ### IDE Configuration
 
 This project uses [TSLint](https://palantir.github.io/tslint/) for linting and
