@@ -111,12 +111,12 @@ export interface IServiceEndpointConfiguration {
 export interface IVariableGroupConfiguration {
   name: string;
   description: string;
-  variables?: [
+  vsts_data?: [
     {
       [key: string]: VariableValue;
     }
   ];
-  key_vault_provider?: {
+  key_vault_data?: {
     name: string;
     secrets: string[];
     service_endpoint: IServiceEndpointConfiguration;

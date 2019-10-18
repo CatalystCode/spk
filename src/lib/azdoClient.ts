@@ -5,7 +5,7 @@ import { Config } from "../config";
 import { logger } from "../logger";
 // import { azdoUrl } from "./azdoutil";
 
-// File Variables
+// Module state Variables
 let connection: WebApi | undefined;
 let restApi: RestClient | undefined;
 let buildApi: IBuildApi | undefined;
@@ -48,7 +48,7 @@ export const getWebApi = async (): Promise<WebApi> => {
   const orgUrl = azdoUrl(orgName);
 
   logger.debug(
-    `getWebApi called with org url: ${orgUrl} and token: ${personalAccessToken}`
+    `getWebApi with org url: ${orgUrl} and token: ${personalAccessToken}`
   );
 
   const authHandler = getPersonalAccessTokenHandler(personalAccessToken);

@@ -25,7 +25,13 @@ export const TaskApi = async (): Promise<ITaskAgentApi> => {
   }
 
   const api = await getWebApi();
-  taskApi = await api.getTaskAgentApi();
+  try {
+    taskApi = await api.getTaskAgentApi();
+    logger.info(`Successfully connected to Azure DevOps Task API!`);
+  } catch (err) {
+    logger.error(`Error connecting Azure DevOps Task API`);
+    throw err;
+  }
   return taskApi;
 };
 
@@ -41,14 +47,14 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
     logger.info(`Creating ${message}`);
 
     if (
-      typeof groupConfig.variables === undefined ||
-      typeof groupConfig.variables === null
+      typeof groupConfig.vsts_data === undefined ||
+      typeof groupConfig.vsts_data === null
     ) {
       throw new Error("Invalid input. Variable are not configured");
     }
 
     // map variables from configuration
-    const variablesMap = await buildVariablesMap(groupConfig.variables!);
+    const variablesMap = await buildVariablesMap(groupConfig.vsts_data!);
 
     // create variable group parameterts
     const params: VariableGroupParameters = {
@@ -74,9 +80,8 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
   VariableGroup
 > => {
   const gitOpsConfig = Config().azure_devops!;
-  const project = gitOpsConfig.project!;
   const groupConfig = gitOpsConfig.variable_group!;
-  const groupKvConfig = groupConfig.key_vault_provider!;
+  const groupKvConfig = groupConfig.key_vault_data!;
 
   const message: string = `Variable Group ${groupConfig.name}`;
 
@@ -84,8 +89,8 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
     logger.info(`Creating ${message}`);
     let serviceEndpoint: IServiceEndpoint;
     if (
-      typeof groupConfig.key_vault_provider === undefined ||
-      typeof groupConfig.key_vault_provider === null
+      typeof groupConfig.key_vault_data === undefined ||
+      typeof groupConfig.key_vault_data === null
     ) {
       throw new Error(
         "Invalid input. Azure KeyVault Provider data is not configured"
@@ -105,12 +110,12 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
     // create AzureKeyVaultVariableValue object
     const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
       serviceEndpointId: serviceEndpoint.id,
-      vault: groupConfig.key_vault_provider!.name
+      vault: groupConfig.key_vault_data!.name
     };
 
     // map secrets from config
     const secretsMap: IKeyVaultVariableMap = await buildKeyVaultVariablesMap(
-      groupConfig.key_vault_provider!.secrets
+      groupConfig.key_vault_data!.secrets
     );
 
     // creating variable group parameterts
@@ -141,8 +146,7 @@ const doAddVariableGroup = async (
   accessToAllPipelines: boolean
 ): Promise<VariableGroup> => {
   const message: string = `Variable Group ${variableGroupdata.name}`;
-  const gitOpsConfig = Config().azure_devops!;
-  const project = gitOpsConfig.project!;
+  const project = Config().azure_devops!.project!;
   try {
     logger.debug(
       `Creating new Variable Group ${JSON.stringify(variableGroupdata)}`
