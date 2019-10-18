@@ -10,10 +10,6 @@ import {
   validatePrereqs
 } from "./infra/validate";
 
-export const defaultFileLocation = os.homedir() + "/.spk/config.yaml";
-export let config: IConfigYaml = {};
-export const Config = (): IConfigYaml => config;
-
 /**
  * Adds the init command to the commander command object
  * @param command Commander command object to decorate

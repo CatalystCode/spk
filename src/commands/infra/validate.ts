@@ -128,6 +128,7 @@ export const validateEnvVariables = async (
   globalInit: boolean
 ): Promise<boolean> => {
   const config = Config();
+
   if (!config.infra) {
     config.infra = {};
   }
