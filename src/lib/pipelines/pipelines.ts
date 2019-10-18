@@ -4,6 +4,7 @@ import {
   AgentPoolQueue,
   Build,
   BuildDefinition,
+  BuildDefinitionVariable,
   BuildRepository,
   ContinuousIntegrationTrigger,
   DefinitionQuality,
@@ -14,6 +15,7 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
 import { logger } from "../../logger";
+import { azdoUrl } from "../azdoutil";
 
 const hostedUbuntuPool = "Hosted Ubuntu 1604";
 const hostedUbuntuPoolId = 224;
@@ -28,18 +30,18 @@ export enum RepositoryTypes {
 
 /**
  * Get an Azure DevOps Build API Client
- * @param orgUrl An Azure DevOps Organization URL
+ * @param org An Azure DevOps Organization Name
  * @param token A Personal Access Token (PAT) used to authenticate against DevOps.
  * @returns BuildApi Client for Azure Devops
  */
 export const getBuildApiClient = async (
-  orgUrl: string,
+  orgName: string,
   personalAccessToken: string
 ): Promise<IBuildApi> => {
   return initBuildApiClient(
     getPersonalAccessTokenHandler,
     WebApi,
-    orgUrl,
+    orgName,
     personalAccessToken
   );
 };
@@ -47,10 +49,11 @@ export const getBuildApiClient = async (
 export const initBuildApiClient = async (
   tokenHandler: (n: string) => any,
   webapi: typeof WebApi,
-  orgUrl: string,
+  orgName: string,
   token: string
 ): Promise<IBuildApi> => {
   const authHandler = tokenHandler(token);
+  const orgUrl = azdoUrl(orgName);
   const connection = new webapi(orgUrl, authHandler);
 
   return connection.getBuildApi();
@@ -64,6 +67,9 @@ interface IPipeline {
   yamlFilePath: string;
   branchFilters: string[];
   maximumConcurrentBuilds: number;
+  variables?: {
+    [key: string]: BuildDefinitionVariable;
+  };
 }
 
 /**
@@ -128,6 +134,10 @@ export const definitionForAzureRepoPipeline = (
     yamlFilename: pipelineConfig.yamlFilePath
   } as YamlProcess;
 
+  if (pipelineConfig.variables) {
+    pipelineDefinition.variables = pipelineConfig.variables;
+  }
+
   return pipelineDefinition;
 };
 
@@ -180,6 +190,10 @@ export const definitionForGithubRepoPipeline = (
   pipelineDefinition.process = {
     yamlFilename: pipelineConfig.yamlFilePath
   } as YamlProcess;
+
+  if (pipelineConfig.variables) {
+    pipelineDefinition.variables = pipelineConfig.variables;
+  }
 
   return pipelineDefinition;
 };

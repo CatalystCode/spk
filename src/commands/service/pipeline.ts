@@ -1,7 +1,3 @@
-import fs from "fs";
-import yaml from "js-yaml";
-import path from "path";
-
 import commander = require("commander");
 import { logger } from "../../logger";
 
@@ -30,7 +26,7 @@ export const createPipelineCommandDecorator = (
       "-p, --personal-access-token <personal-access-token>",
       "Personal Access Token"
     )
-    .option("-o, --org-url <org-url>", "Organization URL for Azure DevOps")
+    .option("-o, --org-name <org-name>", "Organization Name for Azure DevOps")
     .option("-r, --repo-name <repo-name>", "Repository Name in Azure DevOps")
     .option("-u, --repo-url <repo-url>", "Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
@@ -39,7 +35,7 @@ export const createPipelineCommandDecorator = (
       const {
         pipelineName,
         personalAccessToken,
-        orgUrl,
+        orgName,
         repoName,
         repoUrl,
         devopsProject,
@@ -59,9 +55,9 @@ export const createPipelineCommandDecorator = (
           );
         }
 
-        if (typeof orgUrl !== "string") {
+        if (typeof orgName !== "string") {
           throw new Error(
-            `--org-url must be of type 'string', ${typeof orgUrl} given.`
+            `--org-url must be of type 'string', ${typeof orgName} given.`
           );
         }
 
@@ -97,7 +93,7 @@ export const createPipelineCommandDecorator = (
       try {
         await installPipeline(
           serviceName,
-          orgUrl,
+          orgName,
           personalAccessToken,
           pipelineName,
           repoName,
@@ -114,9 +110,9 @@ export const createPipelineCommandDecorator = (
 };
 
 /**
- *
+ * Install a pipeline for the service in an azure devops org.
  * @param serviceName
- * @param orgUrl
+ * @param orgName
  * @param personalAccessToken
  * @param pipelineName
  * @param repoName
@@ -126,7 +122,7 @@ export const createPipelineCommandDecorator = (
  */
 export const installPipeline = async (
   serviceName: string,
-  orgUrl: string,
+  orgName: string,
   personalAccessToken: string,
   pipelineName: string,
   repoName: string,
@@ -138,9 +134,8 @@ export const installPipeline = async (
   let builtDefinition;
 
   try {
-    devopsClient = await getBuildApiClient(orgUrl, personalAccessToken);
+    devopsClient = await getBuildApiClient(orgName, personalAccessToken);
     logger.info("Fetched DevOps Client");
-    logger.info(devopsClient!);
   } catch (err) {
     logger.error(err);
     return exitFn(1);
@@ -170,7 +165,6 @@ export const installPipeline = async (
   }
 
   logger.info(`Created pipeline for ${pipelineName}`);
-  logger.info(builtDefinition as BuildDefinition);
   logger.info(`Pipeline ID: ${(builtDefinition as BuildDefinition).id}`);
 
   try {
