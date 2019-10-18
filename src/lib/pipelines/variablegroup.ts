@@ -7,22 +7,40 @@ import {
   VariableValue
 } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
-import { getConfig } from "../../../src/config";
+import { getConfig } from "../../config";
 import { logger } from "../../logger";
-import { getTaskAgentClient } from "./azdo";
+import { getWebApi, getBuildApi } from "./azdo";
 import { IServiceEndpoint } from "./azdoInterfaces";
-import { getBuildApiClient } from "./pipelines";
 import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
+
+import {} from "azure-devops-node-api/TaskAgentApi";
+
+////////////////////////////////////////////////////////////////////////////////
+// State
+////////////////////////////////////////////////////////////////////////////////
+let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be reused
 
 const config = getConfig();
 logger.debug(`Config: ${config}`);
 const gitOpsConfig = config.azure_devops!;
-const orgUrl = gitOpsConfig.org!;
-const token = gitOpsConfig.access_token!;
 const project = gitOpsConfig.project!;
 
 /**
- * Adds Variable group `groupConfig` in Azure DevOps project `project` under org `orgUrl` and returns `VariableGroup` object
+ * Creates AzDo `azure-devops-node-api.WebApi.ITaskAgentApi` with `orgUrl` and `token and returns `ITaskAgentApi`
+ *
+ */
+export const TaskApi = async (): Promise<ITaskAgentApi> => {
+  if (typeof taskApi !== "undefined") {
+    return taskApi;
+  }
+
+  const webApi = await getWebApi();
+  taskApi = await webApi.getTaskAgentApi();
+  return taskApi;
+};
+
+/**
+ * Adds Variable group `groupConfig` in Azure DevOps project and returns `VariableGroup` object
  *
  */
 export const addVariableGroup = async (): Promise<VariableGroup> => {
@@ -58,7 +76,7 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
 };
 
 /**
- * * Adds Variable group `groupConfig` with Key Valut maopping in Azure DevOps project `project` under org `orgUrl` and returns `VariableGroup` object
+ * * Adds Variable group `groupConfig` with Key Valut maopping in Azure DevOps project and returns `VariableGroup` object
  *
  */
 export const addVariableGroupWithKeyVaultMap = async (): Promise<
@@ -134,7 +152,7 @@ const doAddVariableGroup = async (
     logger.debug(
       `Creating new Variable Group ${JSON.stringify(variableGroupdata)}`
     );
-    const taskClient: ITaskAgentApi = await getTaskAgentClient(orgUrl, token);
+    const taskClient: ITaskAgentApi = await TaskApi();
     const group: VariableGroup = await taskClient.addVariableGroup(
       variableGroupdata,
       project
@@ -179,7 +197,7 @@ const authorizeAccessToAllPipelines = async (
       `Creating resource definition: ${JSON.stringify(resourceDefinition)}`
     );
 
-    const buildCleint = await getBuildApiClient(orgUrl!, token!);
+    const buildCleint = await getBuildApi();
     const resourceDefinitionResponse = await buildCleint.authorizeProjectResources(
       [resourceDefinition],
       project

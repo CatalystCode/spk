@@ -1,53 +1,76 @@
 import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
+import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { RestClient } from "typed-rest-client";
+import { getConfig } from "../../config";
 import { logger } from "../../logger";
+
+////////////////////////////////////////////////////////////////////////////////
+// State
+////////////////////////////////////////////////////////////////////////////////
+let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be reused
+let connection: WebApi | undefined;
+let restApi: RestClient | undefined;
+let buildApi: IBuildApi | undefined;
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi` with `orgUrl` and `token and returns `WebApi`
  *
- * @param orgUrl The Azure DevOps Org url
- * @param token The personal access token from Azure DevOps project
  */
-export const getWebApi = async (
-  orgUrl: string,
-  token: string
-): Promise<WebApi> => {
-  logger.debug(`getWebApi called with org url: ${orgUrl} and token: ${token}`);
-  const authHandler = getPersonalAccessTokenHandler(token);
-  return new WebApi(orgUrl, authHandler);
+export const getWebApi = async (): Promise<WebApi> => {
+  if (typeof connection !== "undefined") {
+    return connection;
+  }
+
+  const config = getConfig();
+  logger.debug(`Config: ${config}`);
+  const gitOpsConfig = config.azure_devops!;
+  const orgUrl = gitOpsConfig.org!;
+  const personalAccessToken = gitOpsConfig.access_token!;
+
+  // PAT and devops URL are required
+  if (typeof personalAccessToken === "undefined") {
+    throw Error(
+      `Unable to parse Azure DevOps Personal Access Token (azure_devops.access_token) from spk config`
+    );
+  }
+
+  if (typeof orgUrl === "undefined") {
+    throw Error(
+      `Unable to parse Azure DevOps Organization URL (azure_devops.org) from spk config`
+    );
+  }
+
+  logger.debug(
+    `getWebApi called with org url: ${orgUrl} and token: ${personalAccessToken}`
+  );
+
+  const authHandler = getPersonalAccessTokenHandler(personalAccessToken);
+  connection = new WebApi(orgUrl, authHandler);
+
+  return connection;
 };
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi.RestClient` with `orgUrl` and `token and returns `RestClient`
  *
- * @param orgUrl The Azure DevOps Org url
- * @param token The personal access token from Azure DevOps project
  */
-export const getRestClient = async (
-  orgUrl: string,
-  token: string
-): Promise<RestClient> => {
-  logger.debug(
-    `getRestClient called with org url: ${orgUrl} and token: ${token}`
-  );
-  const connection = await getWebApi(orgUrl, token);
-  return connection.rest;
+export const getRestClient = async (): Promise<RestClient> => {
+  if (typeof restApi !== "undefined") {
+    return restApi;
+  }
+
+  const webApi = await getWebApi();
+  restApi = webApi.rest;
+  return restApi;
 };
 
-/**
- * Creates AzDo `azure-devops-node-api.WebApi.ITaskAgentApi` with `orgUrl` and `token and returns `ITaskAgentApi`
- *
- * @param orgUrl The Azure DevOps Org url
- * @param token The personal access token from Azure DevOps project
- */
-export const getTaskAgentClient = async (
-  orgUrl: string,
-  token: string
-): Promise<ITaskAgentApi> => {
-  logger.debug(
-    `getTaskAgentClient called with org url: ${orgUrl} and token: ${token}`
-  );
-  const connection = await getWebApi(orgUrl, token);
-  return await connection.getTaskAgentApi();
+export const getBuildApi = async (): Promise<IBuildApi> => {
+  if (typeof buildApi !== "undefined") {
+    return buildApi;
+  }
+
+  const webApi = await getWebApi();
+  buildApi = await webApi.getBuildApi();
+  return buildApi;
 };

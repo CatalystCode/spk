@@ -4,7 +4,7 @@ import {
   createStorageAccountIfNotExists,
   getStorageAccountKey
 } from "../../lib/azure/storage";
-import { addVariableGroupWithKeyVaultMap } from "../../lib/pipelines/variablegroup";
+import { addVariableGroupWithKeyVaultMap } from "../../lib/pipelines/variableGroup";
 import { logger } from "../../logger";
 
 /**

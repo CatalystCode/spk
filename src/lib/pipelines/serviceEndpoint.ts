@@ -79,7 +79,7 @@ export const addServiceEndpoint = async (
     );
     logger.info(`Creating ${message}`);
 
-    const client: RestClient = await getRestClient(orgUrl, personalAccessToken);
+    const client: RestClient = await getRestClient();
     const resource: string = `${orgUrl}/${project}/${apiUrl}?${apiVersion}`;
     logger.debug(` addServiceEndpoint:Resource: ${resource}`);
 
@@ -120,7 +120,7 @@ export const getServiceEndpointByName = async (
 
   try {
     const uriParameter = `?endpointNames=${serviceEndpointName}`;
-    const client: RestClient = await getRestClient(orgUrl, personalAccessToken);
+    const client: RestClient = await getRestClient();
     const resource: string = `${orgUrl}/${project}/${apiUrl}${uriParameter}&${apiVersion}`;
     logger.info(`getServiceEndpointByName:Resource: ${resource}`);
 
