@@ -9,14 +9,11 @@ import {
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { Config } from "../../config";
 import { logger } from "../../logger";
-import { getBuildApi, getWebApi } from "./azdo";
+import { getBuildApi, getWebApi } from "../azdoClient";
 import { IServiceEndpoint } from "./azdoInterfaces";
 import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
 
 let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be reused
-
-const gitOpsConfig = Config().azure_devops!;
-const project = gitOpsConfig.project!;
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi.ITaskAgentApi` with `orgUrl` and `token and returns `ITaskAgentApi`
@@ -76,6 +73,8 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
 export const addVariableGroupWithKeyVaultMap = async (): Promise<
   VariableGroup
 > => {
+  const gitOpsConfig = Config().azure_devops!;
+  const project = gitOpsConfig.project!;
   const groupConfig = gitOpsConfig.variable_group!;
   const groupKvConfig = groupConfig.key_vault_provider!;
 
@@ -142,6 +141,8 @@ const doAddVariableGroup = async (
   accessToAllPipelines: boolean
 ): Promise<VariableGroup> => {
   const message: string = `Variable Group ${variableGroupdata.name}`;
+  const gitOpsConfig = Config().azure_devops!;
+  const project = gitOpsConfig.project!;
   try {
     logger.debug(
       `Creating new Variable Group ${JSON.stringify(variableGroupdata)}`
@@ -179,6 +180,8 @@ const authorizeAccessToAllPipelines = async (
   try {
     // authorize access to variable group from all pipelines
     logger.info(`Creating ${message}`);
+    const gitOpsConfig = Config().azure_devops!;
+    const project = gitOpsConfig.project!;
 
     const resourceDefinition: DefinitionResourceReference = {
       authorized: true,

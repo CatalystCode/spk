@@ -3,18 +3,11 @@ import { IRestResponse, RestClient } from "typed-rest-client";
 import { Config } from "../../config";
 import { logger } from "../../logger";
 import { IServiceEndpointConfiguration } from "../../types";
-import { getRestClient } from "./azdo";
+import { getRestClient } from "../azdoClient";
 import { IServiceEndpoint, IServiceEndpointParams } from "./azdoInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
 const apiVersion: string = "api-version=5.1-preview.2";
-
-const config = Config();
-logger.debug(`Config: ${JSON.stringify(config)}`);
-const gitOpsConfig = config.azure_devops!;
-const orgUrl = gitOpsConfig.org!;
-const personalAccessToken = gitOpsConfig.access_token!;
-const project = gitOpsConfig.project!;
 
 /**
  * Check for Azdo Service Endpoint by name `serviceEndpointConfig.name` and creates `serviceEndpoint` if it does not exist
@@ -69,6 +62,11 @@ export const addServiceEndpoint = async (
 
   let resp: IRestResponse<IServiceEndpoint>;
 
+  const config = Config();
+  const gitOpsConfig = config.azure_devops!;
+  const orgUrl = gitOpsConfig.org!;
+  const project = gitOpsConfig.project!;
+
   try {
     const endPointParams: IServiceEndpointParams = await createServiceEndPointParams(
       serviceEndpointConfig
@@ -117,6 +115,10 @@ export const getServiceEndpointByName = async (
   logger.info(`getServiceEndpointByName called with ${serviceEndpointName}`);
 
   let resp: IRestResponse<any>;
+  const config = Config();
+  const gitOpsConfig = config.azure_devops!;
+  const orgUrl = gitOpsConfig.org!;
+  const project = gitOpsConfig.project!;
 
   try {
     const uriParameter = `?endpointNames=${serviceEndpointName}`;
