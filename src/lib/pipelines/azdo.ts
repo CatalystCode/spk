@@ -19,7 +19,6 @@ export const getWebApi = async (): Promise<WebApi> => {
   }
 
   const config = Config();
-  logger.debug(`Config: ${config}`);
   const gitOpsConfig = config.azure_devops!;
   const orgUrl = gitOpsConfig.org!;
   const personalAccessToken = gitOpsConfig.access_token!;
