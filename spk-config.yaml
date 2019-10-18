@@ -8,14 +8,14 @@ azure_devops: # Should this live under the `spk` configuration?
   variable_group:
     name: "myvg"
     description: "myvg description"
-    variables: # Either this or Key Value provider should be configured for this variable group
+    vsts_data: # Either this or Key Value provider should be configured for this variable group
       var1:
         value: value1
         isSecret: true
       var2:
         value: value2
         isSecret: false
-    key_vault_provider:
+    key_vault_data:
       name: "mykeyvault" # name of the Azure Key Vaukt with Secrets
       secrets: ["secret1", "secret2"] # Names of secrets from Azure Key Vault to map in Variable Group
       service_endpoint: # service endpoint is required to authorize with Azure Key Vault
