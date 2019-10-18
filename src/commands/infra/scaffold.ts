@@ -259,18 +259,11 @@ export const scaffoldJson = async (
 };
 
 export const generateHclClusterDefinition = (vartfData: string) => {
-  try {
-    const data: string = fs.readFileSync(vartfData, "utf8");
-    const fields: { [name: string]: string | "" | any } = parseVariablesTf(
-      data
-    );
-    const def: { [name: string]: string | "" | any } = {};
-    def.inputs = fields;
-    return def;
-  } catch (err) {
-    logger.error("Unable to create a HCL definition object");
-    logger.error(err);
-  }
+  const data: string = fs.readFileSync(vartfData, "utf8");
+  const fields: { [name: string]: string | "" | any } = parseVariablesTf(data);
+  const def: { [name: string]: string | "" | any } = {};
+  def.inputs = fields;
+  return def;
 };
 
 /**
@@ -299,13 +292,7 @@ export const scaffoldHcl = async (
       .replace(/\}([^}]*)$/, "$1")
       .replace(/(^[ \t]*\n)/gm, "")
       .trim();
-    fs.writeFile(confPath, hcl, err => {
-      if (err) {
-        logger.error("Unable to create or write to HCL file.");
-        logger.error(err);
-        return false;
-      }
-    });
+    fs.writeFileSync(confPath, hcl);
   } catch (err) {
     logger.error("Failed to create HCL file.");
     logger.error(err);
