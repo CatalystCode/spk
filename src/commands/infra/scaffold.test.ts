@@ -1,14 +1,9 @@
-import {
-  disableVerboseLogging,
-  enableVerboseLogging,
-  logger
-} from "../../logger";
+import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import {
   generateClusterDefinition,
   parseVariablesTf,
   scaffoldHcl
 } from "./scaffold";
-import { fs } from "mock-fs";
 
 beforeAll(() => {
   enableVerboseLogging();
