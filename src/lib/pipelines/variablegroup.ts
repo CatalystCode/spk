@@ -1,3 +1,4 @@
+import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
 import { DefinitionResourceReference } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import {
   AzureKeyVaultVariableGroupProviderData,
@@ -13,17 +14,10 @@ import { getBuildApi, getWebApi } from "./azdo";
 import { IServiceEndpoint } from "./azdoInterfaces";
 import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
 
-import {} from "azure-devops-node-api/TaskAgentApi";
-
-////////////////////////////////////////////////////////////////////////////////
-// State
-////////////////////////////////////////////////////////////////////////////////
 let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be reused
 
-const config = Config();
-logger.debug(`Config: ${config}`);
-const gitOpsConfig = config.azure_devops!;
-const project = gitOpsConfig.project!;
+// const gitOpsConfig = Config().azure_devops!;
+// const project = gitOpsConfig.project!;
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi.ITaskAgentApi` with `orgUrl` and `token and returns `ITaskAgentApi`
@@ -34,229 +28,253 @@ export const TaskApi = async (): Promise<ITaskAgentApi> => {
     return taskApi;
   }
 
-  const webApi = await getWebApi();
-  taskApi = await webApi.getTaskAgentApi();
+  // const config = Config();
+  // const gitOpsConfig = config.azure_devops!;
+  // const orgUrl = gitOpsConfig.org!;
+  // const personalAccessToken = gitOpsConfig.access_token!;
+
+  // // PAT and devops URL are required
+  // if (typeof personalAccessToken === "undefined") {
+  //   throw Error(
+  //     `Unable to parse Azure DevOps Personal Access Token (azure_devops.access_token) from spk config`
+  //   );
+  // }
+
+  // if (typeof orgUrl === "undefined") {
+  //   throw Error(
+  //     `Unable to parse Azure DevOps Organization URL (azure_devops.org) from spk config`
+  //   );
+  // }
+
+  // logger.debug(
+  //   `getWebApi called with org url: ${orgUrl} and token: ${personalAccessToken}`
+  // );
+
+  // const authHandler = getPersonalAccessTokenHandler(personalAccessToken);
+  // const connection = new WebApi(orgUrl, authHandler);
+  const api = await getWebApi();
+  taskApi = await api.getTaskAgentApi();
   return taskApi;
 };
 
-/**
- * Adds Variable group `groupConfig` in Azure DevOps project and returns `VariableGroup` object
- *
- */
-export const addVariableGroup = async (): Promise<VariableGroup> => {
-  const groupConfig = config.azure_devops!.variable_group!;
-  const message: string = `Variable Group ${groupConfig.name}`;
-  try {
-    logger.info(`Creating ${message}`);
+// /**
+//  * Adds Variable group `groupConfig` in Azure DevOps project and returns `VariableGroup` object
+//  *
+//  */
+// export const addVariableGroup = async (): Promise<VariableGroup> => {
+//   const groupConfig = config.azure_devops!.variable_group!;
+//   const message: string = `Variable Group ${groupConfig.name}`;
+//   try {
+//     logger.info(`Creating ${message}`);
 
-    if (
-      typeof groupConfig.variables === undefined ||
-      typeof groupConfig.variables === null
-    ) {
-      throw new Error("Invalid input. Variable are not configured");
-    }
+//     if (
+//       typeof groupConfig.variables === undefined ||
+//       typeof groupConfig.variables === null
+//     ) {
+//       throw new Error("Invalid input. Variable are not configured");
+//     }
 
-    // map variables from configuration
-    const variablesMap = await buildVariablesMap(groupConfig.variables!);
+//     // map variables from configuration
+//     const variablesMap = await buildVariablesMap(groupConfig.variables!);
 
-    // create variable group parameterts
-    const params: VariableGroupParameters = {
-      description: groupConfig.description,
-      name: groupConfig.name,
-      type: "Vsts",
-      variables: variablesMap
-    };
+//     // create variable group parameterts
+//     const params: VariableGroupParameters = {
+//       description: groupConfig.description,
+//       name: groupConfig.name,
+//       type: "Vsts",
+//       variables: variablesMap
+//     };
 
-    return doAddVariableGroup(params, true);
-  } catch (err) {
-    logger.error(`Failed to create ${message}`);
-    logger.error(err);
-    throw err;
-  }
-};
+//     return doAddVariableGroup(params, true);
+//   } catch (err) {
+//     logger.error(`Failed to create ${message}`);
+//     logger.error(err);
+//     throw err;
+//   }
+// };
 
-/**
- * * Adds Variable group `groupConfig` with Key Valut maopping in Azure DevOps project and returns `VariableGroup` object
- *
- */
-export const addVariableGroupWithKeyVaultMap = async (): Promise<
-  VariableGroup
-> => {
-  const groupConfig = gitOpsConfig.variable_group!;
-  const groupKvConfig = groupConfig.key_vault_provider!;
+// /**
+//  * * Adds Variable group `groupConfig` with Key Valut maopping in Azure DevOps project and returns `VariableGroup` object
+//  *
+//  */
+// export const addVariableGroupWithKeyVaultMap = async (): Promise<
+//   VariableGroup
+// > => {
+//   const groupConfig = gitOpsConfig.variable_group!;
+//   const groupKvConfig = groupConfig.key_vault_provider!;
 
-  const message: string = `Variable Group ${groupConfig.name}`;
+//   const message: string = `Variable Group ${groupConfig.name}`;
 
-  try {
-    logger.info(`Creating ${message}`);
-    let serviceEndpoint: IServiceEndpoint;
-    if (
-      typeof groupConfig.key_vault_provider === undefined ||
-      typeof groupConfig.key_vault_provider === null
-    ) {
-      throw new Error(
-        "Invalid input. Azure KeyVault Provider data is not configured"
-      );
-    }
+//   try {
+//     logger.info(`Creating ${message}`);
+//     let serviceEndpoint: IServiceEndpoint;
+//     if (
+//       typeof groupConfig.key_vault_provider === undefined ||
+//       typeof groupConfig.key_vault_provider === null
+//     ) {
+//       throw new Error(
+//         "Invalid input. Azure KeyVault Provider data is not configured"
+//       );
+//     }
 
-    // get service endpoint id
-    logger.info(`Checking for Service endpoint`);
-    serviceEndpoint = await createServiceEndpointIfNotExists(
-      groupKvConfig.service_endpoint
-    );
+//     // get service endpoint id
+//     logger.info(`Checking for Service endpoint`);
+//     serviceEndpoint = await createServiceEndpointIfNotExists(
+//       groupKvConfig.service_endpoint
+//     );
 
-    logger.info(
-      `Using Service endpoint id: ${serviceEndpoint.id} for Key Vault`
-    );
+//     logger.info(
+//       `Using Service endpoint id: ${serviceEndpoint.id} for Key Vault`
+//     );
 
-    // create AzureKeyVaultVariableValue object
-    const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
-      serviceEndpointId: serviceEndpoint.id,
-      vault: groupConfig.key_vault_provider!.name
-    };
+//     // create AzureKeyVaultVariableValue object
+//     const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
+//       serviceEndpointId: serviceEndpoint.id,
+//       vault: groupConfig.key_vault_provider!.name
+//     };
 
-    // map secrets from config
-    const secretsMap: IKeyVaultVariableMap = await buildKeyVaultVariablesMap(
-      groupConfig.key_vault_provider!.secrets
-    );
+//     // map secrets from config
+//     const secretsMap: IKeyVaultVariableMap = await buildKeyVaultVariablesMap(
+//       groupConfig.key_vault_provider!.secrets
+//     );
 
-    // creating variable group parameterts
-    const params: VariableGroupParameters = {
-      description: groupConfig.description,
-      name: groupConfig.name,
-      providerData: kvProvideData,
-      type: "AzureKeyVault",
-      variables: secretsMap
-    };
+//     // creating variable group parameterts
+//     const params: VariableGroupParameters = {
+//       description: groupConfig.description,
+//       name: groupConfig.name,
+//       providerData: kvProvideData,
+//       type: "AzureKeyVault",
+//       variables: secretsMap
+//     };
 
-    return doAddVariableGroup(params, true);
-  } catch (err) {
-    logger.error(`Failed to create ${message}`);
-    logger.error(err);
-    throw err;
-  }
-};
+//     return doAddVariableGroup(params, true);
+//   } catch (err) {
+//     logger.error(`Failed to create ${message}`);
+//     logger.error(err);
+//     throw err;
+//   }
+// };
 
-/**
- * * Adds Variable group with `VariableGroupParameters` data and returns `VariableGroup` object.
- *
- * @param variableGroupdata The Variable group data
- * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
- */
-const doAddVariableGroup = async (
-  variableGroupdata: VariableGroupParameters,
-  accessToAllPipelines: boolean
-): Promise<VariableGroup> => {
-  const message: string = `Variable Group ${variableGroupdata.name}`;
-  try {
-    logger.debug(
-      `Creating new Variable Group ${JSON.stringify(variableGroupdata)}`
-    );
-    const taskClient: ITaskAgentApi = await TaskApi();
-    const group: VariableGroup = await taskClient.addVariableGroup(
-      variableGroupdata,
-      project
-    );
-    logger.debug(`Created new Variable Group: ${JSON.stringify(group)}`);
-    logger.info(`Created ${message} with id: ${group.id!}`);
+// /**
+//  * * Adds Variable group with `VariableGroupParameters` data and returns `VariableGroup` object.
+//  *
+//  * @param variableGroupdata The Variable group data
+//  * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
+//  */
+// const doAddVariableGroup = async (
+//   variableGroupdata: VariableGroupParameters,
+//   accessToAllPipelines: boolean
+// ): Promise<VariableGroup> => {
+//   const message: string = `Variable Group ${variableGroupdata.name}`;
+//   try {
+//     logger.debug(
+//       `Creating new Variable Group ${JSON.stringify(variableGroupdata)}`
+//     );
+//     const taskClient: ITaskAgentApi = await TaskApi();
+//     const group: VariableGroup = await taskClient.addVariableGroup(
+//       variableGroupdata,
+//       project
+//     );
+//     logger.debug(`Created new Variable Group: ${JSON.stringify(group)}`);
+//     logger.info(`Created ${message} with id: ${group.id!}`);
 
-    if (accessToAllPipelines) {
-      await authorizeAccessToAllPipelines(group);
-    }
+//     if (accessToAllPipelines) {
+//       await authorizeAccessToAllPipelines(group);
+//     }
 
-    return group;
-  } catch (err) {
-    logger.error(`Failed to create ${message}`);
-    logger.error(err);
-    throw err;
-  }
-};
+//     return group;
+//   } catch (err) {
+//     logger.error(`Failed to create ${message}`);
+//     logger.error(err);
+//     throw err;
+//   }
+// };
 
-/**
- * * Enables authorization for all pipelines to access Variable group with `variableGroup` data and returns `true` if successful
- *
- * @param variableGroup The Variable group object
- */
-const authorizeAccessToAllPipelines = async (
-  variableGroup: VariableGroup
-): Promise<boolean> => {
-  const message: string = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
+// /**
+//  * * Enables authorization for all pipelines to access Variable group with `variableGroup` data and returns `true` if successful
+//  *
+//  * @param variableGroup The Variable group object
+//  */
+// const authorizeAccessToAllPipelines = async (
+//   variableGroup: VariableGroup
+// ): Promise<boolean> => {
+//   const message: string = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
 
-  try {
-    // authorize access to variable group from all pipelines
-    logger.info(`Creating ${message}`);
+//   try {
+//     // authorize access to variable group from all pipelines
+//     logger.info(`Creating ${message}`);
 
-    const resourceDefinition: DefinitionResourceReference = {
-      authorized: true,
-      id: variableGroup.id!.toString(),
-      name: variableGroup.name,
-      type: "variablegroup"
-    };
+//     const resourceDefinition: DefinitionResourceReference = {
+//       authorized: true,
+//       id: variableGroup.id!.toString(),
+//       name: variableGroup.name,
+//       type: "variablegroup"
+//     };
 
-    logger.debug(
-      `Creating resource definition: ${JSON.stringify(resourceDefinition)}`
-    );
+//     logger.debug(
+//       `Creating resource definition: ${JSON.stringify(resourceDefinition)}`
+//     );
 
-    const buildCleint = await getBuildApi();
-    const resourceDefinitionResponse = await buildCleint.authorizeProjectResources(
-      [resourceDefinition],
-      project
-    );
+//     const buildCleint = await getBuildApi();
+//     const resourceDefinitionResponse = await buildCleint.authorizeProjectResources(
+//       [resourceDefinition],
+//       project
+//     );
 
-    logger.debug(
-      `Created resource definition: ${JSON.stringify(
-        resourceDefinitionResponse
-      )}`
-    );
-    logger.info(
-      `Authorized access ${message} authorized flag set to ${resourceDefinitionResponse[0].authorized}`
-    );
+//     logger.debug(
+//       `Created resource definition: ${JSON.stringify(
+//         resourceDefinitionResponse
+//       )}`
+//     );
+//     logger.info(
+//       `Authorized access ${message} authorized flag set to ${resourceDefinitionResponse[0].authorized}`
+//     );
 
-    return true;
-  } catch (err) {
-    logger.error(`Failed to create ${message}`);
-    logger.error(err);
-    throw err;
-  }
-};
+//     return true;
+//   } catch (err) {
+//     logger.error(`Failed to create ${message}`);
+//     logger.error(err);
+//     throw err;
+//   }
+// };
 
-export interface IVariablesMap {
-  [key: string]: VariableValue;
-}
+// export interface IVariablesMap {
+//   [key: string]: VariableValue;
+// }
 
-export interface IKeyVaultVariableMap {
-  [key: string]: AzureKeyVaultVariableValue;
-}
+// export interface IKeyVaultVariableMap {
+//   [key: string]: AzureKeyVaultVariableValue;
+// }
 
-export const buildKeyVaultVariablesMap = async (
-  secrets: string[]
-): Promise<IKeyVaultVariableMap> => {
-  const secretsMap: IKeyVaultVariableMap = {};
-  logger.debug(`secrets: ${secrets}`);
+// export const buildKeyVaultVariablesMap = async (
+//   secrets: string[]
+// ): Promise<IKeyVaultVariableMap> => {
+//   const secretsMap: IKeyVaultVariableMap = {};
+//   logger.debug(`secrets: ${secrets}`);
 
-  for (const secret of secrets) {
-    logger.debug(`secret name: ${secret}`);
-    secretsMap[secret] = {
-      enabled: true,
-      isSecret: true
-    };
-  }
+//   for (const secret of secrets) {
+//     logger.debug(`secret name: ${secret}`);
+//     secretsMap[secret] = {
+//       enabled: true,
+//       isSecret: true
+//     };
+//   }
 
-  logger.debug(`secretsMap: ${JSON.stringify(secretsMap)}`);
-  return secretsMap;
-};
+//   logger.debug(`secretsMap: ${JSON.stringify(secretsMap)}`);
+//   return secretsMap;
+// };
 
-export const buildVariablesMap = async (
-  variables: IVariablesMap[]
-): Promise<IVariablesMap> => {
-  const variablesMap: IVariablesMap = {};
-  logger.debug(`variables: ${JSON.stringify(variables)}`);
+// export const buildVariablesMap = async (
+//   variables: IVariablesMap[]
+// ): Promise<IVariablesMap> => {
+//   const variablesMap: IVariablesMap = {};
+//   logger.debug(`variables: ${JSON.stringify(variables)}`);
 
-  for (const [key, value] of Object.entries(variables)) {
-    logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
-    variablesMap[key] = value;
-  }
+//   for (const [key, value] of Object.entries(variables)) {
+//     logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
+//     variablesMap[key] = value;
+//   }
 
-  logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
-  return variablesMap;
-};
+//   logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
+//   return variablesMap;
+// };

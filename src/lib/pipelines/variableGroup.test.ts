@@ -2,22 +2,16 @@
 // Mocks
 ////////////////////////////////////////////////////////////////////////////////
 jest.mock("azure-devops-node-api");
-// jest.mock("../../commands/init");
 jest.mock("../../config");
+jest.mock("./azdo");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Imports
 ////////////////////////////////////////////////////////////////////////////////
-import { WebApi } from "azure-devops-node-api";
 import uuid from "uuid/v4";
-// import { Config } from "../../commands/init";
 import { Config } from "../../config";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-import {
-  addVariableGroup,
-  addVariableGroupWithKeyVaultMap,
-  TaskApi
-} from "./variableGroup";
+import { TaskApi } from "./variableGroup";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tests
@@ -30,9 +24,18 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-describe("TaskAPI", () => {
+describe("TaskApi", () => {
   test("should fail when PAT not set", async () => {
-    const invalidCheck: string | undefined = undefined;
-    expect(invalidCheck).toBeUndefined();
+    (Config as jest.Mock).mockReturnValue({
+      azure_devops: {}
+    });
+
+    let invalidPatError: Error | undefined;
+    try {
+      await TaskApi();
+    } catch (err) {
+      invalidPatError = err;
+    }
+    expect(invalidPatError).toBeDefined();
   });
 });
