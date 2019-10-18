@@ -1,5 +1,6 @@
 import * as path from "path";
-import { config, loadConfiguration } from "../../commands/init";
+import { Config, loadConfiguration } from "../../config";
+import { IConfigYaml } from "../../types";
 import * as serviceEndpoint from "./serviceEndpoint";
 
 const mockServiceEndpointId: string = "mock-service-endpoint-id";
@@ -11,17 +12,19 @@ jest.spyOn(serviceEndpoint, "getServiceEndpointByName").mockImplementation(
   }
 );
 
+let config: IConfigYaml;
 beforeEach(() => {
   process.env.test_name = "my_storage_account";
   process.env.test_key = "my_storage_key";
   const mockFileName = "src/commands/mocks/spk-config.yaml";
   const filename = path.resolve(mockFileName);
   loadConfiguration(filename);
+  config = Config();
 });
 
 describe("Validate service endpoint endpoint", () => {
   test("valid service endpoint params", async () => {
-    const serviceEndpointConfig = config.azure_devops!.variable_group!
+    const serviceEndpointConfig = Config().azure_devops!.variable_group!
       .key_vault_provider!.service_endpoint;
 
     const data = await serviceEndpoint.createServiceEndPointParams(

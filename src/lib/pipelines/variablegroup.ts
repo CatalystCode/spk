@@ -7,9 +7,9 @@ import {
   VariableValue
 } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
-import { getConfig } from "../../config";
+import { Config } from "../../config";
 import { logger } from "../../logger";
-import { getWebApi, getBuildApi } from "./azdo";
+import { getBuildApi, getWebApi } from "./azdo";
 import { IServiceEndpoint } from "./azdoInterfaces";
 import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
 
@@ -20,7 +20,7 @@ import {} from "azure-devops-node-api/TaskAgentApi";
 ////////////////////////////////////////////////////////////////////////////////
 let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be reused
 
-const config = getConfig();
+const config = Config();
 logger.debug(`Config: ${config}`);
 const gitOpsConfig = config.azure_devops!;
 const project = gitOpsConfig.project!;

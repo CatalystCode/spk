@@ -1,14 +1,10 @@
 import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
-import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { RestClient } from "typed-rest-client";
 import { Config } from "../../config";
 import { logger } from "../../logger";
 
-////////////////////////////////////////////////////////////////////////////////
-// State
-////////////////////////////////////////////////////////////////////////////////
-let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be reused
+// File Variables
 let connection: WebApi | undefined;
 let restApi: RestClient | undefined;
 let buildApi: IBuildApi | undefined;
