@@ -27,7 +27,7 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
       "-t, --template <path to variables.tf> ",
       "Location of the variables.tf for the terraform deployment"
     )
-    .option("-c, --hcl", "Generates cluster definition HCL file")
+    .option("--hcl", "Generates cluster definition HCL file")
     .action(async opts => {
       try {
         if (opts.name && opts.source && opts.version && opts.template) {

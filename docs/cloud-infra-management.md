@@ -76,7 +76,7 @@ spk infra scaffold|s [options]
 > `spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "0.0.1" --template /microsoft/bedrock/cluster/environments/azure-simple`
 
 Options:
-  -c, --hcl                                      Generate HCL definition file (terragrunt.hcl)
+  --hcl                                          Generate HCL definition file (terragrunt.hcl)
   -n, --name <name>                              Cluster name for scaffolding
   -s, --source <cluster definition github repo>  Source URL for the repository containing the terraform deployment
   -v, --version <repository version>             Version or tag for the repository so a fixed version is referenced
