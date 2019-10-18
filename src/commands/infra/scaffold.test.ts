@@ -1,4 +1,8 @@
-import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
+import {
+  disableVerboseLogging,
+  enableVerboseLogging,
+  logger
+} from "../../logger";
 import {
   generateClusterDefinition,
   parseVariablesTf,
@@ -70,5 +74,14 @@ describe("Validate generation of a valid cluster HCL file", () => {
     const sampleVarTf = "src/commands/mocks/azure-simple/variables.tf";
     const value = await scaffoldHcl(mockFileName, sampleVarTf);
     expect(value).toBe(true);
+  });
+});
+
+describe("Failure testing for generation of a valid cluster HCL file", () => {
+  test("Validate that a variables.tf sample can be parsed and translated to an HCL file", async () => {
+    const mockFileName = "src/commands/mocks/azure-simple";
+    const sampleVarTf = "src/commands/mocks/azure-simple";
+    const value = await scaffoldHcl(mockFileName, sampleVarTf);
+    expect(value).toBe(false);
   });
 });
