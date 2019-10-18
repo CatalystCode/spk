@@ -2,7 +2,7 @@ import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { ITaskAgentApi } from "azure-devops-node-api/TaskAgentApi";
 import { RestClient } from "typed-rest-client";
-import { getConfig } from "../../config";
+import { Config } from "../../config";
 import { logger } from "../../logger";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ export const getWebApi = async (): Promise<WebApi> => {
     return connection;
   }
 
-  const config = getConfig();
+  const config = Config();
   logger.debug(`Config: ${config}`);
   const gitOpsConfig = config.azure_devops!;
   const orgUrl = gitOpsConfig.org!;

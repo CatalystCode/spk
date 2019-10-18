@@ -1,6 +1,6 @@
 import { generateUuid } from "@azure/core-http";
 import { IRestResponse, RestClient } from "typed-rest-client";
-import { getConfig } from "../../config";
+import { Config } from "../../config";
 import { logger } from "../../logger";
 import { IServiceEndpointConfiguration } from "../../types";
 import { getRestClient } from "./azdo";
@@ -9,7 +9,7 @@ import { IServiceEndpoint, IServiceEndpointParams } from "./azdoInterfaces";
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
 const apiVersion: string = "api-version=5.1-preview.2";
 
-const config = getConfig();
+const config = Config();
 logger.debug(`Config: ${JSON.stringify(config)}`);
 const gitOpsConfig = config.azure_devops!;
 const orgUrl = gitOpsConfig.org!;

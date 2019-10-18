@@ -4,6 +4,7 @@ import path from "path";
 import shelljs from "shelljs";
 import * as config from "../../config";
 import {
+  generateDockerfile,
   generateGitIgnoreFile,
   generateStarterAzurePipelinesYaml
 } from "../../lib/fileutils";
@@ -71,7 +72,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
 };
 
 /**
- * Initializes the `rootProject` with a bedrock.yaml, maintainers.yaml, and azure-pipelines.yaml file
+ * Initializes the `rootProject` with a bedrock.yaml, maintainers.yaml
  * If opts.monoRepo == true, the root directly will be initialized as a mono-repo
  * If opts.monoRepo == true, all direct subdirectories under opts.packagesDir will be initialized as individual projects
  *
@@ -116,6 +117,7 @@ export const initialize = async (
   for (const absPackagePath of absPackagePaths) {
     await generateStarterAzurePipelinesYaml(absProjectRoot, absPackagePath);
     generateGitIgnoreFile(absPackagePath, gitIgnoreFileContent);
+    generateDockerfile(absPackagePath);
   }
 
   logger.info(`Project initialization complete!`);
@@ -251,9 +253,9 @@ const generateBedrockFile = async (
       return file;
     },
     {
-      rings: defaultRings.reduce<{ [ring: string]: { default: boolean } }>(
+      rings: defaultRings.reduce<{ [ring: string]: { isDefault: boolean } }>(
         (defaults, ring) => {
-          defaults[ring] = { default: true };
+          defaults[ring] = { isDefault: true };
           return defaults;
         },
         {}

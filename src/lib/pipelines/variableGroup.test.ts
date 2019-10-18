@@ -11,7 +11,7 @@ jest.mock("../../config");
 import { WebApi } from "azure-devops-node-api";
 import uuid from "uuid/v4";
 // import { Config } from "../../commands/init";
-import { getConfig } from "../../config";
+import { Config } from "../../config";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import {
   addVariableGroup,
