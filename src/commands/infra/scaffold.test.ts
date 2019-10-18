@@ -78,7 +78,7 @@ describe("Validate generation of a valid cluster HCL file", () => {
 });
 
 describe("Failure testing for generation of a valid cluster HCL file", () => {
-  test("Validate that a variables.tf sample can be parsed and translated to an HCL file", async () => {
+  test("Mocked a failed scenario of HCL generation", async () => {
     const mockFileName = "src/commands/mocks/azure-simple";
     const sampleVarTf = "src/commands/mocks/azure-simple";
     const value = await scaffoldHcl(mockFileName, sampleVarTf);
