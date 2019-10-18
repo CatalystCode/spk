@@ -9,7 +9,7 @@ import {
   validateAzure,
   validateEnvVariables,
   validatePrereqs
-} from "./infra/vaildate";
+} from "./infra/validate";
 
 export const defaultFileLocation = os.homedir() + "/.spk/config.yaml";
 export let config: IConfigYaml = {};

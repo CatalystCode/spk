@@ -6,7 +6,7 @@ import {
   validateAzure,
   validateEnvVariables,
   validatePrereqs
-} from "./vaildate";
+} from "./validate";
 
 beforeAll(() => {
   enableVerboseLogging();
