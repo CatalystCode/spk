@@ -1,6 +1,6 @@
 import commander from "commander";
 import { join } from "path";
-import { bedrock } from "../../config";
+import { Bedrock } from "../../config";
 import { createPullRequest } from "../../lib/git/azure";
 import { getCurrentBranch, getOriginUrl } from "../../lib/gitutils";
 import { logger } from "../../logger";
@@ -32,23 +32,23 @@ export const createServiceRevisionCommandDecorator = (
       "Personal access token associated with your Azure DevOps token; falls back to azure_devops.access_token in your spk config"
     )
     .option(
-      "--org-url <organization-url>",
-      "Your Azure DevOps organization URL; falls back to azure_devops.org in your spk config"
+      "--org-name <organization-name>",
+      "Your Azure DevOps organization name; falls back to azure_devops.org in your spk config"
     )
     .option("")
     .action(async opts => {
       try {
-        const { orgUrl, personalAccessToken } = opts;
+        const { orgName, personalAccessToken } = opts;
         let { description, remoteUrl, sourceBranch, title } = opts;
 
         ////////////////////////////////////////////////////////////////////////
         // Give defaults
         ////////////////////////////////////////////////////////////////////////
         // default pull request against initial ring
-        const bedrockConfig = await bedrock();
+        const bedrockConfig = await Bedrock();
         const defaultRings = Object.entries(bedrockConfig.rings || {})
           .map(([branch, config]) => ({ branch, ...config }))
-          .filter(ring => ring.default);
+          .filter(ring => ring.isDefault);
         if (defaultRings.length === 0) {
           throw new Error(
             `No default rings specified in ${join(__dirname, "bedrock.yaml")}`
@@ -127,9 +127,9 @@ export const createServiceRevisionCommandDecorator = (
             `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
           );
         }
-        if (typeof orgUrl !== "string") {
+        if (typeof orgName !== "string") {
           throw Error(
-            `--org-url must be of type 'string', ${typeof orgUrl} given.`
+            `--org-name must be of type 'string', ${typeof orgName} given.`
           );
         }
 
@@ -144,7 +144,7 @@ export const createServiceRevisionCommandDecorator = (
           }
           await createPullRequest(title, sourceBranch, ring.branch, {
             description,
-            orgUrl,
+            orgName,
             originPushUrl: remoteUrl,
             personalAccessToken
           });

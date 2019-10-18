@@ -1,9 +1,10 @@
-import fs from "fs";
+import fs, { write } from "fs";
 import mockFs from "mock-fs";
 
 import yaml from "js-yaml";
 import {
   createTestBedrockYaml,
+  createTestHldAzurePipelinesYaml,
   createTestMaintainersYaml
 } from "../test/mockFactory";
 
@@ -14,7 +15,9 @@ import { IBedrockFile, IHelmConfig, IMaintainersFile } from "../types";
 import {
   addNewServiceToBedrockFile,
   addNewServiceToMaintainersFile,
-  generateGitIgnoreFile
+  generateDockerfile,
+  generateGitIgnoreFile,
+  generateHldAzurePipelinesYaml
 } from "./fileutils";
 
 beforeAll(() => {
@@ -23,6 +26,46 @@ beforeAll(() => {
 
 afterAll(() => {
   disableVerboseLogging();
+});
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe("generateHldAzurePipelinesYaml", () => {
+  const targetDirectory = "hld-repository";
+  const writeSpy = jest.spyOn(fs, "writeFileSync");
+  beforeEach(() => {
+    mockFs({
+      "hld-repository": {}
+    });
+  });
+  afterEach(() => {
+    mockFs.restore();
+  });
+
+  it("should not do anything if file exist", async () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/azure-pipelines.yaml`]: "existing pipeline"
+    };
+    mockFs(mockFsOptions);
+
+    generateHldAzurePipelinesYaml(targetDirectory);
+    expect(writeSpy).not.toBeCalled();
+  });
+
+  it("should generate the file if one does not exist", async () => {
+    const absTargetPath = path.resolve(targetDirectory);
+    const expectedFilePath = `${absTargetPath}/azure-pipelines.yaml`;
+
+    generateHldAzurePipelinesYaml(targetDirectory);
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      createTestHldAzurePipelinesYaml(),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
 });
 
 describe("Adding a new service to a Maintainer file", () => {
@@ -101,9 +144,9 @@ describe("generating service gitignore file", () => {
     generateGitIgnoreFile(targetDirectory, content);
 
     const absTargetPath = path.resolve(targetDirectory);
-    const expedtedGitIgnoreFilePath = `${absTargetPath}/.gitignore`;
+    const expectedGitIgnoreFilePath = `${absTargetPath}/.gitignore`;
 
-    expect(writeSpy).toBeCalledWith(expedtedGitIgnoreFilePath, content, "utf8");
+    expect(writeSpy).toBeCalledWith(expectedGitIgnoreFilePath, content, "utf8");
   });
 });
 
@@ -151,6 +194,44 @@ describe("Adding a new service to a Bedrock file", () => {
     expect(writeSpy).toBeCalledWith(
       bedrockFilePath,
       yaml.safeDump(expected),
+      "utf8"
+    );
+  });
+});
+
+describe("generating service Dockerfile", () => {
+  const targetDirectory = "my-new-service";
+
+  beforeEach(() => {
+    mockFs({
+      "my-new-service": {}
+    });
+  });
+  afterEach(() => {
+    mockFs.restore();
+  });
+
+  it("should not do anything if file exist", async () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/Dockerfile`]: "hello!!!!"
+    };
+    mockFs(mockFsOptions);
+
+    const writeSpy = jest.spyOn(fs, "writeFileSync");
+    generateDockerfile(targetDirectory);
+    expect(writeSpy).not.toBeCalled();
+  });
+
+  it("should generate the file if one does not exist", async () => {
+    const writeSpy = jest.spyOn(fs, "writeFileSync");
+    generateDockerfile(targetDirectory);
+
+    const absTargetPath = path.resolve(targetDirectory);
+    const expectedGitIgnoreFilePath = `${absTargetPath}/Dockerfile`;
+
+    expect(writeSpy).toBeCalledWith(
+      expectedGitIgnoreFilePath,
+      "FROM alpine\nRUN echo 'hello world'",
       "utf8"
     );
   });
