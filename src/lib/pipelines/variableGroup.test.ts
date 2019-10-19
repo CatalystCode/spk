@@ -394,7 +394,7 @@ describe("authorizeAccessToAllPipelines", () => {
     expect(authorized).toBeUndefined();
   });
 
-  test("should fail when variable group is null", async () => {
+  test("should fail when passing null variable group", async () => {
     // create variable group parameterts
     const variableGroup: VariableGroup | undefined = {};
 
