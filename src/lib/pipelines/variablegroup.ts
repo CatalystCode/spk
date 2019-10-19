@@ -17,7 +17,7 @@ let taskApi: ITaskAgentApi | undefined; // keep track of the gitApi so it can be
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi.ITaskAgentApi` with `orgUrl` and `token and returns `ITaskAgentApi`
- *
+ * @returns new `ITaskAgentApi` object
  */
 export const TaskApi = async (): Promise<ITaskAgentApi> => {
   if (typeof taskApi !== "undefined") {
@@ -37,7 +37,7 @@ export const TaskApi = async (): Promise<ITaskAgentApi> => {
 
 /**
  * Adds Variable group `groupConfig` in Azure DevOps project and returns `VariableGroup` object
- *
+ * @returns newly created `VariableGroup` object
  */
 export const addVariableGroup = async (): Promise<VariableGroup> => {
   const config = Config();
@@ -74,7 +74,7 @@ export const addVariableGroup = async (): Promise<VariableGroup> => {
 
 /**
  * * Adds Variable group `groupConfig` with Key Valut maopping in Azure DevOps project and returns `VariableGroup` object
- *
+ * @returns newly created `VariableGroup` object
  */
 export const addVariableGroupWithKeyVaultMap = async (): Promise<
   VariableGroup
@@ -140,6 +140,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
  *
  * @param variableGroupdata The Variable group data
  * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
+ * @returns newly created `VariableGroup` object
  */
 export const doAddVariableGroup = async (
   variableGroupdata: VariableGroupParameters,
@@ -175,6 +176,7 @@ export const doAddVariableGroup = async (
  * * Enables authorization for all pipelines to access Variable group with `variableGroup` data and returns `true` if successful
  *
  * @param variableGroup The Variable group object
+ * @returns `true` if successfull; otherwise `false`
  */
 export const authorizeAccessToAllPipelines = async (
   variableGroup: VariableGroup
@@ -225,14 +227,27 @@ export const authorizeAccessToAllPipelines = async (
   }
 };
 
+/**
+ * * Key/value interface for variables
+ *
+ */
 export interface IVariablesMap {
   [key: string]: VariableValue;
 }
 
+/**
+ * * Key/value interface for Key Vault secrets
+ *
+ */
 export interface IKeyVaultVariableMap {
   [key: string]: AzureKeyVaultVariableValue;
 }
 
+/**
+ * * Creates `IKeyVaultVariableMap` object from variables key/value pairs
+ * @param variableGroup The Variable group object
+ * @returns `IKeyVaultVariableMap[]` with Key Vault secrets for Varibale Group
+ */
 export const buildKeyVaultVariablesMap = async (
   secrets: string[]
 ): Promise<IKeyVaultVariableMap> => {
@@ -251,6 +266,11 @@ export const buildKeyVaultVariablesMap = async (
   return secretsMap;
 };
 
+/**
+ * * Creates `IVariablesMap` object from variables key/value apirs
+ * @param variableGroup The Variable group object
+ * @returns `IVariablesMap[]` with Varibale Group variables
+ */
 export const buildVariablesMap = async (
   variables: IVariablesMap[]
 ): Promise<IVariablesMap> => {

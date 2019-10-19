@@ -3,7 +3,7 @@ import { IRestResponse, RestClient } from "typed-rest-client";
 import { Config } from "../../config";
 import { logger } from "../../logger";
 import { IServiceEndpointConfiguration } from "../../types";
-import { getRestClient, azdoUrl } from "../azdoClient";
+import { azdoUrl, getRestClient } from "../azdoClient";
 import { IServiceEndpoint, IServiceEndpointParams } from "./azdoInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
@@ -13,6 +13,7 @@ const apiVersion: string = "api-version=5.1-preview.2";
  * Check for Azdo Service Endpoint by name `serviceEndpointConfig.name` and creates `serviceEndpoint` if it does not exist
  *
  * @param serviceEndpoint The service endpoint configuration
+ * @returns newly created `IServiceEndpoint` object
  */
 export const createServiceEndpointIfNotExists = async (
   serviceEndpointConfig: IServiceEndpointConfiguration
@@ -53,6 +54,7 @@ export const createServiceEndpointIfNotExists = async (
  * Creates a new Service Endpoint in Azure DevOps project
  *
  * @param serviceEndpoint The service endpoint configuration
+ * @returns newly created `IServiceEndpoint` object
  */
 export const addServiceEndpoint = async (
   serviceEndpointConfig: IServiceEndpointConfiguration
@@ -108,6 +110,7 @@ export const addServiceEndpoint = async (
  * Get Service Endpoint by name from Azure DevOps project
  *
  * @param serviceEndpointName The service endpoint name to find existing service endpoint by name
+ * * @returns `IServiceEndpoint` if found by the name; otherwise `null`
  */
 export const getServiceEndpointByName = async (
   serviceEndpointName: string
@@ -162,6 +165,7 @@ export const getServiceEndpointByName = async (
  * Created `IServiceEndPointParams` from the argument `serviceEndpointConfig` received
  *
  * @param serviceEndpointConfig The service endpoint endpoint request data from configuration
+ * @returns `IServiceEndpointParams` object
  */
 export const createServiceEndPointParams = async (
   serviceEndpointConfig: IServiceEndpointConfiguration
@@ -190,7 +194,13 @@ export const createServiceEndPointParams = async (
   return endPointParams;
 };
 
-export const validateServiceEndpointInput = async (
+/**
+ * Check for `null` or `undefined` variables in `IServiceEndpointConfiguration`
+ *
+ * @param serviceEndpointConfig The service endpoint request data from configuration
+ * @throws `Error` object when validation fails
+ */
+const validateServiceEndpointInput = async (
   serviceEndpointConfig: IServiceEndpointConfiguration
 ) => {
   const errors: string[] = [];
