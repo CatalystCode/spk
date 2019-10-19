@@ -4,6 +4,7 @@ import emoji from "node-emoji";
 import { promisify } from "util";
 import { Config } from "../../config";
 import { logger } from "../../logger";
+import shell from "shelljs";
 
 const binaries: string[] = ["terraform", "git", "az", "helm"];
 const envVar: string[] = [
@@ -72,7 +73,7 @@ export const validatePrereqs = async (
   // Validate executables in PATH
   for (const i of executables) {
     try {
-      await promisify(child_process.exec)("which " + i);
+      await shell.which(i);
       config.infra.checks[i] = true;
     } catch (err) {
       if (globalInit === true) {
