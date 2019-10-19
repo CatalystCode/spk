@@ -3,7 +3,7 @@ import { IRestResponse, RestClient } from "typed-rest-client";
 import { Config } from "../../config";
 import { logger } from "../../logger";
 import { IServiceEndpointConfiguration } from "../../types";
-import { getRestClient } from "../azdoClient";
+import { getRestClient, azdoUrl } from "../azdoClient";
 import { IServiceEndpoint, IServiceEndpointParams } from "./azdoInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
@@ -64,7 +64,7 @@ export const addServiceEndpoint = async (
 
   const config = Config();
   const gitOpsConfig = config.azure_devops!;
-  const orgUrl = gitOpsConfig.org!;
+  const orgUrl = azdoUrl(gitOpsConfig.org!);
   const project = gitOpsConfig.project!;
 
   try {
@@ -117,7 +117,7 @@ export const getServiceEndpointByName = async (
   let resp: IRestResponse<any>;
   const config = Config();
   const gitOpsConfig = config.azure_devops!;
-  const orgUrl = gitOpsConfig.org!;
+  const orgUrl = azdoUrl(gitOpsConfig.org!);
   const project = gitOpsConfig.project!;
 
   try {
@@ -166,6 +166,7 @@ export const getServiceEndpointByName = async (
 export const createServiceEndPointParams = async (
   serviceEndpointConfig: IServiceEndpointConfiguration
 ): Promise<IServiceEndpointParams> => {
+  await validateServiceEndpointInput(serviceEndpointConfig);
   const endPointParams: IServiceEndpointParams = {
     authorization: {
       parameters: {
@@ -187,4 +188,39 @@ export const createServiceEndPointParams = async (
   };
 
   return endPointParams;
+};
+
+export const validateServiceEndpointInput = async (
+  serviceEndpointConfig: IServiceEndpointConfiguration
+) => {
+  const errors: string[] = [];
+
+  // name is required
+  if (typeof serviceEndpointConfig.name === "undefined") {
+    errors.push(`Invalid Service end point name.`);
+  }
+
+  if (typeof serviceEndpointConfig.service_principal_id === "undefined") {
+    errors.push(`Invalid service prrincipla id.`);
+  }
+
+  if (typeof serviceEndpointConfig.service_principal_secret === "undefined") {
+    errors.push(`Invalid service prrincipla secret.`);
+  }
+
+  if (typeof serviceEndpointConfig.subscription_id === "undefined") {
+    errors.push(`Invalid subscription id.`);
+  }
+
+  if (typeof serviceEndpointConfig.subscription_name === "undefined") {
+    errors.push(`Invalid subscription name.`);
+  }
+
+  if (typeof serviceEndpointConfig.tenant_id === "undefined") {
+    errors.push(`Invalid tenant id.`);
+  }
+
+  if (errors.length !== 0) {
+    throw new Error(errors.join(""));
+  }
 };

@@ -141,7 +141,7 @@ export const addVariableGroupWithKeyVaultMap = async (): Promise<
  * @param variableGroupdata The Variable group data
  * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
  */
-const doAddVariableGroup = async (
+export const doAddVariableGroup = async (
   variableGroupdata: VariableGroupParameters,
   accessToAllPipelines: boolean
 ): Promise<VariableGroup> => {
@@ -176,10 +176,14 @@ const doAddVariableGroup = async (
  *
  * @param variableGroup The Variable group object
  */
-const authorizeAccessToAllPipelines = async (
+export const authorizeAccessToAllPipelines = async (
   variableGroup: VariableGroup
 ): Promise<boolean> => {
   const message: string = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
+
+  if (typeof variableGroup === undefined || variableGroup === null) {
+    throw new Error("Invalid input");
+  }
 
   try {
     // authorize access to variable group from all pipelines

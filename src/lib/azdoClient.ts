@@ -3,7 +3,6 @@ import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { RestClient } from "typed-rest-client";
 import { Config } from "../config";
 import { logger } from "../logger";
-// import { azdoUrl } from "./azdoutil";
 
 // Module state Variables
 let connection: WebApi | undefined;
@@ -19,8 +18,8 @@ export const azdoUrl = (orgName: string): string =>
   `https://dev.azure.com/${orgName}`;
 
 /**
- * Creates AzDo `azure-devops-node-api.WebApi` with `orgUrl` and `token and returns `WebApi`
- *
+ * Creates AzDo `azure-devops-node-api.WebApi` with `org` and `token`
+ * @returns AzDo Web Api object
  */
 export const getWebApi = async (): Promise<WebApi> => {
   if (typeof connection !== "undefined") {
@@ -58,8 +57,8 @@ export const getWebApi = async (): Promise<WebApi> => {
 };
 
 /**
- * Creates AzDo `azure-devops-node-api.WebApi.RestClient` with `orgUrl` and `token and returns `RestClient`
- *
+ * Creates AzDo `azure-devops-node-api.WebApi.RestClient` with `org` and `token and returns `RestClient`
+ * @returns AzDo RestClient object
  */
 export const getRestClient = async (): Promise<RestClient> => {
   if (typeof restApi !== "undefined") {
@@ -71,6 +70,10 @@ export const getRestClient = async (): Promise<RestClient> => {
   return restApi;
 };
 
+/**
+ * Creates AzDo `azure-devops-node-api.WebApi.IBuildApi` with `org` and `token and returns `RestClient`
+ * @returns AzDo IBuildApi object
+ */
 export const getBuildApi = async (): Promise<IBuildApi> => {
   if (typeof buildApi !== "undefined") {
     return buildApi;
