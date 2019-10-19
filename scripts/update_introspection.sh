@@ -9,5 +9,5 @@ source venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "python update_pipeline.py $1 $2 $3 $4 $5 $6 $7 $8"
-python update_pipeline.py $1 $2 $3 $4 $5 $6 $7 $8
+echo "python update_pipeline.py $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12}"
+python update_pipeline.py $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12}
