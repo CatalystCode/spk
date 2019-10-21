@@ -5,12 +5,13 @@ jest.mock("../azdoClient");
 
 // Imports
 import uuid from "uuid/v4";
-import { Config } from "../../config";
+import { readYaml } from "../../config";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
+import { IVariableGroupData } from "../../types";
 import {
   addServiceEndpoint,
   createServiceEndPointParams
@@ -34,27 +35,24 @@ afterAll(() => {
 
 describe("Validate service endpoint parameters creation", () => {
   test("valid service endpoint params", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              name: serviceEndpointName,
-              service_principal_id: servicePrincipalId,
-              service_principal_secret: servicePrincipalSecret,
-              subscription_id: subscriptionId,
-              subscription_name: subscriptionName,
-              tenant_id: tenantId
-            }
-          }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {
+          name: serviceEndpointName,
+          service_principal_id: servicePrincipalId,
+          service_principal_secret: servicePrincipalSecret,
+          subscription_id: subscriptionId,
+          subscription_name: subscriptionName,
+          tenant_id: tenantId
         }
       }
     });
+    const input = readYaml<IVariableGroupData>("");
 
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
-
-    const data = await createServiceEndPointParams(serviceEndpointConfig);
+    const data = await createServiceEndPointParams(
+      input.key_vault_provider!.service_endpoint
+    );
 
     expect(data.name).toBe(serviceEndpointName);
     expect(data.type).toBe("azurerm");
@@ -72,28 +70,25 @@ describe("Validate service endpoint parameters creation", () => {
   });
 
   test("should fail creating service endpoint params without the name", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              service_principal_id: servicePrincipalId,
-              service_principal_secret: servicePrincipalSecret,
-              subscription_id: subscriptionId,
-              subscription_name: subscriptionName,
-              tenant_id: tenantId
-            }
-          }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {
+          service_principal_id: servicePrincipalId,
+          service_principal_secret: servicePrincipalSecret,
+          subscription_id: subscriptionId,
+          subscription_name: subscriptionName,
+          tenant_id: tenantId
         }
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
-      await createServiceEndPointParams(serviceEndpointConfig);
+      await createServiceEndPointParams(
+        input.key_vault_provider!.service_endpoint
+      );
     } catch (err) {
       invalidPatError = err;
     }
@@ -101,28 +96,25 @@ describe("Validate service endpoint parameters creation", () => {
   });
 
   test("should fail creating service endpoint params without service principal id", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              name: serviceEndpointName,
-              service_principal_secret: servicePrincipalSecret,
-              subscription_id: subscriptionId,
-              subscription_name: subscriptionName,
-              tenant_id: tenantId
-            }
-          }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {
+          name: serviceEndpointName,
+          service_principal_secret: servicePrincipalSecret,
+          subscription_id: subscriptionId,
+          subscription_name: subscriptionName,
+          tenant_id: tenantId
         }
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
-      await createServiceEndPointParams(serviceEndpointConfig);
+      await createServiceEndPointParams(
+        input.key_vault_provider!.service_endpoint
+      );
     } catch (err) {
       invalidPatError = err;
     }
@@ -130,28 +122,25 @@ describe("Validate service endpoint parameters creation", () => {
   });
 
   test("should fail creating service endpoint params without service principal secret", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              name: serviceEndpointName,
-              service_principal_id: servicePrincipalId,
-              subscription_id: subscriptionId,
-              subscription_name: subscriptionName,
-              tenant_id: tenantId
-            }
-          }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {
+          name: serviceEndpointName,
+          service_principal_id: servicePrincipalId,
+          subscription_id: subscriptionId,
+          subscription_name: subscriptionName,
+          tenant_id: tenantId
         }
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
-      await createServiceEndPointParams(serviceEndpointConfig);
+      await createServiceEndPointParams(
+        input.key_vault_provider!.service_endpoint
+      );
     } catch (err) {
       invalidPatError = err;
     }
@@ -159,28 +148,25 @@ describe("Validate service endpoint parameters creation", () => {
   });
 
   test("should fail creating service endpoint params without subscription id", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              name: serviceEndpointName,
-              service_principal_id: servicePrincipalId,
-              service_principal_secret: servicePrincipalSecret,
-              subscription_name: subscriptionName,
-              tenant_id: tenantId
-            }
-          }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {
+          name: serviceEndpointName,
+          service_principal_id: servicePrincipalId,
+          service_principal_secret: servicePrincipalSecret,
+          subscription_name: subscriptionName,
+          tenant_id: tenantId
         }
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
-      await createServiceEndPointParams(serviceEndpointConfig);
+      await createServiceEndPointParams(
+        input.key_vault_provider!.service_endpoint
+      );
     } catch (err) {
       invalidPatError = err;
     }
@@ -188,28 +174,25 @@ describe("Validate service endpoint parameters creation", () => {
   });
 
   test("should fail creating service endpoint params without subscription name", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              name: serviceEndpointName,
-              service_principal_id: servicePrincipalId,
-              service_principal_secret: servicePrincipalSecret,
-              subscription_id: subscriptionId,
-              tenant_id: tenantId
-            }
-          }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {
+          name: serviceEndpointName,
+          service_principal_id: servicePrincipalId,
+          service_principal_secret: servicePrincipalSecret,
+          subscription_id: subscriptionId,
+          tenant_id: tenantId
         }
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
-      await createServiceEndPointParams(serviceEndpointConfig);
+      await createServiceEndPointParams(
+        input.key_vault_provider!.service_endpoint
+      );
     } catch (err) {
       invalidPatError = err;
     }
@@ -217,22 +200,19 @@ describe("Validate service endpoint parameters creation", () => {
   });
 
   test("should fail creating service endpoint params without entire section", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {}
-          }
-        }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        service_endpoint: {}
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
-      await createServiceEndPointParams(serviceEndpointConfig);
+      await createServiceEndPointParams(
+        input.key_vault_provider!.service_endpoint
+      );
     } catch (err) {
       invalidPatError = err;
     }
@@ -242,30 +222,23 @@ describe("Validate service endpoint parameters creation", () => {
 
 describe("addServiceEndpoint", () => {
   test("should pass when service endpoint config is set", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {
-          key_vault_data: {
-            service_endpoint: {
-              name: serviceEndpointName,
-              service_principal_id: servicePrincipalId,
-              service_principal_secret: servicePrincipalSecret,
-              subscription_id: subscriptionId,
-              subscription_name: subscriptionName,
-              tenant_id: tenantId
-            }
-          }
-        }
+    (readYaml as jest.Mock).mockReturnValue({
+      description: "mydesc",
+      key_vault_provider: {
+        name: serviceEndpointName,
+        service_principal_id: servicePrincipalId,
+        service_principal_secret: servicePrincipalSecret,
+        subscription_id: subscriptionId,
+        subscription_name: subscriptionName,
+        tenant_id: tenantId
       }
     });
-
-    const serviceEndpointConfig = Config().azure_devops!.variable_group!
-      .key_vault_data!.service_endpoint;
+    const input = readYaml<IVariableGroupData>("");
 
     let invalidGroupError: Error | undefined;
     try {
       logger.info("calling add variable group");
-      await addServiceEndpoint(serviceEndpointConfig);
+      await addServiceEndpoint(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidGroupError = err;
     }
