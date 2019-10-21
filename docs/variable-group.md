@@ -7,7 +7,7 @@ in Azure DevOps project.
 Usage:
 
 ```
-spk service [command] [options]
+spk variable-group [command] [options]
 ```
 
 Commands:
