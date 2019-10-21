@@ -73,14 +73,13 @@ export const validatePrereqs = async (
   // Validate executables in PATH
   for (const i of executables) {
     if (!shelljs.which(i)) {
+      config.infra.checks[i] = false;
       if (globalInit === true) {
         logger.warn(i + " not installed.");
-        config.infra.checks[i] = false;
       } else {
         logger.error(
           emoji.emojify(":no_entry_sign: '" + i + "'" + " not installed")
         );
-        config.infra.checks[i] = false;
         return false;
       }
     } else {
