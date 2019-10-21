@@ -34,7 +34,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
     )
     .option(
       "-t, --personal-access-token <personal-access-token>",
-      "Personal access token associated with the Azure DevOps otg; falls back to azure_devops.access_token in spk config"
+      "Personal access token associated with the Azure DevOps org; falls back to azure_devops.access_token in spk config"
     )
     .action(async opts => {
       try {
@@ -108,12 +108,19 @@ export const create = async (
     const data = readYaml<IVariableGroupData>(filepath);
     logger.debug(`Varible Group Yaml data: ${JSON.stringify(data)}`);
 
-    let variableGroup: VariableGroup;
+    // validate variable group type
+    if (data.type === `Vsts` || data.type === `AzureKeyVault`) {
+      let variableGroup: VariableGroup;
 
-    if (data.type === "AzureKeyVault") {
-      variableGroup = await addVariableGroupWithKeyVaultMap(data, accessOpts);
-    } else if (data.type === "Vsts") {
-      variableGroup = await addVariableGroup(data, accessOpts);
+      if (data.type === "AzureKeyVault") {
+        variableGroup = await addVariableGroupWithKeyVaultMap(data, accessOpts);
+      } else if (data.type === "Vsts") {
+        variableGroup = await addVariableGroup(data, accessOpts);
+      }
+    } else {
+      throw new Error(
+        `Varible Group type "${data.type}" is not supported. "Vsts" and "AzureKeyVault" are valid types and case sensitive.`
+      );
     }
   } catch (err) {
     logger.error(`An error occurred while creating variable group\n ${err}`);

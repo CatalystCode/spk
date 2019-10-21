@@ -24,22 +24,24 @@ Global options:
 
 ## Prerequisites
 
-1. An Azure DevOps project.
+An existing
+[Azure DevOps project](https://azure.microsoft.com/en-us/services/devops/) is
+required to create a Variable Group. In addition, to link secrets from an Azure
+key vault as variables in Variable Group, you will need an existing key vault
+containing your secrets and the Service Principal for authorization with Azure
+Key Vault.
 
-2. To link secrets from an Azure key vault as variables in Variable Group, you
-   will need an existing key vault containing your secrets and the Service
-   Principal for authorization with Azure Key Vault.
-   - Use existng or
-     [create a service prrincipal either in Azure Portal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
-     or
-     [with Azure CLI](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest).
-   - Use existing or
-     [create a Key Vault in Azure Portal](https://docs.microsoft.com/en-us/azure/key-vault/quick-create-portal)
-     or
-     [with Azure CLI](https://docs.microsoft.com/en-us/azure/key-vault/quick-create-cli).
-   - Give the service principal `get` and `list` access in Azure Key Vault.
-     Follow step 2 from
-     [these instructions](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault).
+1. Use existng or
+   [create a service prrincipal either in Azure Portal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
+   or
+   [with Azure CLI](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest).
+2. Use existing or
+   [create a Key Vault in Azure Portal](https://docs.microsoft.com/en-us/azure/key-vault/quick-create-portal)
+   or
+   [with Azure CLI](https://docs.microsoft.com/en-us/azure/key-vault/quick-create-cli).
+3. Give the service principal `get` and `list` access in Azure Key Vault. Follow
+   step 2 from
+   [these instructions](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault).
 
 ## Commands
 
@@ -53,14 +55,14 @@ spk variable-group create|c [options]
 
 Options:
   -f, --file <file>                     Path to the yaml file that contains variable group manifest
-  -o, --org-name <organization-name>    Azure DevOps organization name; falls back to azure_devops.org in spk config
+  -o, --org-name <org>                  Azure DevOps organization name; falls back to azure_devops.org in spk config
   -p, --project <project>               Azure DevOps project name; falls back to azure_devops.project in spk config
-  -t, --personal-access-token <pat>     Personal access token associated with the Azure DevOps otg; falls back to azure_devops.access_token in spk config
+  -t, --personal-access-token <token>   Personal access token from Azure DevOps org; falls back to azure_devops.access_token in spk config
 ```
 
-#### Variable Group Yaml Manifest
+Variable Group Yaml Manifest File Format
 
-1. Variable Group sample manifest with variables stored in Azure DevOps
+1. Variable Group manifest with variables stored in Azure DevOps
 
    ```
    name: "myvg"
@@ -70,19 +72,18 @@ Options:
      storage-account-name:
        value: fabrikamstorage
      storage-account-access-key:
-       value: "confidential key"
+       value: "confidential value to be masked"
        isSecret: true
    ```
 
    _*NOTE:*_
 
-   - `variables` value can also be in json format as shown below.
+   - `variables` value can also support json format as shown below.
      ```
-     variables: { storage-account-name: { value: "fabrikamstorage" }, storage-account-access-key: {value: "confidential key", isSecret: true } }
+     variables: { storage-account-name: { value: "fabrikamstorage" }, storage-account-access-key: {value: "confidential value", isSecret: true } }
      ```
 
-2. Variable Group sample manifest with varibles linking to secrets in Azure Key
-   Vault
+2. Variable Group manifest with varibles linking to secrets in Azure Key Vault
 
    ```
    name: "myvg"
@@ -112,7 +113,7 @@ Options:
    - `name` SPK will try to find an existing service endpoint by name and
      creates a new service end point if needed.
 
-   - `variables` value can also be in json format as shown below.
+   - `variables` value can also support json format as shown below.
      ```
      variables: { storage-account-name: { enabled: true }, storage-account-access-key: { enabled: true }, personal-access-token: { enabled: true } }
      ```
