@@ -1,6 +1,8 @@
 # Variable Group
 
-Create variable group in Azure DevOps project.
+Create
+[variable group](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups)
+in Azure DevOps project.
 
 Usage:
 
@@ -110,8 +112,8 @@ Variable Group Yaml Manifest File Format
 
    **_NOTE:_**
 
-   - `name` SPK will try to find an existing service endpoint by name and
-     creates a new service end point if needed.
+   - SPK will create a new service endpoint when it does not exist by
+     `service_endpoint: name`.
 
    - `variables` value can also support json format as shown below.
      ```

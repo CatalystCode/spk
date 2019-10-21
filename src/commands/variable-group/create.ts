@@ -109,21 +109,19 @@ export const create = async (
     logger.debug(`Varible Group Yaml data: ${JSON.stringify(data)}`);
 
     // validate variable group type
-    if (data.type === `Vsts` || data.type === `AzureKeyVault`) {
-      let variableGroup: VariableGroup;
 
-      if (data.type === "AzureKeyVault") {
-        variableGroup = await addVariableGroupWithKeyVaultMap(data, accessOpts);
-      } else if (data.type === "Vsts") {
-        variableGroup = await addVariableGroup(data, accessOpts);
-      }
+    let variableGroup: VariableGroup;
+
+    if (data.type === "AzureKeyVault") {
+      variableGroup = await addVariableGroupWithKeyVaultMap(data, accessOpts);
+    } else if (data.type === "Vsts") {
+      variableGroup = await addVariableGroup(data, accessOpts);
     } else {
       throw new Error(
-        `Varible Group type "${data.type}" is not supported. "Vsts" and "AzureKeyVault" are valid types and case sensitive.`
+        `Varible Group type "${data.type}" is not supported. Only "Vsts" and "AzureKeyVault" are valid types and case sensitive.`
       );
     }
   } catch (err) {
-    logger.error(`An error occurred while creating variable group\n ${err}`);
     throw err;
   }
 };
