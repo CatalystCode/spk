@@ -1,3 +1,4 @@
+import { AzureKeyVaultVariableValue } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { VariableValue } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 
 /**
@@ -99,7 +100,7 @@ export interface IAzurePipelinesYaml {
   }>;
 }
 
-export interface IServiceEndpointConfiguration {
+export interface IServiceEndpointData {
   name: string;
   subscription_id: string;
   subscription_name: string;
@@ -108,18 +109,18 @@ export interface IServiceEndpointConfiguration {
   tenant_id: string;
 }
 
-export interface IVariableGroupConfiguration {
+export interface IVariableGroupData {
   name: string;
   description: string;
-  vsts_data?: [
+  type: string;
+  variables: [
     {
-      [key: string]: VariableValue;
+      [key: string]: AzureKeyVaultVariableValue;
     }
   ];
-  key_vault_data?: {
+  key_vault_provider?: {
     name: string;
-    secrets: string[];
-    service_endpoint: IServiceEndpointConfiguration;
+    service_endpoint: IServiceEndpointData;
   };
 }
 
@@ -136,7 +137,6 @@ export interface IConfigYaml {
     hld_repository?: string;
     manifest_repository?: string;
     access_token?: string;
-    variable_group?: IVariableGroupConfiguration;
   };
   infra?: {
     checks?: {

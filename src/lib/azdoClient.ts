@@ -4,6 +4,7 @@ import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { RestClient } from "typed-rest-client";
 import { Config } from "../config";
 import { logger } from "../logger";
+import { IAzureDevOpsOpts } from "./git";
 
 // Module state Variables
 let connection: WebApi | undefined;
@@ -20,17 +21,23 @@ export const azdoUrl = (orgName: string): string =>
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi` with `org` and `token`
+ * @param opts optionally override spk config Azure DevOps access options
  * @returns AzDo `WebApi` object
  */
-export const getWebApi = async (): Promise<WebApi> => {
+export const getWebApi = async (
+  opts: IAzureDevOpsOpts = {}
+): Promise<WebApi> => {
   if (typeof connection !== "undefined") {
     return connection;
   }
 
+  // Load config from opts and fallback to spk config
   const config = Config();
-  const gitOpsConfig = config.azure_devops!;
-  const orgName = gitOpsConfig.org!;
-  const personalAccessToken = gitOpsConfig.access_token!;
+  const {
+    personalAccessToken = config.azure_devops &&
+      config.azure_devops.access_token,
+    orgName = config.azure_devops && config.azure_devops.org
+  } = opts;
 
   // PAT and devops URL are required
   if (typeof personalAccessToken === "undefined") {
@@ -59,28 +66,34 @@ export const getWebApi = async (): Promise<WebApi> => {
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi.RestClient` with `org` and `token and returns `RestClient`
+ * @param opts optionally override spk config Azure DevOps access options
  * @returns AzDo `RestClient` object
  */
-export const getRestClient = async (): Promise<RestClient> => {
+export const getRestClient = async (
+  opts: IAzureDevOpsOpts = {}
+): Promise<RestClient> => {
   if (typeof restApi !== "undefined") {
     return restApi;
   }
 
-  const webApi = await getWebApi();
+  const webApi = await getWebApi(opts);
   restApi = webApi.rest;
   return restApi;
 };
 
 /**
  * Creates AzDo `azure-devops-node-api.WebApi.IBuildApi` with `org` and `token and returns `RestClient`
+ * @param opts optionally override spk config Azure DevOps access options
  * @returns AzDo `IBuildApi` object
  */
-export const getBuildApi = async (): Promise<IBuildApi> => {
+export const getBuildApi = async (
+  opts: IAzureDevOpsOpts = {}
+): Promise<IBuildApi> => {
   if (typeof buildApi !== "undefined") {
     return buildApi;
   }
 
-  const webApi = await getWebApi();
+  const webApi = await getWebApi(opts);
   buildApi = await webApi.getBuildApi();
   return buildApi;
 };

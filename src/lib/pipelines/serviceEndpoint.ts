@@ -2,8 +2,9 @@ import { generateUuid } from "@azure/core-http";
 import { IRestResponse, RestClient } from "typed-rest-client";
 import { Config } from "../../config";
 import { logger } from "../../logger";
-import { IServiceEndpointConfiguration } from "../../types";
+import { IServiceEndpointData } from "../../types";
 import { azdoUrl, getRestClient } from "../azdoClient";
+import { IAzureDevOpsOpts } from "../git";
 import { IServiceEndpoint, IServiceEndpointParams } from "./azdoInterfaces";
 
 const apiUrl: string = "_apis/serviceendpoint/endpoints";
@@ -12,28 +13,30 @@ const apiVersion: string = "api-version=5.1-preview.2";
 /**
  * Check for Azdo Service Endpoint by name `serviceEndpointConfig.name` and creates `serviceEndpoint` if it does not exist
  *
- * @param serviceEndpoint The service endpoint configuration
+ * @param serviceEndpointData The service endpoint inout data
+ * @param opts optionally override spk config with Azure DevOps access options
  * @returns newly created `IServiceEndpoint` object
  */
 export const createServiceEndpointIfNotExists = async (
-  serviceEndpointConfig: IServiceEndpointConfiguration
+  serviceEndpointData: IServiceEndpointData,
+  opts: IAzureDevOpsOpts = {}
 ): Promise<IServiceEndpoint> => {
-  const serviceEndpointName = serviceEndpointConfig.name;
+  const serviceEndpointName = serviceEndpointData.name;
   const message = `service endpoint ${serviceEndpointName}`;
 
   if (serviceEndpointName === null || serviceEndpointName === undefined) {
-    throw new Error("Invalid inout. Service Endpoint name is null");
+    throw new Error("Service Endpoint name is null");
   }
 
   try {
     let serviceEndpoint: IServiceEndpoint | null;
 
     // get service endpoint by name that is configured in the config file
-    serviceEndpoint = await getServiceEndpointByName(serviceEndpointName);
+    serviceEndpoint = await getServiceEndpointByName(serviceEndpointName, opts);
 
     // Service endpoint is not found so create a new service endpoint
     if (serviceEndpoint === null || serviceEndpoint === undefined) {
-      serviceEndpoint = await addServiceEndpoint(serviceEndpointConfig!);
+      serviceEndpoint = await addServiceEndpoint(serviceEndpointData!, opts);
     }
 
     if (serviceEndpoint === null || serviceEndpoint === undefined) {
@@ -44,8 +47,9 @@ export const createServiceEndpointIfNotExists = async (
 
     return serviceEndpoint;
   } catch (err) {
-    logger.error(`Error occurred while checking and creating ${message}`);
-    logger.error(err);
+    logger.error(
+      `Error occurred while checking and creating ${message}\n ${err}`
+    );
     throw err;
   }
 };
@@ -53,25 +57,30 @@ export const createServiceEndpointIfNotExists = async (
 /**
  * Creates a new Service Endpoint in Azure DevOps project
  *
- * @param serviceEndpoint The service endpoint configuration
+ * @param serviceEndpointData The service endpoint input data,
+ * @param opts optionally override spk config with Azure DevOps access options
  * @returns newly created `IServiceEndpoint` object
  */
 export const addServiceEndpoint = async (
-  serviceEndpointConfig: IServiceEndpointConfiguration
+  serviceEndpointData: IServiceEndpointData,
+  opts: IAzureDevOpsOpts = {}
 ): Promise<IServiceEndpoint> => {
-  const message = `service endpoint ${serviceEndpointConfig.name}`;
+  const message = `service endpoint ${serviceEndpointData.name}`;
   logger.info(`addServiceEndpoint method called with ${message}`);
 
   let resp: IRestResponse<IServiceEndpoint>;
 
   const config = Config();
-  const gitOpsConfig = config.azure_devops!;
-  const orgUrl = azdoUrl(gitOpsConfig.org!);
-  const project = gitOpsConfig.project!;
+  const {
+    project = config.azure_devops && config.azure_devops.project,
+    orgName = config.azure_devops && config.azure_devops.org
+  } = opts;
+
+  const orgUrl = azdoUrl(orgName!);
 
   try {
     const endPointParams: IServiceEndpointParams = await createServiceEndPointParams(
-      serviceEndpointConfig
+      serviceEndpointData
     );
 
     logger.debug(
@@ -79,7 +88,7 @@ export const addServiceEndpoint = async (
     );
     logger.info(`Creating ${message}`);
 
-    const client: RestClient = await getRestClient();
+    const client: RestClient = await getRestClient(opts);
     const resource: string = `${orgUrl}/${project}/${apiUrl}?${apiVersion}`;
     logger.debug(` addServiceEndpoint:Resource: ${resource}`);
 
@@ -110,22 +119,28 @@ export const addServiceEndpoint = async (
  * Get Service Endpoint by name from Azure DevOps project
  *
  * @param serviceEndpointName The service endpoint name to find existing service endpoint by name
- * * @returns `IServiceEndpoint` if found by the name; otherwise `null`
+ * @param opts optionally override spk config with Azure DevOps access options
+ * @returns `IServiceEndpoint` if found by the name; otherwise `null`
  */
 export const getServiceEndpointByName = async (
-  serviceEndpointName: string
+  serviceEndpointName: string,
+  opts: IAzureDevOpsOpts = {}
 ): Promise<IServiceEndpoint | null> => {
   logger.info(`getServiceEndpointByName called with ${serviceEndpointName}`);
-
   let resp: IRestResponse<any>;
+
   const config = Config();
-  const gitOpsConfig = config.azure_devops!;
-  const orgUrl = azdoUrl(gitOpsConfig.org!);
-  const project = gitOpsConfig.project!;
+  const {
+    project = config.azure_devops && config.azure_devops.project,
+    orgName = config.azure_devops && config.azure_devops.org
+  } = opts;
+
+  const orgUrl = azdoUrl(orgName!);
+  logger.info(`getServiceEndpointByName orgUrl: ${orgUrl}`);
 
   try {
     const uriParameter = `?endpointNames=${serviceEndpointName}`;
-    const client: RestClient = await getRestClient();
+    const client: RestClient = await getRestClient(opts);
     const resource: string = `${orgUrl}/${project}/${apiUrl}${uriParameter}&${apiVersion}`;
     logger.info(`getServiceEndpointByName:Resource: ${resource}`);
 
@@ -162,32 +177,32 @@ export const getServiceEndpointByName = async (
 };
 
 /**
- * Created `IServiceEndPointParams` from the argument `serviceEndpointConfig` received
+ * Created `IServiceEndPointParams` from the argument `serviceEndpointData` received
  *
- * @param serviceEndpointConfig The service endpoint endpoint request data from configuration
+ * @param serviceEndpointData The service endpoint request data
  * @returns `IServiceEndpointParams` object
  */
 export const createServiceEndPointParams = async (
-  serviceEndpointConfig: IServiceEndpointConfiguration
+  serviceEndpointData: IServiceEndpointData
 ): Promise<IServiceEndpointParams> => {
-  await validateServiceEndpointInput(serviceEndpointConfig);
+  await validateServiceEndpointInput(serviceEndpointData);
   const endPointParams: IServiceEndpointParams = {
     authorization: {
       parameters: {
         authenticationType: "spnKey",
-        serviceprincipalid: serviceEndpointConfig.service_principal_id,
-        serviceprincipalkey: serviceEndpointConfig.service_principal_secret,
-        tenantid: serviceEndpointConfig.tenant_id
+        serviceprincipalid: serviceEndpointData.service_principal_id,
+        serviceprincipalkey: serviceEndpointData.service_principal_secret,
+        tenantid: serviceEndpointData.tenant_id
       },
       scheme: "ServicePrincipal"
     },
     data: {
-      subscriptionId: serviceEndpointConfig.subscription_id,
-      subscriptionName: serviceEndpointConfig.subscription_name
+      subscriptionId: serviceEndpointData.subscription_id,
+      subscriptionName: serviceEndpointData.subscription_name
     },
     id: generateUuid(),
     isReady: false,
-    name: serviceEndpointConfig.name,
+    name: serviceEndpointData.name,
     type: "azurerm"
   };
 
@@ -195,38 +210,38 @@ export const createServiceEndPointParams = async (
 };
 
 /**
- * Check for `null` or `undefined` variables in `IServiceEndpointConfiguration`
+ * Check for `null` or `undefined` variables in `IServiceEndpointData`
  *
- * @param serviceEndpointConfig The service endpoint request data from configuration
- * @throws `Error` object when validation fails
+ * @param serviceEndpointData The service endpoint request data
+ * @throws `Error` object when required variables is specified
  */
 const validateServiceEndpointInput = async (
-  serviceEndpointConfig: IServiceEndpointConfiguration
+  serviceEndpointData: IServiceEndpointData
 ) => {
   const errors: string[] = [];
 
   // name is required
-  if (typeof serviceEndpointConfig.name === "undefined") {
+  if (typeof serviceEndpointData.name === "undefined") {
     errors.push(`Invalid Service end point name.`);
   }
 
-  if (typeof serviceEndpointConfig.service_principal_id === "undefined") {
+  if (typeof serviceEndpointData.service_principal_id === "undefined") {
     errors.push(`Invalid service prrincipla id.`);
   }
 
-  if (typeof serviceEndpointConfig.service_principal_secret === "undefined") {
+  if (typeof serviceEndpointData.service_principal_secret === "undefined") {
     errors.push(`Invalid service prrincipla secret.`);
   }
 
-  if (typeof serviceEndpointConfig.subscription_id === "undefined") {
+  if (typeof serviceEndpointData.subscription_id === "undefined") {
     errors.push(`Invalid subscription id.`);
   }
 
-  if (typeof serviceEndpointConfig.subscription_name === "undefined") {
+  if (typeof serviceEndpointData.subscription_name === "undefined") {
     errors.push(`Invalid subscription name.`);
   }
 
-  if (typeof serviceEndpointConfig.tenant_id === "undefined") {
+  if (typeof serviceEndpointData.tenant_id === "undefined") {
     errors.push(`Invalid tenant id.`);
   }
 
