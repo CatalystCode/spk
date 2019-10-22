@@ -2,6 +2,7 @@ import { Command } from "../command";
 import { dashboardCommandDecorator } from "./dashboard";
 import { getCommandDecorator } from "./get";
 import { onboardCommandDecorator } from "./onboard";
+import { updateCommandDecorator } from "./update";
 import { validateCommandDecorator } from "./validate";
 
 /**
@@ -14,6 +15,7 @@ export const deploymentCommand = Command(
     getCommandDecorator,
     onboardCommandDecorator,
     validateCommandDecorator,
-    dashboardCommandDecorator
+    dashboardCommandDecorator,
+    updateCommandDecorator
   ]
 );
