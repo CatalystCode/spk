@@ -5,7 +5,7 @@ jest.mock("../azdoClient");
 
 // Imports
 import uuid from "uuid/v4";
-import { readYaml } from "../../config";
+import { Config, readYaml } from "../../config";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
@@ -222,16 +222,26 @@ describe("Validate service endpoint parameters creation", () => {
 
 describe("addServiceEndpoint", () => {
   test("should pass when service endpoint config is set", async () => {
+    (Config as jest.Mock).mockReturnValue({
+      azure_devops: {
+        orrg: uuid()
+      }
+    });
+
     (readYaml as jest.Mock).mockReturnValue({
       description: "mydesc",
       key_vault_provider: {
-        name: serviceEndpointName,
-        service_principal_id: servicePrincipalId,
-        service_principal_secret: servicePrincipalSecret,
-        subscription_id: subscriptionId,
-        subscription_name: subscriptionName,
-        tenant_id: tenantId
-      }
+        name: "vault",
+        service_endpoint: {
+          name: serviceEndpointName,
+          service_principal_id: servicePrincipalId,
+          service_principal_secret: servicePrincipalSecret,
+          subscription_id: subscriptionId,
+          subscription_name: subscriptionName,
+          tenant_id: tenantId
+        }
+      },
+      name: "myvg"
     });
     const input = readYaml<IVariableGroupData>("");
 

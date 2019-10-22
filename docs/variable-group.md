@@ -74,7 +74,7 @@ Variable Group Yaml Manifest File Format
      storage-account-name:
        value: fabrikamstorage
      storage-account-access-key:
-       value: "confidential value to be masked"
+       value: "fabrikamstorage access key"
        isSecret: true
    ```
 
@@ -82,7 +82,7 @@ Variable Group Yaml Manifest File Format
 
    - `variables` value can also support json format as shown below.
      ```
-     variables: { storage-account-name: { value: "fabrikamstorage" }, storage-account-access-key: {value: "confidential value", isSecret: true } }
+     variables: { storage-account-name: { value: "fabrikamstorage" }, storage-account-access-key: {value: "fabrikamstorage access key", isSecret: true } }
      ```
 
 2. Variable Group manifest with varibles linking to secrets in Azure Key Vault
@@ -101,7 +101,7 @@ Variable Group Yaml Manifest File Format
    key_vault_provider:
      name: "mykeyvault"                                      # name of the Azure Key Vault with Secrets
      service_endpoint:                                       # service endpoint is required to authorize with Azure Key Vault
-       name: "service-connection-name"                       # service endpoint name
+       name: "service-connection-name"                       # service endpoint name to find an existing endpoint or to create a new endpoint with this name
        subscription_id: "subscription-id"                    # Azure Subscription id where Key Vault exist
        subscription_name: "sub-name"                         # Azure Subscription name where Key Vault exist
        service_principal_id: "service-principal-id"          # Service Principal Id that has 'Get' and 'List' in Key Vault Access Policy
@@ -117,5 +117,5 @@ Variable Group Yaml Manifest File Format
 
    - `variables` value can also support json format as shown below.
      ```
-     variables: { storage-account-name: { enabled: true }, storage-account-access-key: { enabled: true }, personal-access-token: { enabled: true } }
+     variables: { fabrikam-storage-account: { enabled: true }, fabrikam-storage-account-access-key: { enabled: true }, azdo-personal-access-token: { enabled: true } }
      ```
