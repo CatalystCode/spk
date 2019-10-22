@@ -39,12 +39,12 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
         }
         await copyTfTemplate(opts.template, opts.name);
         await validateVariablesTf(path.join(opts.template, "variables.tf"));
-        await renameTfvars(opts.name);
         if (opts.hcl) {
           logger.info("Generating HCL cluster definition file.");
           await scaffoldHcl(
             opts.name,
-            path.join(opts.template, "variables.tf")
+            path.join(opts.template, "variables.tf"),
+            path.join(opts.template, "backend.tfvars")
           );
         } else {
           await scaffoldJson(
@@ -54,6 +54,11 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
             opts.template
           );
         }
+        const backendConfig = await validateBackendTfvars(opts.template);
+        if (backendConfig === true && opts.hcl) {
+          logger.info("Generating remote backend configuration in HCL.");
+        }
+        await renameTfvars(opts.name);
       } catch (err) {
         logger.error("Error occurred while generating scaffold");
         logger.error(err);
@@ -64,7 +69,7 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
 /**
  * Checks if working variables.tf is present
  *
- * @param templatePath Path the variables.tf file
+ * @param templatePath Path to the variables.tf file
  */
 export const validateVariablesTf = async (
   templatePath: string
@@ -84,6 +89,25 @@ export const validateVariablesTf = async (
     return false;
   }
   return true;
+};
+
+/**
+ * Checks if backend.tfvars is present
+ *
+ * @param dir Path to the backend.tfvars file
+ */
+export const validateBackendTfvars = async (dir: string) => {
+  try {
+    if (fs.existsSync(path.join(dir, "backend.tfvars"))) {
+      logger.info(`A remote backend configuration was found.`);
+      return true;
+    } else {
+      logger.info(`No remote backend configuration was found.`);
+      return false;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
 };
 
 /**
@@ -266,6 +290,20 @@ export const generateHclClusterDefinition = (vartfData: string) => {
   return def;
 };
 
+export const generateHclBackend = (backendTfvarData: string) => {
+  const data = fs
+    .readFileSync(backendTfvarData)
+    .toString()
+    .replace(/\"/g, "")
+    .split("\n");
+  // const fields: { [name: string]: string | "" | any } = parseVariablesTf(data);
+  const fields: { [name: string]: string | "" } = {};
+  const def: { [name: string]: string | "" | any } = {};
+  def.backend = "azurerm";
+  def.config = data;
+  return def;
+};
+
 /**
  * This function creates a primary base Terragrunt HCL definition for
  * generating cluster definitions from.
@@ -275,10 +313,12 @@ export const generateHclClusterDefinition = (vartfData: string) => {
  */
 export const scaffoldHcl = async (
   dirName: string,
-  vartfData: string
+  vartfData: string,
+  backendTfvarData: string
 ): Promise<boolean> => {
   try {
     const def = generateHclClusterDefinition(vartfData);
+    const backendDef = generateHclBackend(backendTfvarData);
     const confPath: string = path.format({
       base: "terragrunt.hcl",
       dir: dirName,
@@ -286,13 +326,24 @@ export const scaffoldHcl = async (
     });
     const hcl = JSON.stringify(def, null, 2)
       .replace(/\"([^(\")"]+)\":/g, "$1:")
-      .replace(new RegExp(":", "g"), " =")
-      .replace(new RegExp(",", "g"), " ")
+      .replace(/\:/g, " =")
+      .replace(/\,/g, "")
       .replace("{", "")
       .replace(/\}([^}]*)$/, "$1")
       .replace(/(^[ \t]*\n)/gm, "")
       .trim();
     fs.writeFileSync(confPath, hcl);
+    const backendHcl = JSON.stringify(backendDef, null, 2)
+      .replace(/\=/g, " = ")
+      .replace(/\"([^(\")"]+)\":/g, "$1:")
+      .replace(/\:/g, " =")
+      .replace(/\\|\,/g, "")
+      //.replace(/\"/g, "")
+      //.replace(/\,/g, "")
+      .replace(/\[/g, "{")
+      .replace(/]/g, "}")
+      .replace(/(^[ \t]*\n)/gm, "");
+    logger.info(backendHcl);
   } catch (err) {
     logger.error("Failed to create HCL file.");
     logger.error(err);
