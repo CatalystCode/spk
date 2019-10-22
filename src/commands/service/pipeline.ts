@@ -1,13 +1,14 @@
-import commander = require("commander");
-import { logger } from "../../logger";
-
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
+import commander = require("commander");
+import path from "path";
+import { Config } from "../../config";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
   getBuildApiClient,
   queueBuild
 } from "../../lib/pipelines/pipelines";
+import { logger } from "../../logger";
 
 import { BuildDefinition } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
@@ -30,17 +31,44 @@ export const createPipelineCommandDecorator = (
     .option("-r, --repo-name <repo-name>", "Repository Name in Azure DevOps")
     .option("-u, --repo-url <repo-url>", "Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
-    .option("-l, --project-path <project-path>", "Path to Bedrock Project")
+    .option(
+      "-l, --packages-dir <packages-dir>",
+      "The monorepository directory containing this service definition. ie. '--packages-dir packages' if my-service is located under ./packages/my-service."
+    )
     .action(async (serviceName, opts) => {
+      const { azure_devops } = Config();
       const {
-        pipelineName,
-        personalAccessToken,
-        orgName,
-        repoName,
-        repoUrl,
-        devopsProject,
-        projectPath
+        orgName = azure_devops && azure_devops.org,
+        personalAccessToken = azure_devops && azure_devops.access_token,
+        devopsProject = azure_devops && azure_devops.project,
+        pipelineName = serviceName + "-pipeline",
+        packagesDir = "./"
       } = opts;
+
+      const { repoName, repoUrl } = opts;
+
+      /**
+       * ./spk-macos service create-pipeline serviceB
+       * -p uzc2jry46vcsjlrm33gtma73aq7thd6s76sp4656jn5zmv6wytka
+       * -n miko-no-pipeline-two
+       * -u dev.azure.com/mitarng/spk-test-project/_git/test-mono-repo asdf
+       * -r test-mono-repo
+       * -o mitarng  asdf
+       * -d spk-test-project asdf
+       */
+
+      /**
+       * spk-macos service create-pipeline serviceB
+       * -n serviceB-pipeline
+       * -u dev.azure.com/mitarng/spk-test-project/_git/test-mono-repo
+       */
+
+      /**
+       * Works:
+       * spk-macos service create-pipeline serviceB -p uzc2jry46vcsjlrm33gtma73aq7thd6s76sp4656jn5zmv6wytka -n miko-no-pipeline-three -u dev.azure.com/mitarng/spk-test-project/_git/test-mono-repo -r test-mono-repo -o mitarng -d spk-test-project
+       *
+       *
+       */
 
       try {
         if (typeof pipelineName !== "string") {
@@ -79,9 +107,9 @@ export const createPipelineCommandDecorator = (
           );
         }
 
-        if (typeof projectPath !== "string") {
+        if (typeof packagesDir !== "string") {
           throw new Error(
-            `--project-path projectPath must be of type 'string', ${typeof projectPath} given.`
+            `--packages-dir must be of type 'string', ${typeof packagesDir} given.`
           );
         }
       } catch (err) {
@@ -99,6 +127,7 @@ export const createPipelineCommandDecorator = (
           repoName,
           repoUrl,
           devopsProject,
+          packagesDir,
           process.exit
         );
       } catch (err) {
@@ -118,7 +147,6 @@ export const createPipelineCommandDecorator = (
  * @param repoName
  * @param repoUrl
  * @param project
- * @param projectPath
  */
 export const installPipeline = async (
   serviceName: string,
@@ -128,6 +156,7 @@ export const installPipeline = async (
   repoName: string,
   repoUrl: string,
   project: string,
+  packagesDir: string,
   exitFn: (status: number) => void
 ) => {
   let devopsClient;
@@ -149,7 +178,7 @@ export const installPipeline = async (
     repositoryName: repoName,
     repositoryUrl: repoUrl,
     yamlFileBranch: "master",
-    yamlFilePath: `packages/${serviceName}/azure-pipelines.yaml`
+    yamlFilePath: path.join(packagesDir, serviceName, "azure-pipelines.yaml") // This may not work if we're using a non-mono repository and azure-pipelines.yaml is in the root directory.
   });
 
   try {
