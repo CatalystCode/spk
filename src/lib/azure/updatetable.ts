@@ -96,7 +96,7 @@ export const addDeployment = (
   value2?: string,
   key3?: string,
   value3?: string
-) => {
+): any => {
   const newEntry: any = {};
   newEntry.RowKey = getRowKey();
   newEntry.PartitionKey = partitionKey;
@@ -122,8 +122,25 @@ export const addDeployment = (
       }
     }
   );
+  return newEntry;
 };
 
+/**
+ * Updates an existing deployment given the existing entries in the table for the filters
+ * @param entries Existing entries in the deployment table
+ * @param accountName Name of the storage account
+ * @param accountKey Access key for the storage account
+ * @param tableName Name of the table in storage account to use
+ * @param partitionKey Partition key for the project
+ * @param filterName Name of the field to filter by, for eg. imageTag is a filter name for the image tag release pipeline
+ * @param filterValue Value of the filter key
+ * @param key1 Name of the first field being inserted to the table
+ * @param value1 Value of the first field being inserted to the table
+ * @param key2 Name of the second field being inserted to the table
+ * @param value2 Value of the second field being inserted to the table
+ * @param key3 Name of the third field being inserted to the table
+ * @param value3 Value of the third field being inserted to the table
+ */
 export const updateExistingDeployment = <T>(
   entries: any[],
   accountName: string,
@@ -138,7 +155,7 @@ export const updateExistingDeployment = <T>(
   value2?: string,
   key3?: string,
   value3?: string
-) => {
+): any => {
   let addEntity = false;
   if (entries.length !== 0) {
     const entry: any = entries[0];
@@ -194,8 +211,10 @@ export const updateExistingDeployment = <T>(
         }
       );
     }
+
+    return entry;
   } else {
-    addDeployment(
+    return addDeployment(
       accountName,
       accountKey,
       tableName,
@@ -212,6 +231,14 @@ export const updateExistingDeployment = <T>(
   }
 };
 
+/**
+ * Inserts a new entry into the table
+ * @param accountName Name of the storage account
+ * @param accountKey Access key to the storage account
+ * @param tableName Table name for the deployments table in storage account
+ * @param entry The new entry to be inserted into the table
+ * @param callback Callback handler for the post insert function
+ */
 export const insertToTable = (
   accountName: string,
   accountKey: string,
@@ -223,6 +250,14 @@ export const insertToTable = (
   tableService.insertEntity(tableName, entry, callback);
 };
 
+/**
+ * Updates an entry in the table
+ * @param accountName Name of the storage account
+ * @param accountKey Access key to the storage account
+ * @param tableName Table name for the deployments table in storage account
+ * @param entry The new entry to be updated in the table
+ * @param callback Callback handler for the post update function
+ */
 export const updateEntryInTable = (
   accountName: string,
   accountKey: string,
