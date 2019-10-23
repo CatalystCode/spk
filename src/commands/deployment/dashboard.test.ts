@@ -25,7 +25,7 @@ afterAll(() => {
 describe("Validate dashboard container pull", () => {
   test("Pull dashboard container if docker is installed", async () => {
     try {
-      const dashboardContainerId = await launchDashboard(2020);
+      const dashboardContainerId = await launchDashboard(2020, false);
       const dockerInstalled = await validatePrereqs(["docker"], false);
       if (dockerInstalled) {
         const dockerId = await exec("docker", [
@@ -49,7 +49,7 @@ describe("Validate dashboard container pull", () => {
 describe("Validate dashboard clean up", () => {
   test("Launch the dashboard two times", async () => {
     try {
-      const dashboardContainerId = await launchDashboard(2020);
+      const dashboardContainerId = await launchDashboard(2020, true);
       const dockerInstalled = await validatePrereqs(["docker"], false);
       if (dockerInstalled) {
         const dockerId = await exec("docker", [
@@ -61,7 +61,7 @@ describe("Validate dashboard clean up", () => {
         expect(dockerId).toBeDefined();
         expect(dashboardContainerId).not.toBe("");
         logger.info("Verified that docker image has been pulled.");
-        const dashboardContainerId2 = await launchDashboard(2020);
+        const dashboardContainerId2 = await launchDashboard(2020, true);
         expect(dashboardContainerId).not.toBe(dashboardContainerId2);
         await exec("docker", ["container", "stop", dashboardContainerId2]);
       } else {
