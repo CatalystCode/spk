@@ -1,6 +1,7 @@
 export interface IAzureDevOpsOpts {
   personalAccessToken?: string;
-  orgUrl?: string;
+  orgName?: string;
+  project?: string;
   serverUrl?: string;
 }
 

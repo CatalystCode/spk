@@ -6,8 +6,10 @@ import AZGitInterfaces, {
 import { exec } from "child_process";
 import { promisify } from "util";
 import { IAzureDevOpsOpts, PullRequest } from ".";
-import { Config } from "../../commands/init";
+import { Config } from "../../config";
 import { logger } from "../../logger";
+import { azdoUrl } from "../azdoutil";
+import { getOriginUrl } from "../gitutils";
 
 ////////////////////////////////////////////////////////////////////////////////
 // State
@@ -48,15 +50,14 @@ const generatePRUrl = async (
  * Authenticates using config and credentials from global config and returns
  * an Azure DevOps Git API
  */
-export const GitAPI = async (opts: IAzureDevOpsOpts = {}) => {
+export const GitAPI = async (opts: IAzureDevOpsOpts = {}): Promise<IGitApi> => {
   // Load the gitApi if it has not been initialized
   if (typeof gitApi === "undefined") {
     // Load config from opts and fallback to spk config
-    const config = Config();
+    const { azure_devops } = Config();
     const {
-      personalAccessToken = config.azure_devops &&
-        config.azure_devops.access_token,
-      orgUrl = config.azure_devops && config.azure_devops.org
+      personalAccessToken = azure_devops && azure_devops.access_token,
+      orgName = azure_devops && azure_devops.org
     } = opts;
 
     // PAT and devops URL are required
@@ -66,7 +67,7 @@ export const GitAPI = async (opts: IAzureDevOpsOpts = {}) => {
       );
     }
 
-    if (typeof orgUrl === "undefined") {
+    if (typeof orgName === "undefined") {
       throw Error(
         `Unable to parse Azure DevOps Organization URL (azure_devops.devops_org_url) from spk config`
       );
@@ -78,10 +79,10 @@ export const GitAPI = async (opts: IAzureDevOpsOpts = {}) => {
       .map((char, i, arr) => (i > arr.length - 5 ? char : "*"))
       .join("");
     logger.info(
-      `Attempting to authenticate with Azure DevOps organization '${orgUrl}' using PAT '${obfuscatedPAT}'`
+      `Attempting to authenticate with Azure DevOps organization '${orgName}' using PAT '${obfuscatedPAT}'`
     );
     const authHandler = azdo.getPersonalAccessTokenHandler(personalAccessToken);
-    const connection = new azdo.WebApi(orgUrl, authHandler);
+    const connection = new azdo.WebApi(azdoUrl(orgName), authHandler);
 
     // Instantiate the git API
     try {
@@ -127,17 +128,15 @@ export const createPullRequest: PullRequest = async (
   const gitOrigin: string =
     originPushUrl.length > 0
       ? originPushUrl
-      : await promisify(exec)("git config --get remote.origin.url")
-          .then(out => out.stdout.trim())
-          .catch(err => {
-            logger.error(err);
-            logger.error(
-              `Error parsing remote origin from git client, run 'git config --get remote.origin.url' for more information`
-            );
-            return Promise.reject(
-              Error(`No remote origin found in the current git repository`)
-            );
-          });
+      : await getOriginUrl().catch(err => {
+          logger.error(err);
+          logger.error(
+            `Error parsing remote origin from git client, run 'git config --get remote.origin.url' for more information`
+          );
+          return Promise.reject(
+            Error(`No remote origin found in the current git repository`)
+          );
+        });
 
   // fetch all repositories associated with the personal access token
   const gitAPI = await GitAPI(options);

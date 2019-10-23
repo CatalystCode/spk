@@ -1,10 +1,10 @@
-import commander from "commander";
-
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
-import { logger } from "../../logger";
-
-import { config, loadConfiguration } from "../init";
-
+import {
+  BuildDefinition,
+  BuildDefinitionVariable
+} from "azure-devops-node-api/interfaces/BuildInterfaces";
+import commander from "commander";
+import { Config } from "../../config";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
@@ -12,11 +12,7 @@ import {
   IAzureRepoPipelineConfig,
   queueBuild
 } from "../../lib/pipelines/pipelines";
-
-import {
-  BuildDefinition,
-  BuildDefinitionVariable
-} from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { logger } from "../../logger";
 
 export const installHldToManifestPipelineDecorator = (
   command: commander.Command
@@ -28,7 +24,7 @@ export const installHldToManifestPipelineDecorator = (
       "Install the manifest generation pipeline to your Azure DevOps instance"
     )
     .action(async () => {
-      loadConfiguration();
+      const config = Config();
 
       if (!config) {
         logger.error("Config failed to load");
@@ -42,14 +38,14 @@ export const installHldToManifestPipelineDecorator = (
         return;
       }
 
-      const orgUrl = config.azure_devops.org!;
+      const orgName = config.azure_devops.org!;
       const pat = config.azure_devops.access_token!;
-      const hldRepo = config.azure_devops.manifest_repository!;
+      const hldRepo = config.azure_devops.hld_repository!;
       const project = config.azure_devops.project!;
       const manifestRepo = config.azure_devops.manifest_repository!;
       const hldRepoName = "HLD";
 
-      if (!orgUrl || !pat || !hldRepo || !project || !manifestRepo) {
+      if (!orgName || !pat || !hldRepo || !project || !manifestRepo) {
         logger.error("Azure DevOps config section not complete ");
         process.exit(1);
         return;
@@ -57,7 +53,7 @@ export const installHldToManifestPipelineDecorator = (
 
       try {
         await installHldToManifestPipeline(
-          orgUrl,
+          orgName,
           pat,
           hldRepoName,
           hldRepo,

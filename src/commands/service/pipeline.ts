@@ -1,13 +1,19 @@
-import commander = require("commander");
-import { logger } from "../../logger";
-
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
+import commander = require("commander");
+import path from "path";
+import { Config } from "../../config";
+import {
+  getOriginUrl,
+  getRepositoryName,
+  getRepositoryUrl
+} from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
   getBuildApiClient,
   queueBuild
 } from "../../lib/pipelines/pipelines";
+import { logger } from "../../logger";
 
 import { BuildDefinition } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
@@ -26,21 +32,35 @@ export const createPipelineCommandDecorator = (
       "-p, --personal-access-token <personal-access-token>",
       "Personal Access Token"
     )
-    .option("-o, --org-url <org-url>", "Organization URL for Azure DevOps")
+    .option("-o, --org-name <org-name>", "Organization Name for Azure DevOps")
     .option("-r, --repo-name <repo-name>", "Repository Name in Azure DevOps")
     .option("-u, --repo-url <repo-url>", "Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
-    .option("-l, --project-path <project-path>", "Path to Bedrock Project")
+    .option(
+      "-l, --packages-dir <packages-dir>",
+      "The monorepository directory containing this service definition. ie. '--packages-dir packages' if my-service is located under ./packages/my-service."
+    )
     .action(async (serviceName, opts) => {
+      const gitOriginUrl = await getOriginUrl();
+
+      const { azure_devops } = Config();
       const {
-        pipelineName,
-        personalAccessToken,
-        orgUrl,
-        repoName,
-        repoUrl,
-        devopsProject,
-        projectPath
+        orgName = azure_devops && azure_devops.org,
+        personalAccessToken = azure_devops && azure_devops.access_token,
+        devopsProject = azure_devops && azure_devops.project,
+        pipelineName = serviceName + "-pipeline",
+        packagesDir = "./",
+        repoName = getRepositoryName(gitOriginUrl),
+        repoUrl = getRepositoryUrl(gitOriginUrl)
       } = opts;
+
+      logger.debug(`orgName: ${orgName}`);
+      logger.debug(`personalAccessToken: ${personalAccessToken}`);
+      logger.debug(`devopsProject: ${devopsProject}`);
+      logger.debug(`pipelineName: ${pipelineName}`);
+      logger.debug(`packagesDir: ${packagesDir}`);
+      logger.debug(`repoName: ${repoName}`);
+      logger.debug(`repoUrl: ${repoUrl}`);
 
       try {
         if (typeof pipelineName !== "string") {
@@ -55,9 +75,9 @@ export const createPipelineCommandDecorator = (
           );
         }
 
-        if (typeof orgUrl !== "string") {
+        if (typeof orgName !== "string") {
           throw new Error(
-            `--org-url must be of type 'string', ${typeof orgUrl} given.`
+            `--org-url must be of type 'string', ${typeof orgName} given.`
           );
         }
 
@@ -79,9 +99,9 @@ export const createPipelineCommandDecorator = (
           );
         }
 
-        if (typeof projectPath !== "string") {
+        if (typeof packagesDir !== "string") {
           throw new Error(
-            `--project-path projectPath must be of type 'string', ${typeof projectPath} given.`
+            `--packages-dir must be of type 'string', ${typeof packagesDir} given.`
           );
         }
       } catch (err) {
@@ -93,12 +113,13 @@ export const createPipelineCommandDecorator = (
       try {
         await installPipeline(
           serviceName,
-          orgUrl,
+          orgName,
           personalAccessToken,
           pipelineName,
           repoName,
           repoUrl,
           devopsProject,
+          packagesDir,
           process.exit
         );
       } catch (err) {
@@ -110,31 +131,31 @@ export const createPipelineCommandDecorator = (
 };
 
 /**
- *
+ * Install a pipeline for the service in an azure devops org.
  * @param serviceName
- * @param orgUrl
+ * @param orgName
  * @param personalAccessToken
  * @param pipelineName
  * @param repoName
  * @param repoUrl
  * @param project
- * @param projectPath
  */
 export const installPipeline = async (
   serviceName: string,
-  orgUrl: string,
+  orgName: string,
   personalAccessToken: string,
   pipelineName: string,
   repoName: string,
   repoUrl: string,
   project: string,
+  packagesDir: string,
   exitFn: (status: number) => void
 ) => {
   let devopsClient;
   let builtDefinition;
 
   try {
-    devopsClient = await getBuildApiClient(orgUrl, personalAccessToken);
+    devopsClient = await getBuildApiClient(orgName, personalAccessToken);
     logger.info("Fetched DevOps Client");
   } catch (err) {
     logger.error(err);
@@ -149,7 +170,7 @@ export const installPipeline = async (
     repositoryName: repoName,
     repositoryUrl: repoUrl,
     yamlFileBranch: "master",
-    yamlFilePath: `packages/${serviceName}/azure-pipelines.yaml`
+    yamlFilePath: path.join(packagesDir, serviceName, "azure-pipelines.yaml") // This may not work if we're using a non-mono repository and azure-pipelines.yaml is in the root directory.
   });
 
   try {

@@ -1,9 +1,10 @@
 import child_process from "child_process";
 import commander from "commander";
 import emoji from "node-emoji";
+import shelljs from "shelljs";
 import { promisify } from "util";
+import { Config } from "../../config";
 import { logger } from "../../logger";
-import { config } from "../init";
 
 const binaries: string[] = ["terraform", "git", "az", "helm"];
 const envVar: string[] = [
@@ -62,6 +63,7 @@ export const validatePrereqs = async (
   executables: string[],
   globalInit: boolean
 ): Promise<boolean> => {
+  const config = Config();
   if (!config.infra) {
     config.infra = {};
   }
@@ -70,10 +72,8 @@ export const validatePrereqs = async (
   }
   // Validate executables in PATH
   for (const i of executables) {
-    try {
-      await promisify(child_process.exec)("which " + i);
-      config.infra.checks[i] = true;
-    } catch (err) {
+    if (!shelljs.which(i)) {
+      config.infra.checks[i] = false;
       if (globalInit === true) {
         logger.warn(i + " not installed.");
       } else {
@@ -82,7 +82,8 @@ export const validatePrereqs = async (
         );
         return false;
       }
-      config.infra.checks[i] = false;
+    } else {
+      config.infra.checks[i] = true;
     }
   }
   return true;
@@ -92,6 +93,7 @@ export const validatePrereqs = async (
  * Validates that user is logged into Azure CLI
  */
 export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
+  const config = Config();
   // Validate authentication with Azure
   if (!config.infra) {
     config.infra = {};
@@ -125,6 +127,8 @@ export const validateEnvVariables = async (
   variables: string[],
   globalInit: boolean
 ): Promise<boolean> => {
+  const config = Config();
+
   if (!config.infra) {
     config.infra = {};
   }
