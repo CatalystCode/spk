@@ -55,9 +55,7 @@ export const cleanDashboarContainers = async () => {
     dockerOutput = dockerOutput.replace(/\n/g, " ");
     dockerOutput = dockerOutput.replace(/"/g, "");
     const containerIds = dockerOutput.split(" ");
-
-    let args = ["kill"];
-    args = args.concat(containerIds);
+    const args = ["kill", ...containerIds];
 
     await exec("docker", args);
   }
