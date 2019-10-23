@@ -48,12 +48,14 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
  * Cleans previously launched spk dashboard docker containers
  */
 export const cleanDashboarContainers = async () => {
+  const config = Config();
+
   let dockerOutput = await exec("docker", [
     "ps",
     "-a",
     "-q",
     "--filter",
-    "ancestor=samiyaakhtar/spektate:prod",
+    "ancestor=" + config.introspection!.dashboard!.image!,
     '--format="{{.ID}}"'
   ]);
   if (dockerOutput.length > 0) {
