@@ -75,19 +75,14 @@ the pipelines to send data to Spektate storage.
    the end of your last release task (make sure this is not a separate task in
    the process):
 
-   ```yaml
-   latest_commit=$(git rev-parse --short HEAD) echo
-   "latest_commit=$latest_commit"
+   ```bash
+   latest_commit=$(git rev-parse --short HEAD)
+   echo "latest_commit=$latest_commit"
 
-   VERSION_TO_DOWNLOAD=$(curl -s
-   "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep
-   "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') echo "Downloading SPK version
-   $VERSION_TO_DOWNLOAD" && wget
-   "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
-   chmod +x ./spk-linux ./spk-linux -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t
-   $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name imageTag --filter-value
-   $(Build.BuildId) --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit
-   --env $(Release.EnvironmentName)
+   VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+   echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+   chmod +x ./spk-linux
+   ./spk-linux -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name imageTag --filter-value $(Build.BuildId) --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName)
    ```
 
 4. To the Manifest generation pipeline, we need to capture the commit Id, so
@@ -95,16 +90,16 @@ the pipelines to send data to Spektate storage.
    that the update can capture the commit Id into the manifest repository. Add
    the following task:
 
-```yaml
-- bash: |
-    cd "$HOME"/<name of your manifest repository>
-    latest_commit=$(git rev-parse --short HEAD)
-    VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-    echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
-    chmod +x ./spk-linux
-    ./spk-linux -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name hldCommitId --filter-value $commitId --p3 $(Build.BuildId) --manifest-commit-id $latest_commit
-  displayName: Update manifest pipeline details in CJ db
-```
+   ```yaml
+   - bash: |
+       cd "$HOME"/<name of your manifest repository>
+       latest_commit=$(git rev-parse --short HEAD)
+       VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+       echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+       chmod +x ./spk-linux
+       ./spk-linux -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name hldCommitId --filter-value $commitId --p3 $(Build.BuildId) --manifest-commit-id $latest_commit
+     displayName: Update manifest pipeline details in CJ db
+   ```
 
 5. Kick off a full deployment from the source to docker pipeline, and you should
    see some entries coming into the database for each subsequent deployment
