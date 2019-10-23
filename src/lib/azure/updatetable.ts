@@ -46,74 +46,21 @@ export const updateDeployment = (
     nextContinuationToken,
     (error, result) => {
       if (!error) {
-        let addEntity = false;
-        if (result.entries.length !== 0) {
-          const entry: any = result.entries[0];
-          if (key1 in entry && entry[key1]._ !== value1.toLowerCase()) {
-            addEntity = true;
-          }
-          entry[key1] = value1.toLowerCase();
-
-          if (key2 && value2) {
-            if (key2 in entry && entry[key2]._ !== value2.toLowerCase()) {
-              addEntity = true;
-            }
-            entry[key2] = value2.toLowerCase();
-          }
-
-          if (key3 && value3) {
-            if (key3 in entry && entry[key3]._ !== value3.toLowerCase()) {
-              addEntity = true;
-            }
-            entry[key3] = value3.toLowerCase();
-          }
-
-          if (addEntity) {
-            entry.RowKey = getRowKey();
-            tableService.insertEntity(
-              tableName,
-              entry,
-              (err, res, response) => {
-                if (err) {
-                  logger.error(err.message);
-                } else {
-                  logger.info(
-                    `Added new entry for ${filterName} ${filterValue}`
-                  );
-                }
-              }
-            );
-          } else {
-            tableService.replaceEntity(
-              tableName,
-              entry,
-              (err, res, response) => {
-                if (err) {
-                  logger.error(err.message);
-                } else {
-                  logger.info(
-                    `Updated existing entry for ${filterName} ${filterValue}`
-                  );
-                }
-              }
-            );
-          }
-        } else {
-          addDeployment(
-            accountName,
-            accountKey,
-            tableName,
-            partitionKey,
-            filterName,
-            filterValue,
-            key1,
-            value1,
-            key2,
-            value2,
-            key3,
-            value3
-          );
-        }
+        updateExistingDeployment(
+          result.entries,
+          accountName,
+          accountKey,
+          tableName,
+          partitionKey,
+          filterName,
+          filterValue,
+          key1,
+          value1,
+          key2,
+          value2,
+          key3,
+          value3
+        );
       } else {
         logger.error(error.message);
       }
@@ -162,19 +109,135 @@ export const addDeployment = (
     newEntry[key3] = value3.toLowerCase();
   }
   const tableService = azure.createTableService(accountName, accountKey);
-  tableService.insertEntity(tableName, newEntry, (error, result, response) => {
-    if (error) {
-      logger.error(error.message);
-    } else {
-      logger.info(`Added new entry for ${filterName} ${filterValue}`);
+  insertToTable(
+    accountName,
+    accountKey,
+    tableName,
+    newEntry,
+    (error, result, response) => {
+      if (error) {
+        logger.error(error.message);
+      } else {
+        logger.info(`Added new entry for ${filterName} ${filterValue}`);
+      }
     }
-  });
+  );
+};
+
+export const updateExistingDeployment = <T>(
+  entries: any[],
+  accountName: string,
+  accountKey: string,
+  tableName: string,
+  partitionKey: string,
+  filterName: string,
+  filterValue: string,
+  key1: string,
+  value1: string,
+  key2?: string,
+  value2?: string,
+  key3?: string,
+  value3?: string
+) => {
+  let addEntity = false;
+  if (entries.length !== 0) {
+    const entry: any = entries[0];
+    if (key1 in entry && entry[key1]._ !== value1.toLowerCase()) {
+      addEntity = true;
+    }
+    entry[key1] = value1.toLowerCase();
+
+    if (key2 && value2) {
+      if (key2 in entry && entry[key2]._ !== value2.toLowerCase()) {
+        addEntity = true;
+      }
+      entry[key2] = value2.toLowerCase();
+    }
+
+    if (key3 && value3) {
+      if (key3 in entry && entry[key3]._ !== value3.toLowerCase()) {
+        addEntity = true;
+      }
+      entry[key3] = value3.toLowerCase();
+    }
+
+    const tableService = azure.createTableService(accountName, accountKey);
+    if (addEntity) {
+      entry.RowKey = getRowKey();
+      insertToTable(
+        accountName,
+        accountKey,
+        tableName,
+        entry,
+        (err, res, response) => {
+          if (err) {
+            logger.error(err.message);
+          } else {
+            logger.info(`Added new entry for ${filterName} ${filterValue}`);
+          }
+        }
+      );
+    } else {
+      updateEntryInTable(
+        accountName,
+        accountKey,
+        tableName,
+        entry,
+        (err, res, response) => {
+          if (err) {
+            logger.error(err.message);
+          } else {
+            logger.info(
+              `Updated existing entry for ${filterName} ${filterValue}`
+            );
+          }
+        }
+      );
+    }
+  } else {
+    addDeployment(
+      accountName,
+      accountKey,
+      tableName,
+      partitionKey,
+      filterName,
+      filterValue,
+      key1,
+      value1,
+      key2,
+      value2,
+      key3,
+      value3
+    );
+  }
+};
+
+export const insertToTable = (
+  accountName: string,
+  accountKey: string,
+  tableName: string,
+  entry: any,
+  callback: (error: Error, result: any, response: azure.ServiceResponse) => void
+) => {
+  const tableService = azure.createTableService(accountName, accountKey);
+  tableService.insertEntity(tableName, entry, callback);
+};
+
+export const updateEntryInTable = (
+  accountName: string,
+  accountKey: string,
+  tableName: string,
+  entry: any,
+  callback: (error: Error, result: any, response: azure.ServiceResponse) => void
+) => {
+  const tableService = azure.createTableService(accountName, accountKey);
+  tableService.replaceEntity(tableName, entry, callback);
 };
 
 /**
  * Generates a RowKey GUID 12 characters long
  */
-const getRowKey = (): string => {
+export const getRowKey = (): string => {
   return uuid()
     .replace("-", "")
     .substring(0, 12);
