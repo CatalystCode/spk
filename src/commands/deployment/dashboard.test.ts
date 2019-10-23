@@ -45,3 +45,30 @@ describe("Validate dashboard container pull", () => {
     }
   }, 30000);
 });
+
+describe("Validate dashboard clean up", () => {
+  test("Launch the dashboard two times", async () => {
+    try {
+      const dashboardContainerId = await launchDashboard(2020);
+      const dockerInstalled = await validatePrereqs(["docker"], false);
+      if (dockerInstalled) {
+        const dockerId = await exec("docker", [
+          "images",
+          "-q",
+          Config().introspection!.dashboard!.image!
+        ]);
+
+        expect(dockerId).toBeDefined();
+        expect(dashboardContainerId).not.toBe("");
+        logger.info("Verified that docker image has been pulled.");
+        const dashboardContainerId2 = await launchDashboard(2020);
+        expect(dashboardContainerId).not.toBe(dashboardContainerId2);
+        await exec("docker", ["container", "stop", dashboardContainerId2]);
+      } else {
+        expect(dashboardContainerId).toBe("");
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+  }, 30000);
+});

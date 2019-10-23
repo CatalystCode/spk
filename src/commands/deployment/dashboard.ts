@@ -39,11 +39,42 @@ export const dashboardCommandDecorator = (command: commander.Command): void => {
     });
 };
 
+/**
+ * Cleans previously launched spk dashboard docker containers
+ */
+export const cleanDashboarContainers = async () => {
+  let dockerOutput = await exec("docker", [
+    "ps",
+    "-a",
+    "-q",
+    "--filter",
+    "ancestor=samiyaakhtar/spektate:prod",
+    '--format="{{.ID}}"'
+  ]);
+  if (dockerOutput.length > 0) {
+    dockerOutput = dockerOutput.replace(/\n/g, " ");
+    dockerOutput = dockerOutput.replace(/"/g, "");
+    const containerIds = dockerOutput.split(" ");
+
+    let args = ["kill"];
+    args = args.concat(containerIds);
+
+    await exec("docker", args);
+  }
+};
+
+/**
+ * Launches an instance of the spk dashboard
+ * @param port the port number to launch the dashboard
+ */
 export const launchDashboard = async (port: number): Promise<string> => {
   try {
     if (!(await validatePrereqs(["docker"], false))) {
       return "";
     }
+    // Clean previous dashboard containers
+    await cleanDashboarContainers();
+
     const config = Config();
     const dockerRepository = config.introspection!.dashboard!.image!;
     logger.info("Pulling dashboard docker image");
