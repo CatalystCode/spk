@@ -3,6 +3,11 @@ import commander = require("commander");
 import path from "path";
 import { Config } from "../../config";
 import {
+  getOriginUrl,
+  getRepositoryName,
+  getRepositoryUrl
+} from "../../lib/gitutils";
+import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
   getBuildApiClient,
@@ -36,39 +41,26 @@ export const createPipelineCommandDecorator = (
       "The monorepository directory containing this service definition. ie. '--packages-dir packages' if my-service is located under ./packages/my-service."
     )
     .action(async (serviceName, opts) => {
+      const gitOriginUrl = await getOriginUrl();
+
       const { azure_devops } = Config();
       const {
         orgName = azure_devops && azure_devops.org,
         personalAccessToken = azure_devops && azure_devops.access_token,
         devopsProject = azure_devops && azure_devops.project,
         pipelineName = serviceName + "-pipeline",
-        packagesDir = "./"
+        packagesDir = "./",
+        repoName = getRepositoryName(gitOriginUrl),
+        repoUrl = getRepositoryUrl(gitOriginUrl)
       } = opts;
 
-      const { repoName, repoUrl } = opts;
-
-      /**
-       * ./spk-macos service create-pipeline serviceB
-       * -p uzc2jry46vcsjlrm33gtma73aq7thd6s76sp4656jn5zmv6wytka
-       * -n miko-no-pipeline-two
-       * -u dev.azure.com/mitarng/spk-test-project/_git/test-mono-repo asdf
-       * -r test-mono-repo
-       * -o mitarng  asdf
-       * -d spk-test-project asdf
-       */
-
-      /**
-       * spk-macos service create-pipeline serviceB
-       * -n serviceB-pipeline
-       * -u dev.azure.com/mitarng/spk-test-project/_git/test-mono-repo
-       */
-
-      /**
-       * Works:
-       * spk-macos service create-pipeline serviceB -p uzc2jry46vcsjlrm33gtma73aq7thd6s76sp4656jn5zmv6wytka -n miko-no-pipeline-three -u dev.azure.com/mitarng/spk-test-project/_git/test-mono-repo -r test-mono-repo -o mitarng -d spk-test-project
-       *
-       *
-       */
+      logger.debug(`orgName: ${orgName}`);
+      logger.debug(`personalAccessToken: ${personalAccessToken}`);
+      logger.debug(`devopsProject: ${devopsProject}`);
+      logger.debug(`pipelineName: ${pipelineName}`);
+      logger.debug(`packagesDir: ${packagesDir}`);
+      logger.debug(`repoName: ${repoName}`);
+      logger.debug(`repoUrl: ${repoUrl}`);
 
       try {
         if (typeof pipelineName !== "string") {
