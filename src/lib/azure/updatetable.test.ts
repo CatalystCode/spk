@@ -57,7 +57,7 @@ afterAll(() => {
 });
 
 describe("Verify the update deployment commands", () => {
-  it("Create a row key, add to storage and update the deployment", async () => {
+  it("should create a row key, add to storage and update the deployment", async () => {
     // Verify that RowKey is valid
     const rowKey = update.getRowKey();
     expect(rowKey).toHaveLength(12);

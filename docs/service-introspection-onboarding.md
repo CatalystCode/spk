@@ -54,15 +54,14 @@ the pipelines to send data to Spektate storage.
 
    ```yaml
    - bash: |
-       curl $SCRIPT > script.sh
-       chmod +x ./script.sh
        tag_name="hello-spektate-$(Build.SourceBranchName)-$(Build.BuildId)"
        commitId=$(Build.SourceVersion)
        commitId=$(echo "${commitId:0:7}")
-       ./script.sh $(ACCOUNT_NAME) $(ACCOUNT_KEY) $(TABLE_NAME) $(PARTITION_KEY) p1 $(Build.BuildId) imageTag $tag_name commitId $commitId service $(Build.Repository.Name)
+       VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+       echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+       chmod +x ./spk-linux
+       ./spk-linux deployment update -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name p1 --filter-value $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $(Build.Repository.Name)
      displayName: Update manifest pipeline details in CJ db
-     env:
-       SCRIPT: https://raw.githubusercontent.com/catalystcode/spk/master/scripts/update_introspection.sh
    ```
 
    Make sure the variable `tag_name` is set to the tag name for the image being
@@ -77,48 +76,35 @@ the pipelines to send data to Spektate storage.
    the process):
 
    ```yaml
+   latest_commit=$(git rev-parse --short HEAD) echo
+   "latest_commit=$latest_commit"
+
+   VERSION_TO_DOWNLOAD=$(curl -s
+   "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep
+   "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') echo "Downloading SPK version
+   $VERSION_TO_DOWNLOAD" && wget
+   "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+   chmod +x ./spk-linux ./spk-linux -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t
+   $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name imageTag --filter-value
+   $(Build.BuildId) --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit
+   --env $(Release.EnvironmentName)
+   ```
+
+4. To the Manifest generation pipeline, we need to capture the commit Id, so
+   it's best to add this task after the manifest generation step takes place so
+   that the update can capture the commit Id into the manifest repository. Add
+   the following task:
+
+```yaml
+- bash: |
+    cd "$HOME"/<name of your manifest repository>
     latest_commit=$(git rev-parse --short HEAD)
-    echo "latest_commit=$latest_commit"
-
-    # Download update storage script
-    curl https://raw.githubusercontent.com/catalystcode/spk/master/scripts/update_introspection.sh > script.sh
-    chmod +x script.sh
-
-    ./script.sh $(ACCOUNT_NAME) $(ACCOUNT_KEY) $(TABLE_NAME) $(PARTITION_KEY) imageTag $(Build.BuildId) p2 $(Release.ReleaseId) hldCommitId $latest_commit env $(Release.EnvironmentName)
-   ```
-
-4. To the HLD to manifest pipeline, we will need to add two tasks, one that
-   updates the storage with the pipeline Id and another with an update for the
-   commit Id that was made into the manifest repo. The reason these two are
-   currently separate steps is to track more information about failures (if they
-   were to happen). For the first step, before the fabrikate steps, add the step
-   below:
-
-   ```yaml
-   - bash: |
-       curl $SCRIPT > script.sh
-       chmod +x ./script.sh
-       commitId=$(Build.SourceVersion)
-       commitId=$(echo "${commitId:0:7}")
-       ./script.sh $(ACCOUNT_NAME) $(ACCOUNT_KEY) $(TABLE_NAME) $(PARTITION_KEY) hldCommitId $commitId p3 $(Build.BuildId)
-     displayName: Update manifest pipeline details in CJ db
-     env:
-       SCRIPT: https://raw.githubusercontent.com/catalystcode/spk/master/scripts/update_introspection.sh
-   ```
-
-   For the step to update manifest commit Id:
-
-   ```yaml
-   - script: |
-       cd "$HOME"/hello-bedrock-manifest
-       curl $SCRIPT > script.sh
-       chmod +x ./script.sh
-       latest_commit=$(git rev-parse --short HEAD)
-       ./script.sh $(ACCOUNT_NAME) $(ACCOUNT_KEY) $(TABLE_NAME) $(PARTITION_KEY) p3 $(Build.BuildId) manifestCommitId $latest_commit
-     displayName: Update commit id in database
-     env:
-       SCRIPT: https://raw.githubusercontent.com/catalystcode/spk/master/scripts/update_introspection.sh
-   ```
+    VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+    echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+    chmod +x ./spk-linux
+    ./spk-linux -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name hldCommitId --filter-value $commitId --p3 $(Build.BuildId) --manifest-commit-id $latest_commit
+  displayName: Update manifest pipeline details in CJ db
+```
 
 5. Kick off a full deployment from the source to docker pipeline, and you should
    see some entries coming into the database for each subsequent deployment
