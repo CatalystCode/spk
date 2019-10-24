@@ -14,9 +14,9 @@ import {
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
 
-export const installHldToManifestPipelineDecorator = (
+export const installHldToManifestPipelineDecorator = async (
   command: commander.Command
-): void => {
+) => {
   command
     .command("install-manifest-pipeline")
     .alias("m")

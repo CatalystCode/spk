@@ -19,7 +19,7 @@ const envVar: string[] = [
  *
  * @param command Commander command object to decorate
  */
-export const validateCommandDecorator = (command: commander.Command): void => {
+export const validateCommandDecorator = async (command: commander.Command) => {
   command
     .command("validate")
     .alias("v")

@@ -18,7 +18,7 @@ import { IHelmConfig, IUser } from "../../types";
  *
  * @param command Commander command object to decorate
  */
-export const createCommandDecorator = (command: commander.Command): void => {
+export const createCommandDecorator = async (command: commander.Command) => {
   command
     .command("create <service-name>")
     .alias("c")

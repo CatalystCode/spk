@@ -9,7 +9,7 @@ import { logger } from "../../logger";
  *
  * @param command Commander command object to decorate
  */
-export const scaffoldCommandDecorator = (command: commander.Command): void => {
+export const scaffoldCommandDecorator = async (command: commander.Command) => {
   command
     .command("scaffold")
     .alias("s")

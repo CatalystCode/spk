@@ -4,6 +4,7 @@ import yaml from "js-yaml";
 import * as os from "os";
 import { Config, defaultFileLocation, loadConfiguration } from "../config";
 import { logger } from "../logger";
+import { ICommandDecorator } from "./command";
 import {
   validateAzure,
   validateEnvVariables,
@@ -14,7 +15,9 @@ import {
  * Adds the init command to the commander command object
  * @param command Commander command object to decorate
  */
-export const initCommandDecorator = (command: commander.Command): void => {
+export const initCommandDecorator: ICommandDecorator = async (
+  command: commander.Command
+) => {
   command
     .command("init")
     .alias("i")

@@ -25,11 +25,11 @@ import { variableGroupCommand } from "./commands/variable-group";
 ////////////////////////////////////////////////////////////////////////////////
 // Instantiate core command object
 ////////////////////////////////////////////////////////////////////////////////
-const rootCommand = Command(
+Command(
   "spk",
   "The missing Bedrock CLI",
   [
-    c => {
+    async c => {
       c.version(require("../package.json").version);
     },
     initCommandDecorator
@@ -42,9 +42,6 @@ const rootCommand = Command(
     hldCommand,
     variableGroupCommand
   ]
-);
-
-////////////////////////////////////////////////////////////////////////////////
-// Main
-////////////////////////////////////////////////////////////////////////////////
-executeCommand(rootCommand, [...process.argv]);
+).then(rootCommand => {
+  executeCommand(rootCommand, [...process.argv]);
+});

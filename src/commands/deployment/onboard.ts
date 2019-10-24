@@ -10,7 +10,7 @@ import { logger } from "../../logger";
  * Adds the onboard command to the commander command object
  * @param command Commander command object to decorate
  */
-export const onboardCommandDecorator = (command: commander.Command): void => {
+export const onboardCommandDecorator = async (command: commander.Command) => {
   command
     .command("onboard")
     .alias("o")

@@ -5,6 +5,7 @@ import AzureDevOpsPipeline from "spektate/lib/pipeline/AzureDevOpsPipeline";
 import IPipeline from "spektate/lib/pipeline/Pipeline";
 import { Config } from "../../config";
 import { logger } from "../../logger";
+import { ICommandDecorator } from "../command";
 export let hldPipeline: IPipeline;
 export let clusterPipeline: IPipeline;
 export let srcPipeline: IPipeline;
@@ -32,7 +33,9 @@ export enum OUTPUT_FORMAT {
  * Adds the get command to the commander command object
  * @param command Commander command object to decorate
  */
-export const getCommandDecorator = (command: commander.Command): void => {
+export const getCommandDecorator: ICommandDecorator = async (
+  command: commander.Command
+) => {
   command
     .command("get")
     .alias("g")

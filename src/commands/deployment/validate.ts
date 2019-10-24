@@ -7,7 +7,7 @@ import { logger } from "../../logger";
  * Adds the validate command to the commander command object
  * @param command Commander command object to decorate
  */
-export const validateCommandDecorator = (command: commander.Command): void => {
+export const validateCommandDecorator = async (command: commander.Command) => {
   command
     .command("validate")
     .alias("v")

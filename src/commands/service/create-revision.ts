@@ -5,9 +5,9 @@ import { createPullRequest } from "../../lib/git/azure";
 import { getCurrentBranch, getOriginUrl } from "../../lib/gitutils";
 import { logger } from "../../logger";
 
-export const createServiceRevisionCommandDecorator = (
+export const createServiceRevisionCommandDecorator = async (
   command: commander.Command
-): void => {
+) => {
   command
     .command("create-revision")
     .alias("cr")

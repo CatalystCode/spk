@@ -13,8 +13,10 @@ interface ICommand {
   name: string;
   description: string;
   command: commander.Command;
-  subCommands: ICommand[];
+  subCommands: Array<Promise<ICommand>>;
 }
+
+export type ICommandDecorator = (c: commander.Command) => Promise<void>;
 
 /**
  * Generates an concrete implementation of ICommand.
@@ -35,12 +37,12 @@ interface ICommand {
  * @param decorators Array of command decorators
  * @param subCommands Array of ICommand which will be added as sub-commands
  */
-export const Command = (
+export const Command = async (
   name: string,
   description: string,
-  decorators: Array<(c: commander.Command) => void> = [],
-  subCommands: ICommand[] = []
-): ICommand => {
+  decorators: ICommandDecorator[] = [],
+  subCommands: Array<Promise<ICommand>> = []
+): Promise<ICommand> => {
   // Initialize default command
   const cmd = new commander.Command();
   cmd
@@ -53,7 +55,7 @@ export const Command = (
 
   // Add all decorators
   for (const decorator of decorators) {
-    decorator(cmd);
+    await decorator(cmd);
   }
 
   // Catch-all for unknown commands
@@ -95,11 +97,10 @@ const decrementArgv = (argv: string[]): string[] => {
  * @param cmd ICommand object to execute against
  * @param argv Array of arguments, flags *must* come at the end (limitation of using git-style sub-commands)
  */
-export const executeCommand = (cmd: ICommand, argv: string[]): void => {
+export const executeCommand = async (cmd: ICommand, argv: string[]) => {
   const targetCommandName = argv.slice(2, 3)[0];
-  const targetCommand = cmd.subCommands.find(
-    sc => sc.name === targetCommandName
-  );
+  const subCommands = await Promise.all(cmd.subCommands);
+  const targetCommand = subCommands.find(sc => sc.name === targetCommandName);
 
   // If the the next argument matches against a sub-command, recur into it.
   // Else call the current command with the rest of the arguments.
@@ -129,8 +130,9 @@ export const executeCommand = (cmd: ICommand, argv: string[]): void => {
  *
  * @param c ICommand object to prepare
  */
-const linkSubCommands = (c: ICommand): ICommand => {
-  const { command, subCommands } = c;
+const linkSubCommands = async (c: ICommand) => {
+  const { command } = c;
+  const subCommands = await Promise.all(c.subCommands);
   // Add all sub-commands
   for (const subCommand of subCommands) {
     // Recur; link all sub-sub-commands to the sub-command before adding to current

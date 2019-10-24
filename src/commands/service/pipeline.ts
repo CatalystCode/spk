@@ -17,9 +17,9 @@ import { logger } from "../../logger";
 
 import { BuildDefinition } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
-export const createPipelineCommandDecorator = (
+export const createPipelineCommandDecorator = async (
   command: commander.Command
-): void => {
+) => {
   command
     .command("create-pipeline <service-name>")
     .alias("p")

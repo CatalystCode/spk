@@ -9,7 +9,7 @@ import { validatePrereqs } from "../infra/validate";
  * Adds the onboard command to the commander command object
  * @param command Commander command object to decorate
  */
-export const dashboardCommandDecorator = (command: commander.Command): void => {
+export const dashboardCommandDecorator = async (command: commander.Command) => {
   command
     .command("dashboard")
     .alias("d")
