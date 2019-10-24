@@ -1,4 +1,4 @@
-# Onboard a Bedrock project to use Service Introspection
+# Service Introspection: Getting Started
 
 Service Introspection shows information about a
 [Bedrock GitOps workflow](https://github.com/microsoft/bedrock/tree/master/gitops).
@@ -17,7 +17,7 @@ pre-requisites.
    instructions.
 2. [Service introspection storage in Azure](#service-introspection-storage). See
    below for instructions on how to create one.
-3. [Pipelies configuration](#pipelines-configuration)
+3. [Pipelines configuration](#pipelines-configuration)
 
 ### Service introspection storage
 
@@ -57,7 +57,7 @@ The Bedrock GitOps pipelines need to be configured to start sending data to
 `spk` service introspection. This is done by adding a script snippet in each
 `azure-pipelines.yml` configuration.
 
-#### Configure a variable group
+#### 1. Configure a variable group
 
 To send data from Azure pipelines to the service introspection storage created
 previously a variable group needs to be configured in Azure DevOps (where the
@@ -65,7 +65,7 @@ pipelines are).
 
 To configure the variable group run: `spk variable-group create`
 
-#### Pipeline 1: CI pipeline configuration
+#### 2. CI pipeline configuration
 
 The CI pipeline runs from the source repository to build a docker image.
 
@@ -98,7 +98,7 @@ by service introspection.
 - Add the task before the crucial steps in your pipeline. This will capture
   details about failures if the important steps fail.
 
-#### Pipeline 2: CD release pipeline (ACR to HLD) configuration
+#### 3. CD release pipeline (ACR to HLD) configuration
 
 The CD release pipeline updates the docker image number in the HLD.
 
@@ -118,7 +118,7 @@ Paste the following task in its corresponding `azure-pipelines.yml`:
 This task is the same as the one from step 1 but instead passes the information
 that corresponds to the CD release pipeline.
 
-#### Pipeline 3: HLD manifest pipeline
+#### 4. HLD manifest pipeline configuration
 
 The HLD manifest pipeline builds the HLD using `fabrikate` and generates
 resource manifests that are then placed in the resource manifest repository.
@@ -153,29 +153,6 @@ Paste the following task after the `fabrikate` step:
 ```
 
 This task will update the `manifestCommitId`.
-
-## Update the pipelines to send data to storage
-
-1. Create a variable group with the following variables, which will be used by
-   the tasks in each of the pipelines to access the storage.
-
-   - `ACCOUNT_KEY`: Set this to the access key for your storage account
-   - `ACCOUNT_NAME`: Set this to the name of your storage account
-   - `PARTITION_KEY`: This field can be a distinguishing key that recognizea
-     your source repository in the storage, for eg. in this example, we're using
-     the name of the source repository `hello-bedrock`
-   - `TABLE_NAME`: Set this to the name of the table in your storage account
-     that you prefer to use
-
-   ![](./images/variable_group.png)
-
-   Make sure that you update the pipelines in the following steps to include
-   this variable group, such as below:
-
-   ```yaml
-   variables:
-     - group: <your-variable-group-name>
-   ```
 
 ## Getting started
 
