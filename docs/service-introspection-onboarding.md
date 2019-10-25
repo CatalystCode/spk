@@ -29,15 +29,15 @@ pipelines, builds and deployments. Currently, service introspection supports
 storage in the form of an Azure Storage table. Follow the steps below to create
 it or use an existing one.
 
-1. Create an Azure storage account:
+#### 1.Create an Azure storage account:
 
-#### Option 1:
+**Option 1:**
 
 Use the
 [`spk deployment onboard`](https://github.com/CatalystCode/spk/blob/master/docs/service-introspection.md#onboard)
 command.
 
-#### Option 2:
+**Option 2:**
 
 Create the account manually or use an existing storage account. You will need to
 have the following properties of this storage before proceeding as they are
@@ -53,8 +53,25 @@ the pipelines to send data to Spektate storage.
 **Note:** The Azure storage account is needed to store information about your
 pipelines and services that is displayed by service introspection.
 
-2. Create a table. Follow these
-   [instructions](https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-quickstart-portal).
+#### 2. Create a table. Follow these
+
+[instructions](https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-quickstart-portal).
+
+#### 3. Storage account CORS settings
+
+Configure the CORS settings for the storage account to allow requests from the
+service introspection dasbhoard.
+
+1. Go to the [Azure portal](https://portal.azure.com)
+2. Search for the name of your storage account
+3. Click the CORS options on the menu on the left side:
+   ![cors menu option](./images/cors-menu.png)
+
+Add the following settings under **Table Service**:
+![cors settings](./images/cors-settings.png)
+
+**Note:** If you are running the service introspection spk dashboard in a port
+other than `4040`, add that entry in the settings instead.
 
 ### Pipelines Configuration
 
@@ -101,8 +118,6 @@ by service introspection.
 
 - Make sure the variable `tag_name` is set to the tag name for the image being
   built in your docker step.
-
-- Add the task early on so that information is sent to spk.
 
 - Add the task before the crucial steps in your pipeline. This will capture
   details about failures if the important steps fail.
