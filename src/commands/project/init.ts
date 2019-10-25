@@ -6,6 +6,7 @@ import * as config from "../../config";
 import {
   generateDockerfile,
   generateGitIgnoreFile,
+  generateHldLifecyclePipelineYaml,
   generateStarterAzurePipelinesYaml
 } from "../../lib/fileutils";
 import { exec } from "../../lib/shell";
@@ -36,10 +37,11 @@ export const initCommandDecorator = (command: commander.Command): void => {
     )
     .option(
       "-r, --default-ring <branch-name>",
-      "Specify a default ring; this corresponds to a default branch which you wish to push initial revisions to"
+      "Specify a default ring; this corresponds to a default branch which you wish to push initial revisions to",
+      "master"
     )
     .action(async opts => {
-      const { monoRepo = false, packagesDir = "packages", defaultRing } = opts;
+      const { monoRepo, packagesDir, defaultRing } = opts;
       const projectPath = process.cwd();
       try {
         // Type check all parsed command line args here.
@@ -53,10 +55,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
             `--packages-dir must be of type 'string', ${typeof packagesDir} given`
           );
         }
-        if (
-          typeof defaultRing !== "string" &&
-          typeof defaultRing !== "undefined"
-        ) {
+        if (typeof defaultRing !== "string") {
           throw new Error(
             `--default-ring must be of type 'string', '${defaultRing}' of type '${typeof defaultRing}' given`
           );
@@ -111,6 +110,7 @@ export const initialize = async (
     defaultRing ? [defaultRing] : []
   );
   await generateMaintainersFile(absProjectRoot, absPackagePaths);
+  await generateHldLifecyclePipelineYaml(absProjectRoot);
 
   const gitIgnoreFileContent = "spk.log";
 
