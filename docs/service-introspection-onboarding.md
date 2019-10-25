@@ -13,7 +13,7 @@ The following diagram shows the main components of service introspection.
 To use service introspection you first need to make sure you have the following
 pre-requisites.
 
-## Pre-Requisites
+## Components
 
 1. GitOps pipelines workflow in Bedrock. To setup the workflow, follow
    [these](https://github.com/microsoft/bedrock/tree/master/gitops)
@@ -25,8 +25,9 @@ pre-requisites.
 ### Service introspection storage
 
 Service introspection tool needs a database to store the information about your
-pipelines and services. Currently, service introspection supports storage in the
-form of an Azure Storage table. Follow the steps below to create it.
+pipelines, builds and deployments. Currently, service introspection supports
+storage in the form of an Azure Storage table. Follow the steps below to create
+it or use an existing one.
 
 1. Create an Azure storage account:
 
@@ -38,8 +39,9 @@ command.
 
 #### Option 2:
 
-Create the account manually. You will need to have the following properties of
-this storage before proceeding:
+Create the account manually or use an existing storage account. You will need to
+have the following properties of this storage before proceeding as they are
+required to configure:
 
 - Name of the storage account
 - Access key to this storage account

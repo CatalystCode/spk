@@ -24,6 +24,7 @@ Commands:
 - [get](#get)
 - [onboard](#onboard)
 - [dashboard](#dashboard)
+- [variable-group](variable-group.md)
 
 Global options:
 
