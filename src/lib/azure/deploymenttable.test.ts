@@ -4,7 +4,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import * as update from "./updatetable";
+import * as update from "./deploymenttable";
 
 const mockedDB: any[] = [];
 jest

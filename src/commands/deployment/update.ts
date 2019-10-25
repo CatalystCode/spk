@@ -1,6 +1,6 @@
 import commander from "commander";
 import open = require("open");
-import { updateDeployment } from "../../lib/azure/updatetable";
+import { updateDeployment } from "../../lib/azure/deploymenttable";
 import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
 import { validatePrereqs } from "../infra/validate";
