@@ -7,6 +7,9 @@ Service introspection is used via the `spk deployment` commands. More
 information about the commands is available in the command reference
 [here](https://github.com/CatalystCode/spk/blob/master/docs/service-introspection.md).
 
+The following diagram shows the main components of service introspection.
+![spk service introspection diagram](./docs/images/service_introspection.png)
+
 To use service introspection you first need to make sure you have the following
 pre-requisites.
 
@@ -63,7 +66,11 @@ To send data from Azure pipelines to the service introspection storage created
 previously a variable group needs to be configured in Azure DevOps (where the
 pipelines are).
 
-To configure the variable group run: `spk variable-group create`
+To configure the variable group run:
+
+```
+spk variable-group create
+```
 
 #### 2. CI pipeline configuration
 
