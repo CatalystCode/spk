@@ -8,7 +8,7 @@ information about the commands is available in the command reference
 [here](https://github.com/CatalystCode/spk/blob/master/docs/service-introspection.md).
 
 The following diagram shows the main components of service introspection.
-![spk service introspection diagram](./docs/images/service_introspection.png)
+![spk service introspection diagram](./images/service_introspection.png)
 
 To use service introspection you first need to make sure you have the following
 pre-requisites.
