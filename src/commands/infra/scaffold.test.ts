@@ -3,11 +3,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import {
-  generateClusterDefinition,
-  parseVariablesTf,
-  generateBackend
-} from "./scaffold";
+import { generateClusterDefinition, parseVariablesTf } from "./scaffold";
 
 beforeAll(() => {
   enableVerboseLogging();

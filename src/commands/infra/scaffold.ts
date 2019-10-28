@@ -39,7 +39,7 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
         await copyTfTemplate(opts.template, opts.name);
         await validateVariablesTf(path.join(opts.template, "variables.tf"));
         await scaffold(opts.name, opts.source, opts.version, opts.template);
-        //await renameTfvars(opts.name);
+        await renameTfvars(opts.name);
       } catch (err) {
         logger.error("Error occurred while generating scaffold");
         logger.error(err);
@@ -98,7 +98,7 @@ export const renameTfvars = async (dir: string): Promise<void> => {
   try {
     const tfFiles = fs.readdirSync(dir);
     tfFiles.forEach(file => {
-      if (file.indexOf(".tfvars") !== -1) {
+      if (file.substr(file.lastIndexOf(".") + 1) === "tfvars") {
         fs.renameSync(path.join(dir, file), path.join(dir, file + ".backup"));
       }
     });
@@ -160,7 +160,7 @@ export const parseVariablesTf = (data: string) => {
   const fields: { [name: string]: string | "" } = {};
   const fieldSplitRegex = /\"\s{0,}\{/;
   const defaultRegex = /default\s{0,}=\s{0,}(.*)/;
-  blocks.forEach((b, idx) => {
+  blocks.forEach(b => {
     b = b.trim();
     const elt = b.split(fieldSplitRegex);
     elt[0] = elt[0].trim().replace('"', "");
@@ -184,6 +184,23 @@ export const parseVariablesTf = (data: string) => {
 };
 
 /**
+ * Parses and reformats the backend.tfvars
+ *
+ * @param backendTfvarData path to the directory of backend.tfvars
+ */
+export const parseBackendTfvars = (backendData: string) => {
+  const backend: { [name: string]: string | "" } = {};
+  const block = backendData.replace(/\=/g, ":").split("\n");
+  block.forEach(b => {
+    const elt = b.split(":");
+    if (elt[0].length > 0) {
+      backend[elt[0]] = elt[1].replace(/\"/g, "");
+    }
+  });
+  return backend;
+};
+
+/**
  * Generates cluster definition as definition.json
  *
  * @param name name of destination directory
@@ -198,7 +215,7 @@ export const generateClusterDefinition = async (
   source: string,
   template: string,
   version: string,
-  backendTfvars: string,
+  backendData: string,
   vartfData: string
 ) => {
   const fields: { [name: string]: string | null } = parseVariablesTf(vartfData);
@@ -208,10 +225,9 @@ export const generateClusterDefinition = async (
     template,
     version
   };
-  const backendBool = await validateBackendTfvars(name);
-  if (backendBool === true) {
-    const backendData = generateBackend(backendTfvars);
-    def.backend = backendData;
+  if (backendData !== "") {
+    const backend = parseBackendTfvars(backendData);
+    def.backend = backend;
   }
   if (Object.keys(fields).length > 0) {
     const fieldDict: { [name: string]: string | null } = {};
@@ -221,28 +237,6 @@ export const generateClusterDefinition = async (
     def.variables = fieldDict;
   }
   return def;
-};
-
-/**
- * Parses and reformats the backend.tfvars
- *
- * @param backendTfvarData path to the directory of backend.tfvars
- */
-export const generateBackend = (backendTfvarData: string) => {
-  const backend: { [name: string]: string | "" } = {};
-  const data = fs
-    .readFileSync(backendTfvarData)
-    .toString()
-    .replace(/\=/g, ":")
-    .split("\n");
-  data.forEach(b => {
-    const elt = b.split(":");
-    elt[0] = elt[0];
-    if (elt[0].length > 0) {
-      backend[elt[0]] = elt[1].replace(/\"/g, "");
-    }
-  });
-  return backend;
 };
 
 /**
@@ -263,6 +257,11 @@ export const scaffold = async (
   try {
     const tfVariableFile = path.join(name, "variables.tf");
     const backendTfvarsFile = path.join(name, "backend.tfvars");
+    const backendBool = await validateBackendTfvars(name);
+    let backendData = "";
+    if (backendBool === true) {
+      backendData = fs.readFileSync(backendTfvarsFile, "utf8");
+    }
     // Identify which environment the user selected
     if (fs.existsSync(tfVariableFile)) {
       logger.info(`A variables.tf file found : ${tfVariableFile}`);
@@ -275,7 +274,7 @@ export const scaffold = async (
           bedrockSource,
           template,
           bedrockVersion,
-          backendTfvarsFile,
+          backendData,
           data
         );
         if (baseDef) {
@@ -295,8 +294,9 @@ export const scaffold = async (
         logger.error(`Unable to read variable file: ${tfVariableFile}.`);
       }
     }
-  } catch (_) {
+  } catch (err) {
     logger.warn("Unable to create scaffold");
+    logger.error(err);
   }
   return false;
 };
