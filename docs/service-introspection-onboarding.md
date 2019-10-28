@@ -60,7 +60,8 @@ the pipelines to send data to Spektate storage.
        VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
        echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
        chmod +x ./spk-linux
-       ./spk-linux deployment update -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name p1 --filter-value $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $(Build.Repository.Name)
+       ./spk-linux deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service
+
      displayName: Update manifest pipeline details in CJ db
    ```
 
@@ -82,7 +83,7 @@ the pipelines to send data to Spektate storage.
    VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
    echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
    chmod +x ./spk-linux
-   ./spk-linux deployment update -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name imageTag --filter-value $(Build.BuildId) --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName)
+   ./spk-linux deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag $(Build.BuildId)
    ```
 
 4. To the Manifest generation pipeline, we need to capture the commit Id, so
@@ -93,11 +94,13 @@ the pipelines to send data to Spektate storage.
    ```yaml
    - bash: |
        cd "$HOME"/<name of your manifest repository>
+       commitId=$(Build.SourceVersion)
+       commitId=$(echo "${commitId:0:7}")
        latest_commit=$(git rev-parse --short HEAD)
        VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
        echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
        chmod +x ./spk-linux
-       ./spk-linux deployment update -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --filter-name hldCommitId --filter-value $commitId --p3 $(Build.BuildId) --manifest-commit-id $latest_commit
+       ./spk-linux deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit
      displayName: Update manifest pipeline details in CJ db
    ```
 
