@@ -1,5 +1,4 @@
 import commander from "commander";
-import open = require("open");
 import {
   addSrcToACRPipeline,
   IDeploymentTable,
@@ -7,19 +6,17 @@ import {
   updateHLDToManifestPipeline,
   updateManifestCommitId
 } from "../../lib/azure/deploymenttable";
-import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
-import { validatePrereqs } from "../infra/validate";
 
 /**
- * Creates an update command decorator for the command to update a deployment in storage
+ * Creates a create command decorator for the command to update a deployment in storage
  * @param command
  */
-export const updateCommandDecorator = (command: commander.Command): void => {
+export const createCommandDecorator = (command: commander.Command): void => {
   command
-    .command("update")
-    .alias("u")
-    .description("Update the deployment in storage from pipelines")
+    .command("create")
+    .alias("c")
+    .description("Insert the deployment in storage from pipelines")
     .option(
       "-k, --access-key <access-key>",
       "Access key of the storage account"

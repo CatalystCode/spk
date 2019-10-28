@@ -1,4 +1,3 @@
-import * as azure from "azure-storage";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
@@ -151,6 +150,28 @@ describe("Verify the update deployment commands", () => {
                         expect(mockedDB).toHaveLength(2);
                         expect(mockedDB[1].p3).toBe("900");
                         expect(mockedDB[1].manifestCommitId).toBe("manifest1");
+
+                        update
+                          .updateACRToHLDPipeline(
+                            mockTableInfo,
+                            "568",
+                            "hello-spk-master-1234",
+                            "aaaaaaab",
+                            "Staging"
+                          )
+                          .then(someValue6 => {
+                            expect(mockedDB).toHaveLength(3);
+                            expect(mockedDB[2].p1).toBe("1234");
+                            expect(mockedDB[2].p2).toBe("568");
+                            expect(mockedDB[2].env).toBe("staging");
+                            expect(mockedDB[2].p3).toBeUndefined();
+                            expect(
+                              mockedDB[2].manifestCommitId
+                            ).toBeUndefined();
+                            logger.info(
+                              `Verified that creating a release out of an existing deployment does not duplicate entries`
+                            );
+                          });
                       });
                   });
               });
