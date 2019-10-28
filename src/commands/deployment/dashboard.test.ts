@@ -7,7 +7,7 @@ import {
   logger
 } from "../../logger";
 import { validatePrereqs } from "../infra/validate";
-import { launchDashboard, getEnvVars } from "./dashboard";
+import { getEnvVars, launchDashboard } from "./dashboard";
 
 beforeAll(() => {
   process.env.test_name = "my_storage_account";
