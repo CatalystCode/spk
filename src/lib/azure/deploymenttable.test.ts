@@ -7,46 +7,55 @@ import {
 import * as update from "./deploymenttable";
 
 const mockedDB: any[] = [];
-jest
-  .spyOn(update, "insertToTable")
-  .mockImplementation(
-    (
-      accountName: string,
-      accountKey: string,
-      tableName: string,
-      entry: any,
-      callback: (
-        error: Error,
-        result: any,
-        response: azure.ServiceResponse
-      ) => void
-    ) => {
+const mockTableInfo: update.IDeploymentTable = {
+  accountKey: "test",
+  accountName: "test",
+  partitionKey: "test",
+  tableName: "test"
+};
+jest.spyOn(update, "findMatchingDeployments").mockImplementation(
+  (
+    tableInfo: update.IDeploymentTable,
+    filterName: string,
+    filterValue: string
+  ): Promise<any> => {
+    const array: any[] = [];
+    return new Promise(resolve => {
+      mockedDB.forEach((row: any) => {
+        if (filterName in row && row[filterName] === filterValue) {
+          logger.debug(
+            `Found matching mock entry ${JSON.stringify(row, null, 4)}`
+          );
+          array.push(row);
+        }
+      });
+      resolve(array);
+    });
+  }
+);
+
+jest.spyOn(update, "insertToTable").mockImplementation(
+  (tableInfo: update.IDeploymentTable, entry: any): Promise<any> => {
+    return new Promise(resolve => {
       logger.debug(`Inserting to table ${JSON.stringify(entry, null, 4)}`);
       mockedDB.push(entry);
-    }
-  );
-jest
-  .spyOn(update, "updateEntryInTable")
-  .mockImplementation(
-    (
-      accountName: string,
-      accountKey: string,
-      tableName: string,
-      entry: any,
-      callback: (
-        error: Error,
-        result: any,
-        response: azure.ServiceResponse
-      ) => void
-    ) => {
-      logger.debug(`Updating existing entry ${JSON.stringify(entry, null, 4)}`);
+      resolve(entry);
+    });
+  }
+);
+jest.spyOn(update, "updateEntryInTable").mockImplementation(
+  (tableInfo: update.IDeploymentTable, entry: any): Promise<any> => {
+    logger.debug(`Updating existing entry ${JSON.stringify(entry, null, 4)}`);
+    return new Promise(resolve => {
       mockedDB.forEach((row: any, index: number) => {
         if (row.RowKey === entry.RowKey) {
           mockedDB[index] = entry;
+          resolve(entry);
         }
       }, mockedDB);
-    }
-  );
+    });
+  }
+);
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -68,79 +77,84 @@ describe("Verify the update deployment commands", () => {
 
     // Verify that adding a deployment works
     expect(mockedDB).toHaveLength(0);
-    update.addDeployment(
-      "test",
-      "test",
-      "test",
-      "test",
-      "p1",
-      "1234",
-      "imageTag",
-      "hello-spk-master-1234",
-      "service",
-      "test",
-      "commitId",
-      "bbbbbbb"
-    );
-    expect(mockedDB).toHaveLength(1);
-    logger.info(`Verified that a new deployment was added`);
+    update
+      .addSrcToACRPipeline(
+        mockTableInfo,
+        "1234",
+        "hello-spk-master-1234",
+        "test",
+        "bbbbbbb"
+      )
+      .then(someValue1 => {
+        expect(mockedDB).toHaveLength(1);
+        expect(mockedDB[0].p1).toBe("1234");
+        expect(mockedDB[0].imageTag).toBe("hello-spk-master-1234");
+        expect(mockedDB[0].service).toBe("test");
+        expect(mockedDB[0].commitId).toBe("bbbbbbb");
+        logger.info(`Verified that a new deployment was added`);
 
-    // Verify that updating an existing deployment does not add a new element
-    update.updateExistingDeployment(
-      mockedDB,
-      "test",
-      "test",
-      "test",
-      "test",
-      "imageTag",
-      "hello-spk-master-1234",
-      "p2",
-      "567",
-      "env",
-      "Dev"
-    );
-    expect(mockedDB).toHaveLength(1);
-    expect(mockedDB[0].p2).toBe("567");
-    expect(mockedDB[0].env).toBe("dev");
-    expect(mockedDB[0].p1).toBe("1234");
-    logger.info(`Verified that a deployment was updated`);
+        // Verify that updating an existing deployment does not add a new element
+        update
+          .updateACRToHLDPipeline(
+            mockTableInfo,
+            "567",
+            "hello-spk-master-1234",
+            "aaaaaaa",
+            "Dev"
+          )
+          .then(someValue2 => {
+            expect(mockedDB).toHaveLength(1);
+            logger.info(
+              `mockedDB[0] = ${JSON.stringify(mockedDB[0], null, 4)}`
+            );
+            expect(mockedDB[0].p2).toBe("567");
+            expect(mockedDB[0].env).toBe("dev");
+            expect(mockedDB[0].p1).toBe("1234");
+            expect(mockedDB[0].hldCommitId).toBe("aaaaaaa");
+            logger.info(`Verified that a deployment was updated`);
 
-    // Verify that updating an existing deployment that has no match, does add a new element
-    update.updateExistingDeployment(
-      mockedDB,
-      "test",
-      "test",
-      "test",
-      "test",
-      "imageTag",
-      "hello-spk-master-1234",
-      "p2",
-      "568",
-      "env",
-      "Dev",
-      "hldCommitId",
-      "aaaaaaaa"
-    );
-    expect(mockedDB).toHaveLength(2);
-    expect(mockedDB[1].p1).toBe("1234");
-    expect(mockedDB[1].p2).toBe("568");
-    logger.info(
-      `Verified that updating a deployment that does not match adds a new element`
-    );
+            // Verify that updating an existing deployment that has no match, does add a new element
+            update
+              .updateACRToHLDPipeline(
+                mockTableInfo,
+                "568",
+                "hello-spk-master-1234",
+                "aaaaaaab",
+                "Dev"
+              )
+              .then(someValue3 => {
+                expect(mockedDB).toHaveLength(2);
+                expect(mockedDB[1].p1).toBe("1234");
+                expect(mockedDB[1].p2).toBe("568");
+                expect(mockedDB[1].env).toBe("dev");
+                logger.info(
+                  `Verified that updating a deployment that does not match, adds a new element`
+                );
 
-    // Verify third key can be added
-    update.updateExistingDeployment(
-      mockedDB,
-      "test",
-      "test",
-      "test",
-      "test",
-      "p2",
-      "568",
-      "p3",
-      "900"
-    );
-    expect(mockedDB).toHaveLength(2);
-    expect(mockedDB[1].p3).toBe("900");
+                // Verify third pipeline can be added
+                update
+                  .updateHLDToManifestPipeline(
+                    mockTableInfo,
+                    "aaaaaaab",
+                    "900",
+                    "manifest"
+                  )
+                  .then(someValue4 => {
+                    expect(mockedDB).toHaveLength(2);
+                    expect(mockedDB[1].p3).toBe("900");
+                    expect(mockedDB[1].manifestCommitId).toBe("manifest");
+
+                    // Verify manifest commit can be updated
+                    update
+                      .updateManifestCommitId(mockTableInfo, "900", "manifest1")
+                      .then(someValue5 => {
+                        expect(mockedDB).toHaveLength(2);
+                        expect(mockedDB[1].p3).toBe("900");
+                        expect(mockedDB[1].manifestCommitId).toBe("manifest1");
+                      });
+                  });
+              });
+          });
+      });
   });
 });

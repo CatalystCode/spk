@@ -1,6 +1,12 @@
 import commander from "commander";
 import open = require("open");
-import { updateDeployment } from "../../lib/azure/deploymenttable";
+import {
+  addSrcToACRPipeline,
+  IDeploymentTable,
+  updateACRToHLDPipeline,
+  updateHLDToManifestPipeline,
+  updateManifestCommitId
+} from "../../lib/azure/deploymenttable";
 import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
 import { validatePrereqs } from "../infra/validate";
@@ -24,14 +30,7 @@ export const updateCommandDecorator = (command: commander.Command): void => {
       "Partition key for the storage account"
     )
     .option("-t, --table-name <table-name>", "Name of table in storage account")
-    .option(
-      "--filter-name <filter-name>",
-      "Name of the distinguishing column of the first, second or third pipeline"
-    )
-    .option(
-      "--filter-value <filter-value>",
-      "Value of the first distinguishing column of the first, second or third pipeline"
-    )
+    .option("--p1 <p1>", "Identifier for the first pipeline")
     .option("--image-tag <image-tag>", "Image tag")
     .option("--commit-id <commit-id>", "Commit Id in source repository")
     .option("--service <service>", "Service name")
@@ -45,8 +44,6 @@ export const updateCommandDecorator = (command: commander.Command): void => {
     )
     .action(async opts => {
       if (
-        !opts.filterName ||
-        !opts.filterValue ||
         !opts.accessKey ||
         !opts.name ||
         !opts.partitionKey ||
@@ -58,8 +55,15 @@ export const updateCommandDecorator = (command: commander.Command): void => {
         return;
       }
 
+      const tableInfo: IDeploymentTable = {
+        accountKey: opts.accessKey,
+        accountName: opts.name,
+        partitionKey: opts.partitionKey,
+        tableName: opts.tableName
+      };
+
       // This is being called from the first pipeline. Make sure all other fields are defined.
-      if (opts.filterName === "p1") {
+      if (opts.p1) {
         if (!opts.imageTag || !opts.commitId || !opts.service) {
           logger.error(
             "For updating the details of source pipeline, you must specify --image-tag, --commit-id and --service"
@@ -67,48 +71,36 @@ export const updateCommandDecorator = (command: commander.Command): void => {
           return;
         }
 
-        updateDeployment(
-          opts.name,
-          opts.accessKey,
-          opts.tableName,
-          opts.partitionKey,
-          opts.filterName,
-          opts.filterValue,
-          "imageTag",
+        addSrcToACRPipeline(
+          tableInfo,
+          opts.p1,
           opts.imageTag,
-          "commitId",
-          opts.commitId,
-          "service",
-          opts.service
+          opts.service,
+          opts.commitId
         );
+        return;
       }
 
       // This is being called from the second pipeline. Make sure all other fields are defined.
-      if (opts.filterName === "imageTag") {
-        if (!opts.p2 || !opts.hldCommitId || !opts.env) {
+      if (opts.imageTag || opts.p2) {
+        if (!opts.p2 || !opts.hldCommitId || !opts.env || !opts.imageTag) {
           logger.error(
-            "For updating the details of image tag release pipeline, you must specify --p2, --hld-commit-id and --env"
+            "For updating the details of image tag release pipeline, you must specify --p2, --hld-commit-id, --image-tag and --env"
           );
           return;
         }
-        updateDeployment(
-          opts.name,
-          opts.accessKey,
-          opts.tableName,
-          opts.partitionKey,
-          opts.filterName,
-          opts.filterValue,
-          "p2",
+        updateACRToHLDPipeline(
+          tableInfo,
           opts.p2,
-          "hldCommitId",
+          opts.imageTag,
           opts.hldCommitId,
-          "env",
           opts.env
         );
+        return;
       }
 
       // This is being called from the third pipeline. Make sure all other fields are defined.
-      if (opts.filterName === "hldCommitId") {
+      if (opts.hldCommitId && opts.p3) {
         if (!opts.p3) {
           logger.error(
             "For updating the details of manifest generation pipeline, you must specify --p3"
@@ -116,50 +108,31 @@ export const updateCommandDecorator = (command: commander.Command): void => {
           return;
         }
         if (opts.manifestCommitId) {
-          updateDeployment(
-            opts.name,
-            opts.accessKey,
-            opts.tableName,
-            opts.partitionKey,
-            opts.filterName,
-            opts.filterValue,
-            "p3",
+          updateHLDToManifestPipeline(
+            tableInfo,
+            opts.hldCommitId,
             opts.p3,
-            "manifestCommitId",
             opts.manifestCommitId
           );
         } else {
-          updateDeployment(
-            opts.name,
-            opts.accessKey,
-            opts.tableName,
-            opts.partitionKey,
-            opts.filterName,
-            opts.filterValue,
-            "p3",
-            opts.p3
-          );
+          updateHLDToManifestPipeline(tableInfo, opts.hldCommitId, opts.p3);
         }
+        return;
       }
 
       // This is being called from the third pipeline to update manifest id. Make sure all other fields are defined.
-      if (opts.filterName === "p3") {
+      if (opts.p3 && opts.manifestCommitId) {
         if (!opts.manifestCommitId) {
           logger.error(
             "For updating the details of manifest generation pipeline, you must specify --manifest-commit-id"
           );
           return;
         }
-        updateDeployment(
-          opts.name,
-          opts.accessKey,
-          opts.tableName,
-          opts.partitionKey,
-          opts.filterName,
-          opts.filterValue,
-          "manifestCommitId",
-          opts.manifestCommitId
-        );
+        updateManifestCommitId(tableInfo, opts.p3, opts.manifestCommitId);
+        return;
       }
+
+      //  Execution should not get here; request user to specify arguments correctly
+      logger.error("No action could be performed for specified arguments.");
     });
 };

@@ -1,234 +1,292 @@
 import * as azure from "azure-storage";
 import uuid from "uuid/v4";
 import { logger } from "../../logger";
+/**
+ * Deployment Table interface to hold necessary information about a table for deployments
+ */
+export interface IDeploymentTable {
+  accountName: string;
+  accountKey: string;
+  tableName: string;
+  partitionKey: string;
+}
 
 /**
- * Updates a deployment entry in the storage table
- * @param accountName Name of the storage account
- * @param accountKey Access key for the storage account
- * @param tableName Name of the table in storage account to use
- * @param partitionKey Partition key for the project
- * @param filterName Name of the field to filter by, for eg. imageTag is a filter name for the image tag release pipeline
- * @param filterValue Value of the filter key
- * @param key1 Name of the first field being inserted to the table
- * @param value1 Value of the first field being inserted to the table
- * @param key2 Name of the second field being inserted to the table
- * @param value2 Value of the second field being inserted to the table
- * @param key3 Name of the third field being inserted to the table
- * @param value3 Value of the third field being inserted to the table
+ * Adds a new deployment in storage for SRC to ACR pipeline
+ * @param tableInfo table info interface containing information about the storage for deployments
+ * @param pipelineId Identifier of the first pipeline
+ * @param imageTag image tag name
+ * @param serviceName service name
+ * @param commitId commit identifier
  */
-export const updateDeployment = (
-  accountName: string,
-  accountKey: string,
-  tableName: string,
-  partitionKey: string,
+export const addSrcToACRPipeline = (
+  tableInfo: IDeploymentTable,
+  pipelineId: string,
+  imageTag: string,
+  serviceName: string,
+  commitId: string
+): Promise<any> => {
+  const entry: any = {};
+  entry.RowKey = getRowKey();
+  entry.p1 = pipelineId;
+  entry.imageTag = imageTag;
+  entry.service = serviceName;
+  entry.commitId = commitId;
+  entry.PartitionKey = tableInfo.partitionKey;
+  return new Promise(resolve => {
+    insertToTable(tableInfo, entry)
+      .then(() => {
+        logger.info("Added first pipeline details to the database");
+        resolve(entry);
+      })
+      .catch(err => {
+        logger.error(err);
+      });
+  });
+};
+
+/**
+ * Updates the ACR to HLD pipeline in the storage by finding its corresponding SRC to ACR pipeline
+ * @param tableInfo table info interface containing information about the storage for deployments
+ * @param pipelineId identifier for the ACR to HLD pipeline
+ * @param imageTag image tag name
+ * @param hldCommitId commit identifier into HLD
+ * @param env environment name, such as Dev, Staging etc.
+ */
+export const updateACRToHLDPipeline = (
+  tableInfo: IDeploymentTable,
+  pipelineId: string,
+  imageTag: string,
+  hldCommitId: string,
+  env: string
+): Promise<any> => {
+  return new Promise(resolve => {
+    findMatchingDeployments(tableInfo, "imageTag", imageTag).then(entries => {
+      let entryToInsert: any;
+      for (const entry of entries) {
+        entryToInsert = entry;
+        if (
+          (entry.p2 ? entry.p2._ === pipelineId : true) &&
+          (entry.hldCommitId ? entry.hldCommitId._ === hldCommitId : true) &&
+          (entry.env ? entry.env._ === env : true)
+        ) {
+          entry.p2 = pipelineId.toLowerCase();
+          entry.hldCommitId = hldCommitId.toLowerCase();
+          entry.env = env.toLowerCase();
+          updateEntryInTable(tableInfo, entry)
+            .then(() => {
+              logger.info(
+                "Updated image tag release details for its corresponding pipeline"
+              );
+              resolve(entry);
+            })
+            .catch(err => {
+              logger.error(err);
+            });
+          return;
+        }
+      }
+      if (entryToInsert) {
+        entryToInsert.p2 = pipelineId.toLowerCase();
+        entryToInsert.hldCommitId = hldCommitId.toLowerCase();
+        entryToInsert.env = env.toLowerCase();
+        entryToInsert.RowKey = getRowKey();
+        entryToInsert.p3 = undefined;
+        entryToInsert.manifestCommitId = undefined;
+        insertToTable(tableInfo, entryToInsert)
+          .then(() => {
+            logger.info(
+              `Added new p2 entry for imageTag ${imageTag} by finding a similar entry`
+            );
+            resolve(entryToInsert);
+          })
+          .catch(err => {
+            logger.error(err);
+          });
+        return;
+      }
+      // Ideally we should not be getting here, because there should always be a p1 for any p2 being created.
+      const newEntry: any = {};
+      newEntry.PartitionKey = tableInfo.partitionKey;
+      newEntry.RowKey = getRowKey();
+      newEntry.p2 = pipelineId.toLowerCase();
+      newEntry.env = env.toLowerCase();
+      newEntry.hldCommitId = hldCommitId.toLowerCase();
+      newEntry.imageTag = imageTag.toLowerCase();
+      insertToTable(tableInfo, newEntry)
+        .then(() => {
+          logger.info(
+            `Added new p2 entry for imageTag ${imageTag} - no matching entry was found.`
+          );
+          resolve(newEntry);
+        })
+        .catch(err => {
+          logger.error(err);
+        });
+      return;
+    });
+  });
+};
+
+/**
+ * Updates the HLD to manifest pipeline in storage by finding its corresponding SRC to ACR and ACR to HLD pipelines
+ * @param tableInfo table info interface containing information about the deployment storage table
+ * @param hldCommitId commit identifier into the HLD repo, used as a filter to find corresponding deployments
+ * @param pipelineId identifier of the HLD to manifest pipeline
+ * @param manifestCommitId manifest commit identifier
+ */
+export const updateHLDToManifestPipeline = (
+  tableInfo: IDeploymentTable,
+  hldCommitId: string,
+  pipelineId: string,
+  manifestCommitId?: string
+): Promise<any> => {
+  return new Promise(resolve => {
+    findMatchingDeployments(tableInfo, "hldCommitId", hldCommitId).then(
+      entries => {
+        let entryToInsert: any;
+        for (const entry of entries) {
+          entryToInsert = entry;
+          if (
+            (entry.p3 ? entry.p3._ === pipelineId : true) &&
+            (entry.manifestCommitId
+              ? entry.manifestCommitId._ === manifestCommitId
+              : true)
+          ) {
+            entry.p3 = pipelineId.toLowerCase();
+            if (manifestCommitId) {
+              entry.manifestCommitId = manifestCommitId.toLowerCase();
+            }
+            updateEntryInTable(tableInfo, entry)
+              .then(() => {
+                logger.info(
+                  "Updated third pipeline details for its corresponding pipeline"
+                );
+                resolve(entry);
+              })
+              .catch(err => {
+                logger.error(err);
+              });
+            return;
+          }
+        }
+        if (entryToInsert) {
+          entryToInsert.p3 = pipelineId.toLowerCase();
+          if (manifestCommitId) {
+            entryToInsert.manifestCommitId = manifestCommitId.toLowerCase();
+          }
+          entryToInsert.hldCommitId = hldCommitId.toLowerCase();
+          entryToInsert.RowKey = getRowKey();
+          insertToTable(tableInfo, entryToInsert)
+            .then(() => {
+              logger.info(
+                `Added new p3 entry for hldCommitId ${hldCommitId} by finding a similar entry`
+              );
+              resolve(entryToInsert);
+            })
+            .catch(err => {
+              logger.error(err);
+            });
+          return;
+        }
+
+        const newEntry: any = {};
+        newEntry.PartitionKey = tableInfo.partitionKey;
+        newEntry.RowKey = getRowKey();
+        newEntry.p3 = pipelineId.toLowerCase();
+        newEntry.hldCommitId = hldCommitId.toLowerCase();
+        if (manifestCommitId) {
+          newEntry.manifestCommitId = manifestCommitId.toLowerCase();
+        }
+        insertToTable(tableInfo, newEntry)
+          .then(() => {
+            logger.info(
+              `Added new p3 entry for hldCommitId ${hldCommitId} - no matching entry was found.`
+            );
+            resolve(newEntry);
+          })
+          .catch(err => {
+            logger.error(err);
+          });
+        return;
+      }
+    );
+  });
+};
+
+/**
+ * Updates manifest commit identifier in the storage for a pipeline identifier in HLD to manifest pipeline
+ * @param tableInfo table info interface containing information about the deployment storage table
+ * @param pipelineId identifier of the HLD to manifest pipeline, used as a filter to find the deployment
+ * @param manifestCommitId manifest commit identifier to be updated
+ */
+export const updateManifestCommitId = (
+  tableInfo: IDeploymentTable,
+  pipelineId: string,
+  manifestCommitId: string
+): Promise<any> => {
+  return new Promise(resolve => {
+    findMatchingDeployments(tableInfo, "p3", pipelineId).then(entries => {
+      // Ideally there should only be one entry for every pipeline id
+      if (entries.length > 0) {
+        const entry = entries[0];
+        entry.manifestCommitId = manifestCommitId;
+        updateEntryInTable(tableInfo, entry)
+          .then(() => {
+            logger.info(
+              `Update manifest commit Id ${manifestCommitId} for pipeline Id ${pipelineId}`
+            );
+            resolve(entry);
+          })
+          .catch(err => {
+            logger.error(err);
+          });
+      } else {
+        logger.error(
+          `No manifest generation found to update manifest commit ${manifestCommitId}`
+        );
+      }
+    });
+  });
+};
+
+/**
+ * Finds matching deployments for a filter name and filter value in the storage
+ * @param tableInfo table info interface containing information about the deployment storage table
+ * @param filterName name of the filter, such as `imageTag`
+ * @param filterValue value of the filter, such as `hello-spk-master-1234`
+ */
+export const findMatchingDeployments = (
+  tableInfo: IDeploymentTable,
   filterName: string,
-  filterValue: string,
-  key1: string,
-  value1: string,
-  key2?: string,
-  value2?: string,
-  key3?: string,
-  value3?: string
-) => {
-  const tableService = azure.createTableService(accountName, accountKey);
+  filterValue: string
+): Promise<any> => {
+  const tableService = azure.createTableService(
+    tableInfo.accountName,
+    tableInfo.accountKey
+  );
   const query: azure.TableQuery = new azure.TableQuery().where(
-    "PartitionKey eq '" + partitionKey + "'"
+    "PartitionKey eq '" + tableInfo.partitionKey + "'"
   );
   query.and(filterName + " eq '" + filterValue + "'");
 
   // To get around issue https://github.com/Azure/azure-storage-node/issues/545, set below to null
   const nextContinuationToken: azure.TableService.TableContinuationToken = null as any;
 
-  tableService.queryEntities(
-    tableName,
-    query,
-    nextContinuationToken,
-    (error, result) => {
-      if (!error) {
-        updateExistingDeployment(
-          result.entries,
-          accountName,
-          accountKey,
-          tableName,
-          partitionKey,
-          filterName,
-          filterValue,
-          key1,
-          value1,
-          key2,
-          value2,
-          key3,
-          value3
-        );
-      } else {
-        logger.error(error.message);
-      }
-    }
-  );
-};
-
-/**
- * Adds a deployment entry to the storage table
- * @param accountName Name of the storage account
- * @param accountKey Access key for the storage account
- * @param tableName Name of the table in storage account to use
- * @param partitionKey Partition key for the project
- * @param filterName Name of the field to filter by, for eg. imageTag is a filter name for the image tag release pipeline
- * @param filterValue Value of the filter key
- * @param key1 Name of the first field being inserted to the table
- * @param value1 Value of the first field being inserted to the table
- * @param key2 Name of the second field being inserted to the table
- * @param value2 Value of the second field being inserted to the table
- * @param key3 Name of the third field being inserted to the table
- * @param value3 Value of the third field being inserted to the table
- */
-export const addDeployment = (
-  accountName: string,
-  accountKey: string,
-  tableName: string,
-  partitionKey: string,
-  filterName: string,
-  filterValue: string,
-  key1: string,
-  value1: string,
-  key2?: string,
-  value2?: string,
-  key3?: string,
-  value3?: string
-): any => {
-  const newEntry: any = {};
-  newEntry.RowKey = getRowKey();
-  newEntry.PartitionKey = partitionKey;
-  newEntry[filterName] = filterValue.toLowerCase();
-  newEntry[key1] = value1.toLowerCase();
-  if (key2 && value2) {
-    newEntry[key2] = value2.toLowerCase();
-  }
-  if (key3 && value3) {
-    newEntry[key3] = value3.toLowerCase();
-  }
-  const tableService = azure.createTableService(accountName, accountKey);
-  insertToTable(
-    accountName,
-    accountKey,
-    tableName,
-    newEntry,
-    (error, result, response) => {
-      if (error) {
-        logger.error(error.message);
-      } else {
-        logger.info(`Added new entry for ${filterName} ${filterValue}`);
-      }
-    }
-  );
-  return newEntry;
-};
-
-/**
- * Updates an existing deployment given the existing entries in the table for the filters
- * @param entries Existing entries in the deployment table
- * @param accountName Name of the storage account
- * @param accountKey Access key for the storage account
- * @param tableName Name of the table in storage account to use
- * @param partitionKey Partition key for the project
- * @param filterName Name of the field to filter by, for eg. imageTag is a filter name for the image tag release pipeline
- * @param filterValue Value of the filter key
- * @param key1 Name of the first field being inserted to the table
- * @param value1 Value of the first field being inserted to the table
- * @param key2 Name of the second field being inserted to the table
- * @param value2 Value of the second field being inserted to the table
- * @param key3 Name of the third field being inserted to the table
- * @param value3 Value of the third field being inserted to the table
- */
-export const updateExistingDeployment = <T>(
-  entries: any[],
-  accountName: string,
-  accountKey: string,
-  tableName: string,
-  partitionKey: string,
-  filterName: string,
-  filterValue: string,
-  key1: string,
-  value1: string,
-  key2?: string,
-  value2?: string,
-  key3?: string,
-  value3?: string
-): any => {
-  let addEntity = false;
-  if (entries.length !== 0) {
-    const entry: any = entries[0];
-    if (key1 in entry && entry[key1]._ !== value1.toLowerCase()) {
-      addEntity = true;
-    }
-    entry[key1] = value1.toLowerCase();
-
-    if (key2 && value2) {
-      if (key2 in entry && entry[key2]._ !== value2.toLowerCase()) {
-        addEntity = true;
-      }
-      entry[key2] = value2.toLowerCase();
-    }
-
-    if (key3 && value3) {
-      if (key3 in entry && entry[key3]._ !== value3.toLowerCase()) {
-        addEntity = true;
-      }
-      entry[key3] = value3.toLowerCase();
-    }
-
-    const tableService = azure.createTableService(accountName, accountKey);
-    if (addEntity) {
-      entry.RowKey = getRowKey();
-      insertToTable(
-        accountName,
-        accountKey,
-        tableName,
-        entry,
-        (err, res, response) => {
-          if (err) {
-            logger.error(err.message);
-          } else {
-            logger.info(`Added new entry for ${filterName} ${filterValue}`);
-          }
+  return new Promise((resolve, reject) => {
+    tableService.queryEntities(
+      tableInfo.tableName,
+      query,
+      nextContinuationToken,
+      (error, result) => {
+        if (!error) {
+          resolve(result.entries);
+        } else {
+          reject(error);
         }
-      );
-    } else {
-      updateEntryInTable(
-        accountName,
-        accountKey,
-        tableName,
-        entry,
-        (err, res, response) => {
-          if (err) {
-            logger.error(err.message);
-          } else {
-            logger.info(
-              `Updated existing entry for ${filterName} ${filterValue}`
-            );
-          }
-        }
-      );
-    }
-
-    return entry;
-  } else {
-    return addDeployment(
-      accountName,
-      accountKey,
-      tableName,
-      partitionKey,
-      filterName,
-      filterValue,
-      key1,
-      value1,
-      key2,
-      value2,
-      key3,
-      value3
+      }
     );
-  }
+  });
 };
 
 /**
@@ -240,14 +298,26 @@ export const updateExistingDeployment = <T>(
  * @param callback Callback handler for the post insert function
  */
 export const insertToTable = (
-  accountName: string,
-  accountKey: string,
-  tableName: string,
-  entry: any,
-  callback: (error: Error, result: any, response: azure.ServiceResponse) => void
-) => {
-  const tableService = azure.createTableService(accountName, accountKey);
-  tableService.insertEntity(tableName, entry, callback);
+  tableInfo: IDeploymentTable,
+  entry: any
+): Promise<any> => {
+  const tableService = azure.createTableService(
+    tableInfo.accountName,
+    tableInfo.accountKey
+  );
+  return new Promise((resolve, reject) => {
+    tableService.insertEntity(
+      tableInfo.tableName,
+      entry,
+      (err, result, response) => {
+        if (!err) {
+          resolve(entry);
+        } else {
+          reject(err);
+        }
+      }
+    );
+  });
 };
 
 /**
@@ -259,14 +329,26 @@ export const insertToTable = (
  * @param callback Callback handler for the post update function
  */
 export const updateEntryInTable = (
-  accountName: string,
-  accountKey: string,
-  tableName: string,
-  entry: any,
-  callback: (error: Error, result: any, response: azure.ServiceResponse) => void
-) => {
-  const tableService = azure.createTableService(accountName, accountKey);
-  tableService.replaceEntity(tableName, entry, callback);
+  tableInfo: IDeploymentTable,
+  entry: any
+): Promise<any> => {
+  const tableService = azure.createTableService(
+    tableInfo.accountName,
+    tableInfo.accountKey
+  );
+  return new Promise((resolve, reject) => {
+    tableService.replaceEntity(
+      tableInfo.tableName,
+      entry,
+      (err, result, response) => {
+        if (!err) {
+          resolve(entry);
+        } else {
+          reject(err);
+        }
+      }
+    );
+  });
 };
 
 /**
