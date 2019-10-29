@@ -171,6 +171,26 @@ describe("Verify the update deployment commands", () => {
                             logger.info(
                               `Verified that creating a release out of an existing deployment does not duplicate entries`
                             );
+
+                            update
+                              .updateHLDToManifestPipeline(
+                                mockTableInfo,
+                                "newcommit",
+                                "901",
+                                "unitest"
+                              )
+                              .then(someValue7 => {
+                                expect(mockedDB).toHaveLength(4);
+                                expect(mockedDB[3].p1).toBeUndefined();
+                                expect(mockedDB[3].p2).toBeUndefined();
+                                expect(mockedDB[3].p3).toBe("901");
+                                expect(mockedDB[3].manifestCommitId).toBe(
+                                  "unitest"
+                                );
+                              });
+                            logger.info(
+                              `Verified that committing directly into HLD creates a new entry in storage and does not link p1 and p2`
+                            );
                           });
                       });
                   });
