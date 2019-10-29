@@ -99,7 +99,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
         ) {
           const config = Config();
           variableGroupName =
-            config.azure_devops && config.azure_devops.variable_group;
+            config.azure_devops && config.azure_devops!.variable_group;
         }
         // Type check all parsed command line args here.
         if (typeof helmChartChart !== "string") {

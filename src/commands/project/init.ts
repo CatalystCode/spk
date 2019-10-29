@@ -2,7 +2,7 @@ import commander from "commander";
 import fs from "fs";
 import path from "path";
 import shelljs from "shelljs";
-import * as config from "../../config";
+import { Config, write } from "../../config";
 import {
   generateDockerfile,
   generateGitIgnoreFile,
@@ -40,10 +40,26 @@ export const initCommandDecorator = (command: commander.Command): void => {
       "Specify a default ring; this corresponds to a default branch which you wish to push initial revisions to",
       "master"
     )
+    .option(
+      "--variable-group-name <variable-group-name>",
+      "The Azure DevOps Variable Group."
+    )
     .action(async opts => {
       const { monoRepo, packagesDir, defaultRing } = opts;
       const projectPath = process.cwd();
       try {
+        let variableGroupName = opts.variableGroupName;
+        // fall back to spk config azure_devops.variable_group when <variable-group-name> argument is not specified
+        if (
+          variableGroupName === undefined ||
+          variableGroupName === null ||
+          variableGroupName === ""
+        ) {
+          const config = Config();
+          variableGroupName =
+            config.azure_devops && config.azure_devops!.variable_group;
+        }
+
         // Type check all parsed command line args here.
         if (typeof monoRepo !== "boolean") {
           throw new Error(
@@ -60,7 +76,18 @@ export const initCommandDecorator = (command: commander.Command): void => {
             `--default-ring must be of type 'string', '${defaultRing}' of type '${typeof defaultRing}' given`
           );
         }
-        await initialize(projectPath, { monoRepo, packagesDir, defaultRing });
+
+        if (typeof variableGroupName !== "string") {
+          throw new Error(
+            `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
+          );
+        }
+
+        await initialize(projectPath, variableGroupName, {
+          defaultRing,
+          monoRepo,
+          packagesDir
+        });
       } catch (err) {
         logger.error(
           `Error occurred while initializing project ${projectPath}`
@@ -80,6 +107,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
  */
 export const initialize = async (
   rootProjectPath: string,
+  variableGroupName: string,
   opts?: { monoRepo: boolean; packagesDir?: string; defaultRing?: string }
 ) => {
   const { monoRepo = false, packagesDir = "packages", defaultRing } =
@@ -115,7 +143,9 @@ export const initialize = async (
   const gitIgnoreFileContent = "spk.log";
 
   for (const absPackagePath of absPackagePaths) {
-    await generateStarterAzurePipelinesYaml(absProjectRoot, absPackagePath);
+    await generateStarterAzurePipelinesYaml(absProjectRoot, absPackagePath, [
+      variableGroupName
+    ]);
     generateGitIgnoreFile(absPackagePath, gitIgnoreFileContent);
     generateDockerfile(absPackagePath);
   }
@@ -213,7 +243,7 @@ const generateMaintainersFile = async (
     );
   } else {
     // Write out
-    config.write(maintainersFile, absProjectPath);
+    write(maintainersFile, absProjectPath);
   }
 };
 
@@ -273,6 +303,6 @@ const generateBedrockFile = async (
     );
   } else {
     // Write out
-    config.write(bedrockFile, absProjectPath);
+    write(bedrockFile, absProjectPath);
   }
 };
