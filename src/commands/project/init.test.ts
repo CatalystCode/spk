@@ -24,8 +24,10 @@ describe("Initializing a blank standard repo", () => {
     const randomTmpDir = path.join(os.tmpdir(), uuid());
     fs.mkdirSync(randomTmpDir);
 
+    const variableGroupName = uuid();
+
     // init
-    await initialize(randomTmpDir);
+    await initialize(randomTmpDir, variableGroupName);
 
     // bedrock.yaml, maintainers.yaml, and azure-pipelines.yaml should be in a the root for a 'standard' project
     const filepaths = [
@@ -60,8 +62,10 @@ describe("Initializing a blank mono-repo", () => {
       return projectDir;
     });
 
+    const variableGroupName = uuid();
+
     // Initialize the monorepo
-    await initialize(randomTmpDir, {
+    await initialize(randomTmpDir, variableGroupName, {
       monoRepo: true,
       packagesDir: randomPackagesDir
     });

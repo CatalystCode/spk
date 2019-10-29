@@ -37,12 +37,20 @@ describe("Adding a service to a repo directory", () => {
 
     const serviceName = uuid();
 
+    const variableGroupName = uuid();
+
     logger.info(
       `creating randomTmpDir ${randomTmpDir} and service ${serviceName}`
     );
 
     // addService call
-    await createService(randomTmpDir, serviceName, packageDir, false);
+    await createService(
+      randomTmpDir,
+      serviceName,
+      packageDir,
+      false,
+      variableGroupName
+    );
 
     // Check temp test directory exists
     expect(fs.existsSync(randomTmpDir)).toBe(true);
@@ -76,12 +84,21 @@ describe("Adding a service to a repo directory", () => {
     const packageDir = "packages";
 
     const serviceName = uuid();
+
+    const variableGroupName = uuid();
+
     logger.info(
       `creating randomTmpDir ${randomTmpDir} and service ${serviceName}`
     );
 
     // addService call
-    await createService(randomTmpDir, serviceName, "packages", false);
+    await createService(
+      randomTmpDir,
+      serviceName,
+      "packages",
+      false,
+      variableGroupName
+    );
 
     // Check temp test directory exists
     expect(fs.existsSync(randomTmpDir)).toBe(true);
