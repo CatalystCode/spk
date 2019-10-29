@@ -128,6 +128,7 @@ export interface IConfigYaml {
     hld_repository?: string;
     manifest_repository?: string;
     access_token?: string;
+    variable_group?: string;
   };
 
   infra?: {

@@ -1,6 +1,7 @@
 import commander from "commander";
 import path from "path";
 import shelljs from "shelljs";
+import { Config } from "../../config";
 import {
   addNewServiceToBedrockFile,
   addNewServiceToMaintainersFile,
@@ -69,6 +70,10 @@ export const createCommandDecorator = (command: commander.Command): void => {
       "SPK CLI will try to commit and push these changes to a new origin/branch named after the service.",
       false
     )
+    .option(
+      "--variable-group-name <variable-group-name>",
+      "The Azure DevOps Variable Group."
+    )
     .action(async (serviceName, opts) => {
       const {
         helmChartChart,
@@ -81,9 +86,21 @@ export const createCommandDecorator = (command: commander.Command): void => {
         maintainerEmail,
         gitPush
       } = opts;
+
+      let variableGroupName = opts.variableGroupName;
       const projectPath = process.cwd();
 
       try {
+        // fall back to spk config azure_devops.variable_group when <variable-group-name> argument is not specified
+        if (
+          variableGroupName === undefined ||
+          variableGroupName === null ||
+          variableGroupName === ""
+        ) {
+          const config = Config();
+          variableGroupName =
+            config.azure_devops && config.azure_devops.variable_group;
+        }
         // Type check all parsed command line args here.
         if (typeof helmChartChart !== "string") {
           throw new Error(
@@ -135,15 +152,27 @@ export const createCommandDecorator = (command: commander.Command): void => {
             `gitPush must be of type 'boolean', ${typeof gitPush} given.`
           );
         }
-        await createService(projectPath, serviceName, packagesDir, gitPush, {
-          helmChartChart,
-          helmChartRepository,
-          helmConfigBranch,
-          helmConfigGit,
-          helmConfigPath,
-          maintainerEmail,
-          maintainerName
-        });
+        if (typeof variableGroupName !== "string") {
+          throw new Error(
+            `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
+          );
+        }
+        await createService(
+          projectPath,
+          serviceName,
+          packagesDir,
+          gitPush,
+          variableGroupName,
+          {
+            helmChartChart,
+            helmChartRepository,
+            helmConfigBranch,
+            helmConfigGit,
+            helmConfigPath,
+            maintainerEmail,
+            maintainerName
+          }
+        );
       } catch (err) {
         logger.error(
           `Error occurred adding service ${serviceName} to project ${projectPath}`
@@ -165,6 +194,7 @@ export const createService = async (
   serviceName: string,
   packagesDir: string,
   gitPush: boolean,
+  variableGroupName: string,
   opts?: {
     helmChartChart: string;
     helmChartRepository: string;
@@ -207,7 +237,9 @@ export const createService = async (
   shelljs.mkdir("-p", newServiceDir);
 
   // Create azure pipelines yaml in directory
-  await generateStarterAzurePipelinesYaml(rootProjectPath, newServiceDir);
+  await generateStarterAzurePipelinesYaml(rootProjectPath, newServiceDir, [
+    variableGroupName
+  ]);
 
   // Create empty .gitignore file in directory
   generateGitIgnoreFile(newServiceDir, "");

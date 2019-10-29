@@ -40,7 +40,8 @@ export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
  */
 export const generateStarterAzurePipelinesYaml = async (
   projectRoot: string,
-  packagePath: string
+  packagePath: string,
+  variableGroups?: string[]
 ) => {
   const absProjectRoot = path.resolve(projectRoot);
   const absPackagePath = path.resolve(packagePath);
@@ -64,7 +65,8 @@ export const generateStarterAzurePipelinesYaml = async (
     );
   } else {
     const starterYaml = await starterAzurePipelines({
-      relProjectPaths: [path.relative(absProjectRoot, absPackagePath)]
+      relProjectPaths: [path.relative(absProjectRoot, absPackagePath)],
+      variableGroups
     });
     // Write
     await promisify(fs.writeFile)(
