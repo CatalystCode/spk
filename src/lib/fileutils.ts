@@ -11,10 +11,32 @@ import {
   IUser
 } from "../types";
 
+export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
+  logger.info(
+    `Generating hld lifecycle pipeline hld-lifecycle.yaml in ${projectRoot}`
+  );
+
+  const azurePipelinesYamlPath = path.join(projectRoot, "hld-lifecycle.yaml");
+
+  if (fs.existsSync(azurePipelinesYamlPath)) {
+    logger.warn(
+      `Existing hld-lifecycle.yaml found at ${azurePipelinesYamlPath}, skipping generation`
+    );
+
+    return;
+  }
+
+  const hldYaml = hldLifecyclePipelineYaml();
+  logger.info(`Writing hld-lifecycle.yaml file to ${azurePipelinesYamlPath}`);
+  fs.writeFileSync(azurePipelinesYamlPath, hldYaml, "utf8");
+};
+
 /**
- * Writes out the starter azure-pipelines.yaml file to `targetPath`
+ * Writes out a starter azure-pipelines.yaml
+ * One pipeline should exist for each service.
  *
- * @param targetPath Path to write the azure-pipelines.yaml file to
+ * @param projectRoot Path to the root of the project (where the bedrock.yaml file exists)
+ * @param packagePath Path to the packages directory
  */
 export const generateStarterAzurePipelinesYaml = async (
   projectRoot: string,
@@ -22,20 +44,23 @@ export const generateStarterAzurePipelinesYaml = async (
 ) => {
   const absProjectRoot = path.resolve(projectRoot);
   const absPackagePath = path.resolve(packagePath);
+  const azurePipelineFileName = `azure-pipelines.yaml`;
 
-  logger.info(`Generating starter azure-pipelines.yaml in ${absPackagePath}`);
+  logger.info(
+    `Generating starter ${azurePipelineFileName} in ${absPackagePath}`
+  );
 
   // Check if azure-pipelines.yaml already exists; if it does, skip generation
   const azurePipelinesYamlPath = path.join(
     absPackagePath,
-    "azure-pipelines.yaml"
+    azurePipelineFileName
   );
   logger.debug(
-    `Writing azure-pipelines.yaml file to ${azurePipelinesYamlPath}`
+    `Writing ${azurePipelineFileName} file to ${azurePipelinesYamlPath}`
   );
   if (fs.existsSync(azurePipelinesYamlPath)) {
     logger.warn(
-      `Existing azure-pipelines.yaml found at ${azurePipelinesYamlPath}, skipping generation`
+      `Existing ${azurePipelineFileName} found at ${azurePipelinesYamlPath}, skipping generation`
     );
   } else {
     const starterYaml = await starterAzurePipelines({
@@ -64,12 +89,14 @@ export const starterAzurePipelines = async (opts: {
   vmImage?: string;
   branches?: string[];
   variableGroups?: string[];
+  variables?: Array<{ name: string; value: string }>;
 }): Promise<IAzurePipelinesYaml> => {
   const {
     relProjectPaths = ["."],
     vmImage = "ubuntu-latest",
     branches = ["master"],
-    variableGroups = []
+    variableGroups = [],
+    variables = []
   } = opts;
 
   // Ensure any blank paths are turned into "./"
@@ -84,20 +111,11 @@ export const starterAzurePipelines = async (opts: {
       branches: { include: branches },
       paths: { include: cleanedPaths }
     },
-    variables: [...variableGroups.map(group => ({ group }))],
+    variables: [...variableGroups.map(group => ({ group })), ...variables],
     pool: {
       vmImage
     },
     steps: [
-      {
-        script: generateYamlScript([
-          `printenv | sort`,
-          `pwd`,
-          `ls -la`,
-          `echo "The name of this service is: $(BUILD.BUILDNUMBER)"`
-        ]),
-        displayName: "Run a multi-line script"
-      },
       {
         script: generateYamlScript([
           `echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"`,
@@ -106,22 +124,55 @@ export const starterAzurePipelines = async (opts: {
         displayName: "Azure Login"
       },
       ...cleanedPaths.map(projectPath => {
+        const projectPathParts = projectPath
+          .split(path.sep)
+          .filter(p => p !== "");
+        // If a the projectPath contains more than 1 segment (a service in a
+        // mono-repo), use the last part as the project name as it will the
+        // folder containing the Dockerfile. Otherwise, its a standard service
+        // and does not need a a project name
+        const projectName =
+          projectPathParts.length > 1
+            ? "-" + projectPathParts.slice(-1)[0]
+            : "";
         return {
           script: generateYamlScript([
             `cd ${projectPath} # Need to make sure Build.DefinitionName matches directory. It's case sensitive`,
             `echo "az acr build -r $(ACR_NAME) --image $(Build.DefinitionName):$(build.SourceBranchName)-$(build.BuildId) ."`,
-            `az acr build -r $(ACR_NAME) --image $(Build.DefinitionName):$(build.SourceBranchName)-$(build.BuildId) .`
+            `az acr build -r $(ACR_NAME) --image $(Build.DefinitionName)${projectName}:$(build.SourceBranchName)-$(build.BuildId) .`
           ]),
           displayName: "ACR Build and Publish"
         };
-      }),
-      {
-        script: generateYamlScript([`echo Hello, world!`]),
-        displayName: "Run a one-line script"
-      }
+      })
     ]
   };
   // tslint:enable: object-literal-sort-keys
+
+  const requiredPipelineVariables = [
+    `'ACR_NAME' (name of your ACR)`,
+    `'SP_APP_ID' (service principal ID with access to your ACR)`,
+    `'SP_PASS' (service principal secret)`,
+    `'SP_TENANT' (service principal tenant)`
+  ].join(", ");
+
+  for (const relPath of cleanedPaths) {
+    const relPathParts = relPath.split(path.sep).filter(p => p !== "");
+    const packagesDir =
+      relPathParts.length > 1 ? relPathParts.slice(-2)[0] : undefined;
+    const packagesOption = packagesDir ? `--packages-dir ${packagesDir} ` : "";
+    const serviceName =
+      relPathParts.length > 1
+        ? relPathParts.slice(-2)[1]
+        : process
+            .cwd()
+            .split(path.sep)
+            .slice(-1)[0];
+    const spkServiceCreatePipelineCmd =
+      "spk service create-pipeline " + packagesOption + serviceName;
+    logger.info(
+      `Generated azure-pipelines.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceCreatePipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+    );
+  }
 
   return starter;
 };
@@ -218,6 +269,39 @@ const manifestGenerationPipelineYaml = () => {
   // tslint:enable: no-empty
 
   return yaml.safeDump(pipelineYaml, { lineWidth: Number.MAX_SAFE_INTEGER });
+};
+
+const hldLifecyclePipelineYaml = () => {
+  // based on https://github.com/microsoft/bedrock/blob/master/gitops/azure-devops/ManifestGeneration.md#add-azure-pipelines-build-yaml
+  // tslint:disable: object-literal-sort-keys
+  // tslint:disable: no-empty
+  const pipelineyaml: IAzurePipelinesYaml = {
+    trigger: {
+      branches: {
+        include: ["master"]
+      }
+    },
+    pool: {
+      vmImage: "Ubuntu-16.04"
+    },
+    steps: [
+      {
+        checkout: "self",
+        persistCredentials: true,
+        clean: true
+      },
+      {
+        bash: generateYamlScript([
+          `echo "hello world. this is where lifecycle management will be implemented."`
+        ]),
+        displayName: "hello world"
+      }
+    ]
+  };
+  // tslint:enable: object-literal-sort-keys
+  // tslint:enable: no-empty
+
+  return yaml.safeDump(pipelineyaml, { lineWidth: Number.MAX_SAFE_INTEGER });
 };
 
 /**

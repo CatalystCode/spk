@@ -106,7 +106,7 @@ export const launchDashboard = async (
   }
 };
 
-const getEnvVars = (): string[] => {
+export const getEnvVars = (): string[] => {
   const config = Config();
   const envVars = [];
   envVars.push("-e");
@@ -135,6 +135,21 @@ const getEnvVars = (): string[] => {
     envVars.push("-e");
     envVars.push(
       "REACT_APP_PIPELINE_ACCESS_TOKEN=" + config.azure_devops!.access_token
+    );
+
+    if (!config.introspection!.azure!.source_repo_access_token) {
+      envVars.push("-e");
+      envVars.push(
+        "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=" +
+          config.azure_devops!.access_token
+      );
+    }
+  }
+  if (config.introspection!.azure!.source_repo_access_token) {
+    envVars.push("-e");
+    envVars.push(
+      "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=" +
+        config.introspection!.azure!.source_repo_access_token
     );
   }
 
