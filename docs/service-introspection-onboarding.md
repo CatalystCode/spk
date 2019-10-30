@@ -123,6 +123,8 @@ Paste the following task in its corresponding `azure-pipelines.yml`:
     tag_name="hello-spektate-$(Build.SourceBranchName)-$(Build.BuildId)"
     commitId=$(Build.SourceVersion)
     commitId=$(echo "${commitId:0:7}")
+    service=$(Build.Repository.Name)
+    service=${service##*/}
     VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
     echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
     chmod +x ./spk-linux
@@ -151,17 +153,12 @@ Paste the following task towards the end of your release step in the release
 pipeline:
 
 ```yaml
-latest_commit=$(git rev-parse --short HEAD) echo "latest_commit=$latest_commit"
+latest_commit=$(git rev-parse --short HEAD)
 
-VERSION_TO_DOWNLOAD=$(curl -s
-"https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep
-"tag_name" | sed -E 's/.*"([^"]+)".*/\1/') echo "Downloading SPK version
-$VERSION_TO_DOWNLOAD" && wget
-"https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
-chmod +x ./spk-linux ./spk-linux deployment create  -n $(ACCOUNT_NAME) -k
-$(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Release.ReleaseId)
---hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag
-$(Build.BuildId)
+VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') 
+echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+chmod +x ./spk-linux
+./spk-linux deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag $(Build.BuildId)
 ```
 
 This task is similar to the one from step 1 but instead passes the information
