@@ -48,17 +48,13 @@ export const initCommandDecorator = (command: commander.Command): void => {
       const { monoRepo, packagesDir, defaultRing } = opts;
       const projectPath = process.cwd();
       try {
-        let variableGroupName = opts.variableGroupName;
         // fall back to spk config azure_devops.variable_group when <variable-group-name> argument is not specified
-        if (
-          variableGroupName === undefined ||
-          variableGroupName === null ||
-          variableGroupName === ""
-        ) {
-          const config = Config();
-          variableGroupName =
-            config.azure_devops && config.azure_devops!.variable_group;
-        }
+        const { azure_devops } = Config();
+        const {
+          variableGroupName = azure_devops && azure_devops.variable_group
+        } = opts;
+
+        logger.info(`variable name: ${variableGroupName}`);
 
         // Type check all parsed command line args here.
         if (typeof monoRepo !== "boolean") {
@@ -77,16 +73,20 @@ export const initCommandDecorator = (command: commander.Command): void => {
           );
         }
 
-        if (typeof variableGroupName !== "string") {
+        if (
+          variableGroupName !== null &&
+          typeof variableGroupName !== "string"
+        ) {
           throw new Error(
             `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
           );
         }
 
-        await initialize(projectPath, variableGroupName, {
+        await initialize(projectPath, {
           defaultRing,
           monoRepo,
-          packagesDir
+          packagesDir,
+          variableGroups: variableGroupName === null ? [] : [variableGroupName]
         });
       } catch (err) {
         logger.error(
@@ -107,11 +107,19 @@ export const initCommandDecorator = (command: commander.Command): void => {
  */
 export const initialize = async (
   rootProjectPath: string,
-  variableGroupName: string,
-  opts?: { monoRepo: boolean; packagesDir?: string; defaultRing?: string }
+  opts?: {
+    monoRepo: boolean;
+    packagesDir?: string;
+    defaultRing?: string;
+    variableGroups?: string[];
+  }
 ) => {
-  const { monoRepo = false, packagesDir = "packages", defaultRing } =
-    opts || {};
+  const {
+    monoRepo = false,
+    packagesDir = "packages",
+    defaultRing,
+    variableGroups = []
+  } = opts || {};
   const absProjectRoot = path.resolve(rootProjectPath);
   logger.info(
     `Initializing project ${absProjectRoot} as a ${
@@ -143,9 +151,9 @@ export const initialize = async (
   const gitIgnoreFileContent = "spk.log";
 
   for (const absPackagePath of absPackagePaths) {
-    await generateStarterAzurePipelinesYaml(absProjectRoot, absPackagePath, [
-      variableGroupName
-    ]);
+    await generateStarterAzurePipelinesYaml(absProjectRoot, absPackagePath, {
+      variableGroups
+    });
     generateGitIgnoreFile(absPackagePath, gitIgnoreFileContent);
     generateDockerfile(absPackagePath);
   }

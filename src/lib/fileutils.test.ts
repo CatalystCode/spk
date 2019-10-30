@@ -370,11 +370,12 @@ describe("starterAzurePipelines", () => {
       return servicePath;
     });
 
-    const variableGroupName = uuid();
+    const variableGroups = [uuid()];
+
     for (const servicePath of servicePaths) {
-      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath, [
-        variableGroupName
-      ]);
+      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath, {
+        variableGroups
+      });
 
       // file should exist
       expect(fs.existsSync(servicePath)).toBe(true);
@@ -391,9 +392,10 @@ describe("starterAzurePipelines", () => {
       let hasCorrecctVariableGroup: boolean = false;
       for (const [key, value] of Object.entries(azureYaml.variables!)) {
         const item: { group: string } = value as { group: string };
-        hasCorrecctVariableGroup = item.group === variableGroupName;
+        hasCorrecctVariableGroup = item.group === variableGroups[0];
       }
 
+      expect(hasCorrectIncludes).toBe(true);
       expect(hasCorrecctVariableGroup).toBe(true);
     }
   });
@@ -406,13 +408,14 @@ describe("starterAzurePipelines", () => {
       return servicePath;
     });
 
-    const variableGroupName1 = uuid();
-    const variableGroupName2 = uuid();
+    // const variableGroupName1 =;
+    // const variableGroupName2 = ;
+    const variableGroups = [uuid(), uuid()];
+
     for (const servicePath of servicePaths) {
-      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath, [
-        variableGroupName1,
-        variableGroupName2
-      ]);
+      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath, {
+        variableGroups
+      });
 
       // file should exist
       expect(fs.existsSync(servicePath)).toBe(true);
@@ -431,15 +434,16 @@ describe("starterAzurePipelines", () => {
       for (const [key, value] of Object.entries(azureYaml.variables!)) {
         const item: { group: string } = value as { group: string };
 
-        if (item.group === variableGroupName1) {
+        if (item.group === variableGroups[0]) {
           hasCorrecctVariableGroup1 = true;
         }
 
-        if (item.group === variableGroupName2) {
+        if (item.group === variableGroups[1]) {
           hasCorrecctVariableGroup2 = true;
         }
       }
 
+      expect(hasCorrectIncludes).toBe(true);
       expect(hasCorrecctVariableGroup1).toBe(true);
       expect(hasCorrecctVariableGroup2).toBe(true);
     }

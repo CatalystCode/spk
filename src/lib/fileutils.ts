@@ -42,7 +42,7 @@ export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
 export const generateStarterAzurePipelinesYaml = async (
   projectRoot: string,
   packagePath: string,
-  variableGroups?: string[]
+  opts?: { variableGroups?: string[] }
 ) => {
   const absProjectRoot = path.resolve(projectRoot);
   const absPackagePath = path.resolve(packagePath);
@@ -51,6 +51,10 @@ export const generateStarterAzurePipelinesYaml = async (
   logger.info(
     `Generating starter ${azurePipelineFileName} in ${absPackagePath}`
   );
+
+  const { variableGroups = [] } = opts || {};
+
+  logger.debug(`variableGroups length: ${variableGroups.length}`);
 
   // Check if azure-pipelines.yaml already exists; if it does, skip generation
   const azurePipelinesYamlPath = path.join(
