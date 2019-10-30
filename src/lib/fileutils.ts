@@ -37,6 +37,7 @@ export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
  *
  * @param projectRoot Path to the root of the project (where the bedrock.yaml file exists)
  * @param packagePath Path to the packages directory
+ * @param variableGroups Azure DevOps variable group names
  */
 export const generateStarterAzurePipelinesYaml = async (
   projectRoot: string,
