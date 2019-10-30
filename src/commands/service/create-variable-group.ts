@@ -28,7 +28,7 @@ export const createVariablegroupCommandDecorator = (
     )
     .option(
       "-u, --service-principal-id <service-principal-id>",
-      "Azure service principal id with `pull` and `build` permissions in Azure Container Registry"
+      "Azure service principal id with `contributor` role in Azure Container Registry"
     )
     .option(
       "-p, --service-principal-password <service-principal-password>",

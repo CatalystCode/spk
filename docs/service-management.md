@@ -126,7 +126,7 @@ Create new variable group in Azure DevOps project using the options below. Also 
 
 Options:
   -r, --registry-name <registry-name>                             The name of the existing Azure Container Registry
-  -u, --service-principal-id <service-principal-id>               Azure service principal id with `pull` and `build` permissions in Azure Container Registry"
+  -u, --service-principal-id <service-principal-id>               Azure service principal id with `contributor` role in Azure Container Registry"
   -p, --service-principal-password <service-principal-password>   The Azure service principal password
   -t, --tenant                                                    The Azure AD tenant id of service principal
   --org-name <organization-name>                                  Azure DevOps organization name; falls back to azure_devops.org in spk config
