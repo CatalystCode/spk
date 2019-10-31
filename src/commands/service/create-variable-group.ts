@@ -20,11 +20,15 @@ export const createVariablegroupCommandDecorator = (
     .command("create-variable-group <variable-group-name>")
     .alias("cvg")
     .description(
-      "Create a new variable group in Azure DevOps project with specifc varibles[acr name, service principla id, service principal password, and Azure AD tenant id]."
+      "Create a new variable group in Azure DevOps project with specific variables (ACR name, HLD Repo name, Personal Access Token, Service Principal id, Service Principal password, and Azure AD tenant id)"
     )
     .option(
       "-r, --registry-name <registry-name>",
       "The name of the existing Azure Container Registry."
+    )
+    .option(
+      "-d, --hld-repo-name <hld-repo-name>",
+      "The high level definition (HLD) git repo name."
     )
     .option(
       "-u, --service-principal-id <service-principal-id>",
@@ -54,33 +58,19 @@ export const createVariablegroupCommandDecorator = (
       try {
         const {
           registryName,
-          servicePrincipalId,
-          servicePrincipalPassword,
-          tenant,
-          orgName,
-          project,
-          personalAccessToken
-        } = opts;
-
-        logger.debug(
-          `opts: ${variableGroupName}, ${registryName}, ${servicePrincipalId}, ${servicePrincipalPassword}, ${tenant}`
-        );
-
-        // required parameters check
-        const errors: string[] = await validateRequiredArguments(
-          variableGroupName,
-          registryName,
+          hldRepoName,
           servicePrincipalId,
           servicePrincipalPassword,
           tenant
-        );
+        } = opts;
 
-        if (errors.length !== 0) {
-          logger.error(
-            `the following arguments are required: ${errors.join("")}`
-          );
-          return errors;
-        }
+        const { azure_devops } = Config();
+
+        const {
+          orgName = azure_devops && azure_devops.org,
+          personalAccessToken = azure_devops && azure_devops.access_token,
+          project = azure_devops && azure_devops.project
+        } = opts;
 
         const accessOpts: IAzureDevOpsOpts = {
           orgName,
@@ -90,13 +80,28 @@ export const createVariablegroupCommandDecorator = (
 
         logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
 
-        logger.info(
-          "Successfully created a variable group in Azure DevOps project!"
+        // required parameters check
+        const errors: string[] = await validateRequiredArguments(
+          variableGroupName,
+          registryName,
+          hldRepoName,
+          servicePrincipalId,
+          servicePrincipalPassword,
+          tenant,
+          accessOpts
         );
+
+        if (errors.length !== 0) {
+          logger.error(
+            `the following arguments are required: ${errors.join("")}`
+          );
+          return errors;
+        }
 
         const variableGroup = await create(
           variableGroupName,
           registryName,
+          hldRepoName,
           servicePrincipalId,
           servicePrincipalPassword,
           tenant,
@@ -108,6 +113,10 @@ export const createVariablegroupCommandDecorator = (
 
         // print newly created variable group
         echo(JSON.stringify(variableGroup, null, 2));
+
+        logger.info(
+          "Successfully created a variable group in Azure DevOps project!"
+        );
       } catch (err) {
         logger.error(`Error occurred while creating variable group`);
         logger.error(err);
@@ -116,18 +125,20 @@ export const createVariablegroupCommandDecorator = (
 };
 
 /**
- * creates varible group with variables from the below parameters
+ * Creates a Azure DevOps variable group
  *
  * @param variableGroupName The Azure DevOps varible group name
  * @param registryName The Azure container registry name
- * @param servicePrincipalId The Azure service principla id with ACR pull and build permissions for az login
- * @param servicePrincipalPassword The service principla password for az login
+ * @param hldRepoName The HLD repo name
+ * @param servicePrincipalId The Azure service principal id with ACR pull and build permissions for az login
+ * @param servicePrincipalPassword The service principal password for az login
  * @param tenantId The Azure AD tenant id for az login
  * @param accessOpts Azure DevOps access options from command options to override spk config
  */
 export const create = async (
   variableGroupName: string,
   registryName: string,
+  hldRepoName: string,
   servicePrincipalId: string,
   servicePrincipalPassword: string,
   tenantId: string,
@@ -141,15 +152,24 @@ export const create = async (
     await validateRequiredArguments(
       variableGroupName,
       registryName,
+      hldRepoName,
       servicePrincipalId,
       servicePrincipalPassword,
-      tenantId
+      tenantId,
+      accessOpts
     );
 
     // validate variable group type"
     const vars: any = {
       ACR_NAME: {
         value: registryName
+      },
+      HLD_REPO: {
+        value: hldRepoName
+      },
+      PAT: {
+        isSecret: true,
+        value: accessOpts.personalAccessToken
       },
       SP_APP_ID: {
         isSecret: true,
@@ -189,9 +209,11 @@ export const create = async (
 export const validateRequiredArguments = async (
   variableGroupName: any,
   registryName: any,
+  hldRepoName: any,
   servicePrincipalId: any,
   servicePrincipalPassword: any,
-  tenant: any
+  tenant: any,
+  accessOpts: IAzureDevOpsOpts
 ): Promise<string[]> => {
   const errors: string[] = [];
 
@@ -201,6 +223,10 @@ export const validateRequiredArguments = async (
 
   if (registryName === undefined || registryName === "") {
     errors.push("\n -r / --registry-name");
+  }
+
+  if (hldRepoName === undefined || hldRepoName === "") {
+    errors.push("\n -d / --hld-repo-name");
   }
 
   if (servicePrincipalId === undefined || servicePrincipalId === "") {
@@ -216,6 +242,23 @@ export const validateRequiredArguments = async (
 
   if (tenant === undefined || servicePrincipalPassword === "") {
     errors.push("\n -t / --tenant");
+  }
+
+  if (accessOpts.orgName === undefined || accessOpts.orgName === "") {
+    errors.push("\n --org-name / azure_devops:org is not set in spk config");
+  }
+
+  if (
+    accessOpts.personalAccessToken === undefined ||
+    accessOpts.personalAccessToken === ""
+  ) {
+    errors.push(
+      "\n --personal-access-token / azure_devops:access_token is not set in spk config"
+    );
+  }
+
+  if (accessOpts.project === undefined || accessOpts.project === "") {
+    errors.push("\n --project / azure_devops:project is not set in spk config");
   }
 
   return errors;

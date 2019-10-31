@@ -35,7 +35,7 @@ containing your secrets and the Service Principal for authorization with Azure
 Key Vault.
 
 1. Use existng or
-   [create a service prrincipal either in Azure Portal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
+   [create a service principal either in Azure Portal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
    or
    [with Azure CLI](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest).
 2. Use existing or
@@ -126,6 +126,7 @@ Create new variable group in Azure DevOps project using the options below. Also 
 
 Options:
   -r, --registry-name <registry-name>                             The name of the existing Azure Container Registry
+  -d, --hld-repo-name <hld-repo-name>                             The high level definition (HLD) git repo name
   -u, --service-principal-id <service-principal-id>               Azure service principal id with `contributor` role in Azure Container Registry"
   -p, --service-principal-password <service-principal-password>   The Azure service principal password
   -t, --tenant                                                    The Azure AD tenant id of service principal

@@ -26,45 +26,62 @@ afterAll(() => {
 
 const registryName = uuid();
 const variableGroupName = uuid();
+const hldRepoName = uuid();
 const servicePrincipalId = uuid();
 const servicePrincipalPassword = uuid();
 const tenant = uuid();
+
 const orgName = uuid();
 const project = uuid();
 const personalAccessToken = uuid();
 
+const accessopts: IAzureDevOpsOpts = {
+  orgName,
+  personalAccessToken,
+  project
+};
+
 describe("validateRequiredArguments", () => {
   test("Should fail when all required arguments specified with empty values", async () => {
+    const opts: IAzureDevOpsOpts = {};
+
     const errors: string[] = await validateRequiredArguments(
       "",
       "",
       "",
       "",
-      ""
+      "",
+      "",
+      opts
     );
     logger.info(`length: ${errors.length}`);
-    expect(errors.length).toBe(5);
+    expect(errors.length).toBe(9);
   });
 
   test("Should fail when all required arguments are not specified", async () => {
+    const opts: IAzureDevOpsOpts = {};
     const errors: string[] = await validateRequiredArguments(
       undefined,
       undefined,
       undefined,
       undefined,
-      undefined
+      undefined,
+      undefined,
+      opts
     );
     logger.info(`length: ${errors.length}`);
-    expect(errors.length).toBe(5);
+    expect(errors.length).toBe(9);
   });
 
   test("Should fail when variableGroupName  arguments is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       undefined,
       registryName,
+      hldRepoName,
       servicePrincipalId,
       servicePrincipalPassword,
-      tenant
+      tenant,
+      accessopts
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
@@ -74,9 +91,25 @@ describe("validateRequiredArguments", () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       undefined,
+      hldRepoName,
       servicePrincipalId,
       servicePrincipalPassword,
-      tenant
+      tenant,
+      accessopts
+    );
+    logger.info(`length: ${errors.length}`);
+    expect(errors.length).toBe(1);
+  });
+
+  test("Should fail when hldRepoName arguments is not specified", async () => {
+    const errors: string[] = await validateRequiredArguments(
+      variableGroupName,
+      registryName,
+      undefined,
+      servicePrincipalId,
+      servicePrincipalPassword,
+      tenant,
+      accessopts
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
@@ -86,9 +119,11 @@ describe("validateRequiredArguments", () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
+      hldRepoName,
       undefined,
       servicePrincipalPassword,
-      tenant
+      tenant,
+      accessopts
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
@@ -98,9 +133,11 @@ describe("validateRequiredArguments", () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
+      hldRepoName,
       servicePrincipalId,
       undefined,
-      tenant
+      tenant,
+      accessopts
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
@@ -110,9 +147,11 @@ describe("validateRequiredArguments", () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
+      hldRepoName,
       servicePrincipalId,
       servicePrincipalPassword,
-      undefined
+      undefined,
+      accessopts
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
@@ -130,7 +169,7 @@ describe("create", () => {
     let invalidDataError: Error | undefined;
     try {
       logger.info("calling create");
-      await create("", "", "", "", "", accessOpts);
+      await create("", "", "", "", "", "", accessOpts);
     } catch (err) {
       invalidDataError = err;
     }
@@ -150,6 +189,7 @@ describe("create", () => {
       await create(
         variableGroupName,
         registryName,
+        hldRepoName,
         servicePrincipalId,
         servicePrincipalPassword,
         tenant,
