@@ -310,21 +310,36 @@ export const printDeployments = (
           : ""
       );
 
-      if (deployment.dockerToHldRelease) {
-        row.push(deployment.dockerToHldRelease.id);
-      } else if (deployment.dockerToHldReleaseStage) {
-        row.push(deployment.dockerToHldReleaseStage.id);
-      } else {
+      if (
+        !deployment.dockerToHldRelease &&
+        !deployment.dockerToHldReleaseStage
+      ) {
         row.push("");
+      } else {
+        row.push(
+          deployment.dockerToHldRelease
+            ? getStatus(deployment.dockerToHldRelease.status)
+            : ""
+        );
       }
+
+      let dockerToHldId = "";
+      let dockerToHldStatus = "";
+
+      if (deployment.dockerToHldRelease) {
+        dockerToHldId = deployment.dockerToHldRelease.id;
+        dockerToHldStatus = getStatus(deployment.dockerToHldRelease.status);
+      } else if (deployment.dockerToHldReleaseStage) {
+        dockerToHldId = deployment.dockerToHldReleaseStage.id;
+        dockerToHldStatus = getStatus(
+          deployment.dockerToHldReleaseStage.status
+        );
+      }
+      row.push(dockerToHldId);
 
       row.push(deployment.environment.toUpperCase());
       row.push(deployment.hldCommitId);
-      row.push(
-        deployment.dockerToHldRelease
-          ? getStatus(deployment.dockerToHldRelease.status)
-          : ""
-      );
+      row.push(dockerToHldStatus);
       row.push(
         deployment.hldToManifestBuild ? deployment.hldToManifestBuild.id : ""
       );
