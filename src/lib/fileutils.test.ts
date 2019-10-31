@@ -333,8 +333,15 @@ describe("starterAzurePipelines", () => {
       expect(starter.variables!.includes({ group }));
     }
 
-    // pool.vmImage should be 'gentoo'
-    expect(starter.pool!.vmImage).toBe(vmImage);
+    // verify components of stages
+    expect(starter.stages && starter.stages.length === 2);
+    for (const stage of starter.stages!) {
+      for (const job of stage.jobs) {
+        // pool.vmImage should be 'gentoo'
+        expect(job.pool!.vmImage).toBe(vmImage);
+        expect(job.steps);
+      }
+    }
   });
 
   test("that all services receive an azure-pipelines.yaml and the correct paths have been inserted", async () => {
