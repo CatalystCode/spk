@@ -309,9 +309,15 @@ export const printDeployments = (
           ? getStatus(deployment.srcToDockerBuild.result)
           : ""
       );
-      row.push(
-        deployment.dockerToHldRelease ? deployment.dockerToHldRelease.id : ""
-      );
+
+      if (deployment.dockerToHldRelease) {
+        row.push(deployment.dockerToHldRelease.id);
+      } else if (deployment.dockerToHldReleaseStage) {
+        row.push(deployment.dockerToHldReleaseStage.id);
+      } else {
+        row.push("");
+      }
+
       row.push(deployment.environment.toUpperCase());
       row.push(deployment.hldCommitId);
       row.push(

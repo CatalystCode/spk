@@ -6073,10 +6073,10 @@ spdx-license-ids@^3.0.0:
   resolved "https://registry.yarnpkg.com/spdx-license-ids/-/spdx-license-ids-3.0.5.tgz#3694b5804567a458d3c8045842a6358632f62654"
   integrity sha512-J+FWzZoynJEXGphVIS+XEh3kFSjZX/1i9gFBaWQcB+/tmpe2qUsSBABpcxqxnAxFdiUFEgAX1bjYGQvIZmoz9Q==
 
-spektate@^0.1.7:
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/spektate/-/spektate-0.1.7.tgz#39bcd1d905090f914f95b7a23bbd54ba41c939f8"
-  integrity sha512-ONYGn68wjd5efdJdcyxsGS+bwGloQR0KbHX0sT9kNsC4/kjSU8QIzgdkRBz+BKAOGeKM4g7LDCAYBta/EDpLfg==
+spektate@^0.1.11:
+  version "0.1.11"
+  resolved "https://registry.yarnpkg.com/spektate/-/spektate-0.1.11.tgz#baed3326a25465c280c4d0b8da3f829abefc0f64"
+  integrity sha512-NZZmkELGd4EgdusMKkX3dC/mLbj8YNYk6W9bqm+m9Udy/AjflVJAMYWU1TpQFLhemou2AV1qb+cRM34BQipPSQ==
   dependencies:
     axios "^0.19.0"
     azure-storage "^2.10.3"
