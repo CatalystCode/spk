@@ -310,19 +310,6 @@ export const printDeployments = (
           : ""
       );
 
-      if (
-        !deployment.dockerToHldRelease &&
-        !deployment.dockerToHldReleaseStage
-      ) {
-        row.push("");
-      } else {
-        row.push(
-          deployment.dockerToHldRelease
-            ? getStatus(deployment.dockerToHldRelease.status)
-            : ""
-        );
-      }
-
       let dockerToHldId = "";
       let dockerToHldStatus = "";
 
