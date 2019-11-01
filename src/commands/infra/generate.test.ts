@@ -1,4 +1,5 @@
 import fs, { chmod } from "fs";
+import * as os from "os";
 import path from "path";
 import {
   disableVerboseLogging,
@@ -13,10 +14,12 @@ import {
 
 beforeAll(() => {
   enableVerboseLogging();
+  jest.setTimeout(10000);
 });
 
 afterAll(() => {
   disableVerboseLogging();
+  jest.setTimeout(5000);
 });
 
 describe("Validate test project folder contains a definition.json", () => {
@@ -46,5 +49,16 @@ describe("Validate definition.json contains a source", () => {
     ];
     const returnArray = await validateTemplateSource(mockProjectPath);
     expect(returnArray).toEqual(expectedArray);
+  });
+});
+
+describe("Validate cloning of a remote repo from source", () => {
+  test("Validating that a provided project source remote repo is initially cloned into .spk/templates", async () => {
+    const mockProjectPath = "src/commands/infra/mocks";
+    const rootDef = path.join(mockProjectPath, "definition.json");
+    const data: string = fs.readFileSync(rootDef, "utf8");
+    const definitionJSON = JSON.parse(data);
+    expect(await validateRemoteSource(definitionJSON.source)).toBe(true);
+    // Need improved tests to check cloned repo
   });
 });

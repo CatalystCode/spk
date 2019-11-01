@@ -106,7 +106,7 @@ export const validateTemplateSource = async (
     return sources;
   } catch (_) {
     logger.error(
-      `Unable to validate project folder definition.json fie. Is it malformed?`
+      `Unable to validate project folder definition.json file. Is it malformed?`
     );
     return [];
   }
@@ -181,7 +181,7 @@ export const validateRemoteSource = async (
     );
   } catch (_) {
     logger.error(
-      `Unable to validate project folder definition.json fie. Is it malformed?`
+      `Unable to validate project folder definition.json file. Is it malformed?`
     );
     return false;
   }
