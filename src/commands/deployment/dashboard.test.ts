@@ -96,7 +96,7 @@ describe("Fallback to azure devops access token", () => {
 });
 
 describe("Extract manifest repository information", () => {
-  test("Message is specified when optional params are missing", () => {
+  test("Manifest repository information is successfully extracted", () => {
     let manifestInfo = extractManifestRepositoryInformation();
     expect(manifestInfo).toBeDefined();
     expect(manifestInfo!.githubUsername).toBeUndefined();
