@@ -53,6 +53,7 @@ export interface IBedrockFile {
       helm: IHelmConfig;
     };
   };
+  variableGroups?: string[];
 }
 
 /**

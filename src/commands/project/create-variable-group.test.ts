@@ -3,7 +3,6 @@ jest.mock("../../config");
 
 // imports
 import uuid from "uuid/v4";
-import { Config, loadConfiguration } from "../../config";
 import { IAzureDevOpsOpts } from "../../lib/git";
 import {
   disableVerboseLogging,
@@ -12,7 +11,7 @@ import {
 } from "../../logger";
 import {
   create,
-  setVariableGroupConfig,
+  setVariableGroupInBedrockFile,
   validateRequiredArguments
 } from "./create-variable-group";
 
@@ -26,7 +25,7 @@ afterAll(() => {
 
 const registryName = uuid();
 const variableGroupName = uuid();
-const hldRepoName = uuid();
+const hldRepoUrl = uuid();
 const servicePrincipalId = uuid();
 const servicePrincipalPassword = uuid();
 const tenant = uuid();
@@ -73,11 +72,11 @@ describe("validateRequiredArguments", () => {
     expect(errors.length).toBe(9);
   });
 
-  test("Should fail when variableGroupName  arguments is not specified", async () => {
+  test("Should fail when variableGroupName  argument is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       undefined,
       registryName,
-      hldRepoName,
+      hldRepoUrl,
       servicePrincipalId,
       servicePrincipalPassword,
       tenant,
@@ -87,11 +86,11 @@ describe("validateRequiredArguments", () => {
     expect(errors.length).toBe(1);
   });
 
-  test("Should fail when registryName arguments is not specified", async () => {
+  test("Should fail when registryName argument is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       undefined,
-      hldRepoName,
+      hldRepoUrl,
       servicePrincipalId,
       servicePrincipalPassword,
       tenant,
@@ -101,7 +100,7 @@ describe("validateRequiredArguments", () => {
     expect(errors.length).toBe(1);
   });
 
-  test("Should fail when hldRepoName arguments is not specified", async () => {
+  test("Should fail when hldRepoUrl argument is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
@@ -115,11 +114,11 @@ describe("validateRequiredArguments", () => {
     expect(errors.length).toBe(1);
   });
 
-  test("Should fail when servicePrincipalId arguments is not specified", async () => {
+  test("Should fail when servicePrincipalId argument is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
-      hldRepoName,
+      hldRepoUrl,
       undefined,
       servicePrincipalPassword,
       tenant,
@@ -129,11 +128,11 @@ describe("validateRequiredArguments", () => {
     expect(errors.length).toBe(1);
   });
 
-  test("Should fail when servicePrincipalPassword arguments is not specified", async () => {
+  test("Should fail when servicePrincipalPassword argument is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
-      hldRepoName,
+      hldRepoUrl,
       servicePrincipalId,
       undefined,
       tenant,
@@ -143,11 +142,11 @@ describe("validateRequiredArguments", () => {
     expect(errors.length).toBe(1);
   });
 
-  test("Should fail when tenant arguments is not specified", async () => {
+  test("Should fail when tenant argument is not specified", async () => {
     const errors: string[] = await validateRequiredArguments(
       variableGroupName,
       registryName,
-      hldRepoName,
+      hldRepoUrl,
       servicePrincipalId,
       servicePrincipalPassword,
       undefined,
@@ -189,7 +188,7 @@ describe("create", () => {
       await create(
         variableGroupName,
         registryName,
-        hldRepoName,
+        hldRepoUrl,
         servicePrincipalId,
         servicePrincipalPassword,
         tenant,
@@ -202,34 +201,16 @@ describe("create", () => {
   });
 });
 
-describe("setVariableGroupConfig", () => {
+describe("setVariableGroupInBedrockFile", () => {
   test("Should fail with empty variable group name", async () => {
+    const projectPath = process.cwd();
     let invalidGroupNameError: Error | undefined;
     try {
       logger.info("calling create");
-      await setVariableGroupConfig("");
+      await setVariableGroupInBedrockFile("", "");
     } catch (err) {
       invalidGroupNameError = err;
     }
     expect(invalidGroupNameError).toBeDefined();
-  });
-
-  test("Should pass with valid variable group name", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        variable_group: {}
-      }
-    });
-
-    await setVariableGroupConfig(variableGroupName);
-
-    // force reload by calling explict loadConfiguration method
-    loadConfiguration();
-    logger.info(
-      `variable group name from config: ${
-        Config().azure_devops!.variable_group
-      }`
-    );
-    expect(Config().azure_devops!.variable_group).toBe(variableGroupName);
   });
 });

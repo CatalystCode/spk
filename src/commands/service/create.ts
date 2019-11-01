@@ -1,7 +1,7 @@
 import commander from "commander";
 import path from "path";
 import shelljs from "shelljs";
-import { Config } from "../../config";
+import { Bedrock } from "../../config";
 import {
   addNewServiceToBedrockFile,
   addNewServiceToMaintainersFile,
@@ -11,7 +11,7 @@ import {
 } from "../../lib/fileutils";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import { logger } from "../../logger";
-import { IHelmConfig, IUser } from "../../types";
+import { IBedrockFile, IHelmConfig, IUser } from "../../types";
 
 /**
  * Adds the create command to the service command object
@@ -89,12 +89,21 @@ export const createCommandDecorator = (command: commander.Command): void => {
 
       const projectPath = process.cwd();
       try {
-        // fall back to spk config azure_devops.variable_group when <variable-group-name> argument is not specified
+        // fall back to bedrock.yaml when <variable-group-name> argument is not specified
+        let bedrockFile: IBedrockFile | undefined;
+        try {
+          bedrockFile = Bedrock();
+        } catch (err) {
+          logger.info(err);
+        }
 
-        const { azure_devops } = Config();
         const {
-          variableGroupName = azure_devops && azure_devops.variable_group
+          variableGroupName = bedrockFile &&
+            bedrockFile.variableGroups &&
+            bedrockFile.variableGroups![0]
         } = opts;
+
+        logger.info(`variable name: ${variableGroupName}`);
 
         // Type check all parsed command line args here.
         if (typeof helmChartChart !== "string") {
@@ -149,12 +158,14 @@ export const createCommandDecorator = (command: commander.Command): void => {
         }
         if (
           variableGroupName !== null &&
+          variableGroupName !== undefined &&
           typeof variableGroupName !== "string"
         ) {
           throw new Error(
             `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
           );
         }
+
         await createService(projectPath, serviceName, packagesDir, gitPush, {
           helmChartChart,
           helmChartRepository,
@@ -163,7 +174,10 @@ export const createCommandDecorator = (command: commander.Command): void => {
           helmConfigPath,
           maintainerEmail,
           maintainerName,
-          variableGroups: variableGroupName === null ? [] : [variableGroupName]
+          variableGroups:
+            variableGroupName === undefined || variableGroupName === null
+              ? []
+              : [variableGroupName]
         });
       } catch (err) {
         logger.error(

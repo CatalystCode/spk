@@ -1,12 +1,12 @@
 import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import commander from "commander";
+import path from "path";
 import { echo } from "shelljs";
-import { Config } from "../../config";
+import { Bedrock, Config, write } from "../../config";
 import { IAzureDevOpsOpts } from "../../lib/git";
 import { addVariableGroup } from "../../lib/pipelines/variableGroup";
 import { logger } from "../../logger";
-import { IVariableGroupData } from "../../types";
-import { writeConfigToDefaultLocation } from "../init";
+import { IBedrockFile, IHelmConfig, IVariableGroupData } from "../../types";
 
 /**
  * Adds the create command to the variable-group command object
@@ -27,8 +27,8 @@ export const createVariablegroupCommandDecorator = (
       "The name of the existing Azure Container Registry."
     )
     .option(
-      "-d, --hld-repo-name <hld-repo-name>",
-      "The high level definition (HLD) git repo name."
+      "-d, --hld-repo-url <hld-repo-url>",
+      "The high level definition (HLD) git repo url."
     )
     .option(
       "-u, --service-principal-id <service-principal-id>",
@@ -58,7 +58,7 @@ export const createVariablegroupCommandDecorator = (
       try {
         const {
           registryName,
-          hldRepoName,
+          hldRepoUrl,
           servicePrincipalId,
           servicePrincipalPassword,
           tenant
@@ -84,7 +84,7 @@ export const createVariablegroupCommandDecorator = (
         const errors: string[] = await validateRequiredArguments(
           variableGroupName,
           registryName,
-          hldRepoName,
+          hldRepoUrl,
           servicePrincipalId,
           servicePrincipalPassword,
           tenant,
@@ -101,7 +101,7 @@ export const createVariablegroupCommandDecorator = (
         const variableGroup = await create(
           variableGroupName,
           registryName,
-          hldRepoName,
+          hldRepoUrl,
           servicePrincipalId,
           servicePrincipalPassword,
           tenant,
@@ -109,7 +109,8 @@ export const createVariablegroupCommandDecorator = (
         );
 
         // set the variable group name
-        await setVariableGroupConfig(variableGroup.name!);
+        const projectPath = process.cwd();
+        await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
 
         // print newly created variable group
         echo(JSON.stringify(variableGroup, null, 2));
@@ -129,7 +130,7 @@ export const createVariablegroupCommandDecorator = (
  *
  * @param variableGroupName The Azure DevOps varible group name
  * @param registryName The Azure container registry name
- * @param hldRepoName The HLD repo name
+ * @param hldRepoUrl The HLD repo url
  * @param servicePrincipalId The Azure service principal id with ACR pull and build permissions for az login
  * @param servicePrincipalPassword The service principal password for az login
  * @param tenantId The Azure AD tenant id for az login
@@ -138,7 +139,7 @@ export const createVariablegroupCommandDecorator = (
 export const create = async (
   variableGroupName: string,
   registryName: string,
-  hldRepoName: string,
+  hldRepoUrl: string,
   servicePrincipalId: string,
   servicePrincipalPassword: string,
   tenantId: string,
@@ -152,7 +153,7 @@ export const create = async (
     await validateRequiredArguments(
       variableGroupName,
       registryName,
-      hldRepoName,
+      hldRepoUrl,
       servicePrincipalId,
       servicePrincipalPassword,
       tenantId,
@@ -165,7 +166,7 @@ export const create = async (
         value: registryName
       },
       HLD_REPO: {
-        value: hldRepoName
+        value: hldRepoUrl
       },
       PAT: {
         isSecret: true,
@@ -209,7 +210,7 @@ export const create = async (
 export const validateRequiredArguments = async (
   variableGroupName: any,
   registryName: any,
-  hldRepoName: any,
+  hldRepoUrl: any,
   servicePrincipalId: any,
   servicePrincipalPassword: any,
   tenant: any,
@@ -225,8 +226,8 @@ export const validateRequiredArguments = async (
     errors.push("\n -r / --registry-name");
   }
 
-  if (hldRepoName === undefined || hldRepoName === "") {
-    errors.push("\n -d / --hld-repo-name");
+  if (hldRepoUrl === undefined || hldRepoUrl === "") {
+    errors.push("\n -d / --hld-repo-url");
   }
 
   if (servicePrincipalId === undefined || servicePrincipalId === "") {
@@ -265,21 +266,60 @@ export const validateRequiredArguments = async (
 };
 
 /**
- * Sets the variable group name in ./spk/config.yaml
+ * Sets the variable group name in a default bedrock.yaml
  *
+ * @param rootProjectPath Path to generate/update the the bedrock.yaml file in
  * @param variableGroupName The varible group name
  */
-export const setVariableGroupConfig = async (variableGroupName: string) => {
+export const setVariableGroupInBedrockFile = async (
+  rootProjectPath: string,
+  variableGroupName: string
+) => {
+  if (
+    rootProjectPath === undefined ||
+    rootProjectPath === null ||
+    rootProjectPath === ""
+  ) {
+    throw new Error("Project root path is not valid");
+  }
+
   if (
     variableGroupName === undefined ||
     variableGroupName === null ||
     variableGroupName === ""
   ) {
-    throw new Error("Variable Group Name is null");
+    throw new Error("Variable Group Name is not valid");
   }
-  // set variable name in the config object
-  Config().azure_devops!.variable_group = variableGroupName;
 
-  // write to the disk
-  writeConfigToDefaultLocation();
+  const absProjectRoot = path.resolve(rootProjectPath);
+  logger.info(`Creating variable group ${variableGroupName}`);
+
+  let bedrockFile: IBedrockFile | undefined;
+
+  // Get bedrock.yaml if it already exists
+  try {
+    bedrockFile = Bedrock();
+    bedrockFile.variableGroups = bedrockFile.variableGroups
+      ? bedrockFile.variableGroups
+      : [];
+  } catch (err) {
+    logger.info(
+      `No bedrock.yaml found at ${absProjectRoot}, creating a new file to add variable group`
+    );
+  }
+
+  // if fies does not exist, create it
+  if (bedrockFile === undefined) {
+    bedrockFile = {
+      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
+      services: {}, // service property is not optional so set it to null
+      variableGroups: []
+    };
+  }
+
+  // add new variabe group
+  bedrockFile.variableGroups!.push(variableGroupName);
+
+  // Write out
+  write(bedrockFile, absProjectRoot);
 };

@@ -1,8 +1,8 @@
 import commander from "commander";
 import fs from "fs";
 import path from "path";
-import shelljs from "shelljs";
-import { Config, write } from "../../config";
+import shelljs, { cat } from "shelljs";
+import { Bedrock, write } from "../../config";
 import {
   generateDockerfile,
   generateGitIgnoreFile,
@@ -47,11 +47,20 @@ export const initCommandDecorator = (command: commander.Command): void => {
     .action(async opts => {
       const { monoRepo, packagesDir, defaultRing } = opts;
       const projectPath = process.cwd();
+
       try {
-        // fall back to spk config azure_devops.variable_group when <variable-group-name> argument is not specified
-        const { azure_devops } = Config();
+        // fall back to bedrock.yaml when <variable-group-name> argument is not specified
+        let bedrockFile: IBedrockFile | undefined;
+        try {
+          bedrockFile = Bedrock();
+        } catch (err) {
+          logger.info(err);
+        }
+
         const {
-          variableGroupName = azure_devops && azure_devops.variable_group
+          variableGroupName = bedrockFile &&
+            bedrockFile.variableGroups &&
+            bedrockFile.variableGroups![0]
         } = opts;
 
         logger.info(`variable name: ${variableGroupName}`);
@@ -75,6 +84,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
 
         if (
           variableGroupName !== null &&
+          variableGroupName !== undefined &&
           typeof variableGroupName !== "string"
         ) {
           throw new Error(
@@ -86,7 +96,10 @@ export const initCommandDecorator = (command: commander.Command): void => {
           defaultRing,
           monoRepo,
           packagesDir,
-          variableGroups: variableGroupName === null ? [] : [variableGroupName]
+          variableGroups:
+            variableGroupName === undefined || variableGroupName === null
+              ? []
+              : [variableGroupName]
         });
       } catch (err) {
         logger.error(
@@ -304,13 +317,20 @@ const generateBedrockFile = async (
 
   // Check if a bedrock.yaml already exists; skip write if present
   const bedrockFilePath = path.join(absProjectPath, "bedrock.yaml");
-  logger.debug(`Writing bedrock.yaml file to ${bedrockFilePath}`);
-  if (fs.existsSync(bedrockFilePath)) {
-    logger.warn(
-      `Existing bedrock.yaml found at ${bedrockFilePath}, skipping generation`
+
+  try {
+    logger.debug(
+      `Existing bedrock.yaml found at ${bedrockFilePath}, updating with generated services and rings`
     );
-  } else {
-    // Write out
-    write(bedrockFile, absProjectPath);
+    // File might have been created by `project create-variable-group` command to store variable group names for the project
+    const existingFile = Bedrock();
+    if (existingFile.variableGroups) {
+      bedrockFile.variableGroups = existingFile.variableGroups;
+    }
+  } catch (err) {
+    logger.debug(`Writing bedrock.yaml file to ${bedrockFilePath}`);
   }
+
+  // Write out
+  write(bedrockFile, absProjectPath);
 };
