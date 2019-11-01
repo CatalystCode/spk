@@ -277,6 +277,7 @@ export const createService = async (
     helmConfig = {
       chart: {
         chart: helmChartChart,
+        method: "helm",
         repository: helmChartRepository
       }
     };
@@ -285,6 +286,7 @@ export const createService = async (
       chart: {
         branch: helmConfigBranch,
         git: helmConfigGit,
+        method: "git",
         path: helmConfigPath
       }
     };
