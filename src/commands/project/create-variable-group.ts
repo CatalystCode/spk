@@ -298,7 +298,7 @@ export const setVariableGroupInBedrockFile = async (
 
   // Get bedrock.yaml if it already exists
   try {
-    bedrockFile = Bedrock();
+    bedrockFile = Bedrock(rootProjectPath);
     bedrockFile.variableGroups = bedrockFile.variableGroups
       ? bedrockFile.variableGroups
       : [];

@@ -1,14 +1,16 @@
-// Mocks
-jest.mock("../../config");
-
 // imports
+import fs from "fs";
+import os from "os";
+import path from "path";
 import uuid from "uuid/v4";
+import { readYaml, write } from "../../config";
 import { IAzureDevOpsOpts } from "../../lib/git";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
+import { IBedrockFile } from "../../types";
 import {
   create,
   setVariableGroupInBedrockFile,
@@ -202,7 +204,7 @@ describe("create", () => {
 });
 
 describe("setVariableGroupInBedrockFile", () => {
-  test("Should fail with empty variable group name", async () => {
+  test("Should fail with empty arguments", async () => {
     const projectPath = process.cwd();
     let invalidGroupNameError: Error | undefined;
     try {
@@ -212,5 +214,112 @@ describe("setVariableGroupInBedrockFile", () => {
       invalidGroupNameError = err;
     }
     expect(invalidGroupNameError).toBeDefined();
+  });
+
+  test("Should fail with empty variable group name", async () => {
+    const projectPath = process.cwd();
+    let invalidGroupNameError: Error | undefined;
+    try {
+      logger.info("calling create");
+      await setVariableGroupInBedrockFile(uuid(), "");
+    } catch (err) {
+      invalidGroupNameError = err;
+    }
+    expect(invalidGroupNameError).toBeDefined();
+  });
+
+  test("Should fail with empty directory", async () => {
+    const projectPath = process.cwd();
+    let invalidGroupNameError: Error | undefined;
+    try {
+      logger.info("calling create");
+      await setVariableGroupInBedrockFile("", uuid());
+    } catch (err) {
+      invalidGroupNameError = err;
+    }
+    expect(invalidGroupNameError).toBeDefined();
+  });
+
+  test("Should pass adding a variable group name when no bedrock file exists", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+
+    await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
+
+    const filePath = path.join(randomTmpDir, "bedrock.yaml");
+    expect(fs.existsSync(filePath)).toBe(true);
+
+    const bedrockFileData = readYaml<IBedrockFile>(filePath);
+    logger.info(`filejson: ${JSON.stringify(bedrockFileData)}`);
+    expect(bedrockFileData.variableGroups![0]).toBe(variableGroupName);
+  });
+
+  test("Should pass adding a valid variable group name when bedrock file exists with undefined variableGroups", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+
+    const bedrockFileData: IBedrockFile = {
+      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
+      services: {}, // service property is not optional so set it to null
+      variableGroups: undefined
+    };
+
+    await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
+
+    const bedrockFilePath = path.join(randomTmpDir, "bedrock.yaml");
+    expect(fs.existsSync(bedrockFilePath)).toBe(true);
+
+    const bedrockFile = readYaml<IBedrockFile>(bedrockFilePath);
+    logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
+    expect(bedrockFile.variableGroups![0]).toBe(variableGroupName);
+  });
+
+  test("Should pass adding a valid variable group name when bedrock file exists with empty variableGroups", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+
+    const bedrockFileData: IBedrockFile = {
+      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
+      services: {}, // service property is not optional so set it to null
+      variableGroups: []
+    };
+
+    await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
+
+    const bedrockFilePath = path.join(randomTmpDir, "bedrock.yaml");
+    expect(fs.existsSync(bedrockFilePath)).toBe(true);
+
+    const bedrockFile = readYaml<IBedrockFile>(bedrockFilePath);
+    logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
+    expect(bedrockFile.variableGroups![0]).toBe(variableGroupName);
+  });
+
+  test("Should pass adding a valid variable group name when bedrock file exists when variableGroups length is already 1", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+
+    const prevariableGroupName = uuid();
+    logger.info(`prevariableGroupName: ${prevariableGroupName}`);
+    const bedrockFileData: IBedrockFile = {
+      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
+      services: {}, // service property is not optional so set it to null
+      variableGroups: [prevariableGroupName]
+    };
+
+    write(bedrockFileData, randomTmpDir);
+
+    await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
+
+    const filePath = path.join(randomTmpDir, "bedrock.yaml");
+    expect(fs.existsSync(filePath)).toBe(true);
+
+    const bedrockFile = readYaml<IBedrockFile>(filePath);
+    logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
+    expect(bedrockFile.variableGroups![0]).toBe(prevariableGroupName);
+    expect(bedrockFile.variableGroups![1]).toBe(variableGroupName);
   });
 });
