@@ -1,15 +1,15 @@
+import child_process from "child_process";
+import { getMaxListeners } from "cluster";
 import commander from "commander";
 import fs, { chmod } from "fs";
-import fsextra, { readdir } from "fs-extra";
-import path from "path";
-import { logger } from "../../logger";
-import child_process from "child_process";
-import gitUrlParse from "git-url-parse";
-import { getMaxListeners } from "cluster";
 import * as os from "os";
+import path from "path";
+import simpleGit from "simple-git/promise";
+import { logger } from "../../logger";
 
 const spkTemplatesPath = os.homedir() + "/.spk/templates";
-const simpleGit = require("simple-git");
+const git = simpleGit();
+
 /**
  * Adds the init command to the commander command object
  *
@@ -83,16 +83,13 @@ export const validateDefinition = async (
  */
 export const validateTemplateSource = async (
   projectPath: string
-): Promise<Array<string>> => {
-  emptyJSON: JSON;
+): Promise<string[]> => {
   try {
     const rootDef = path.join(projectPath, "definition.json");
     const data: string = fs.readFileSync(rootDef, "utf8");
     const definitionJSON = JSON.parse(data);
     // TO DO : Check for malformed JSON
-    if (
-      !(definitionJSON.source, definitionJSON.version, definitionJSON.template)
-    ) {
+    if (!(definitionJSON.template && definitionJSON.source)) {
       logger.info(
         `The definition.json file is invalid. There is a missing field for the definition file's sources. Template: ${definitionJSON.template} source: ${definitionJSON.source} version: ${definitionJSON.version}`
       );
@@ -122,7 +119,7 @@ export const validateTemplateSource = async (
  * @param projectPath Path to the definition.json file
  */
 export const validateRemoteSource = async (
-  definitionJSON: Array<string>
+  definitionJSON: string[]
 ): Promise<boolean> => {
   try {
     const [source, template, version] = definitionJSON;
@@ -145,26 +142,43 @@ export const validateRemoteSource = async (
       );
     }
     // Checking for git remote
-    simpleGit(sourcePath).listRemote([source], (err: any, result: any) => {
-      if (err) {
-        logger.error(
-          `There was an error cloning the source repository: ${err}`
-        );
-        return false;
-      } else {
-        if (!result) {
+    require("simple-git")(sourcePath).listRemote(
+      [source],
+      (err: any, result: any) => {
+        if (err) {
           logger.error(
-            `Unable to clone the source remote repository. Does the repo exist? ${result}`
+            `There was an error checking the remote source repository: ${err}`
           );
           return false;
         } else {
-          logger.info(
-            `Cloning remote source: ${source} to local templates ${sourcePath}.`
-          );
-          simpleGit(sourcePath).clone(source);
+          if (!result) {
+            logger.error(
+              `Unable to clone the source remote repository. Does the remote repo exist? Do you have the rights to access it? ${result}`
+            );
+            return false;
+          } else {
+            logger.info(
+              `Checking if source repo: ${source} has been already cloned to: ${sourcePath}.`
+            );
+            require("simple-git")(sourcePath).revparse(
+              ["--is-inside-work-tree"],
+              (err2: any, result2: any) => {
+                if (result2) {
+                  logger.info(
+                    `Remote repo: ${source} exists in folder ${sourcePath}`
+                  );
+                } else {
+                  logger.info(
+                    `Cloning remote repo: ${source} into local folder ${sourcePath}`
+                  );
+                  git.clone(source, `${sourcePath}`);
+                }
+              }
+            );
+          }
         }
       }
-    });
+    );
   } catch (_) {
     logger.error(
       `Unable to validate project folder definition.json fie. Is it malformed?`
