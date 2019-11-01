@@ -1,8 +1,6 @@
 import commander from "commander";
 import path from "path";
 import shelljs from "shelljs";
-import { logger } from "../../logger";
-
 import {
   addNewServiceToBedrockFile,
   addNewServiceToMaintainersFile,
@@ -11,6 +9,7 @@ import {
   generateStarterAzurePipelinesYaml
 } from "../../lib/fileutils";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
+import { logger } from "../../logger";
 import { IHelmConfig, IUser } from "../../types";
 
 /**
@@ -238,6 +237,7 @@ export const createService = async (
     helmConfig = {
       chart: {
         chart: helmChartChart,
+        method: "helm",
         repository: helmChartRepository
       }
     };
@@ -246,6 +246,7 @@ export const createService = async (
       chart: {
         branch: helmConfigBranch,
         git: helmConfigGit,
+        method: "git",
         path: helmConfigPath
       }
     };

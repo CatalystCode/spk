@@ -89,12 +89,14 @@ export const starterAzurePipelines = async (opts: {
   vmImage?: string;
   branches?: string[];
   variableGroups?: string[];
+  variables?: Array<{ name: string; value: string }>;
 }): Promise<IAzurePipelinesYaml> => {
   const {
     relProjectPaths = ["."],
     vmImage = "ubuntu-latest",
     branches = ["master"],
-    variableGroups = []
+    variableGroups = [],
+    variables = []
   } = opts;
 
   // Ensure any blank paths are turned into "./"
@@ -109,44 +111,180 @@ export const starterAzurePipelines = async (opts: {
       branches: { include: branches },
       paths: { include: cleanedPaths }
     },
-    variables: [...variableGroups.map(group => ({ group }))],
-    pool: {
-      vmImage
-    },
-    steps: [
+    variables: [...variableGroups.map(group => ({ group })), ...variables],
+    stages: [
       {
-        script: generateYamlScript([
-          `printenv | sort`,
-          `pwd`,
-          `ls -la`,
-          `echo "The name of this service is: $(BUILD.BUILDNUMBER)"`
-        ]),
-        displayName: "Run a multi-line script"
+        // Build stage
+        stage: "build",
+        jobs: [
+          {
+            job: "run_build_push_acr",
+            pool: {
+              vmImage
+            },
+            steps: [
+              {
+                script: generateYamlScript([
+                  `echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"`,
+                  `az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"`
+                ]),
+                displayName: "Azure Login"
+              },
+              ...cleanedPaths.map(projectPath => {
+                const projectPathParts = projectPath
+                  .split(path.sep)
+                  .filter(p => p !== "");
+                // If a the projectPath contains more than 1 segment (a service in a
+                // mono-repo), use the last part as the project name as it will the
+                // folder containing the Dockerfile. Otherwise, its a standard service
+                // and does not need a a project name
+                const projectName =
+                  projectPathParts.length > 1
+                    ? "-" + projectPathParts.slice(-1)[0]
+                    : "";
+                return {
+                  script: generateYamlScript([
+                    `cd ${projectPath}`,
+                    `echo "az acr build -r $(ACR_NAME) --image $(Build.Repository.Name)${projectName}:$(Build.SourceBranchName)-$(Build.BuildNumber) ."`,
+                    `az acr build -r $(ACR_NAME) --image $(Build.Repository.Name)${projectName}:$(Build.SourceBranchName)-$(Build.BuildNumber) .`
+                  ]),
+                  displayName: "ACR Build and Publish"
+                };
+              })
+            ]
+          }
+        ]
       },
       {
-        script: generateYamlScript([
-          `echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"`,
-          `az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"`
-        ]),
-        displayName: "Azure Login"
-      },
-      ...cleanedPaths.map(projectPath => {
-        return {
-          script: generateYamlScript([
-            `cd ${projectPath} # Need to make sure Build.DefinitionName matches directory. It's case sensitive`,
-            `echo "az acr build -r $(ACR_NAME) --image $(Build.DefinitionName):$(build.SourceBranchName)-$(build.BuildId) ."`,
-            `az acr build -r $(ACR_NAME) --image $(Build.DefinitionName):$(build.SourceBranchName)-$(build.BuildId) .`
-          ]),
-          displayName: "ACR Build and Publish"
-        };
-      }),
-      {
-        script: generateYamlScript([`echo Hello, world!`]),
-        displayName: "Run a one-line script"
+        // Update HLD Stage
+        stage: "hld_update",
+        dependsOn: "build",
+        condition:
+          "and(succeeded('build'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/DEPLOY/'),eq(variables['Build.SourceBranchName'],'master')))",
+        jobs: [
+          {
+            job: "update_image_tag",
+            pool: {
+              vmImage
+            },
+            steps: [
+              {
+                script: generateYamlScript([
+                  `# Download build.sh`,
+                  `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
+                  `chmod +x ./build.sh`
+                ]),
+                displayName: "Download bedrock bash scripts"
+              },
+              ...cleanedPaths.map(projectPath => {
+                logger.info(`projectPath: ${projectPath}`);
+                const projectPathParts = projectPath
+                  .split(path.sep)
+                  .filter(p => p !== "");
+                // If a the projectPath contains more than 1 segment (a service in a
+                // mono-repo), use the last part as the project name as it will the
+                // folder containing the Dockerfile. Otherwise, its a standard service
+                // and does not need a a project name
+
+                logger.info(`projectPathParts: ${projectPathParts}`);
+                const projectName =
+                  projectPathParts.length > 1
+                    ? projectPathParts.slice(-1)[0]
+                    : "";
+
+                logger.info(`projectName: ${projectName}`);
+                logger.info(`projectPath: ${projectPath}`);
+                return {
+                  script: generateYamlScript([
+                    `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
+                    `. build.sh --source-only`,
+                    ``,
+                    `# Initialization`,
+                    `verify_access_token`,
+                    `init`,
+                    `helm init`,
+                    `get_os`,
+                    ``,
+                    `# Fabrikate`,
+                    `get_fab_version`,
+                    `download_fab`,
+                    ``,
+                    `# Clone HLD repo`,
+                    `git_connect`,
+                    `# --- End Script`,
+                    ``,
+                    `# Update HLD`,
+                    `git checkout -b "DEPLOY/$(Build.Repository.Name)-${projectName}-$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                    `../fab/fab set --subcomponent ${projectName} image.tag=$(Build.SourceBranchName)-$(Build.BuildNumber)`,
+                    `echo "GIT STATUS"`,
+                    `git status`,
+                    `echo "GIT ADD (git add -A)"`,
+                    `git add -A`,
+                    ``,
+                    `# Set git identity`,
+                    `git config user.email "admin@azuredevops.com"`,
+                    `git config user.name "Automated Account"`,
+                    ``,
+                    `# Commit changes`,
+                    `echo "GIT COMMIT"`,
+                    `git commit -m "Updating ${projectName} image tag to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
+                    ``,
+                    `# Git Push`,
+                    `git_push`,
+                    ``,
+                    `# Open PR via az repo cli`,
+                    `echo 'az extension add --name azure-devops'`,
+                    `az extension add --name azure-devops`,
+                    ``,
+                    `echo 'az devops login'`,
+                    `echo "$(PAT)" | az devops login`,
+                    ``,
+                    `echo 'az repos pr create --description "Updating ${projectName} to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
+                    `az repos pr create --description "Updating ${projectName} to $(Build.SourceBranchName)-$(Build.BuildNumber)."`
+                  ]),
+                  displayName:
+                    "Download Fabrikate, Update HLD, Push changes, Open PR",
+                  env: {
+                    ACCESS_TOKEN_SECRET: "$(PAT)",
+                    REPO: "$(HLD_REPO)"
+                  }
+                };
+              })
+            ]
+          }
+        ]
       }
     ]
   };
   // tslint:enable: object-literal-sort-keys
+
+  const requiredPipelineVariables = [
+    `'ACR_NAME' (name of your ACR)`,
+    `'HLD_REPO' (Repository for your HLD in AzDo. eg. 'dev.azure.com/bhnook/fabrikam/_git/hld')`,
+    `'PAT' (AzDo Personal Access Token with permissions to the HLD repository.)`,
+    `'SP_APP_ID' (service principal ID with access to your ACR)`,
+    `'SP_PASS' (service principal secret)`,
+    `'SP_TENANT' (service principal tenant)`
+  ].join(", ");
+
+  for (const relPath of cleanedPaths) {
+    const relPathParts = relPath.split(path.sep).filter(p => p !== "");
+    const packagesDir =
+      relPathParts.length > 1 ? relPathParts.slice(-2)[0] : undefined;
+    const packagesOption = packagesDir ? `--packages-dir ${packagesDir} ` : "";
+    const serviceName =
+      relPathParts.length > 1
+        ? relPathParts.slice(-2)[1]
+        : process
+            .cwd()
+            .split(path.sep)
+            .slice(-1)[0];
+    const spkServiceCreatePipelineCmd =
+      "spk service create-pipeline " + packagesOption + serviceName;
+    logger.info(
+      `Generated azure-pipelines.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceCreatePipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+    );
+  }
 
   return starter;
 };

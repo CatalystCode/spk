@@ -21,10 +21,12 @@ interface IUser {
 export interface IHelmConfig {
   chart:
     | {
+        method: "helm";
         repository: string; // repo (eg; https://kubernetes-charts-incubator.storage.googleapis.com/)
         chart: string; // chart name (eg; zookeeper)
       }
     | ({
+        method: "git";
         git: string; // git url to clone (eg; https://github.com/helm/charts.git)
         path: string; // path in the git repo to the directory containing the Chart.yaml (eg; incubator/zookeeper)
       } & (
@@ -74,6 +76,26 @@ export interface IAzurePipelinesYaml {
   pool?: {
     vmImage?: string;
   };
+  stages?: Array<{
+    // Stages are in public preview and must be enabled to use. https://docs.microsoft.com/en-us/azure/devops/pipelines/process/stages?view=azure-devops&tabs=yaml
+    stage: string;
+    dependsOn?: string;
+    condition?: string;
+    jobs: Array<{
+      job: string;
+      pool: {
+        vmImage: string;
+      };
+      steps?: Array<{
+        script?: string;
+        displayName?: string;
+        env?: {
+          ACCESS_TOKEN_SECRET?: string;
+          REPO?: string;
+        };
+      }>;
+    }>;
+  }>;
   steps?: Array<{
     bash?: string;
     clean?: boolean;
