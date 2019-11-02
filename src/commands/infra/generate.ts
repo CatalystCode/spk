@@ -36,9 +36,6 @@ export const generateCommandDecorator = (command: commander.Command): void => {
             `No project folder was provided, spk will generate the current folder as a project`
           );
         }
-        if (!fs.existsSync(spkTemplatesPath)) {
-          fs.mkdirSync(spkTemplatesPath);
-        }
         await validateDefinition(opts.project);
         const jsonSource = await validateTemplateSource(opts.project);
         await validateRemoteSource(jsonSource);
@@ -60,6 +57,10 @@ export const validateDefinition = async (
   projectPath: string
 ): Promise<boolean> => {
   try {
+    // If templates folder does not exist, create cache templates directory
+    if (!fs.existsSync(spkTemplatesPath)) {
+      fs.mkdirSync(spkTemplatesPath);
+    }
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
         `Provided project path for generate is invalid or definition.json can not be found: ${projectPath}`
