@@ -1,15 +1,13 @@
 import Table from "cli-table";
 import commander from "commander";
 import Deployment from "spektate/lib/Deployment";
+import AzureDevOpsPipeline from "spektate/lib/pipeline/AzureDevOpsPipeline";
+import IPipeline from "spektate/lib/pipeline/Pipeline";
+import { Config } from "../../config";
 import { logger } from "../../logger";
-import {
-  clusterPipeline,
-  config,
-  hldPipeline,
-  srcPipeline,
-  verifyAppConfiguration
-} from "./init";
-
+export let hldPipeline: IPipeline;
+export let clusterPipeline: IPipeline;
+export let srcPipeline: IPipeline;
 /**
  * Output formats to display service details
  */
@@ -39,62 +37,52 @@ export const getCommandDecorator = (command: commander.Command): void => {
     .command("get")
     .alias("g")
     .description(
-      "Get deployment(s) for a service, release environment, build Id, commit Id, or image tag."
+      "Get the list of deployments and filter with these options: service name, environment, build ID, commit ID, container image tag."
     )
     .option(
       "-b, --build-id <build-id>",
-      "Get deployments for a particular build Id from source repository"
+      "Filter by the build ID of the source repository"
     )
     .option(
       "-c, --commit-id <commit-id>",
-      "Get deployments for a particular commit Id from source repository"
+      "Filter by a commit ID from the source repository"
     )
     .option(
       "-d, --deployment-id <deployment-id>",
-      "Get deployments for a particular deployment Id from source repository"
+      "Filter by the deployment ID of the source repository"
     )
-    .option(
-      "-i, --image-tag <image-tag>",
-      "Get deployments for a particular image tag"
-    )
-    .option(
-      "-e, --env <environment>",
-      "Get deployments for a particular environment"
-    )
-    .option(
-      "-s, --service <service-name>",
-      "Get deployments for a particular service"
-    )
+    .option("-i, --image-tag <image-tag>", "Filter by a container image tag")
+    .option("-e, --env <environment>", "Filter by environment name")
+    .option("-s, --service <service-name>", "Filter by service name")
     .option(
       "-o, --output <output-format>",
-      "Get output in one of these forms: normal, wide, JSON"
+      "Output the information one of the following: normal, wide, JSON"
     )
     .option("-w, --watch", "Watch the deployments for a live view")
     .action(async opts => {
       try {
-        verifyAppConfiguration().then(() => {
-          if (opts.watch) {
-            watchGetDeployments(
-              processOutputFormat(opts.output),
-              opts.env,
-              opts.imageTag,
-              opts.buildId,
-              opts.commitId,
-              opts.service,
-              opts.deploymentId
-            );
-          } else {
-            getDeployments(
-              processOutputFormat(opts.output),
-              opts.env,
-              opts.imageTag,
-              opts.buildId,
-              opts.commitId,
-              opts.service,
-              opts.deploymentId
-            );
-          }
-        });
+        initialize();
+        if (opts.watch) {
+          watchGetDeployments(
+            processOutputFormat(opts.output),
+            opts.env,
+            opts.imageTag,
+            opts.buildId,
+            opts.commitId,
+            opts.service,
+            opts.deploymentId
+          );
+        } else {
+          getDeployments(
+            processOutputFormat(opts.output),
+            opts.env,
+            opts.imageTag,
+            opts.buildId,
+            opts.commitId,
+            opts.service,
+            opts.deploymentId
+          );
+        }
       } catch (err) {
         logger.error(`Error occurred while getting deployment(s)`);
         logger.error(err);
@@ -106,7 +94,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
  * Processes the output format based on defaults
  * @param outputFormat Output format specified by the user
  */
-function processOutputFormat(outputFormat: string): OUTPUT_FORMAT {
+export const processOutputFormat = (outputFormat: string): OUTPUT_FORMAT => {
   if (outputFormat && outputFormat.toLowerCase() === "wide") {
     return OUTPUT_FORMAT.WIDE;
   } else if (outputFormat && outputFormat.toLowerCase() === "json") {
@@ -114,7 +102,7 @@ function processOutputFormat(outputFormat: string): OUTPUT_FORMAT {
   }
 
   return OUTPUT_FORMAT.NORMAL;
-}
+};
 
 /**
  * Gets a list of deployments for the specified filters
@@ -135,11 +123,12 @@ export const getDeployments = (
   service?: string,
   deploymentId?: string
 ): Promise<Deployment[]> => {
+  const config = Config();
   return Deployment.getDeploymentsBasedOnFilters(
-    config.STORAGE_ACCOUNT_NAME,
-    config.STORAGE_ACCOUNT_KEY,
-    config.STORAGE_TABLE_NAME,
-    config.STORAGE_PARTITION_KEY,
+    config.introspection!.azure!.account_name!,
+    config.introspection!.azure!.key!,
+    config.introspection!.azure!.table_name!,
+    config.introspection!.azure!.partition_key!,
     srcPipeline,
     hldPipeline,
     clusterPipeline,
@@ -157,6 +146,48 @@ export const getDeployments = (
     }
     return deployments;
   });
+};
+
+/**
+ * Initializes the pipelines assuming that the configuration has been loaded
+ */
+const initialize = () => {
+  const config = Config();
+
+  if (
+    !config.introspection ||
+    !config.azure_devops ||
+    !config.introspection.azure ||
+    !config.azure_devops.org ||
+    !config.azure_devops.project ||
+    !config.introspection.azure.account_name ||
+    !config.introspection.azure.table_name ||
+    !config.introspection.azure.key ||
+    !config.introspection.azure.partition_key
+  ) {
+    logger.error("You need to run `spk init` to initialize.");
+    process.exit(1);
+    return;
+  }
+
+  srcPipeline = new AzureDevOpsPipeline(
+    config.azure_devops.org,
+    config.azure_devops.project,
+    false,
+    config.azure_devops.access_token
+  );
+  hldPipeline = new AzureDevOpsPipeline(
+    config.azure_devops.org,
+    config.azure_devops.project,
+    true,
+    config.azure_devops.access_token
+  );
+  clusterPipeline = new AzureDevOpsPipeline(
+    config.azure_devops.org,
+    config.azure_devops.project,
+    false,
+    config.azure_devops.access_token
+  );
 };
 
 /**
@@ -179,6 +210,18 @@ export const watchGetDeployments = (
   deploymentId?: string
 ): void => {
   const timeInterval = 5000;
+
+  // Call get deployments once, and then set the timer.
+  getDeployments(
+    outputFormat,
+    environment,
+    imageTag,
+    p1Id,
+    commitId,
+    service,
+    deploymentId
+  );
+
   setInterval(() => {
     getDeployments(
       outputFormat,
@@ -200,7 +243,7 @@ export const watchGetDeployments = (
 export const printDeployments = (
   deployments: Deployment[],
   outputFormat: OUTPUT_FORMAT
-) => {
+): Table | undefined => {
   if (deployments.length > 0) {
     let row = [];
     row.push("Start Time");
@@ -222,6 +265,8 @@ export const printDeployments = (
       row.push("Manifest Commit");
       row.push("End Time");
     }
+
+    // tslint:disable: object-literal-sort-keys
     const table = new Table({
       head: row,
       chars: {
@@ -243,6 +288,8 @@ export const printDeployments = (
       },
       style: { "padding-left": 0, "padding-right": 0 }
     });
+    // tslint:enable: object-literal-sort-keys
+
     deployments.forEach(deployment => {
       row = [];
       row.push(
@@ -287,7 +334,7 @@ export const printDeployments = (
         row.push(
           deployment.hldToManifestBuild &&
             deployment.hldToManifestBuild.finishTime &&
-            !isNaN(deployment.hldToManifestBuild.finishTime.getTime())
+            !isNaN(new Date(deployment.hldToManifestBuild.finishTime).getTime())
             ? deployment.hldToManifestBuild.finishTime.toLocaleString()
             : ""
         );
@@ -296,8 +343,10 @@ export const printDeployments = (
     });
 
     logger.info("\n" + table.toString());
+    return table;
   } else {
     logger.info("No deployments found for specified filters.");
+    return undefined;
   }
 };
 

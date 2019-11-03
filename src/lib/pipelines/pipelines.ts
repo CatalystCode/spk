@@ -2,7 +2,9 @@ import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   AgentPoolQueue,
+  Build,
   BuildDefinition,
+  BuildDefinitionVariable,
   BuildRepository,
   ContinuousIntegrationTrigger,
   DefinitionQuality,
@@ -11,6 +13,8 @@ import {
   DefinitionType,
   YamlProcess
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { logger } from "../../logger";
+import { azdoUrl } from "../azdoutil";
 
 const hostedUbuntuPool = "Hosted Ubuntu 1604";
 const hostedUbuntuPoolId = 224;
@@ -25,29 +29,30 @@ export enum RepositoryTypes {
 
 /**
  * Get an Azure DevOps Build API Client
- * @param orgUrl An Azure DevOps Organization URL
+ * @param org An Azure DevOps Organization Name
  * @param token A Personal Access Token (PAT) used to authenticate against DevOps.
  * @returns BuildApi Client for Azure Devops
  */
 export const getBuildApiClient = async (
-  orgUrl: string,
+  orgName: string,
   personalAccessToken: string
 ): Promise<IBuildApi> => {
   return initBuildApiClient(
     getPersonalAccessTokenHandler,
     WebApi,
-    orgUrl,
+    orgName,
     personalAccessToken
   );
 };
 
-const initBuildApiClient = async (
+export const initBuildApiClient = async (
   tokenHandler: (n: string) => any,
   webapi: typeof WebApi,
-  orgUrl: string,
+  orgName: string,
   token: string
 ): Promise<IBuildApi> => {
   const authHandler = tokenHandler(token);
+  const orgUrl = azdoUrl(orgName);
   const connection = new webapi(orgUrl, authHandler);
 
   return connection.getBuildApi();
@@ -61,12 +66,16 @@ interface IPipeline {
   yamlFilePath: string;
   branchFilters: string[];
   maximumConcurrentBuilds: number;
+  variables?: {
+    [key: string]: BuildDefinitionVariable;
+  };
 }
 
 /**
  * Interface that describes a Pipeline Configuration for an Azure DevOps
  * backed git repository.
  */
+// tslint:disable-next-line: no-empty-interface
 export interface IAzureRepoPipelineConfig extends IPipeline {}
 
 /**
@@ -93,7 +102,8 @@ export const definitionForAzureRepoPipeline = (
       batchChanges: false,
       branchFilters: pipelineConfig.branchFilters,
       maxConcurrentBuildsPerBranch: pipelineConfig.maximumConcurrentBuilds,
-      type: DefinitionTriggerType.ContinuousIntegration
+      settingsSourceType: 2,
+      triggerType: DefinitionTriggerType.ContinuousIntegration
     } as ContinuousIntegrationTrigger
   ];
 
@@ -123,6 +133,10 @@ export const definitionForAzureRepoPipeline = (
     yamlFilename: pipelineConfig.yamlFilePath
   } as YamlProcess;
 
+  if (pipelineConfig.variables) {
+    pipelineDefinition.variables = pipelineConfig.variables;
+  }
+
   return pipelineDefinition;
 };
 
@@ -142,7 +156,8 @@ export const definitionForGithubRepoPipeline = (
       batchChanges: false,
       branchFilters: pipelineConfig.branchFilters,
       maxConcurrentBuildsPerBranch: pipelineConfig.maximumConcurrentBuilds,
-      type: DefinitionTriggerType.ContinuousIntegration
+      settingsSourceType: 2,
+      triggerType: DefinitionTriggerType.ContinuousIntegration
     } as ContinuousIntegrationTrigger
   ];
 
@@ -175,6 +190,10 @@ export const definitionForGithubRepoPipeline = (
     yamlFilename: pipelineConfig.yamlFilePath
   } as YamlProcess;
 
+  if (pipelineConfig.variables) {
+    pipelineDefinition.variables = pipelineConfig.variables;
+  }
+
   return pipelineDefinition;
 };
 
@@ -190,5 +209,51 @@ export const createPipelineForDefinition = async (
   azdoProject: string,
   definition: BuildDefinition
 ): Promise<BuildDefinition> => {
-  return buildApi.createDefinition(definition, azdoProject);
+  logger.info("Creating pipeline for definition");
+
+  try {
+    logger.debug(
+      `Creating BuildDefinition based on ${JSON.stringify(definition)}`
+    );
+    const createdDefn = await buildApi.createDefinition(
+      definition,
+      azdoProject
+    );
+    // type definition for createDefinition is wrong. It will resolve a `null` if an error occurs in azdo
+    if (!createdDefn) {
+      throw Error(
+        `Error creating BuildDefinition; buildApi.createDefinition() returned an invalid value of ${createdDefn}`
+      );
+    }
+    return createdDefn;
+  } catch (e) {
+    logger.error(e);
+    throw Error("Error creating definition");
+  }
+};
+
+/**
+ * Queue a build on a pipeline.
+ * @param buildApi BuildApi Client for Azure Devops
+ * @param azdoProject Azure DevOps Project within the authenticated Organization.
+ * @param definitionId A Build Definition ID.
+ * @returns Build object that was created by the Build API Clients
+ */
+export const queueBuild = async (
+  buildApi: IBuildApi,
+  azdoProject: string,
+  definitionId: number
+): Promise<Build> => {
+  const buildReference: Build = {
+    definition: {
+      id: definitionId
+    }
+  };
+
+  try {
+    return await buildApi.queueBuild(buildReference, azdoProject);
+  } catch (e) {
+    logger.error(e);
+    throw Error("Error queueing build");
+  }
 };

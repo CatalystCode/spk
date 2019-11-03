@@ -104,9 +104,17 @@ export const executeCommand = (cmd: ICommand, argv: string[]): void => {
   // If the the next argument matches against a sub-command, recur into it.
   // Else call the current command with the rest of the arguments.
   if (targetCommandName && targetCommand) {
+    // If command is a sub-command, it needs to load configuration before
+    // sub-command can be executed.
     executeCommand(targetCommand, decrementArgv(argv));
   } else {
-    argv.length <= 2 ? cmd.command.outputHelp() : cmd.command.parse(argv);
+    // Top level try/catch. If an error occurs, log it and exit with code 1
+    try {
+      argv.length <= 2 ? cmd.command.outputHelp() : cmd.command.parse(argv);
+    } catch (err) {
+      logger.error(err);
+      process.exit(1);
+    }
   }
 };
 

@@ -11,10 +11,17 @@
  * - if (typeof var === 'number') {}
  * - etc...
  */
+// fetch module is required for @azure/ms-rest-nodeauth in lib/azure
+import "isomorphic-fetch";
 import { Command, executeCommand } from "./commands/command";
 import { deploymentCommand } from "./commands/deployment";
+import { hldCommand } from "./commands/hld";
+import { infraCommand } from "./commands/infra";
+import { ingressCommand } from "./commands/ingress-route";
+import { initCommandDecorator } from "./commands/init";
 import { projectCommand } from "./commands/project";
 import { serviceCommand } from "./commands/service";
+import { variableGroupCommand } from "./commands/variable-group";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Instantiate core command object
@@ -25,9 +32,18 @@ const rootCommand = Command(
   [
     c => {
       c.version(require("../package.json").version);
-    }
+    },
+    initCommandDecorator
   ],
-  [deploymentCommand, projectCommand, serviceCommand]
+  [
+    deploymentCommand,
+    projectCommand,
+    serviceCommand,
+    infraCommand,
+    hldCommand,
+    variableGroupCommand,
+    ingressCommand
+  ]
 );
 
 ////////////////////////////////////////////////////////////////////////////////
