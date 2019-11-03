@@ -1,13 +1,19 @@
-    - task: DownloadBuildArtifacts@0
-        inputs:
-            buildType: 'specific'
-            project: 'ca459769-cfe0-490c-a89e-1f1eb2eba550'
-            pipeline: '20'
-            buildVersionToDownload: 'latest'
-            downloadType: 'single'
-            artifactName: 'spk_linux_node_12'
-            downloadPath: '$(System.ArtifactsDirectory)'
-
-- script: |
-    ls '$(System.ArtifactsDirectory)'
-displayName: "ECHO DIR"
+stages:
+- stage: setip
+  jobs:
+  - job: "run_build_push_acr"
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'specific'
+        project: 'ca459769-cfe0-490c-a89e-1f1eb2eba550'
+        definition: '20'
+        buildVersionToDownload: 'latestFromBranch'
+        branchName: 'refs/heads/master'
+        itemPattern: 'spk**'
+        targetPath: '$(Pipeline.Workspace)'
+    - script: |
+        ls '$(Pipeline.Workspace)'
+    displayName: "ECHO DIR"
