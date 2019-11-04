@@ -15,10 +15,10 @@ stages:
         artifactName: 'spk_linux_node_12'
         targetPath: '$(Pipeline.Workspace)'
     - script: |
-        echo "Current Dir is ${pwd}"
+        echo "Current Dir is $(pwd)"
         ls -ld
         cd $(Pipeline.Workspace)
-        echo "Current Dir is ${pwd}"
+        echo "Current Dir is $(pwd)"
         ls -ld
         # ls -ld "$(Pipeline.Workspace)"
         # echo "cd $(Pipeline.Workspace)"
