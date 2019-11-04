@@ -17,13 +17,13 @@ stages:
         targetPath: '$(System.DefaultWorkingDirectory)'
     - script: |
         echo "Current Dir is $(pwd)"
-        ls -ld
+        ls -l
         cd $(Pipeline.Workspace)
         echo "Current Dir is $(pwd)"
-        ls -ld
+        ls -l
         cd $(System.DefaultWorkingDirectory)
         echo "Current Dir is $(pwd)"
-        ls -ld
+        ls -l
         # ls -ld "$(Pipeline.Workspace)"
         # echo "cd $(Pipeline.Workspace)"
         # cd '$(Pipeline.Workspace)'
