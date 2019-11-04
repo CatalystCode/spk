@@ -25,6 +25,7 @@ stages:
         spk --version
       displayName: "ECHO DIR"
     - script: |
+        shopt -s expand_aliases
         alias spk="$(pwd)/spk-linux"
         export PLAYGROUND_DIR="$(System.DefaultWorkingDirectory)/playground"
         echo "Running from $(pwd)"
