@@ -16,4 +16,6 @@ stages:
         targetPath: '$(Pipeline.Workspace)'
     - script: |
         ls '$(Pipeline.Workspace)'
+        alias spk=${pwd}/spk-linux
+        spk --version
     displayName: "ECHO DIR"
