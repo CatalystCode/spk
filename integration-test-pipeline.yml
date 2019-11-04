@@ -23,7 +23,10 @@ stages:
         ls -l
         alias spk="$(pwd)/spk-linux"
         spk --version
-      displayName: "ECHO DIR"
+      displayName: "Verify SPK downloaded and executable"
+
+  - job: "run_tests"
+    steps:
     - script: |
         shopt -s expand_aliases
         alias spk="$(pwd)/spk-linux"
