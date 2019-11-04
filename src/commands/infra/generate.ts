@@ -97,7 +97,7 @@ export const validateTemplateSource = async (
       return [];
     }
     logger.info(
-      `Checking for locally stored template: ${definitionJSON.template} from remote repoitory: ${definitionJSON.source} at version: ${definitionJSON.version}`
+      `Checking for locally stored template: ${definitionJSON.template} from remote repository: ${definitionJSON.source} at version: ${definitionJSON.version}`
     );
     const sources = [
       definitionJSON.source,
