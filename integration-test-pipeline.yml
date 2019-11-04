@@ -26,6 +26,8 @@ stages:
       displayName: "Verify SPK downloaded and executable"
 
   - job: "run_tests"
+    dependsOn: env_setup
+    condition: succeeded('env_setup')
     steps:
     - script: |
         shopt -s expand_aliases
