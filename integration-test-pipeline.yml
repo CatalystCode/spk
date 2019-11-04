@@ -1,5 +1,5 @@
 stages:
-- stage: setup
+- stage: env_setup
   jobs:
   - job: "download_spk_artifact"
     pool:
@@ -25,6 +25,10 @@ stages:
         spk --version
       displayName: "Verify SPK downloaded and executable"
 
+- stage: test_execution
+  dependsOn: env_setup
+  condition: succeeded('env_setup')
+  jobs:
   - job: "run_tests"
     steps:
     - script: |
