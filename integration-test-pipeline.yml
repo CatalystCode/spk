@@ -13,11 +13,14 @@ stages:
         buildVersionToDownload: 'latestFromBranch'
         branchName: 'refs/heads/master'
         artifactName: 'spk_linux_node_12'
-        # targetPath: '$(Pipeline.Workspace)'
+        targetPath: '$(System.DefaultWorkingDirectory)'
     - script: |
         echo "Current Dir is $(pwd)"
         ls -ld
         cd $(Pipeline.Workspace)
+        echo "Current Dir is $(pwd)"
+        ls -ld
+        cd $(System.DefaultWorkingDirectory)
         echo "Current Dir is $(pwd)"
         ls -ld
         # ls -ld "$(Pipeline.Workspace)"
