@@ -20,19 +20,6 @@ stages:
         ls -l
         chmod +x spk-linux
         ls -l
-        ./spk-linux --version
-        # cd $(Pipeline.Workspace)
-        # echo "Current Dir is $(pwd)"
-        # ls -l
-        # cd $(System.DefaultWorkingDirectory)
-        # echo "Current Dir is $(pwd)"
-        # ls -l
-
-        # ls -ld "$(Pipeline.Workspace)"
-        # echo "cd $(Pipeline.Workspace)"
-        # cd '$(Pipeline.Workspace)'
-        # alias spk=${pwd}/spk-linux
-        # echo "pwd"
-        # pwd
-        # spk-linux --version
+        alias spk=$(pwd)/spk-linux
+        spk --version
     displayName: "ECHO DIR"
