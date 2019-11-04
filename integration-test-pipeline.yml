@@ -1,3 +1,5 @@
+trigger: none
+
 stages:
 - stage: env_setup
   jobs:
@@ -72,7 +74,6 @@ stages:
         spk project init -m -d $services_dir
 
         spk service create $FrontEnd -d $services_dir
-        # ls -l
         validate_service "$PLAYGROUND_DIR/test-mono-repo/$services_dir/$FrontEnd"
         echo "Validated!"
       displayName: "CREATING DIR"
