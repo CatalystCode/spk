@@ -20,6 +20,6 @@ stages:
         ls -l
         chmod +x spk-linux
         ls -l
-        alias spk=$(pwd)/spk-linux
+        alias spk="$(pwd)/spk-linux"
         spk --version
     displayName: "ECHO DIR"
