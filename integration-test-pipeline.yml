@@ -23,4 +23,18 @@ stages:
         ls -l
         alias spk="$(pwd)/spk-linux"
         spk --version
-    displayName: "ECHO DIR"
+      displayName: "ECHO DIR"
+    - script: |
+        export PLAYGROUND_DIR="$(System.DefaultWorkingDirectory)/playground"
+        echo "Running from $(pwd)"
+
+        if [ -d "$PLAYGROUND_DIR"  ]; then rm -Rf $PLAYGROUND_DIR; fi
+
+        if [ ! -d "$PLAYGROUND_DIR" ]; then
+          echo "PLAYGROUND_DIR does not exist"
+          mkdir $PLAYGROUND_DIR
+          echo "PLAYGROUND_DIR created"
+        fi
+        spk --version
+      displayName: "CREATING DIR"
+
