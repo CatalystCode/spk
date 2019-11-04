@@ -25,6 +25,7 @@ stages:
         spk --version
       displayName: "ECHO DIR"
     - script: |
+        alias spk="$(pwd)/spk-linux"
         export PLAYGROUND_DIR="$(System.DefaultWorkingDirectory)/playground"
         echo "Running from $(pwd)"
 
@@ -35,6 +36,7 @@ stages:
           mkdir $PLAYGROUND_DIR
           echo "PLAYGROUND_DIR created"
         fi
+        cd $PLAYGROUND_DIR
         spk --version
       displayName: "CREATING DIR"
 
