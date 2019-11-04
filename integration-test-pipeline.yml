@@ -1,7 +1,7 @@
 stages:
-- stage: setip
+- stage: setup
   jobs:
-  - job: "run_build_push_acr"
+  - job: "download_spk_artifact"
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
@@ -12,7 +12,7 @@ stages:
         definition: '20'
         buildVersionToDownload: 'latestFromBranch'
         branchName: 'refs/heads/master'
-        itemPattern: 'spk**'
+        artifactName: 'spk_linux_node_12'
         targetPath: '$(Pipeline.Workspace)'
     - script: |
         ls '$(Pipeline.Workspace)'
