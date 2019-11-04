@@ -12,6 +12,7 @@ stages:
         definition: '20'
         buildVersionToDownload: 'latestFromBranch'
         branchName: 'refs/heads/master'
+        itemPattern: "spk*"
         artifactName: 'spk_linux_node_12'
         targetPath: '$(System.DefaultWorkingDirectory)'
     - script: |
