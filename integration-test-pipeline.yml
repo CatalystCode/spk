@@ -15,7 +15,8 @@ stages:
         artifactName: 'spk_linux_node_12'
         targetPath: '$(Pipeline.Workspace)'
     - script: |
-        ls '$(Pipeline.Workspace)'
+        ls -ld '$(Pipeline.Workspace)'
+        cd $(Pipeline.Workspace)
         #alias spk=${pwd}/spk-linux
         pwd
         spk-linux --version
