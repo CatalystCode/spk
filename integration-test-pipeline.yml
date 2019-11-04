@@ -25,11 +25,28 @@ stages:
         spk --version
       displayName: "Verify SPK downloaded and executable"
 
-  - job: "run_tests"
-    dependsOn: download_spk_artifact
-    condition: succeeded('download_spk_artifact')
-    steps:
+  # - job: "run_tests"
+  #   dependsOn: download_spk_artifact
+  #   condition: succeeded('download_spk_artifact')
+  #   steps:
     - script: |
+        validate_service () {
+            echo "Checking directory `$1`" 
+            # local gitignore=".gitignore"
+            # local yaml="azure-pipelines.yaml"
+            # local dockerfile="Dockerfile"
+            local files=( ".gitignore" "azure-pipelines.yaml" "Dockerfile" )
+            for i in "${files[@]}"
+            do
+                : 
+                currentFile="$1/$i"
+                echo "Current file: $currentFile"
+                if [ ! -f $currentFile ]; then
+                    echo "The file `$i` does not exist in directory `$1`"
+                    exit 1
+                fi
+            done
+        }
         shopt -s expand_aliases
         alias spk="$(pwd)/spk-linux"
         export PLAYGROUND_DIR="$(System.DefaultWorkingDirectory)/playground"
@@ -55,6 +72,8 @@ stages:
         spk project init -m -d $services_dir
 
         spk service create $FrontEnd -d $services_dir
-        ls -l
+        # ls -l
+        validate_service "$PLAYGROUND_DIR/test-mono-repo/$services_dir/$FrontEnd"
+        echo "Validated!"
       displayName: "CREATING DIR"
 
