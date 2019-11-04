@@ -16,8 +16,11 @@ stages:
         targetPath: '$(Pipeline.Workspace)'
     - script: |
         ls -ld '$(Pipeline.Workspace)'
-        cd $(Pipeline.Workspace)
+        echo "cd $(Pipeline.Workspace)"
+        cd '$(Pipeline.Workspace)'
         #alias spk=${pwd}/spk-linux
+        echo "pwd"
         pwd
+        ls -ld
         spk-linux --version
     displayName: "ECHO DIR"
