@@ -39,5 +39,17 @@ stages:
         fi
         cd $PLAYGROUND_DIR
         spk --version
+        export FrontEnd=Fabrikam.Acme.FrontEnd
+        export BackEnd=Fabrikam.Acme.BackEnd
+        export services_dir=services
+
+        mkdir test-mono-repo
+        cd test-mono-repo
+
+        mkdir $services_dir
+        spk project init -m -d $services_dir
+
+        spk service create $FrontEnd -d $services_dir
+        ls -l
       displayName: "CREATING DIR"
 
