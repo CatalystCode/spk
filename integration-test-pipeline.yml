@@ -3,6 +3,7 @@ trigger: none
 schedules:
 - cron: "0 3 * * *"
   displayName: M-F 7:00PM (UTC - 8:00) Pacific daily build
+  always: true
 
 stages:
 - stage: env_setup
