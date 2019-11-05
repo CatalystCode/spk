@@ -3,7 +3,7 @@ trigger: none
 schedules:
 - cron: "0 3 * * *"
   branches:
-      include: master
+    include: [ master ] 
   displayName: M-F 7:00PM (UTC - 8:00) Pacific daily build
   always: true
 
