@@ -20,7 +20,6 @@ stages:
         # # Login to Azure 
         # echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
         # az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
-      workingDirectory: '$(modulePath)'
       displayName: 'Azure CLI Setup'
     - task: DownloadPipelineArtifact@2
       inputs:
