@@ -19,10 +19,12 @@ stages:
     steps:
     - script: |
         # Install the extension
+        export AZURE_DEVOPS_EXT_PAT=$(AZDO_PAT)
         az extension add --name azure-devops
         # Login to Azure 
         echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
         az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
+        echo "Attempting to list repos:"
         az repos list --org https://dev.azure.com/abrig -p spk
       displayName: 'Azure CLI Setup'
     - task: DownloadPipelineArtifact@2
