@@ -122,67 +122,52 @@ export const validateTemplateSource = async (
 export const validateRemoteSource = async (
   definitionJSON: string[]
 ): Promise<boolean> => {
+  const [source, template, version] = definitionJSON;
+  // Converting source name to storable folder name
+  const httpReg = /^(.*?)\.com/;
+  const punctuationReg = /[^\w\s]/g;
+  let sourceFolder = source.replace(httpReg, "");
+  sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
+  const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+  logger.warn(`Converted to: ${sourceFolder}`);
+  logger.info(`Checking if source:${sourcePath} is stored locally.`);
+  if (!fs.existsSync(sourcePath)) {
+    logger.warn(
+      `Provided source template folder was not found, attempting to clone the template source repo locally.`
+    );
+    fs.mkdirSync(sourcePath);
+  } else {
+    logger.info(
+      `Source template folder found. Checking remote existence of remote repository`
+    );
+  }
+  // Checking for git remote
   try {
-    const [source, template, version] = definitionJSON;
-    // Converting source name to storable folder name
-    const httpReg = /^(.*?)\.com/;
-    const punctuationReg = /[^\w\s]/g;
-    let sourceFolder = source.replace(httpReg, "");
-    sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
-    const sourcePath = path.join(spkTemplatesPath, sourceFolder);
-    logger.warn(`Converted to: ${sourceFolder}`);
-    logger.info(`Checking if source:${sourcePath} is stored locally.`);
-    if (!fs.existsSync(sourcePath)) {
-      logger.warn(
-        `Provided source template folder was not found, attempting to clone the template source repo locally.`
+    const result = await simpleGit(sourcePath).listRemote([source]);
+    if (!result) {
+      logger.error(
+        `Unable to clone the source remote repository. Does the remote repo exist? Do you have the rights to access it? ${result}`
       );
-      fs.mkdirSync(sourcePath);
+      return false;
     } else {
       logger.info(
-        `Source template folder found. Checking remote existence of remote repository`
+        `Checking if source repo: ${source} has been already cloned to: ${sourcePath}.`
       );
-    }
-    // Checking for git remote
-    require("simple-git")(sourcePath).listRemote(
-      [source],
-      (err: any, result: any) => {
-        if (err) {
-          logger.error(
-            `There was an error checking the remote source repository: ${err}`
-          );
-          return false;
-        } else {
-          if (!result) {
-            logger.error(
-              `Unable to clone the source remote repository. Does the remote repo exist? Do you have the rights to access it? ${result}`
-            );
-            return false;
-          } else {
-            logger.info(
-              `Checking if source repo: ${source} has been already cloned to: ${sourcePath}.`
-            );
-            require("simple-git")(sourcePath).revparse(
-              ["--is-inside-work-tree"],
-              (err2: any, result2: any) => {
-                if (result2) {
-                  logger.info(
-                    `Remote repo: ${source} exists in folder ${sourcePath}`
-                  );
-                } else {
-                  logger.info(
-                    `Cloning remote repo: ${source} into local folder ${sourcePath}`
-                  );
-                  git.clone(source, `${sourcePath}`);
-                }
-              }
-            );
-          }
-        }
+      const result2 = await simpleGit(sourcePath).revparse([
+        "--is-inside-work-tree"
+      ]);
+      if (result2) {
+        logger.info(`Remote repo: ${source} exists in folder ${sourcePath}`);
+      } else {
+        logger.info(
+          `Cloning remote repo: ${source} into local folder ${sourcePath}`
+        );
+        git.clone(source, `${sourcePath}`);
       }
-    );
-  } catch (_) {
+    }
+  } catch (err) {
     logger.error(
-      `Unable to validate project folder definition.json file. Is it malformed?`
+      `There was an error checking the remote source repository: ${err}`
     );
     return false;
   }
