@@ -50,11 +50,7 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
           }
           for (const file of files) {
             if (file !== "defintion.json") {
-              fs.unlink(path.join(opts.name, file), err => {
-                if (err) {
-                  throw err;
-                }
-              });
+              fs.unlinkSync(path.join(opts.name, file));
             }
           }
         });
