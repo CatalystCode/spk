@@ -11,9 +11,9 @@ variables:
 - group: 'spk-vg'  
 
 stages:
-- stage: env_setup
+- stage: integration_tests
   jobs:
-  - job: "download_spk_artifact"
+  - job: "setup_env_and_run_tests"
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
@@ -47,55 +47,22 @@ stages:
         alias spk="$(pwd)/spk-linux"
         spk --version
       displayName: "Verify SPK downloaded and executable"
-
-  # - job: "run_tests"
-  #   dependsOn: download_spk_artifact
-  #   condition: succeeded('download_spk_artifact')
-  #   steps:
-    - script: |
-        validate_service () {
-            echo "Checking directory `$1`" 
-            # local gitignore=".gitignore"
-            # local yaml="azure-pipelines.yaml"
-            # local dockerfile="Dockerfile"
-            local files=( ".gitignore" "azure-pipelines.yaml" "Dockerfile" )
-            for i in "${files[@]}"
-            do
-                : 
-                currentFile="$1/$i"
-                echo "Current file: $currentFile"
-                if [ ! -f $currentFile ]; then
-                    echo "The file `$i` does not exist in directory `$1`"
-                    exit 1
-                fi
-            done
-        }
-        shopt -s expand_aliases
-        alias spk="$(pwd)/spk-linux"
-        export PLAYGROUND_DIR="$(System.DefaultWorkingDirectory)/playground"
-        echo "Running from $(pwd)"
-
-        if [ -d "$PLAYGROUND_DIR"  ]; then rm -Rf $PLAYGROUND_DIR; fi
-
-        if [ ! -d "$PLAYGROUND_DIR" ]; then
-          echo "PLAYGROUND_DIR does not exist"
-          mkdir $PLAYGROUND_DIR
-          echo "PLAYGROUND_DIR created"
-        fi
-        cd $PLAYGROUND_DIR
-        spk --version
-        export FrontEnd=Fabrikam.Acme.FrontEnd
-        export BackEnd=Fabrikam.Acme.BackEnd
-        export services_dir=services
-
-        mkdir test-mono-repo
-        cd test-mono-repo
-
-        mkdir $services_dir
-        spk project init -m -d $services_dir
-
-        spk service create $FrontEnd -d $services_dir
-        validate_service "$PLAYGROUND_DIR/test-mono-repo/$services_dir/$FrontEnd"
+    - bash: |
+        curl $FUNC_SCRIPT > spk-test-func.sh
+        chmod +x ./spk-test-func.sh
+        curl $TEST_SCRIPT > spk-int.sh
+        chmod +x ./spk-int.sh
+      displayName: "Download integration test scripts"
+      env:
+        FUNC_SCRIPT: https://gist.githubusercontent.com/andrebriggs/4246ae4a0287c5b2a2a4e35de90e0f6a/raw/bed205d961b14290d2147170ddd7e177483127e9/spk-test-func.sh
+        TEST_SCRIPT: https://gist.githubusercontent.com/andrebriggs/1d538e95beb2e647ecab8ef6abb0ba7c/raw/2b5ba12b14400cda508e878eebe784ab3838230d/spk-int.sh
+    - script: | 
+        export SPK_PATH="$(pwd)/spk-linux"
+        export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
+        # AZDO_PROJECT="${AZDO_PROJECT:-"spk"}"
+        # AZDO_ORG="${AZDO_ORG:-"abrig"}"
+        # AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/abrig"}"
+        sh ./spk-int.sh
         echo "Validated!"
-      displayName: "CREATING DIR"
+      displayName: "Run Tests"
 
