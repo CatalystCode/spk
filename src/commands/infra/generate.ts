@@ -67,15 +67,16 @@ export const validateDefinition = async (
     }
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
-        `Provided project path for generate is invalid or definition.json can not be found: ${projectPath}`
+        `Provided project path for generate is invalid or definition.json cannot be found: ${projectPath}`
       );
       return false;
     }
     logger.info(
       `Project folder found. Extracting information from definition.json files.`
     );
-  } catch (_) {
+  } catch (err) {
     logger.error(`Unable to validate project folder path.`);
+    logger.error(err);
     return false;
   }
   return true;
