@@ -87,7 +87,6 @@ describe("Validate spk.tfvars file", () => {
       mockProjectPath,
       mockProjectPath
     );
-    expect(generateTfvars).toBe(true);
     const data = fs.readFileSync(
       path.join(mockProjectPath, "spk.tfvars"),
       "utf-8"

@@ -129,6 +129,7 @@ export const validateRemoteSource = async (
   const httpReg = /^(.*?)\.com/;
   const punctuationReg = /[^\w\s]/g;
   let sourceFolder = source.replace(httpReg, "");
+  logger.info(`Version: ${version}`);
   sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
   const sourcePath = path.join(spkTemplatesPath, sourceFolder);
   // logger.warn(`Converted to: ${sourceFolder}`);
@@ -226,7 +227,7 @@ export const parseDefinitionJson = async (projectPath: string) => {
 export const generateSpkTfvars = async (
   projectPath: string,
   generatedPath: string
-): Promise<boolean> => {
+) => {
   try {
     // Remove existing spk.tfvars if it already exists
     if (fs.existsSync(path.join(generatedPath, "spk.tfvars"))) {
@@ -253,10 +254,8 @@ export const generateSpkTfvars = async (
         newTfVar + "\n"
       );
     });
-    return true;
   } catch (err) {
     logger.error(err);
-    return false;
   }
 };
 
