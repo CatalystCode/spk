@@ -17,17 +17,17 @@ stages:
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
-    - script: |
-        # Install the extension
-        export AZURE_DEVOPS_EXT_PAT=$(AZDO_PAT)
-        az extension add --name azure-devops
+    # - script: |
+    #     # Install the extension
+    #     export AZURE_DEVOPS_EXT_PAT=$(AZDO_PAT)
+    #     az extension add --name azure-devops
         
-        # Login to Azure 
-        echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
-        az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
-        echo "Attempting to list repos:"
-        az repos list --org https://dev.azure.com/abrig -p spk
-      displayName: 'Azure CLI Setup'
+    #     # Login to Azure 
+    #     echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
+    #     az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
+    #     echo "Attempting to list repos:"
+    #     az repos list --org https://dev.azure.com/abrig -p spk
+    #   displayName: 'Azure CLI Setup'
     - task: DownloadPipelineArtifact@2
       inputs:
         buildType: 'specific'
@@ -58,6 +58,18 @@ stages:
         FUNC_SCRIPT: https://gist.githubusercontent.com/andrebriggs/4246ae4a0287c5b2a2a4e35de90e0f6a/raw/ed7296ba6f260c8bdc067e451f18c2b7ca3b08a0/spk-test-func.sh
         TEST_SCRIPT: https://gist.githubusercontent.com/andrebriggs/1d538e95beb2e647ecab8ef6abb0ba7c/raw/88c1cb137cab5d72f43392b645b928614b6048fd/spk-int.sh
     - bash: | 
+
+        # Install the extension
+        export AZURE_DEVOPS_EXT_PAT=$(AZDO_PAT)
+        az extension add --name azure-devops
+        
+        # Login to Azure 
+        echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
+        az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
+        echo "Attempting to list repos:"
+        az repos list --org https://dev.azure.com/abrig -p spk
+        
+        #Start TEst
         export SPK_PATH="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
         # AZDO_PROJECT="${AZDO_PROJECT:-"spk"}"
