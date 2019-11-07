@@ -56,7 +56,7 @@ stages:
       displayName: "Download integration test scripts"
       env:
         FUNC_SCRIPT: https://gist.githubusercontent.com/andrebriggs/4246ae4a0287c5b2a2a4e35de90e0f6a/raw/ed7296ba6f260c8bdc067e451f18c2b7ca3b08a0/spk-test-func.sh
-        TEST_SCRIPT: https://gist.githubusercontent.com/andrebriggs/1d538e95beb2e647ecab8ef6abb0ba7c/raw/c04e265c8bdbf26451b2fe506ca0b79d4d61b6cf/spk-int.sh
+        TEST_SCRIPT: https://gist.githubusercontent.com/andrebriggs/1d538e95beb2e647ecab8ef6abb0ba7c/raw/197dae727e331e451ba074eb8addadb56354a0b6/spk-int.sh
     - script: | 
         export SPK_PATH="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
@@ -64,6 +64,7 @@ stages:
         # AZDO_ORG="${AZDO_ORG:-"abrig"}"
         # AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/abrig"}"
         ls -l
+        . ./spk-test-func.sh
         sh ./spk-int.sh
         echo "Validated!"
       displayName: "Run Tests"
