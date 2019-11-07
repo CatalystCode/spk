@@ -52,7 +52,6 @@ stages:
         chmod +x ./spk-test-func.sh
         curl $TEST_SCRIPT > spk-int.sh
         chmod +x ./spk-int.sh
-        echo $(pwd)
         ls -l
       displayName: "Download integration test scripts"
       env:
@@ -64,6 +63,7 @@ stages:
         # AZDO_PROJECT="${AZDO_PROJECT:-"spk"}"
         # AZDO_ORG="${AZDO_ORG:-"abrig"}"
         # AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/abrig"}"
+        ls -l
         sh ./spk-int.sh
         echo "Validated!"
       displayName: "Run Tests"
