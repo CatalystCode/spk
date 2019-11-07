@@ -63,11 +63,7 @@ export const validateDefinition = async (
   try {
     // If templates folder does not exist, create cache templates directory
     if (!fs.existsSync(spkTemplatesPath)) {
-      fs.mkdir(spkTemplatesPath, err => {
-        if (err) {
-          logger.error(err);
-        }
-      });
+      fs.mkdirSync(spkTemplatesPath);
     }
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
