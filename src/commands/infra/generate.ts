@@ -75,8 +75,7 @@ export const validateDefinition = async (
       `Project folder found. Extracting information from definition.json files.`
     );
   } catch (err) {
-    logger.error(`Unable to validate project folder path.`);
-    logger.error(err);
+    logger.error(`Unable to validate project folder path: Error: ${err}`);
     return false;
   }
   return true;
