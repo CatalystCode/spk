@@ -69,6 +69,10 @@ stages:
         echo "Attempting to list repos:"
         az repos list --org https://dev.azure.com/abrig -p spk
         
+        # Step up git identity
+        git config --global user.email "me@microsoft.com"
+        git config --global user.name "Service Account"
+        
         #Start TEst
         export SPK_PATH="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
