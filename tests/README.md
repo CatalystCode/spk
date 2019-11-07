@@ -1,7 +1,13 @@
 # Integration Testing SPK
+ 
+This directory contains shell scripts that execute on a build agent and run `spk` commands. An [Azure DevOps pipeline yaml](../smoke-test-pipeline.yml) file scheduled the run of these tests. The yaml file orchestrates the download the lastest master branch build artifact of `spk` on a daily basis and running smoke tests.  
 
-# What 
-This directory contains shell scripts that execute on a build agent and run `spk` commands. An Azure DevOps pipeline yaml file scheduled the run of these tests. The yaml file orchestrates the download the lastest master branch build artifact of `spk` on a deaily basis and running smoke tests.  
+`validations.sh`
+- This files orchestrations the scenarios and is designed to fail on first error
+
+`functions.sh`
+- This file is has simple functions that are reused by `validations.sh`
+
 
 # Scenarios Exercised So Far
 - As a developer create a mono-repo and add services
