@@ -56,7 +56,7 @@ stages:
       displayName: "Download integration test scripts"
       env:
         FUNC_SCRIPT: https://gist.githubusercontent.com/andrebriggs/4246ae4a0287c5b2a2a4e35de90e0f6a/raw/ed7296ba6f260c8bdc067e451f18c2b7ca3b08a0/spk-test-func.sh
-        TEST_SCRIPT: https://gist.githubusercontent.com/andrebriggs/1d538e95beb2e647ecab8ef6abb0ba7c/raw/197dae727e331e451ba074eb8addadb56354a0b6/spk-int.sh
+        TEST_SCRIPT: https://gist.githubusercontent.com/andrebriggs/1d538e95beb2e647ecab8ef6abb0ba7c/raw/4ee90a0055ff115872cace1da66af7d4973da9ff/spk-int.sh
     - bash: | 
         export SPK_PATH="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
