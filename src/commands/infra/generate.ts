@@ -139,7 +139,11 @@ export const validateRemoteSource = async (
       logger.warn(
         `Provided source in template directory was not found, attempting to clone the template source repo locally.`
       );
-      fs.mkdirSync(sourcePath);
+      fs.mkdir(sourcePath, err => {
+        if (err) {
+          logger.error(err);
+        }
+      });
     } else {
       logger.info(
         `Source template folder found. Validating existence of repository.`
