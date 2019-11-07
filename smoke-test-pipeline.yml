@@ -51,8 +51,6 @@ stages:
         # Login to Azure 
         echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
         az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
-        # echo "Attempting to list repos:"
-        # az repos list --org https://dev.azure.com/abrig -p spk
         
         # Step up git identity
         git config --global user.email "me@microsoft.com"
@@ -61,9 +59,6 @@ stages:
         #Start Test
         export SPK_PATH="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
-        # AZDO_PROJECT="${AZDO_PROJECT:-"spk"}"
-        # AZDO_ORG="${AZDO_ORG:-"abrig"}"
-        # AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/abrig"}"
 
         # Include the functions here
         . ./spk-test-func.sh
