@@ -52,6 +52,8 @@ stages:
         chmod +x ./spk-test-func.sh
         curl $TEST_SCRIPT > spk-int.sh
         chmod +x ./spk-int.sh
+        echo $(pwd)
+        ls -l
       displayName: "Download integration test scripts"
       env:
         FUNC_SCRIPT: https://gist.githubusercontent.com/andrebriggs/4246ae4a0287c5b2a2a4e35de90e0f6a/raw/bed205d961b14290d2147170ddd7e177483127e9/spk-test-func.sh
