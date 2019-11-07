@@ -7,7 +7,7 @@ import simpleGit from "simple-git/promise";
 import { logger } from "../../logger";
 import { copyTfTemplate } from "./scaffold";
 
-const spkTemplatesPath = os.homedir() + "/.spk/templates";
+const spkTemplatesPath = path.join(os.homedir(), ".spk/templates");
 const git = simpleGit();
 
 /**
@@ -63,7 +63,11 @@ export const validateDefinition = async (
   try {
     // If templates folder does not exist, create cache templates directory
     if (!fs.existsSync(spkTemplatesPath)) {
-      fs.mkdirSync(spkTemplatesPath);
+      fs.mkdir(spkTemplatesPath, err => {
+        if (err) {
+          logger.error(err);
+        }
+      });
     }
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
@@ -169,6 +173,7 @@ export const validateRemoteSource = async (
         );
         git.clone(source, `${sourcePath}`);
       }
+      // Checkout tagged version
     }
   } catch (err) {
     logger.error(
