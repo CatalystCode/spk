@@ -71,7 +71,7 @@ stages:
         # Run the test
         bash ./spk-int.sh
         status=$?
-        [ $status -eq 0 ] && echo "Test Done!" || echo "Test had issues" && exit 1
+        [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
         
       #failOnStderr: true
       displayName: "Run Tests"
