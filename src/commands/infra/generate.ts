@@ -1,11 +1,11 @@
-import child_process from "child_process";
-import { getMaxListeners } from "cluster";
 import commander from "commander";
 import fs, { chmod } from "fs";
+import mkdirp from "mkdirp";
 import * as os from "os";
 import path from "path";
 import simpleGit from "simple-git/promise";
 import { logger } from "../../logger";
+import { copyTfTemplate } from "./scaffold";
 
 const spkTemplatesPath = os.homedir() + "/.spk/templates";
 const git = simpleGit();
@@ -39,6 +39,10 @@ export const generateCommandDecorator = (command: commander.Command): void => {
         await validateDefinition(opts.project);
         const jsonSource = await validateTemplateSource(opts.project);
         await validateRemoteSource(jsonSource);
+        const generatedDir = await createGenerated(opts.project);
+        const templatePath = await parseDefinitionJson(opts.project);
+        await copyTfTemplate(templatePath, generatedDir);
+        await generateSpkTfvars(opts.project, generatedDir);
       } catch (err) {
         logger.error(
           "Error occurred while generating project deployment files"
@@ -68,7 +72,7 @@ export const validateDefinition = async (
       return false;
     }
     logger.info(
-      `Project folder found. Attempting to generate definition.json file.`
+      `Project folder found. Extracting information from definition.json files.`
     );
   } catch (_) {
     logger.error(`Unable to validate project folder path.`);
@@ -86,9 +90,7 @@ export const validateTemplateSource = async (
   projectPath: string
 ): Promise<string[]> => {
   try {
-    const rootDef = path.join(projectPath, "definition.json");
-    const data: string = fs.readFileSync(rootDef, "utf8");
-    const definitionJSON = JSON.parse(data);
+    const definitionJSON = await readDefinitionJson(projectPath);
     // TO DO : Check for malformed JSON
     if (!(definitionJSON.template && definitionJSON.source)) {
       logger.info(
@@ -129,17 +131,17 @@ export const validateRemoteSource = async (
   let sourceFolder = source.replace(httpReg, "");
   sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
   const sourcePath = path.join(spkTemplatesPath, sourceFolder);
-  logger.warn(`Converted to: ${sourceFolder}`);
-  logger.info(`Checking if source:${sourcePath} is stored locally.`);
+  // logger.warn(`Converted to: ${sourceFolder}`);
+  // logger.info(`Checking if source: ${sourcePath} is stored locally.`);
   try {
     if (!fs.existsSync(sourcePath)) {
       logger.warn(
-        `Provided source template folder was not found, attempting to clone the template source repo locally.`
+        `Provided source in template directory was not found, attempting to clone the template source repo locally.`
       );
       fs.mkdirSync(sourcePath);
     } else {
       logger.info(
-        `Source template folder found. Checking remote existence of remote repository`
+        `Source template folder found. Validating existence of repository.`
       );
     }
     // Checking for git remote
@@ -158,7 +160,7 @@ export const validateRemoteSource = async (
       const result2 = await simpleGit(sourcePath).revparse([
         "--is-inside-work-tree"
       ]);
-      if (!result2) {
+      if (result2) {
         logger.info(`Remote repo: ${source} exists in folder ${sourcePath}`);
       } else {
         logger.info(
@@ -174,4 +176,98 @@ export const validateRemoteSource = async (
     return false;
   }
   return true;
+};
+
+/**
+ * Creates "generated" directory if it does not already exists
+ *
+ * @param projectPath Path to the definition.json file
+ */
+export const createGenerated = async (projectPath: string) => {
+  const newGeneratedPath = projectPath + "-generated";
+  mkdirp(newGeneratedPath, err => {
+    if (err) {
+      logger.error(`An problem occured when creating a generated direcotry`);
+      logger.error(err);
+    }
+    logger.info(`Created generated directory: ${newGeneratedPath}`);
+  });
+  return newGeneratedPath;
+};
+
+/**
+ * Parses the definition.json file and copies the appropriate template
+ * to "-generated" directory
+ *
+ * @param projectPath Path to the definition.json file
+ * @param generatedPath Path to the generated directory
+ */
+export const parseDefinitionJson = async (projectPath: string) => {
+  const definitionJSON = await readDefinitionJson(projectPath);
+  const source = definitionJSON.source;
+  const httpReg = /^(.*?)\.com/;
+  const punctuationReg = /[^\w\s]/g;
+  let sourceFolder = source.replace(httpReg, "");
+  sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
+  const templatePath = path.join(
+    spkTemplatesPath,
+    sourceFolder,
+    definitionJSON.template
+  );
+  return templatePath;
+};
+
+/**
+ * Creates a spk.tfvars in "-generated" directory
+ *
+ * @param projectPath Path to the definition.json file
+ * @param generatedPath Path to the generated directory
+ */
+export const generateSpkTfvars = async (
+  projectPath: string,
+  generatedPath: string
+): Promise<boolean> => {
+  try {
+    // Remove existing spk.tfvars if it already exists
+    if (fs.existsSync(path.join(generatedPath, "spk.tfvars"))) {
+      fs.unlinkSync(path.join(generatedPath, "spk.tfvars"));
+    }
+    // Parse definition.json and extract "variables"
+    const definitionJSON = await readDefinitionJson(projectPath);
+    const variables = definitionJSON.variables;
+    // Restructure the format of variables text
+    const tfVariables = JSON.stringify(variables)
+      .replace(/\:/g, "=")
+      .replace(/\{|\}/g, "")
+      .replace(/\,/g, "\n")
+      .split("\n");
+    // (re)Create spk.tfvars
+    tfVariables.forEach(t => {
+      const tfVar = t.split("=");
+      if (tfVar[0].length > 0) {
+        tfVar[0] = tfVar[0].replace(/\"/g, "");
+      }
+      const newTfVar = tfVar.join(" = ");
+      fs.appendFileSync(
+        path.join(generatedPath, "spk.tfvars"),
+        newTfVar + "\n"
+      );
+    });
+    return true;
+  } catch (err) {
+    logger.error(err);
+    return false;
+  }
+};
+
+/**
+ * Reads a definition.json and returns a JSON object
+ *
+ * @param projectPath Path to the definition.json file
+ */
+export const readDefinitionJson = async (projectPath: string) => {
+  const rootDef = path.join(projectPath, "definition.json");
+  const data: string = fs.readFileSync(rootDef, "utf8");
+  const definitionJSON = JSON.parse(data);
+  return definitionJSON;
 };

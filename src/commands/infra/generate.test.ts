@@ -7,6 +7,8 @@ import {
   logger
 } from "../../logger";
 import {
+  generateSpkTfvars,
+  parseDefinitionJson,
   validateDefinition,
   validateRemoteSource,
   validateTemplateSource
@@ -65,5 +67,33 @@ describe("Validate cloning of a remote repo from source", () => {
     ];
     expect(await validateRemoteSource(testValues)).toBe(true);
     // Need improved tests to check cloned repo
+  });
+});
+
+describe("Validate template path from a definition.json", () => {
+  test("Validating that generate can extract a path from a definition.json file", async () => {
+    const mockProjectPath = "src/commands/infra/mocks";
+    const templatePath = await parseDefinitionJson(mockProjectPath);
+    expect(templatePath).toContain(
+      "_microsoft_bedrock_git/cluster/environments/azure-single-keyvault"
+    );
+  });
+});
+
+describe("Validate spk.tfvars file", () => {
+  test("Validating that a spk.tfvars is generated and has appropriate format", async () => {
+    const mockProjectPath = "src/commands/infra/mocks";
+    const generateTfvars = await generateSpkTfvars(
+      mockProjectPath,
+      mockProjectPath
+    );
+    expect(generateTfvars).toBe(true);
+    const data = fs.readFileSync(
+      path.join(mockProjectPath, "spk.tfvars"),
+      "utf-8"
+    );
+    logger.info(data);
+    expect(data).toContain('gitops_poll_interval = "5m"');
+    fs.unlinkSync(path.join(mockProjectPath, "spk.tfvars"));
   });
 });

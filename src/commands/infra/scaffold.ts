@@ -1,6 +1,8 @@
+import child_process, { exec } from "child_process";
 import commander from "commander";
 import fs, { chmod } from "fs";
 import fsextra, { readdir } from "fs-extra";
+import * as os from "os";
 import path from "path";
 import { logger } from "../../logger";
 
@@ -39,12 +41,58 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
         await copyTfTemplate(opts.template, opts.name);
         await validateVariablesTf(path.join(opts.template, "variables.tf"));
         await scaffold(opts.name, opts.source, opts.version, opts.template);
-        await renameTfvars(opts.name);
+        // await renameTfvars(opts.name);
+
+        // Remove template files after parsing
+        fs.readdir(opts.name, (err, files) => {
+          if (err) {
+            throw err;
+          }
+          for (const file of files) {
+            if (file !== "defintion.json") {
+              fs.unlink(path.join(opts.name, file), err => {
+                if (err) {
+                  throw err;
+                }
+              });
+            }
+          }
+        });
       } catch (err) {
         logger.error("Error occurred while generating scaffold");
         logger.error(err);
       }
     });
+};
+
+/**
+ * Clones source repository to ~/.spk/infra directory
+ *
+ * @param source the git url of a source repo
+ * @param name the name of the project, provided by "--name"
+ * @param version the tag of a source repo, defaults to master
+ */
+export const gitCloneSource = async (
+  source: string,
+  name: string,
+  version: string
+): Promise<boolean> => {
+  const spkDir = os.homedir() + "/.spk";
+  child_process.exec(`git clone ${source} ${spkDir}/infra/${name}`, error => {
+    if (error) {
+      logger.error("There was a problem cloning source repository.");
+      logger.error(error);
+      return false;
+    }
+  });
+  child_process.exec(`git checkout tags/${version}`, error => {
+    if (error) {
+      logger.error("The version provided is invalid.");
+      logger.error(error);
+      return false;
+    }
+  });
+  return true;
 };
 
 /**
@@ -120,7 +168,7 @@ export const copyTfTemplate = async (
 ): Promise<boolean> => {
   try {
     await fsextra.copy(templatePath, envName);
-    logger.info(`Terraform template files copied.`);
+    logger.info(`Terraform template files copied from ${templatePath}`);
   } catch (err) {
     logger.error(
       `Unable to find Terraform environment. Please check template path.`
