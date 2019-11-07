@@ -58,7 +58,12 @@ describe("Validate cloning of a remote repo from source", () => {
     const rootDef = path.join(mockProjectPath, "definition.json");
     const data: string = fs.readFileSync(rootDef, "utf8");
     const definitionJSON = JSON.parse(data);
-    expect(await validateRemoteSource(definitionJSON.source)).toBe(true);
+    const testValues = [
+      definitionJSON.source,
+      definitionJSON.template,
+      definitionJSON.version
+    ];
+    expect(await validateRemoteSource(testValues)).toBe(true);
     // Need improved tests to check cloned repo
   });
 });

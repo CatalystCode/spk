@@ -131,18 +131,18 @@ export const validateRemoteSource = async (
   const sourcePath = path.join(spkTemplatesPath, sourceFolder);
   logger.warn(`Converted to: ${sourceFolder}`);
   logger.info(`Checking if source:${sourcePath} is stored locally.`);
-  if (!fs.existsSync(sourcePath)) {
-    logger.warn(
-      `Provided source template folder was not found, attempting to clone the template source repo locally.`
-    );
-    fs.mkdirSync(sourcePath);
-  } else {
-    logger.info(
-      `Source template folder found. Checking remote existence of remote repository`
-    );
-  }
-  // Checking for git remote
   try {
+    if (!fs.existsSync(sourcePath)) {
+      logger.warn(
+        `Provided source template folder was not found, attempting to clone the template source repo locally.`
+      );
+      fs.mkdirSync(sourcePath);
+    } else {
+      logger.info(
+        `Source template folder found. Checking remote existence of remote repository`
+      );
+    }
+    // Checking for git remote
     const result = await simpleGit(sourcePath).listRemote([source]);
     if (!result) {
       logger.error(
@@ -150,13 +150,15 @@ export const validateRemoteSource = async (
       );
       return false;
     } else {
+      logger.info(`Remote source repo: ${source} exists.`);
       logger.info(
         `Checking if source repo: ${source} has been already cloned to: ${sourcePath}.`
       );
+      const init = await simpleGit(sourcePath).init();
       const result2 = await simpleGit(sourcePath).revparse([
         "--is-inside-work-tree"
       ]);
-      if (result2) {
+      if (!result2) {
         logger.info(`Remote repo: ${source} exists in folder ${sourcePath}`);
       } else {
         logger.info(

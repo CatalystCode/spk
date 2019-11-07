@@ -148,4 +148,4 @@ It will do the following (**In Progress**):
   `~/.spk/templates`
   > Cached repositories will be converted through regex for spk to hash. I.e. a
   > `source` template of `https://github.com/microsoft/bedrock` will be cached
-  > into a folder called `_microsoft_bedrock`
+  > into a folder called `_microsoft_bedrock_git`
