@@ -70,8 +70,8 @@ stages:
 
         # Run the test
         bash ./spk-int.sh
-        
-        echo "Validated!"
-      failOnStderr: true
+        status=$?
+        [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
+      #failOnStderr: true
       displayName: "Run Tests"
 
