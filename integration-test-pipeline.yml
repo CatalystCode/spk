@@ -65,7 +65,7 @@ stages:
         # AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/abrig"}"
         ls -l
         . ./spk-test-func.sh
-        sh ./spk-int.sh
+        bash ./spk-int.sh
         echo "Validated!"
       displayName: "Run Tests"
 
