@@ -41,19 +41,7 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
         await copyTfTemplate(opts.template, opts.name);
         await validateVariablesTf(path.join(opts.template, "variables.tf"));
         await scaffold(opts.name, opts.source, opts.version, opts.template);
-        // await renameTfvars(opts.name);
-
-        // Remove template files after parsing
-        fs.readdir(opts.name, (err, files) => {
-          if (err) {
-            throw err;
-          }
-          for (const file of files) {
-            if (file !== "defintion.json") {
-              fs.unlinkSync(path.join(opts.name, file));
-            }
-          }
-        });
+        await removeTemplateFiles(opts.name);
       } catch (err) {
         logger.error("Error occurred while generating scaffold");
         logger.error(err);
@@ -143,6 +131,25 @@ export const copyTfTemplate = async (
     return false;
   }
   return true;
+};
+
+/**
+ * Removes the Terraform environment template
+ *
+ * @param envPath path so the directory of Terraform templates
+ */
+export const removeTemplateFiles = async (envPath: string): Promise<void> => {
+  // Remove template files after parsing
+  fs.readdir(envPath, (err, files) => {
+    if (err) {
+      throw err;
+    }
+    for (const file of files) {
+      if (file !== "definition.json") {
+        fs.unlinkSync(path.join(envPath, file));
+      }
+    }
+  });
 };
 
 /**

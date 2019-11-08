@@ -91,7 +91,6 @@ describe("Validate spk.tfvars file", () => {
       path.join(mockProjectPath, "spk.tfvars"),
       "utf-8"
     );
-    logger.info(data);
     expect(data).toContain('gitops_poll_interval = "5m"');
     fs.unlinkSync(path.join(mockProjectPath, "spk.tfvars"));
   });

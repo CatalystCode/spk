@@ -73,7 +73,7 @@ export const validateDefinition = async (
       `Project folder found. Extracting information from definition.json files.`
     );
   } catch (err) {
-    logger.error(`Unable to validate project folder path: Error: ${err}`);
+    logger.error(`Unable to validate project folder path: ${err}`);
     return false;
   }
   return true;
@@ -156,7 +156,6 @@ export const validateRemoteSource = async (
       // Check if .git folder exists in ${sourcePath}, if not, then clone
       // if already cloned, 'git pull'
       if (fs.existsSync(path.join(sourcePath, ".git"))) {
-        // simpleGit(sourcePath).checkout('master')
         await simpleGit(sourcePath).pull("origin", "master");
         logger.info(`${source} already cloned. Performing 'git pull'...`);
       } else {
@@ -181,16 +180,17 @@ export const validateRemoteSource = async (
  *
  * @param projectPath Path to the definition.json file
  */
-export const createGenerated = async (projectPath: string) => {
-  const newGeneratedPath = projectPath + "-generated";
-  mkdirp(newGeneratedPath, err => {
-    if (err) {
-      logger.error(`An problem occured when creating a generated direcotry`);
-      logger.error(err);
-    }
+export const createGenerated = async (projectPath: string): Promise<string> => {
+  try {
+    const newGeneratedPath = projectPath + "-generated";
+    mkdirp.sync(newGeneratedPath);
     logger.info(`Created generated directory: ${newGeneratedPath}`);
-  });
-  return newGeneratedPath;
+    return newGeneratedPath;
+  } catch (err) {
+    logger.error(`There was a problem creating the generated directory`);
+    logger.error(err);
+    return "";
+  }
 };
 
 /**
@@ -216,10 +216,19 @@ export const parseDefinitionJson = async (projectPath: string) => {
 };
 
 /**
- * Creates a spk.tfvars in "-generated" directory
+ *
+ * Takes in the "variables" block from definition.json file and returns
+ * a spk.tfvars file.
  *
  * @param projectPath Path to the definition.json file
  * @param generatedPath Path to the generated directory
+ *
+ * Regex will replace ":" with "=", and remove double quotes around
+ * each key to resemble:
+ *
+ * key = "value"
+ *
+ *
  */
 export const generateSpkTfvars = async (
   projectPath: string,
