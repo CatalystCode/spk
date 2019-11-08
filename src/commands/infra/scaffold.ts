@@ -62,36 +62,6 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
 };
 
 /**
- * Clones source repository to ~/.spk/infra directory
- *
- * @param source the git url of a source repo
- * @param name the name of the project, provided by "--name"
- * @param version the tag of a source repo, defaults to master
- */
-export const gitCloneSource = async (
-  source: string,
-  name: string,
-  version: string
-): Promise<boolean> => {
-  const spkDir = os.homedir() + "/.spk";
-  child_process.exec(`git clone ${source} ${spkDir}/infra/${name}`, error => {
-    if (error) {
-      logger.error("There was a problem cloning source repository.");
-      logger.error(error);
-      return false;
-    }
-  });
-  child_process.exec(`git checkout tags/${version}`, error => {
-    if (error) {
-      logger.error("The version provided is invalid.");
-      logger.error(error);
-      return false;
-    }
-  });
-  return true;
-};
-
-/**
  * Checks if working variables.tf is present
  *
  * @param templatePath Path to the variables.tf file
