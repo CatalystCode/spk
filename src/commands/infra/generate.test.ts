@@ -54,7 +54,7 @@ describe("Validate definition.json contains a source", () => {
   });
 });
 
-describe("Validate cloning of a remote repo from source", () => {
+/* describe("Validate cloning of a remote repo from source", () => {
   test("Validating that a provided project source remote repo is initially cloned into .spk/templates", async () => {
     const mockProjectPath = "src/commands/infra/mocks";
     const rootDef = path.join(mockProjectPath, "definition.json");
@@ -68,7 +68,7 @@ describe("Validate cloning of a remote repo from source", () => {
     expect(await validateRemoteSource(testValues)).toBe(true);
     // Need improved tests to check cloned repo
   });
-});
+}); */
 
 describe("Validate template path from a definition.json", () => {
   test("Validating that generate can extract a path from a definition.json file", async () => {

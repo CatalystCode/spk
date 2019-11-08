@@ -62,15 +62,13 @@ export const validateDefinition = async (
 ): Promise<boolean> => {
   try {
     // If templates folder does not exist, create cache templates directory
-    /*     if (!fs.existsSync(spkTemplatesPath)) {
-      fs.mkdirSync(spkTemplatesPath);
-    } */
-    mkdirp(spkTemplatesPath, err => {
-      if (err) {
-        logger.error(`An problem occured when creating ${spkTemplatesPath}`);
-        logger.error(err);
-      }
-    });
+    if (!fs.existsSync(spkTemplatesPath)) {
+      fs.mkdir(spkTemplatesPath, err => {
+        if (err) {
+          logger.error(err);
+        }
+      });
+    }
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
         `Provided project path for generate is invalid or definition.json cannot be found: ${projectPath}`
@@ -144,12 +142,7 @@ export const validateRemoteSource = async (
       logger.warn(
         `Provided source in template directory was not found, attempting to clone the template source repo locally.`
       );
-      mkdirp(sourcePath, err => {
-        if (err) {
-          logger.error(`An problem occured when creating ${sourcePath}`);
-          logger.error(err);
-        }
-      });
+      fs.mkdirSync(sourcePath);
     } else {
       logger.info(
         `Source template folder found. Validating existence of repository.`
@@ -180,6 +173,7 @@ export const validateRemoteSource = async (
         git.clone(source, `${sourcePath}`);
       }
       // Checkout tagged version
+      // await simpleGit(sourcePath).checkout()
     }
   } catch (err) {
     logger.error(
