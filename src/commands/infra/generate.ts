@@ -62,13 +62,7 @@ export const validateDefinition = async (
 ): Promise<boolean> => {
   try {
     // If templates folder does not exist, create cache templates directory
-    if (!fs.existsSync(spkTemplatesPath)) {
-      fs.mkdir(spkTemplatesPath, err => {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    mkdirp.sync(spkTemplatesPath);
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
         `Provided project path for generate is invalid or definition.json cannot be found: ${projectPath}`
@@ -132,17 +126,16 @@ export const validateRemoteSource = async (
   const httpReg = /^(.*?)\.com/;
   const punctuationReg = /[^\w\s]/g;
   let sourceFolder = source.replace(httpReg, "");
-  logger.info(`Version: ${version}`);
   sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
   const sourcePath = path.join(spkTemplatesPath, sourceFolder);
-  // logger.warn(`Converted to: ${sourceFolder}`);
-  // logger.info(`Checking if source: ${sourcePath} is stored locally.`);
+  logger.warn(`Converted to: ${sourceFolder}`);
+  logger.info(`Checking if source: ${sourcePath} is stored locally.`);
   try {
     if (!fs.existsSync(sourcePath)) {
       logger.warn(
         `Provided source in template directory was not found, attempting to clone the template source repo locally.`
       );
-      fs.mkdirSync(sourcePath);
+      mkdirp.sync(sourcePath);
     } else {
       logger.info(
         `Source template folder found. Validating existence of repository.`
@@ -160,20 +153,19 @@ export const validateRemoteSource = async (
       logger.info(
         `Checking if source repo: ${source} has been already cloned to: ${sourcePath}.`
       );
-      const init = await simpleGit(sourcePath).init();
-      const result2 = await simpleGit(sourcePath).revparse([
-        "--is-inside-work-tree"
-      ]);
-      if (result2) {
-        logger.info(`Remote repo: ${source} exists in folder ${sourcePath}`);
+      // Check if .git folder exists in ${sourcePath}, if not, then clone
+      // if already cloned, 'git pull'
+      if (fs.existsSync(path.join(sourcePath, ".git"))) {
+        // simpleGit(sourcePath).checkout('master')
+        await simpleGit(sourcePath).pull("origin", "master");
+        logger.info(`${source} already cloned. Performing 'git pull'...`);
       } else {
-        logger.info(
-          `Cloning remote repo: ${source} into local folder ${sourcePath}`
-        );
-        git.clone(source, `${sourcePath}`);
+        await git.clone(source, `${sourcePath}`);
+        logger.info(`Cloning ${source} was successful.`);
       }
       // Checkout tagged version
-      // await simpleGit(sourcePath).checkout()
+      logger.info(`Checking out template version: ${version}`);
+      simpleGit(sourcePath).checkout(version);
     }
   } catch (err) {
     logger.error(

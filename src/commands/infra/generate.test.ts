@@ -1,5 +1,4 @@
 import fs, { chmod } from "fs";
-import * as os from "os";
 import path from "path";
 import {
   disableVerboseLogging,
@@ -54,6 +53,7 @@ describe("Validate definition.json contains a source", () => {
   });
 });
 
+// Work in progress. Could be used in Integration Testing...
 /* describe("Validate cloning of a remote repo from source", () => {
   test("Validating that a provided project source remote repo is initially cloned into .spk/templates", async () => {
     const mockProjectPath = "src/commands/infra/mocks";
