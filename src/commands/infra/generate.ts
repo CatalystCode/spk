@@ -7,7 +7,7 @@ import simpleGit from "simple-git/promise";
 import { logger } from "../../logger";
 import { copyTfTemplate } from "./scaffold";
 
-const spkTemplatesPath = path.join(os.homedir(), ".spk/templates");
+export const spkTemplatesPath = path.join(os.homedir(), ".spk/templates");
 const git = simpleGit();
 
 /**
@@ -80,7 +80,8 @@ export const validateDefinition = async (
 };
 
 /**
- * Checks if working definition.json is present in the provided project path with validated source & version
+ * Checks if working definition.json is present in the provided
+ * project path with validated source & version
  *
  * @param projectPath Path to the definition.json file
  */
@@ -226,7 +227,6 @@ export const parseDefinitionJson = async (projectPath: string) => {
  * each key to resemble:
  *
  * key = "value"
- *
  *
  */
 export const generateSpkTfvars = async (
