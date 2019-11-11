@@ -4,7 +4,8 @@ import fs from "fs";
 import fsextra from "fs-extra";
 import path from "path";
 import { logger } from "../../logger";
-import { spkTemplatesPath, validateRemoteSource } from "./generate";
+import { validateRemoteSource } from "./generate";
+import * as infra_common from "./infra_common";
 
 /**
  * Adds the init command to the commander command object
@@ -39,13 +40,11 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
           );
         }
         const scaffoldDefinition = [opts.source, opts.template, opts.version];
-        const httpReg = /^(.*?)\.com/;
-        const punctuationReg = /[^\w\s]/g;
-        const sourceFolder = opts.source
-          .replace(httpReg, "")
-          .replace(punctuationReg, "_")
-          .toLowerCase();
-        const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+        const sourceFolder = await infra_common.repoCloneRegex(opts.source);
+        const sourcePath = path.join(
+          infra_common.spkTemplatesPath,
+          sourceFolder
+        );
         await validateRemoteSource(scaffoldDefinition);
         await copyTfTemplate(path.join(sourcePath, opts.template), opts.name);
         await validateVariablesTf(

@@ -5,9 +5,9 @@ import * as os from "os";
 import path from "path";
 import simpleGit from "simple-git/promise";
 import { logger } from "../../logger";
+import * as infra_common from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
 
-export const spkTemplatesPath = path.join(os.homedir(), ".spk/templates");
 const git = simpleGit();
 
 /**
@@ -62,7 +62,7 @@ export const validateDefinition = async (
 ): Promise<boolean> => {
   try {
     // If templates folder does not exist, create cache templates directory
-    mkdirp.sync(spkTemplatesPath);
+    mkdirp.sync(infra_common.spkTemplatesPath);
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
         `Provided project path for generate is invalid or definition.json cannot be found: ${projectPath}`
@@ -124,11 +124,8 @@ export const validateRemoteSource = async (
 ): Promise<boolean> => {
   const [source, template, version] = definitionJSON;
   // Converting source name to storable folder name
-  const httpReg = /^(.*?)\.com/;
-  const punctuationReg = /[^\w\s]/g;
-  let sourceFolder = source.replace(httpReg, "");
-  sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
-  const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+  const sourceFolder = await infra_common.repoCloneRegex(source);
+  const sourcePath = path.join(infra_common.spkTemplatesPath, sourceFolder);
   logger.warn(`Converted to: ${sourceFolder}`);
   logger.info(`Checking if source: ${sourcePath} is stored locally.`);
   try {
@@ -208,7 +205,7 @@ export const parseDefinitionJson = async (projectPath: string) => {
   let sourceFolder = source.replace(httpReg, "");
   sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
   const templatePath = path.join(
-    spkTemplatesPath,
+    infra_common.spkTemplatesPath,
     sourceFolder,
     definitionJSON.template
   );
