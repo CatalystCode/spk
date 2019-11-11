@@ -164,7 +164,7 @@ export const validateRemoteSource = async (
       }
       // Checkout tagged version
       logger.info(`Checking out template version: ${version}`);
-      simpleGit(sourcePath).checkout(version);
+      await simpleGit(sourcePath).checkout(version);
     }
   } catch (err) {
     logger.error(
@@ -188,8 +188,7 @@ export const createGenerated = async (projectPath: string): Promise<string> => {
     return newGeneratedPath;
   } catch (err) {
     logger.error(`There was a problem creating the generated directory`);
-    logger.error(err);
-    return "";
+    return err;
   }
 };
 
