@@ -182,6 +182,7 @@ export const generateDirectories = async (
 ): Promise<void> => {
   try {
     // First, search for definition.json in current working directory
+    const templatePath = await parseDefinitionJson(projectPath);
     const files = fs.readdirSync(".");
     const cwdPath = process.cwd();
     files.forEach(async file => {
@@ -216,7 +217,7 @@ export const generateDirectories = async (
         );
         // Generate Terraform files in generated directory
         await generateSpkTfvars(parentDefinitionJSON.variables, childDirectory);
-        const templatePath = await parseDefinitionJson(projectPath);
+        // const templatePath = await parseDefinitionJson(projectPath);
         await copyTfTemplate(templatePath, childDirectory);
       }
     });
@@ -231,7 +232,6 @@ export const generateDirectories = async (
     );
     // Generate Terraform files in generated directory
     await generateSpkTfvars(definitionJSON.variables, generatedDirectory);
-    const templatePath = await parseDefinitionJson(projectPath);
     await copyTfTemplate(templatePath, generatedDirectory);
   } catch (err) {
     return err;
