@@ -5,7 +5,7 @@ import fsextra from "fs-extra";
 import path from "path";
 import { logger } from "../../logger";
 import { validateRemoteSource } from "./generate";
-import * as infra_common from "./infra_common";
+import * as infraCommon from "./infra_common";
 
 /**
  * Adds the init command to the commander command object
@@ -40,9 +40,9 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
           );
         }
         const scaffoldDefinition = [opts.source, opts.template, opts.version];
-        const sourceFolder = await infra_common.repoCloneRegex(opts.source);
+        const sourceFolder = await infraCommon.repoCloneRegex(opts.source);
         const sourcePath = path.join(
-          infra_common.spkTemplatesPath,
+          infraCommon.spkTemplatesPath,
           sourceFolder
         );
         await validateRemoteSource(scaffoldDefinition);
