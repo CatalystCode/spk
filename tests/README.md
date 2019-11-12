@@ -14,6 +14,8 @@ tests.
 
 - This file is has simple functions that are reused by `validations.sh`.
 
+- This file is has simple functions that are reused by `validations.sh`.
+
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
