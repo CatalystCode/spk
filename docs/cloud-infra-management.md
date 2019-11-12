@@ -139,7 +139,7 @@ Generates a deployment folder of an infrastructure scaffolded project containing
 a `definition.json` that contains a `source`, `template` and `version` to obtain
 and complete the terraform template files.
 
-It will do the following (**In Progress**):
+It will do the following:
 
 - Check if a provided project folder contains a `definition.json`
 - Check if the terraform template `source` provided has a valid remote
@@ -153,3 +153,46 @@ It will do the following (**In Progress**):
 - Copy the appropriate Terraform templates to the "generated" directory
 - Create a `spk.tfvars` in the generated directory based on the variables
   provided in `definition.json`
+
+```
+Usage:
+spk infra generate|g [options]
+
+Generate scaffold for terraform cluster deployment.
+
+Options:
+  -p, --project <path to project folder to generate>   Location of the definition.json file that will be generated
+  -h, --help                                           output usage information
+```
+
+### generate example
+
+Assuming you have the following setup:
+
+```
+discovery-service
+    |- definition.json
+    |- east
+        |- definition.json
+    |- central
+        |- definition.json
+```
+
+When executing the following command **in the `discovery-service` directory**:
+
+```
+spk infra generate --project east
+```
+
+The following hiearchy of directories will be generated _alongside_ the targeted
+directory. In addition, the appropriate versioned Terraform templates will be
+copied over to the leaf directory with a `spk.tfvars`, which contains the
+variables accumulated from parent **and** leaf definition.json files.
+
+```
+discovery-service-generated
+    |- east
+        |- main.tf
+        |- variables.tf
+        |- spk.tfvars
+```
