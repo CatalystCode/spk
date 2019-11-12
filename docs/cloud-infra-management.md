@@ -74,7 +74,7 @@ It will do the following:
 Usage:
 spk infra scaffold|s [options]
 
-> `spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "0.0.1" --template /microsoft/bedrock/cluster/environments/azure-simple`
+> `spk infra scaffold --name discovery-service --source https://github.com/microsoft/bedrock --version "v0.12.0" --template /cluster/environments/azure-simple`
 
 Options:
   -n, --name <name>                              Cluster name for scaffolding
