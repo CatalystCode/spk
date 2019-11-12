@@ -12,9 +12,7 @@ tests.
 
 `functions.sh`
 
-- This file is has simple functions that are reused by `validations.sh`.
-
-- This file is has simple functions that are reused by `validations.sh`.
+- This file has simple functions that are reused by `validations.sh`.
 
 # Scenarios Exercised So Far
 
