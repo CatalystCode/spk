@@ -3,11 +3,9 @@ import * as path from "path";
 import uuid from "uuid/v4";
 import {
   Config,
+  defaultFileLocation,
   loadConfiguration,
-  writeConfigToDefaultLocation,
-  readYaml,
-  saveConfig,
-  defaultFileLocation
+  writeConfigToDefaultLocation
 } from "../../config";
 import {
   disableVerboseLogging,
@@ -16,7 +14,6 @@ import {
 } from "../../logger";
 import { IAzureAccessOpts, IConfigYaml } from "../../types";
 import { setConfiguration, validateRequiredArguments } from "./onboard";
-import fs from "fs";
 
 beforeAll(() => {
   enableVerboseLogging();
