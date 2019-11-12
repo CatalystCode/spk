@@ -6,11 +6,12 @@ import {
   logger
 } from "../../logger";
 import {
-  generateSpkTfvars,
   parseDefinitionJson,
+  readDefinitionJson,
   validateDefinition,
   validateRemoteSource,
-  validateTemplateSource
+  validateTemplateSource,
+  writeSpkTfvars
 } from "./generate";
 
 beforeAll(() => {
@@ -83,10 +84,8 @@ describe("Validate template path from a definition.json", () => {
 describe("Validate spk.tfvars file", () => {
   test("Validating that a spk.tfvars is generated and has appropriate format", async () => {
     const mockProjectPath = "src/commands/infra/mocks";
-    const generateTfvars = await generateSpkTfvars(
-      mockProjectPath,
-      mockProjectPath
-    );
+    const definitionJSON = await readDefinitionJson(mockProjectPath);
+    await writeSpkTfvars(definitionJSON, mockProjectPath);
     const data = fs.readFileSync(
       path.join(mockProjectPath, "spk.tfvars"),
       "utf-8"

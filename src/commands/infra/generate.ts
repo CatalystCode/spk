@@ -39,7 +39,7 @@ export const generateCommandDecorator = (command: commander.Command): void => {
         await validateDefinition(opts.project);
         const jsonSource = await validateTemplateSource(opts.project);
         await validateRemoteSource(jsonSource);
-        await generateDirectories(opts.project);
+        await generateConfig(opts.project);
       } catch (err) {
         logger.error(
           "Error occurred while generating project deployment files"
@@ -177,9 +177,7 @@ export const validateRemoteSource = async (
  *
  * @param projectPath Path to the definition.json file
  */
-export const generateDirectories = async (
-  projectPath: string
-): Promise<void> => {
+export const generateConfig = async (projectPath: string): Promise<void> => {
   try {
     // First, search for definition.json in current working directory
     const templatePath = await parseDefinitionJson(projectPath);
@@ -216,7 +214,7 @@ export const generateDirectories = async (
           path.join(parentDirectory, projectPath)
         );
         // Generate Terraform files in generated directory
-        await generateSpkTfvars(parentDefinitionJSON.variables, childDirectory);
+        await writeSpkTfvars(parentDefinitionJSON.variables, childDirectory);
         // const templatePath = await parseDefinitionJson(projectPath);
         await copyTfTemplate(templatePath, childDirectory);
       }
@@ -231,7 +229,7 @@ export const generateDirectories = async (
       projectPath + "-generated"
     );
     // Generate Terraform files in generated directory
-    await generateSpkTfvars(definitionJSON.variables, generatedDirectory);
+    await writeSpkTfvars(definitionJSON.variables, generatedDirectory);
     await copyTfTemplate(templatePath, generatedDirectory);
   } catch (err) {
     return err;
@@ -291,7 +289,7 @@ export const parseDefinitionJson = async (projectPath: string) => {
  * key = "value"
  *
  */
-export const generateSpkTfvars = async (
+export const writeSpkTfvars = async (
   definitionJSON: string[],
   generatedPath: string
 ) => {
