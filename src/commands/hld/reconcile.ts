@@ -19,10 +19,12 @@ import { IBedrockFile } from "../../types";
 
 export const reconcileHldDecorator = (command: commander.Command): void => {
   command
-    .command("reconcile <repository-name> <hld-path>")
+    .command(
+      "reconcile <repository-name> <hld-path> <bedrock-application-repo-path>"
+    )
     .alias("r")
     .description("Reconcile a HLD with the services tracked in bedrock.yaml.")
-    .action(async (repositoryName, hldPath) => {
+    .action(async (repositoryName, hldPath, bedrockApplicationRepoPath) => {
       try {
         if (typeof repositoryName !== "string") {
           throw new Error(
@@ -33,6 +35,12 @@ export const reconcileHldDecorator = (command: commander.Command): void => {
         if (typeof hldPath !== "string") {
           throw new Error(
             `hld-path must be of type 'string', ${typeof hldPath} given`
+          );
+        }
+
+        if (typeof bedrockApplicationRepoPath !== "string") {
+          throw new Error(
+            `bedrock-application-repo-path must be of type 'string', ${typeof bedrockApplicationRepoPath} given`
           );
         }
 
@@ -50,13 +58,24 @@ export const reconcileHldDecorator = (command: commander.Command): void => {
           !shelljs.test("-e", absHldPath) &&
           !shelljs.test("-d", absHldPath)
         ) {
-          throw new Error(
-            "Error: could not validate bedrock yaml or hld path."
-          );
+          throw new Error("Error: could not validate hld path.");
         }
 
         logger.info(`Found HLD at ${absHldPath}`);
-        const bedrockConfig = Bedrock();
+
+        const absBedrockPath = path.resolve(bedrockApplicationRepoPath);
+
+        if (
+          !shelljs.test("-e", absBedrockPath) &&
+          !shelljs.test("-d", absBedrockPath)
+        ) {
+          throw new Error(
+            "Error: could not validate bedrock application path."
+          );
+        }
+
+        logger.info(`Found bedrock application at ${absHldPath}`);
+        const bedrockConfig = Bedrock(absBedrockPath);
 
         logger.info(
           `Attempting to reconcile HLD with services tracked in bedrock.yaml`
@@ -95,7 +114,7 @@ export const reconcileHld = async (
 
     // Fab add is idempotent.
     // mkdir -p does not fail if ${pathBase} does not exist.
-    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --source ./${pathBase} --method local`;
+    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --source ./${pathBase} --method local && touch ./config/common.yaml`;
 
     await execAndLog(createSvcInHldCommand);
 
@@ -121,22 +140,26 @@ export const reconcileHld = async (
       }
 
       // Otherwise, create the ring in the service.
-      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --source ./${ring} --method local`;
+      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --source ./${ring} --method local && touch ./config/common.yaml`;
 
       await execAndLog(createRingInSvcCommand);
 
       let addHelmChartCommand = "";
-      if (helmConfig.helm.chart.method === "git") {
-        // TODO: git sha
-        addHelmChartCommand = `fab add chart --source ${helmConfig.helm.chart.git} --path ${helmConfig.helm.chart.path}`;
-      } else {
-        addHelmChartCommand = `fab add chart --source ${helmConfig.helm.chart.repository} --path ${helmConfig.helm.chart.chart}`;
+      const { chart } = helmConfig.helm;
+      if ("git" in chart) {
+        const chartVersioning =
+          "branch" in chart
+            ? `--branch ${chart.branch}`
+            : `--version ${chart.sha}`;
+        addHelmChartCommand = `fab add chart --source ${chart.git} --path ${chart.path} ${chartVersioning}`;
+      } else if ("repository" in chart) {
+        addHelmChartCommand = `fab add chart --source ${chart.repository} --path ${chart.chart}`;
       }
 
-      await execAndLog(addHelmChartCommand);
+      await execAndLog(`cd ${ringPathInHld} && ${addHelmChartCommand}`);
 
       // Create config directory, crate static manifest directory.
-      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --source ./static --method local --type static`;
+      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --source ./static --method local --type static && touch ./config/common.yaml`;
 
       await execAndLog(createConfigAndStaticComponentCommand);
 
