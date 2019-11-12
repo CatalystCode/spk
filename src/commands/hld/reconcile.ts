@@ -114,7 +114,7 @@ export const reconcileHld = async (
 
     // Fab add is idempotent.
     // mkdir -p does not fail if ${pathBase} does not exist.
-    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --source ./${pathBase} --method local`;
+    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --source ./${pathBase} --method local && touch ./config/common.yaml`;
 
     await execAndLog(createSvcInHldCommand);
 
@@ -140,7 +140,7 @@ export const reconcileHld = async (
       }
 
       // Otherwise, create the ring in the service.
-      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --source ./${ring} --method local`;
+      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --source ./${ring} --method local && touch ./config/common.yaml`;
 
       await execAndLog(createRingInSvcCommand);
 
@@ -156,10 +156,10 @@ export const reconcileHld = async (
         addHelmChartCommand = `fab add chart --source ${chart.repository} --path ${chart.chart}`;
       }
 
-      await execAndLog(addHelmChartCommand);
+      await execAndLog(`cd ${ringPathInHld} && ${addHelmChartCommand}`);
 
       // Create config directory, crate static manifest directory.
-      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --source ./static --method local --type static`;
+      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --source ./static --method local --type static && touch ./config/common.yaml`;
 
       await execAndLog(createConfigAndStaticComponentCommand);
 
