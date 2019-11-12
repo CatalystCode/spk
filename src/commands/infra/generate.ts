@@ -39,10 +39,7 @@ export const generateCommandDecorator = (command: commander.Command): void => {
         await validateDefinition(opts.project);
         const jsonSource = await validateTemplateSource(opts.project);
         await validateRemoteSource(jsonSource);
-        const generatedDir = await createGenerated(opts.project);
-        const templatePath = await parseDefinitionJson(opts.project);
-        await copyTfTemplate(templatePath, generatedDir);
-        await generateSpkTfvars(opts.project, generatedDir);
+        await generateDirectories(opts.project);
       } catch (err) {
         logger.error(
           "Error occurred while generating project deployment files"
@@ -180,9 +177,75 @@ export const validateRemoteSource = async (
  *
  * @param projectPath Path to the definition.json file
  */
+export const generateDirectories = async (
+  projectPath: string
+): Promise<void> => {
+  try {
+    // First, search for definition.json in current working directory
+    const files = fs.readdirSync(".");
+    const cwdPath = process.cwd();
+    files.forEach(async file => {
+      // If there exists a definition.json, then read file
+      if (file === "definition.json") {
+        logger.info(`A definition.json was found in the parent directory.`);
+        const parentDefinitionJSON = await readDefinitionJson(cwdPath);
+        const leafDefinitionJSON = await readDefinitionJson(projectPath);
+        /* Iterate through parent and leaf JSON objects to find matches
+        If there is a match, then replace parent key-value
+        If there is no match between the parent and leaf,
+        then append leaf key-value parent key-value JSON */
+        for (const parentKey in parentDefinitionJSON.variables) {
+          if (parentKey) {
+            for (const leafKey in leafDefinitionJSON.variables) {
+              if (parentKey === leafKey) {
+                let parentVal = parentDefinitionJSON.variables[parentKey];
+                parentVal = leafDefinitionJSON.variables[leafKey];
+              } else {
+                // Append to parent variables block
+                const leafVal = leafDefinitionJSON.variables[leafKey];
+                parentDefinitionJSON.variables[leafKey] = leafVal;
+              }
+            }
+          }
+        }
+        // Create a generated parent directory
+        const parentDirectory = await createGenerated(cwdPath + "-generated");
+        // Then, create generated child directory
+        const childDirectory = await createGenerated(
+          path.join(parentDirectory, projectPath)
+        );
+        // Generate Terraform files in generated directory
+        await generateSpkTfvars(parentDefinitionJSON.variables, childDirectory);
+        const templatePath = await parseDefinitionJson(projectPath);
+        await copyTfTemplate(templatePath, childDirectory);
+      }
+    });
+    // If there is not a definition.json in current working directory,
+    // then proceed with reading definition.json in project path
+    // await createGenerated(projectPath)
+    // logger.info(`A definition.json was not found in the parent directory.`)
+    const definitionJSON = await readDefinitionJson(projectPath);
+    // Create a generated directory
+    const generatedDirectory = await createGenerated(
+      projectPath + "-generated"
+    );
+    // Generate Terraform files in generated directory
+    await generateSpkTfvars(definitionJSON.variables, generatedDirectory);
+    const templatePath = await parseDefinitionJson(projectPath);
+    await copyTfTemplate(templatePath, generatedDirectory);
+  } catch (err) {
+    return err;
+  }
+};
+
+/**
+ * Creates "generated" directory if it does not already exists
+ *
+ * @param projectPath Path to the definition.json file
+ */
 export const createGenerated = async (projectPath: string): Promise<string> => {
   try {
-    const newGeneratedPath = projectPath + "-generated";
+    const newGeneratedPath = projectPath;
     mkdirp.sync(newGeneratedPath);
     logger.info(`Created generated directory: ${newGeneratedPath}`);
     return newGeneratedPath;
@@ -227,10 +290,9 @@ export const parseDefinitionJson = async (projectPath: string) => {
  *
  * key = "value"
  *
- *
  */
 export const generateSpkTfvars = async (
-  projectPath: string,
+  definitionJSON: string[],
   generatedPath: string
 ) => {
   try {
@@ -238,9 +300,8 @@ export const generateSpkTfvars = async (
     if (fs.existsSync(path.join(generatedPath, "spk.tfvars"))) {
       fs.unlinkSync(path.join(generatedPath, "spk.tfvars"));
     }
-    // Parse definition.json and extract "variables"
-    const definitionJSON = await readDefinitionJson(projectPath);
-    const variables = definitionJSON.variables;
+    // Parse definition.json "variables" block
+    const variables = definitionJSON;
     // Restructure the format of variables text
     const tfVariables = JSON.stringify(variables)
       .replace(/\:/g, "=")
