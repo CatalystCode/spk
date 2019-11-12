@@ -3,6 +3,7 @@ import fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
 import path from "path";
+import { getSecret } from "./lib/azure/keyvault";
 import { logger } from "./logger";
 import { IBedrockFile, IConfigYaml, IMaintainersFile } from "./types";
 
@@ -10,7 +11,7 @@ import { IBedrockFile, IConfigYaml, IMaintainersFile } from "./types";
 // State
 ////////////////////////////////////////////////////////////////////////////////
 let spkConfig: IConfigYaml = {}; // DANGEROUS! this var is globally retrievable and mutable via Config()
-
+let storageAccessKey: string | undefined;
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +67,24 @@ const loadConfigurationFromLocalEnv = <T>(configObj: T): T => {
   return configObj;
 };
 
+const getKey = async (
+  keyVaultName: string,
+  storageAccountName: string
+): Promise<string | undefined> => {
+  logger.debug(`storageAccessKey value: ${storageAccessKey}`);
+
+  if (storageAccessKey !== undefined && storageAccessKey) {
+    logger.debug(`returning existing key`);
+    return storageAccessKey!;
+  }
+
+  // reading from keyvault
+  logger.debug(`Fetching key from key vault`);
+  const keyVaultKey = await getSecret(keyVaultName, `${storageAccountName}Key`);
+  storageAccessKey = keyVaultKey;
+  return storageAccessKey;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // Exported
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,6 +96,26 @@ export const Config = (): IConfigYaml => {
   if (Object.keys(spkConfig).length === 0) {
     try {
       loadConfiguration();
+
+      spkConfig.introspection!.azure = {
+        ...spkConfig.introspection!.azure,
+        get key() {
+          let keyValue: Promise<string | undefined>;
+          // fetch stoarge access key from key vault when it is configured
+          if (
+            spkConfig.key_vault_name &&
+            spkConfig.introspection!.azure!.account_name
+          ) {
+            keyValue = getKey(
+              spkConfig.key_vault_name!,
+              spkConfig.introspection!.azure!.account_name!
+            );
+          } else {
+            keyValue = spkConfig.introspection!.azure!.key;
+          }
+          return keyValue;
+        }
+      };
     } catch (err) {
       logger.warn(err);
     }
@@ -139,5 +178,36 @@ export const loadConfiguration = (filepath: string = defaultFileLocation()) => {
   } catch (err) {
     logger.error(`An error occurred while loading configuration\n ${err}`);
     throw err;
+  }
+};
+
+/**
+ * Writes the global config object to default location
+ */
+export const saveConfig = async (configData: string) => {
+  try {
+    const defaultDir = os.homedir() + "/.spk";
+    if (!fs.existsSync(defaultDir)) {
+      fs.mkdirSync(defaultDir);
+    }
+    fs.writeFileSync(defaultFileLocation(), configData);
+  } catch (err) {
+    logger.error(
+      `Error occurred while saving config to default location. \n ${err}`
+    );
+  }
+};
+
+/**
+ * Writes the global config object to default location
+ */
+export const writeConfigToDefaultLocation = async (filePath: string) => {
+  try {
+    const data = yaml.safeDump(readYaml<IConfigYaml>(filePath));
+    await saveConfig(data);
+  } catch (err) {
+    logger.error(
+      `Error occurred while writing config to default location. \n ${err}`
+    );
   }
 };

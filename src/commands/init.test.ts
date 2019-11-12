@@ -1,9 +1,11 @@
-import * as fs from "fs";
 import * as path from "path";
-import * as util from "util";
-import { Config, defaultFileLocation, loadConfiguration } from "../config";
+import {
+  Config,
+  defaultFileLocation,
+  loadConfiguration,
+  writeConfigToDefaultLocation
+} from "../config";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
-import { writeConfigToDefaultLocation } from "./init";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -68,13 +70,10 @@ describe("Writing to default config location", () => {
       process.env.test_name = "testStorageName";
       process.env.test_key = "testStorageKey";
       loadConfiguration(filename);
-      Config().azure_devops!.access_token = "unit_test_token";
 
-      await writeConfigToDefaultLocation();
+      await writeConfigToDefaultLocation(filename);
       loadConfiguration(defaultFileLocation());
-
       expect(Config().azure_devops!).toBeDefined();
-      expect(Config().azure_devops!.access_token!).toBe("unit_test_token");
     } catch (e) {
       logger.error(e);
       // Make sure execution does not get here:

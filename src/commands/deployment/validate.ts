@@ -1,6 +1,6 @@
 import commander from "commander";
 import { Config } from "../../config";
-import { storageAccountExists } from "../../lib/azure/storage";
+import { validateStorageAccount } from "../../lib/azure/storage";
 import { logger } from "../../logger";
 
 /**
@@ -24,7 +24,7 @@ export const validateCommandDecorator = (command: commander.Command): void => {
 /**
  * Validates that the deployment configuration is specified.
  */
-export const isValidConfig = (): boolean => {
+export const isValidConfig = async (): Promise<boolean> => {
   const missingConfig = [];
   const config = Config();
   if (!config.introspection) {
@@ -36,7 +36,9 @@ export const isValidConfig = (): boolean => {
       if (!config.introspection.azure.account_name) {
         missingConfig.push("config.introspection.azure.account_name");
       }
-      if (!config.introspection.azure.key) {
+      const key = await config.introspection.azure.key;
+
+      if (!key) {
         missingConfig.push("config.introspection.azure.key");
       }
       if (!config.introspection.azure.partition_key) {
@@ -73,10 +75,11 @@ export const isValidConfig = (): boolean => {
  */
 export const isValidStorageAccount = async (): Promise<boolean> => {
   const config = Config();
-  const isValid = await storageAccountExists(
+  const key = await config.introspection!.azure!.key;
+  const isValid = await validateStorageAccount(
     config.introspection!.azure!.resource_group!,
     config.introspection!.azure!.account_name!,
-    config.introspection!.azure!.key!
+    key!
   );
 
   if (!isValid) {
