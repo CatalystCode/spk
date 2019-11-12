@@ -5,9 +5,9 @@ import * as os from "os";
 import path from "path";
 import simpleGit from "simple-git/promise";
 import { logger } from "../../logger";
+import * as infraCommon from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
 
-const spkTemplatesPath = path.join(os.homedir(), ".spk/templates");
 const git = simpleGit();
 
 /**
@@ -59,7 +59,7 @@ export const validateDefinition = async (
 ): Promise<boolean> => {
   try {
     // If templates folder does not exist, create cache templates directory
-    mkdirp.sync(spkTemplatesPath);
+    mkdirp.sync(infraCommon.spkTemplatesPath);
     if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
       logger.error(
         `Provided project path for generate is invalid or definition.json cannot be found: ${projectPath}`
@@ -77,7 +77,8 @@ export const validateDefinition = async (
 };
 
 /**
- * Checks if working definition.json is present in the provided project path with validated source & version
+ * Checks if working definition.json is present in the provided
+ * project path with validated source & version
  *
  * @param projectPath Path to the definition.json file
  */
@@ -120,11 +121,8 @@ export const validateRemoteSource = async (
 ): Promise<boolean> => {
   const [source, template, version] = definitionJSON;
   // Converting source name to storable folder name
-  const httpReg = /^(.*?)\.com/;
-  const punctuationReg = /[^\w\s]/g;
-  let sourceFolder = source.replace(httpReg, "");
-  sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
-  const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+  const sourceFolder = await infraCommon.repoCloneRegex(source);
+  const sourcePath = path.join(infraCommon.spkTemplatesPath, sourceFolder);
   logger.warn(`Converted to: ${sourceFolder}`);
   logger.info(`Checking if source: ${sourcePath} is stored locally.`);
   try {
@@ -254,8 +252,7 @@ export const createGenerated = async (projectPath: string): Promise<string> => {
 };
 
 /**
- * Parses the definition.json file and copies the appropriate template
- * to "-generated" directory
+ * Parses the definition.json file and returns the appropriate template path
  *
  * @param projectPath Path to the definition.json file
  * @param generatedPath Path to the generated directory
@@ -263,12 +260,9 @@ export const createGenerated = async (projectPath: string): Promise<string> => {
 export const parseDefinitionJson = async (projectPath: string) => {
   const definitionJSON = await readDefinitionJson(projectPath);
   const source = definitionJSON.source;
-  const httpReg = /^(.*?)\.com/;
-  const punctuationReg = /[^\w\s]/g;
-  let sourceFolder = source.replace(httpReg, "");
-  sourceFolder = sourceFolder.replace(punctuationReg, "_").toLowerCase();
+  const sourceFolder = await infraCommon.repoCloneRegex(source);
   const templatePath = path.join(
-    spkTemplatesPath,
+    infraCommon.spkTemplatesPath,
     sourceFolder,
     definitionJSON.template
   );
