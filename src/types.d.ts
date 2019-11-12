@@ -50,6 +50,10 @@ export interface IBedrockFile {
   };
   services: {
     [relativeDirectory: string]: {
+      name: string;
+      traefik?: {
+        middlewares?: string[];
+      };
       helm: IHelmConfig;
     };
   };

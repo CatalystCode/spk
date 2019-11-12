@@ -11,6 +11,8 @@ interface ITraefikIngressRoute {
   metadata: {
     name: string;
     namespace?: string;
+    labels?: { [key: string]: string };
+    annotations?: { [key: string]: string };
   };
   spec: {
     entryPoints?: TraefikEntryPoints; // defaults to allowing all traffic if not defined
@@ -57,33 +59,52 @@ export const TraefikIngressRoute = (
   opts: {
     namespace?: string;
     entryPoints?: TraefikEntryPoints;
+    middlewares?: string[];
+    labels?: { [key: string]: string };
+    annotations?: { [key: string]: string };
   } = {}
 ): ITraefikIngressRoute => {
-  const { entryPoints, namespace } = opts;
-  const name = !!ringName ? `${serviceName}-${ringName}` : serviceName;
+  const {
+    entryPoints,
+    namespace,
+    middlewares = [],
+    labels = {},
+    annotations = {}
+  } = opts;
+  const metadataName =
+    ringName.length === 0 ? serviceName : `${serviceName}-${ringName}`; // if a ring was provided, append to service name with a dash ('-')
   const routeMatchPathPrefix = `PathPrefix(\`/${serviceName}\`)`;
-  const routeMatchHeaders = ringName && `Headers(\`Ring\`, \`${ringName}\`)`; // no 'X-' prefix for header: https://tools.ietf.org/html/rfc6648
-  const routeMatch = [routeMatchPathPrefix, routeMatchHeaders]
+  const routeMatchHeaders =
+    ringName.length === 0 ? "" : `Headers(\`Ring\`, \`${ringName}\`)`; // no 'X-' prefix for header: https://tools.ietf.org/html/rfc6648
+  const matchSpec = [routeMatchPathPrefix, routeMatchHeaders]
     .filter(matchRule => !!matchRule)
     .join(" && ");
+  const metadataNamespace = !!namespace ? { namespace } : {};
+  const specEntryPoints =
+    !!entryPoints && entryPoints.length > 0 ? { entryPoints } : {};
+  const specMiddlewares = middlewares.map(middlewareName => ({
+    name: middlewareName
+  }));
 
   return {
     apiVersion: "traefik.containo.us/v1alpha1",
     kind: "IngressRoute",
     metadata: {
-      name,
-      ...(() => (!!namespace ? { namespace } : {}))()
+      annotations,
+      labels,
+      name: metadataName,
+      ...metadataNamespace
     },
     spec: {
-      ...(() =>
-        !!entryPoints && entryPoints.length > 0 ? { entryPoints } : {})(),
+      ...specEntryPoints,
       routes: [
         {
           kind: "Rule",
-          match: routeMatch,
+          match: matchSpec,
+          middlewares: specMiddlewares,
           services: [
             {
-              name,
+              name: metadataName,
               port: servicePort
             }
           ]
