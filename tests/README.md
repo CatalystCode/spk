@@ -102,11 +102,10 @@ tests.
 2. Install Azure DevOps Extension
 3. Set the following environment variables
     <pre>
+    export SPK_LOCATION=<b>REPLACE_ME</b>
     export AZDO_PROJECT=<b>REPLACE_ME</b>
     export AZDO_ORG=<b>REPLACE_ME</b>
     export ACCESS_TOKEN_SECRET=<b>REPLACE_ME</b>
-    export SP_APP_ID=<b>REPLACE_ME</b>
-    export SP_PASS=<b>REPLACE_ME</b>
     </pre>
 4. Navigate to this directory in shell
 5. RUN --> `$ . functions.sh`
