@@ -110,7 +110,10 @@ Options:
 
 Onboard to use the service introspection tool. This will create a storage
 account if it does not already exist in your subscription in the given
-`resource-group`.
+`resource-group`. The storage table will also be created in a newly created or
+in an existing storage account. When Azure Key Vault argument is specified, a
+secret with Azure storage access key will be cerated otherwise, the storage
+access key will need to be specified in environment variables.
 
 #### Prerequisites
 
@@ -126,11 +129,16 @@ Usage:
 spk deployment onboard|o [options]`
 
 Options:
-  -n, --storage-account-name <storage-account-name>                Account name for the storage table
-  -l, --storage-location <storage-location>                        Azure location for Storage account and resource group when they do not exist
-  -r, --storage-resource-group-name <storage-resource-group-name>  Name of the resource group for the storage account
-  -k, --key-vault-name <key-vault-name>                            Name of the Azure key vault
-  -h, --help                                                       Usage information
+  -s, --storage-account-name <storage-account-name>                 Azure storage account name
+  -t, --storage-table-name <storage-table-name>"                    Azure storage table name
+  -l, --storage-location <storage-location>                         Azure location to create new storage account when it does not exist
+  -r, --storage-resource-group-name <storage-resource-group-name>   Name of the resource group to create new storage account when it does not exist
+  -k, --key-vault-name <key-vault-name>                             Name of the Azure key vault to create a new secret with storage access key which is optional
+  --service-principal-id <service-principal-id>                     Azure service principal id with `contributor` role in Azure Resource Group; falls back to introspection.azure.service_principal_id in spk config
+  --service-principal-password <service-principal-password>         The Azure service principal password; falls back to introspection.azure.service_principal_secret in spk config
+  --tenant-id <tenant-id>                                           The Azure AD tenant id of service principal; falls back to introspection.azure.tenant_id in spk config
+  --subscription-id <subscription-id>                               The Azure subscription id; falls back to introspection.azure.subscription_id in spk config
+  -h, --help                                                        Usage information
 
 ```
 
