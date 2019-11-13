@@ -263,10 +263,10 @@ export const starterAzurePipelines = async (opts: {
             .cwd()
             .split(path.sep)
             .slice(-1)[0];
-    const spkServiceCreatePipelineCmd =
-      "spk service create-pipeline " + packagesOption + serviceName;
+    const spkServiceBuildPipelineCmd =
+      "spk service install-build-pipeline " + packagesOption + serviceName;
     logger.info(
-      `Generated azure-pipelines.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceCreatePipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+      `Generated azure-pipelines.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
     );
   }
 
@@ -398,7 +398,7 @@ export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
   ].join(", ");
 
   logger.info(
-    `Generated hld-lifecycle.yaml. Commit and push this file to master before attempting to deploy via the command 'spk project create-lifecycle-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+    `Generated hld-lifecycle.yaml. Commit and push this file to master before attempting to deploy via the command 'spk project install-lifecycle-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
   );
 };
 
@@ -447,8 +447,8 @@ const hldLifecyclePipelineYaml = () => {
           ``,
           `# Update HLD via spk`,
           `git checkout -b "RECONCILE/$(Build.Repository.Name)-$(Build.BuildNumber)"`,
-          `echo "spk hld reconcile $(Build.Repository.Name) $PWD"`,
-          `spk hld reconcile $(Build.Repository.Name) $PWD`,
+          `echo "spk hld reconcile $(Build.Repository.Name) $PWD ./.."`,
+          `spk hld reconcile $(Build.Repository.Name) $PWD ./..`,
           `echo "GIT STATUS"`,
           `git status`,
           `echo "GIT ADD (git add -A)"`,
