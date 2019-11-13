@@ -61,10 +61,10 @@ stages:
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
 
         # Include the functions here
-        . ./spk-test-func.sh
+        . ./functions.sh
 
         # Run the test
-        bash ./spk-int.sh
+        bash ./validations.sh
         status=$?
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
       #failOnStderr: true
