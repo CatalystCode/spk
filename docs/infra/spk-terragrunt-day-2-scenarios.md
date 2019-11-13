@@ -1,4 +1,4 @@
-# SPK + Infra v4
+# SPK + Terragrunt Scenarios
 
 ## Building Cluster Definition (Alternative)
 
