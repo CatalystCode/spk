@@ -92,6 +92,8 @@ tests.
     - SP_APP_ID (e.g Service Principal App Id)
     - SP_PASS (e.g Service Principal Password) <-- 🔒
     - SP_TENANT (e.g Service Principal Tenant Id)
+    - FUNC_SCRIPT (e.g. https://raw.githubusercontent.com/MY_ORG/spk/master/tests/functions.sh)
+    - TEST_SCRIPT (e.g. https://raw.githubusercontent.com/MY_ORG/spk/master/tests/validations.sh)
 3. Azure CLI with Azure DevOps Extension
     - Provided in pipeline yaml
 4. SPK Binary
