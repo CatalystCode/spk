@@ -11,7 +11,6 @@ import { IBedrockFile, IConfigYaml, IMaintainersFile } from "./types";
 // State
 ////////////////////////////////////////////////////////////////////////////////
 let spkConfig: IConfigYaml = {}; // DANGEROUS! this var is globally retrievable and mutable via Config()
-let storageAccessKey: string | undefined;
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,22 +66,23 @@ const loadConfigurationFromLocalEnv = <T>(configObj: T): T => {
   return configObj;
 };
 
-const getKey = async (
-  keyVaultName: string,
-  storageAccountName: string
+const getKeyVaulSecret = async (
+  keyVaultName: string | undefined,
+  storageAccountName: string | undefined
 ): Promise<string | undefined> => {
-  logger.debug(`storageAccessKey value: ${storageAccessKey}`);
+  logger.debug(`Fetching key from key vault`);
+  let keyVaultKey: string | undefined;
 
-  if (storageAccessKey !== undefined && storageAccessKey) {
-    logger.debug(`returning existing key`);
-    return storageAccessKey!;
+  // fetch stoarge access key from key vault when it is configured
+  if (keyVaultName !== undefined && storageAccountName !== undefined) {
+    keyVaultKey = await getSecret(keyVaultName, `${storageAccountName}Key`);
   }
 
-  // reading from keyvault
-  logger.debug(`Fetching key from key vault`);
-  const keyVaultKey = await getSecret(keyVaultName, `${storageAccountName}Key`);
-  storageAccessKey = keyVaultKey;
-  return storageAccessKey;
+  if (keyVaultKey === undefined) {
+    keyVaultKey = await spkConfig.introspection!.azure!.key;
+  }
+
+  return keyVaultKey;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -96,31 +96,26 @@ export const Config = (): IConfigYaml => {
   if (Object.keys(spkConfig).length === 0) {
     try {
       loadConfiguration();
-
-      spkConfig.introspection!.azure = {
-        ...spkConfig.introspection!.azure,
-        get key() {
-          let keyValue: Promise<string | undefined>;
-          // fetch stoarge access key from key vault when it is configured
-          if (
-            spkConfig.key_vault_name &&
-            spkConfig.introspection!.azure!.account_name
-          ) {
-            keyValue = getKey(
-              spkConfig.key_vault_name!,
-              spkConfig.introspection!.azure!.account_name!
-            );
-          } else {
-            keyValue = spkConfig.introspection!.azure!.key;
-          }
-          return keyValue;
-        }
-      };
     } catch (err) {
       logger.warn(err);
     }
   }
-  return spkConfig;
+
+  const introspectionAzure = {
+    ...spkConfig.introspection!.azure,
+    get key() {
+      const { account_name } = (spkConfig.introspection || {}).azure || {};
+      return getKeyVaulSecret(spkConfig.key_vault_name, account_name);
+    }
+  };
+
+  return {
+    ...spkConfig,
+    introspection: {
+      ...spkConfig.introspection,
+      azure: introspectionAzure
+    }
+  };
 };
 
 /**
