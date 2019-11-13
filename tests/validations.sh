@@ -11,7 +11,7 @@ SPK_LOCATION="${SPK_PATH:-"~/Code/spk/dist/spk-macos"}"
 ACCESS_TOKEN_SECRET="${ACCESS_TOKEN_SECRET:-"REPLACE_ME"}"
 AZDO_PROJECT="${AZDO_PROJECT:-"bedrock"}"
 AZDO_ORG="${AZDO_ORG:-"epicstuff"}"
-AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/epicstuff"}"
+AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_PROJECT"}"
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
 echo "SPK_LOCATION: $SPK_LOCATION"

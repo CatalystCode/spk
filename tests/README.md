@@ -83,7 +83,17 @@ tests.
 
 ## Requirements
 
-- SPK Binary
-- Azure DevOps Organization and Project
-- Azure CLI with Azure DevOps Extension
-- A variable group named `spk-vg`
+
+1. Azure DevOps Organization and Project
+2. Create variable group named `spk-vg`. Inside the variable group have the following key/values:
+    - AZDO_PROJECT (e.g. `bedrock`)
+    - AZDO_ORG (e.g. `epicstuff`)
+    - AZDO_PAT (e.g. Personal Access Token with access to AZDO_PROJECT) <-- 🔒
+    - SP_APP_ID (e.g Service Principal App Id)
+    - SP_PASS (e.g Service Principal Password) <-- 🔒
+    - SP_TENANT (e.g Service Principal Tenant Id)
+3. Azure CLI with Azure DevOps Extension
+    - Provided in pipeline yaml
+4. SPK Binary
+    - Provided in pipeline yaml
+
