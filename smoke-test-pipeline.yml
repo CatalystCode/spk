@@ -35,10 +35,10 @@ stages:
         spk --version
       displayName: "Verify SPK downloaded and executable"
     - bash: |
-        curl $FUNC_SCRIPT > spk-test-func.sh
-        chmod +x ./spk-test-func.sh
-        curl $TEST_SCRIPT > spk-int.sh
-        chmod +x ./spk-int.sh
+        curl $FUNC_SCRIPT > functions.sh
+        chmod +x ./functions.sh
+        curl $TEST_SCRIPT > validations.sh
+        chmod +x ./validations.sh
       displayName: "Download integration test scripts"
       env:
         FUNC_SCRIPT: https://raw.githubusercontent.com/CatalystCode/spk/master/tests/functions.sh
