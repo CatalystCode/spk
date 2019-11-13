@@ -8,9 +8,9 @@ set -e
 
 TEST_WORKSPACE="$(pwd)/spk-env"
 SPK_LOCATION="${SPK_PATH:-"~/Code/spk/dist/spk-macos"}"
-[ ! -z "$ACCESS_TOKEN_SECRET" ] || { echo "Provide $ACCESS_TOKEN_SECRET"; exit 1}
-[ ! -z "$AZDO_PROJECT" ] || { echo "Provide $AZDO_PROJECT"; exit 1}
-[ ! -z "$AZDO_ORG" ] || { echo "Provide $AZDO_ORG"; exit 1}
+[ ! -z "$ACCESS_TOKEN_SECRET" ] || { echo "Provide ACCESS_TOKEN_SECRET"; exit 1;}
+[ ! -z "$AZDO_PROJECT" ] || { echo "Provide AZDO_PROJECT"; exit 1;}
+[ ! -z "$AZDO_ORG" ] || { echo "Provide AZDO_ORG"; exit 1;}
 AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_ORG"}"
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
