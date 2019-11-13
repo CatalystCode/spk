@@ -133,7 +133,7 @@ Options:
   -t, --storage-table-name <storage-table-name>"                    Azure storage table name
   -l, --storage-location <storage-location>                         Azure location to create new storage account when it does not exist
   -r, --storage-resource-group-name <storage-resource-group-name>   Name of the resource group to create new storage account when it does not exist
-  -k, --key-vault-name <key-vault-name>                             Name of the Azure key vault to create a new secret with storage access key which is optional
+  -k, --key-vault-name <key-vault-name>                             Name of the Azure key vault; falls back to key_vault_name in spk config. It will create a new secret with storage access key when the value is specified
   --service-principal-id <service-principal-id>                     Azure service principal id with `contributor` role in Azure Resource Group; falls back to introspection.azure.service_principal_id in spk config
   --service-principal-password <service-principal-password>         The Azure service principal password; falls back to introspection.azure.service_principal_secret in spk config
   --tenant-id <tenant-id>                                           The Azure AD tenant id of service principal; falls back to introspection.azure.tenant_id in spk config
