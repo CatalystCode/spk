@@ -35,6 +35,7 @@ stages:
         spk --version
       displayName: "Verify SPK downloaded and executable"
     - bash: |
+        echo "Current Dir is $(pwd)"
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
         curl $FUNC_SCRIPT >| functions.sh
         chmod +x ./functions.sh
@@ -46,6 +47,10 @@ stages:
         FUNC_SCRIPT: $(FUNC_SCRIPT)
         TEST_SCRIPT: $(TEST_SCRIPT)
     - bash: | 
+        # Look at the current dir
+        ls -l
+        echo "Current Dir is $(pwd)"
+        
         # Install the extension
         export AZURE_DEVOPS_EXT_PAT=$(AZDO_PAT)
         az extension add --name azure-devops
@@ -58,15 +63,17 @@ stages:
         git config --global user.email "me@microsoft.com"
         git config --global user.name "Service Account"
 
-        #Start Test
+        #Set ENV VARs
         export SPK_PATH="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
 
-        # Include the functions here
+        # Include dependent scripts
         . ./functions.sh
 
         # Run the test
         bash ./validations.sh
+
+        # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
       #failOnStderr: true
