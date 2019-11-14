@@ -95,7 +95,8 @@ tests.
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
    - SP_TENANT (e.g Service Principal Tenant Id)
-   - ACR_NAME (e.g Name of ACR resource)
+   - ACR_NAME (e.g Name of ACR resource that is accessible from above service
+     principal)
    - FUNC_SCRIPT (e.g.
      https://raw.githubusercontent.com/MY_ORG/spk/master/tests/functions.sh)
    - TEST_SCRIPT (e.g.
