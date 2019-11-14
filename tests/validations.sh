@@ -131,7 +131,7 @@ echo "The remote_repo_url is $remote_repo_url"
 repo_url=$(getHostandPath "$remote_repo_url")
 
 # We need to manipulate the remote url to insert a PAT token so we can
-git remote rm origin
+# git remote rm origin
 git commit -m "inital commit"
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
