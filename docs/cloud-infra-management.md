@@ -167,4 +167,4 @@ build scaffolded definitions using a private AzDO repo, do one of the following:
   every scaffold specify your `--version` and `--template`
 - **Using arguments** - Pass in your formatted source url for your private AzDO
   repo with the PAT and arbitrary username specified. Example
-  `spk infra scaffold --name discovery-service --source https://sk:{my_PAT_Token}@dev.azure.com/microsoft/spk/_git/infra_repo --version v0.0.1 --template cluster/environments/azure-single-keyvault`
+  `spk infra scaffold --name discovery-service --source https://spk:{my_PAT_Token}@dev.azure.com/microsoft/spk/_git/infra_repo --version v0.0.1 --template cluster/environments/azure-single-keyvault`
