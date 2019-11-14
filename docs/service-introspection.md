@@ -119,8 +119,9 @@ environment variables manually.
 
 1. Service principal with owner access.
    [Create a service principal with owner access.](#service-principal)
-2. Azure key vault.
-   [How to create key vault](https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-key-vault-manage-portal?view=azs-1908).
+2. Optionally, Azure Key Vault can be used to securely store and tightly control
+   access to tokens, passwords, API keys, and other secrets
+   [How to create key vault](https://docs.microsoft.com/en-us/azure/key-vault/quick-create-cli).
 3. Give the service principal get and list access. Follow step 2 from
    [these instructions](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault).
 
