@@ -232,6 +232,8 @@ export const loadConfiguration = (filepath: string = defaultConfigFile()) => {
 
 /**
  * Writes the global config object to default location
+ * @param sourceFilePath The source configuration file
+ * @param targetDir The optional target directory to store the configuration to override the default directory
  */
 export const saveConfiguration = async (
   sourceFilePath: string,
