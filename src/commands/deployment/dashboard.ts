@@ -99,7 +99,7 @@ export const launchDashboard = async (
       "run",
       "-d",
       "--rm",
-      ...getEnvVars(),
+      ...(await getEnvVars()),
       "-p",
       port + ":80",
       dockerRepository
@@ -115,8 +115,9 @@ export const launchDashboard = async (
  * Creates and returns an array of env vars that need to be passed into the
  * docker run command
  */
-export const getEnvVars = (): string[] => {
+export const getEnvVars = async (): Promise<string[]> => {
   const config = Config();
+  const key = await Config().introspection!.azure!.key;
   const envVars = [];
   envVars.push("-e");
   envVars.push("REACT_APP_PIPELINE_ORG=" + config.azure_devops!.org!);
@@ -137,9 +138,7 @@ export const getEnvVars = (): string[] => {
     "REACT_APP_STORAGE_TABLE_NAME=" + config.introspection!.azure!.table_name!
   );
   envVars.push("-e");
-  envVars.push(
-    "REACT_APP_STORAGE_ACCESS_KEY=" + config.introspection!.azure!.key!
-  );
+  envVars.push("REACT_APP_STORAGE_ACCESS_KEY=" + key!);
   if (config.azure_devops!.access_token) {
     envVars.push("-e");
     envVars.push(
@@ -154,7 +153,7 @@ export const getEnvVars = (): string[] => {
       );
     }
   } else {
-    logger.warning(
+    logger.warn(
       "Pipeline access token was not specified during init, dashboard may show empty results if pipelines are private"
     );
   }

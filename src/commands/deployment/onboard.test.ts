@@ -1,12 +1,11 @@
 // imports
+import fs from "fs";
+import yaml from "js-yaml";
+import os from "os";
 import * as path from "path";
 import uuid from "uuid/v4";
-import {
-  Config,
-  defaultFileLocation,
-  loadConfiguration,
-  writeConfigToDefaultLocation
-} from "../../config";
+import { Config, loadConfiguration } from "../../config";
+import * as config from "../../config";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
@@ -23,7 +22,6 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-const mockFileName = "src/commands/mocks/spk-config.yaml";
 const storageAccountName = uuid();
 const storageTableName = uuid();
 const storageResourceGroup = uuid();
@@ -33,6 +31,14 @@ const accessOpts: IAzureAccessOpts = {
   subscriptionId: uuid(),
   tenantId: uuid()
 };
+
+const randomTmpDir = path.join(os.tmpdir(), uuid());
+fs.mkdirSync(randomTmpDir);
+const testConfigFile = path.join(randomTmpDir, "config.yaml");
+
+jest.spyOn(config, "defaultConfigFile").mockImplementation((): string => {
+  return testConfigFile;
+});
 
 describe("validateRequiredArguments", () => {
   test("Should fail when all required arguments specified with empty values", async () => {
@@ -159,22 +165,59 @@ describe("validateRequiredArguments", () => {
 });
 
 describe("setConfiguration", () => {
-  test("Should pass when storage account and table names are specified", async () => {
-    const filename = path.resolve(mockFileName);
-    process.env.test_name = "testStorageName";
-    process.env.test_key = "testStorageKey";
+  test("Should pass updating previous storage account and table names", async () => {
+    try {
+      const data = {
+        introspection: {
+          azure: {
+            account_name: "test-storage",
+            table_name: "test-table"
+          }
+        }
+      };
 
-    // create config file in default location
-    await writeConfigToDefaultLocation(filename);
+      // create config file in test location
+      fs.writeFileSync(testConfigFile, yaml.safeDump(data));
 
-    // set storage and table names
-    await setConfiguration(storageAccountName, storageTableName);
+      logger.info(`testConfigFile: ${testConfigFile}`);
 
-    // reloead configuration
-    loadConfiguration(defaultFileLocation());
+      // set storage and table names
+      await setConfiguration(storageAccountName, storageTableName);
+      loadConfiguration(testConfigFile);
 
-    const { azure } = Config().introspection!;
-    expect(azure!.account_name).toBe(storageAccountName);
-    expect(azure!.table_name).toBe(storageTableName);
+      const { azure } = Config().introspection!;
+      expect(azure!.account_name).toBe(storageAccountName);
+      expect(azure!.table_name).toBe(storageTableName);
+    } catch (err) {
+      logger.error(`dirs error: ${err}`);
+    }
+  });
+
+  test("Should pass updating previous undefined storage account and table names", async () => {
+    try {
+      const data = {
+        introspection: {
+          azure: {
+            account_name: undefined,
+            table_name: undefined
+          }
+        }
+      };
+
+      // create config file in test location
+      fs.writeFileSync(testConfigFile, yaml.safeDump(data));
+
+      logger.info(`testConfigFile: ${testConfigFile}`);
+
+      // set storage and table names
+      await setConfiguration(storageAccountName, storageTableName);
+      loadConfiguration(testConfigFile);
+
+      const { azure } = Config().introspection!;
+      expect(azure!.account_name).toBe(storageAccountName);
+      expect(azure!.table_name).toBe(storageTableName);
+    } catch (err) {
+      logger.error(`dirs error: ${err}`);
+    }
   });
 });

@@ -111,9 +111,10 @@ Options:
 Onboard to use the service introspection tool. This will create a storage
 account if it does not already exist in your subscription in the given
 `resource-group`. The storage table will also be created in a newly created or
-in an existing storage account. When Azure Key Vault argument is specified, a
-secret with Azure storage access key will be cerated otherwise, the storage
-access key will need to be specified in environment variables.
+in an existing storage account if it does not exist already. When Azure Key
+Vault argument is specified, a secret with Azure storage access key will be
+created otherwise, the storage access key will need to be specified in
+environment variables manually.
 
 #### Prerequisites
 

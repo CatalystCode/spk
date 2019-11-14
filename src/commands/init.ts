@@ -1,16 +1,11 @@
 import commander from "commander";
-import {
-  Config,
-  loadConfiguration,
-  writeConfigToDefaultLocation
-} from "../config";
+import { loadConfiguration, saveConfiguration } from "../config";
 import { logger } from "../logger";
 import {
   validateAzure,
   validateEnvVariables,
   validatePrereqs
 } from "./infra/validate";
-
 /**
  * Adds the init command to the commander command object
  * @param command Commander command object to decorate
@@ -45,7 +40,7 @@ export const initCommandDecorator = (command: commander.Command): void => {
           true
         );
 
-        await writeConfigToDefaultLocation(opts.file);
+        await saveConfiguration(opts.file);
 
         logger.info("Successfully initialized the spk tool!");
       } catch (err) {

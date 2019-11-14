@@ -1,13 +1,9 @@
 import { StorageAccount } from "@azure/arm-storage/esm/models";
 import commander from "commander";
+import fs from "fs";
 import yaml from "js-yaml";
 import { echo } from "shelljs";
-import {
-  Config,
-  defaultFileLocation,
-  readYaml,
-  saveConfig
-} from "../../config";
+import { Config, defaultConfigFile, readYaml } from "../../config";
 import { setSecret } from "../../lib/azure/keyvault";
 import {
   createStorageAccount,
@@ -146,7 +142,8 @@ export const onboard = async (
 
   // Storage account does not exist so create it.
   if (isExist === false) {
-    if (location === undefined || location === null || location === "") {
+    // if (location === undefined || location === null || location === "") {
+    if (!location) {
       throw new Error(
         "Azure location is required to create new storage account"
       );
@@ -210,12 +207,12 @@ export const setConfiguration = async (
   storageTableName: string
 ): Promise<boolean> => {
   try {
-    const data = readYaml<IConfigYaml>(defaultFileLocation());
+    const data = readYaml<IConfigYaml>(defaultConfigFile());
     data.introspection!.azure!.account_name = storageAccountName;
     data.introspection!.azure!.table_name = storageTableName;
     const jsonData = yaml.safeDump(data);
     logger.verbose(jsonData);
-    await saveConfig(jsonData);
+    fs.writeFileSync(defaultConfigFile(), jsonData);
     return true;
   } catch (err) {
     logger.error(

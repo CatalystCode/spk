@@ -74,7 +74,11 @@ const getKeyVaulSecret = async (
   let keyVaultKey: string | undefined;
 
   // fetch stoarge access key from key vault when it is configured
-  if (keyVaultName !== undefined && storageAccountName !== undefined) {
+  if (
+    keyVaultName !== undefined &&
+    keyVaultName !== null &&
+    storageAccountName !== undefined
+  ) {
     keyVaultKey = await getSecret(keyVaultName, `${storageAccountName}Key`);
   }
 
@@ -192,10 +196,21 @@ export const write = (
 };
 
 /**
+ * Fetches the absolute default directory of the spk global config
+ */
+export const defaultConfigDir = () => {
+  const dir = path.join(os.homedir(), ".spk");
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+  return dir;
+};
+
+/**
  * Fetches the absolute default path of the spk global config
  */
-export const defaultFileLocation = () =>
-  path.join(os.homedir(), ".spk", "config.yaml");
+export const defaultConfigFile = () =>
+  path.join(defaultConfigDir(), "config.yaml");
 
 /**
  * Loads configuration from a given filename, if provided, otherwise
@@ -203,7 +218,7 @@ export const defaultFileLocation = () =>
  *
  * @param filepath file to load configuration from
  */
-export const loadConfiguration = (filepath: string = defaultFileLocation()) => {
+export const loadConfiguration = (filepath: string = defaultConfigFile()) => {
   try {
     fs.statSync(filepath);
     dotenv.config();
@@ -218,30 +233,17 @@ export const loadConfiguration = (filepath: string = defaultFileLocation()) => {
 /**
  * Writes the global config object to default location
  */
-export const saveConfig = async (configData: string) => {
+export const saveConfiguration = async (
+  sourceFilePath: string,
+  targetDir: string = defaultConfigDir()
+) => {
   try {
-    const defaultDir = os.homedir() + "/.spk";
-    if (!fs.existsSync(defaultDir)) {
-      fs.mkdirSync(defaultDir);
-    }
-    fs.writeFileSync(defaultFileLocation(), configData);
+    const data = yaml.safeDump(readYaml<IConfigYaml>(sourceFilePath));
+    const targetFile = path.join(targetDir, "config.yaml");
+    fs.writeFileSync(targetFile, data);
   } catch (err) {
     logger.error(
-      `Error occurred while saving config to default location. \n ${err}`
-    );
-  }
-};
-
-/**
- * Writes the global config object to default location
- */
-export const writeConfigToDefaultLocation = async (filePath: string) => {
-  try {
-    const data = yaml.safeDump(readYaml<IConfigYaml>(filePath));
-    await saveConfig(data);
-  } catch (err) {
-    logger.error(
-      `Error occurred while writing config to default location. \n ${err}`
+      `Error occurred while writing config to default location ${err}`
     );
   }
 };
