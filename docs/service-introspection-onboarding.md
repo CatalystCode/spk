@@ -152,7 +152,7 @@ The CD release pipeline updates the docker image number in the HLD.
 The release pipeline can be setup in two different ways: There are two options
 to setup the ACR to HLD step.
 
-****Option 1:**** As an
+\***\*Option 1:\*\*** As an
 [Azure Release Pipeline](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/?view=azure-devops)
 
 **Instructions:**
@@ -175,7 +175,7 @@ $(Build.BuildId)
 This task is similar to the one from step 1 but instead passes the information
 that corresponds to the CD release pipeline.
 
-****Option 2:** As a **stage**** (if your setup is a
+\***\*Option 2:** As a **stage\*\*** (if your setup is a
 [Multi-stage Azure Pipeline](https://devblogs.microsoft.com/devops/whats-new-with-azure-pipelines/))
 
 **Instructions:**
