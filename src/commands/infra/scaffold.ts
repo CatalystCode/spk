@@ -110,7 +110,7 @@ export const renameTfvars = async (dir: string): Promise<void> => {
   try {
     const tfFiles = fs.readdirSync(dir);
     tfFiles.forEach(file => {
-      if (file.substr(file.lastIndexOf(".") + 1) === "tfvars") {
+      if (file === "terraform.tfvars") {
         fs.renameSync(path.join(dir, file), path.join(dir, file + ".backup"));
       }
     });

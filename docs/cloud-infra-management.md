@@ -174,9 +174,9 @@ Assuming you have the following setup:
 ```
 discovery-service
     |- definition.json
-    |- east
+    |- east/
         |- definition.json
-    |- central
+    |- central/
         |- definition.json
 ```
 
@@ -192,9 +192,42 @@ copied over to the leaf directory with a `spk.tfvars`, which contains the
 variables accumulated from parent **and** leaf definition.json files.
 
 ```
+discovery-service
+    |- definition.json
+    |- east/
+        |- definition.json
+    |- central/
+        |- definition.json
 discovery-service-generated
     |- east
         |- main.tf
         |- variables.tf
         |- spk.tfvars
+```
+
+You can also have a "single-tree" generation by executing `spk infra generate`
+at the level above the targeted directory. For example, if you had the following
+tree structure:
+
+```
+discovery-service
+    |- east/
+        |- definition.json
+    |- central/
+        |- definition.json
+```
+
+and wanted to create _just_ an `east-generated` directory, you could run
+`spk infra generate -p east`, and this will result in the following:
+
+```
+discovery-service
+    |- east/
+        |- definition.json
+    |- east-generated/
+        |- main.tf
+        |- variables.tf
+        |- spk.tfvars
+    |- central/
+        |- definition.json
 ```
