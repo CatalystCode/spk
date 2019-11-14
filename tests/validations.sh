@@ -73,6 +73,7 @@ repo_url=$(getHostandPath "$remote_repo_url")
 
 # We need to manipulate the remote url to insert a PAT token so we can
 git commit -m "inital commit"
+git remote rm origin
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
@@ -131,6 +132,7 @@ repo_url=$(getHostandPath "$remote_repo_url")
 
 # We need to manipulate the remote url to insert a PAT token so we can
 git commit -m "inital commit"
+git remote rm origin
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
