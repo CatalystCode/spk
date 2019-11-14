@@ -34,7 +34,6 @@ export const selfTestCommandDecorator = (command: commander.Command): void => {
         );
         return;
       }
-
       await runSelfTest(config);
     });
 };
@@ -172,9 +171,7 @@ export const deleteSelfTestData = async (
       logger.error(err);
       return false;
     }
-
     return foundEntry;
   });
-
   return isDeleted;
 };
