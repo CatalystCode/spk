@@ -77,7 +77,7 @@ git remote rm origin
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
-
+cd ..
 
 
 
