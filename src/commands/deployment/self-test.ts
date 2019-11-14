@@ -21,7 +21,9 @@ export const selfTestCommandDecorator = (command: commander.Command): void => {
   command
     .command("self-test")
     .alias("st")
-    .description("Validate the configuration and storage account are correct.")
+    .description(
+      "Run a test for the configured storage account. This will write test data and delete the test data. For more information on the behavior, please check the online documentation."
+    )
     .action(async () => {
       const config = Config();
 
@@ -101,7 +103,7 @@ export const writeSelfTestData = async (
   try {
     const p1Id = buildId;
     const imageTag = "spk-test-123";
-    const commitId = "6nbe";
+    const commitId = "6nbe" + buildId;
     const env = "SPK-TEST";
 
     logger.info("Adding src to ACR data to service introspection...");
