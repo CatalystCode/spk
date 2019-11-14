@@ -54,17 +54,7 @@ spk hld init
 git add -A
 
 # See if the remote repo exists
-repo_result=$(az repos list --org $AZDO_ORG_URL -p $AZDO_PROJECT)
-repo_exists=$(echo $repo_result | jq -r --arg hld_dir "$hld_dir" '.[].name | select(. == $hld_dir ) != null')
-
-if [ "$repo_exists" = "true" ]; then
-    echo "The repo '$hld_dir' already exists "
-    # Get the repo id
-    repo_id=$(echo "$repo_result"  | jq -r --arg hld_dir "$hld_dir" '.[] | select(.name == $hld_dir) | .id')
-    echo "repo_id to delete is $repo_id"
-    # Delete the repo
-    az repos delete --id "$repo_id" --yes --org $AZDO_ORG_URL --p $AZDO_PROJECT
-fi
+repo_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_dir
 
 # Create the remote repo for the local repo
 created_repo_result=$(az repos create --name "$hld_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT)
@@ -98,17 +88,7 @@ file_we_expect=("spk.log" "bedrock.yaml" "maintainers.yaml" "hld-lifecycle.yaml"
 validate_directory "$TEST_WORKSPACE/$mono_repo_dir" "${file_we_expect[@]}"
 
 # Does variable group already exist? Delete if so
-vg_result=$(az pipelines variable-group list --org $AZDO_ORG_URL -p $AZDO_PROJECT)
-vg_exists=$(echo $vg_result | jq -r --arg vg_name "$vg_name" '.[].name | select(. == $vg_name ) != null')
-
-if [ "$vg_exists" = "true" ]; then
-    echo "The variable group '$vg_name' already exists "
-    # Get the variable group id
-    vg_id=$(echo "$vg_result"  | jq -r --arg vg_name "$vg_name" '.[] | select(.name == $vg_name) | .id')
-    echo "variable group to delete is $vg_id"
-    # Delete the variable group
-    az pipelines variable-group delete --id "$vg_id" --yes --org $AZDO_ORG_URL --p $AZDO_PROJECT
-fi
+variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name
 
 # Create variable group
 spk project create-variable-group -r $ACR_NAME -d $hld_repo_url -u $SP_APP_ID -p $SP_PASS -t $SP_TENANT --org-name $AZDO_ORG --project $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET $vg_name >> $TEST_WORKSPACE/log.txt
@@ -126,21 +106,8 @@ git add -A
 # TODO: We aren't using the config file right now
 # spk init -f $SPK_CONFIG_FILE
 
-# TODO: We don't delete/create the variable groups
-# spk variable-group create -o $AZDO_ORG -p $AZDO_PROJECT -f spk-vg.yaml -t $ACCESS_TOKEN_SECRET
-
 # See if the remote repo exists
-repo_result=$(az repos list --org $AZDO_ORG_URL -p $AZDO_PROJECT)
-repo_exists=$(echo $repo_result | jq -r --arg mono_repo_dir "$mono_repo_dir" '.[].name | select(. == $mono_repo_dir ) != null')
-
-if [ "$repo_exists" = "true" ]; then
-    echo "The repo '$mono_repo_dir' already exists "
-    # Get the repo id
-    repo_id=$(echo "$repo_result"  | jq -r --arg mono_repo_dir "$mono_repo_dir" '.[] | select(.name == $mono_repo_dir) | .id')
-    echo "repo_id to delete is $repo_id"
-    # Delete the repo
-    az repos delete --id "$repo_id" --yes --org $AZDO_ORG_URL --p $AZDO_PROJECT
-fi
+repo_exists $AZDO_ORG_URL $AZDO_PROJECT $mono_repo_dir
 
 # Create the remote repo for the local repo
 created_repo_result=$(az repos create --name "$mono_repo_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT)
@@ -161,17 +128,7 @@ git push -u origin --all
 
 
 # First we should check what pipelines exist. If there is a pipeline with the same name we should delete it
-pipeline_results=$(az pipelines list)
-pipeline_exists=$(tr '"\""' '"\\"' <<< "$pipeline_results" | jq -r --arg FrontEnd "$FrontEnd-pipeline" '.[].name  | select(. == $FrontEnd ) != null')
-
-if [ "$pipeline_exists" = "true" ]; then
-    echo "The pipeline '$FrontEnd-pipeline' already exists "
-    # Get the pipeline id. We have to replace single "\" with "\\"
-    pipeline_id=$(tr '"\""' '"\\"' <<<"$pipeline_results"  | jq -r --arg FrontEnd "$FrontEnd-pipeline" '.[] | select(.name == $FrontEnd) | .id')
-    echo "pipeline_id to delete is $pipeline_id"
-    # Delete the repo
-     az pipelines delete --id "$pipeline_id" --yes --org $AZDO_ORG_URL --p $AZDO_PROJECT
-fi
+pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $FrontEnd
 
 # Create a pipeline since the code exists in remote repo
 spk service install-build-pipeline -o $AZDO_ORG -r $mono_repo_dir -u $remote_repo_url -d $AZDO_PROJECT -l $services_dir -p $ACCESS_TOKEN_SECRET -v $FrontEnd  >> $TEST_WORKSPACE/log.txt
