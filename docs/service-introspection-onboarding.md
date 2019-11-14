@@ -161,15 +161,11 @@ Paste the following task towards the end of your release step in the release
 pipeline in the Azure DevOps portal:
 
 ```yaml
-latest_commit=$(git rev-parse --short HEAD) VERSION_TO_DOWNLOAD=$(curl -s
-"https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep
-"tag_name" | sed -E 's/.*"([^"]+)".*/\1/') echo "Downloading SPK version
-$VERSION_TO_DOWNLOAD" && wget
-"https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
-chmod +x ./spk-linux ./spk-linux deployment create  -n $(ACCOUNT_NAME) -k
-$(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Release.ReleaseId)
---hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag
-$(Build.BuildId)
+latest_commit=$(git rev-parse --short HEAD)
+VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') 
+echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+chmod +x ./spk-linux
+./spk-linux deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag $(Build.BuildId)
 ```
 
 This task is similar to the one from step 1 but instead passes the information
@@ -183,17 +179,14 @@ that corresponds to the CD release pipeline.
 Paste the following yaml task towards the end of your image tag release stage in
 your multi-stage `azure-pipelines.yml`:
 
+
 ```yaml
-latest_commit=$(git rev-parse --short HEAD) tag_name=$(Build.BuildId)
-VERSION_TO_DOWNLOAD=$(curl -s
-"https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep
-"tag_name" | sed -E 's/.*"([^"]+)".*/\1/') echo "Downloading SPK version
-$VERSION_TO_DOWNLOAD" && wget
-"https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
-chmod +x ./spk-linux ./spk-linux deployment create  -n $(ACCOUNT_NAME) -k
-$(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId)
---hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag
-$tag_name
+latest_commit=$(git rev-parse --short HEAD)
+tag_name=$(Build.BuildId)
+VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') 
+echo "Downloading SPK version $VERSION_TO_DOWNLOAD" && wget "https://github.com/CatalystCode/spk/releases/download/$VERSION_TO_DOWNLOAD/spk-linux"
+chmod +x ./spk-linux
+./spk-linux deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name
 ```
 
 Make sure your variable `tag_name` in this script matches the `tag_name` in the
