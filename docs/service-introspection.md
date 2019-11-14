@@ -25,7 +25,7 @@ Commands:
 - [onboard](#onboard)
 - [dashboard](#dashboard)
 - [variable-group](variable-group.md)
-- [self-test](#selfTest)
+- [self-test](#self-test)
 
 Global options:
 
