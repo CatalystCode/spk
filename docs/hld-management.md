@@ -53,13 +53,13 @@ azure_devops:
 
 ### init
 
-Initialize the HLD repository by creating an `azure-pipelines.yaml` file, if one
-does not already exist.
+Initialize the HLD repository by creating an `manifest-generation.yaml` file, if
+one does not already exist.
 
 ```
 Usage: spk hld init|i [options]
 
-Initialize your hld repository. Will add the azure-pipelines yaml files to your working directory/repository if it does not already exist.
+Initialize your hld repository. Will add the manifest-generation.yaml file to your working directory/repository if it does not already exist.
 
 Options:
   --git-push  SPK CLI will try to commit and push these changes to a new origin/branch. (default: false)
@@ -83,6 +83,11 @@ Install the manifest generation pipeline to your Azure DevOps instance
 
 Options:
   -h, --help  output usage information
+
+
+  TODO: Add new options.
+
+
 ```
 
 ### reconcile
