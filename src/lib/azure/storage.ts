@@ -399,7 +399,7 @@ export const createTableIfNotExists = async (
   accountName: string,
   tableName: string,
   accessKey: string
-) => {
+): Promise<boolean | undefined> => {
   // validate input
   const errors: string[] = [];
 
@@ -415,16 +415,23 @@ export const createTableIfNotExists = async (
     throw new Error(`\n${errors.join("\n")}`);
   }
 
+  let retValue: boolean | undefined;
+
   const storageClient = storage.createTableService(accountName, accessKey);
-  storageClient.createTableIfNotExists(tableName, (err, result) => {
-    if (err) {
-      logger.error(
-        `Unable to create table in storage account ${accountName} \n ${err}`
-      );
-      throw err;
-    }
-    logger.debug(`table result: ${JSON.stringify(result)}`);
+  const retPromise = new Promise<boolean | undefined>((resolve, reject) => {
+    storageClient.createTableIfNotExists(tableName, (err, result) => {
+      if (err) {
+        logger.error(
+          `Unable to create table in storage account ${accountName} \n ${err}`
+        );
+        return reject(err);
+      }
+      logger.debug(`table result: ${JSON.stringify(result)}`);
+      retValue = result.created;
+      return resolve(retValue);
+    });
   });
+  return retPromise;
 };
 
 /**

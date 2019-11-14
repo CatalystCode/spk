@@ -145,7 +145,7 @@ export const onboard = async (
     // if (location === undefined || location === null || location === "") {
     if (!location) {
       throw new Error(
-        "Azure location is required to create new storage account"
+        "the following argument is required: \n -l / --storage-location"
       );
     }
 
@@ -170,10 +170,30 @@ export const onboard = async (
     );
   }
 
-  await createTableIfNotExists(accountName, tableName, accessKey!);
+  const tableCreated = await createTableIfNotExists(
+    accountName,
+    tableName,
+    accessKey!
+  );
+
+  logger.debug(`tabled created: ${tableCreated}`);
 
   // print newly created storage account
-  echo(JSON.stringify(storageAccount, null, 2));
+  if (storageAccount !== undefined) {
+    echo(`${JSON.stringify(storageAccount, null, 2)}\n`);
+  }
+
+  if (storageAccount !== undefined && tableCreated === true) {
+    echo(
+      `Storage account ${accountName} and table ${tableName} are created.\n`
+    );
+  } else if (storageAccount === undefined && tableCreated === true) {
+    echo(
+      `Table ${tableName} is created in existing storage account ${accountName}.\n`
+    );
+  } else if (storageAccount === undefined && tableCreated === false) {
+    echo(`Both storage account ${accountName} and table ${tableName} exist.\n`);
+  }
 
   // if key vault is not specified, exit without reading storage account key and setting it in the key vault
   if (keyVaultName) {
@@ -185,9 +205,10 @@ export const onboard = async (
   } else {
     // notify the user to set the environment variable with storage access key
     echo(
-      `Service introspection deployment onboarding is complete. Please set the storage account access key in environment variable INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.\n`
+      `Please set the storage account access key in environment variable INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.\n`
     );
-    echo(`Storage account ${accountName} access key: ${accessKey}`);
+
+    echo(`Storage account ${accountName} access key: ${accessKey}\n`);
   }
 
   // save storage account and table names in configuration
