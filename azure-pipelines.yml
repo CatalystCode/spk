@@ -6,13 +6,11 @@ pr:
 
 strategy:
   matrix:
-    node_8_x:
-      node_version: 8.x
     node_10_x:
       node_version: 10.x
     node_12_x:
       node_version: 12.x
-  maxParallel: 3
+  maxParallel: 2
 
 pool:
   vmImage: "ubuntu-latest"
