@@ -151,7 +151,7 @@ export const getDeployments = (
 /**
  * Initializes the pipelines assuming that the configuration has been loaded
  */
-export const initialize = () => {
+const initialize = () => {
   const config = Config();
 
   if (
