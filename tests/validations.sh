@@ -22,6 +22,7 @@ echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 branchName=myFeatureBranch
 FrontEnd=Fabrikam.Acme.FrontEnd
 BackEnd=Fabrikam.Acme.BackEnd
+hld_dir=fabrikam-hld
 services_dir=services
 mono_repo_dir=fabrikam2019
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
@@ -40,6 +41,46 @@ if [ ! -d "$TEST_WORKSPACE" ]; then
 fi
 
 cd $TEST_WORKSPACE
+
+# HLD repo set up
+mkdir $hld_dir
+cd $hld_dir
+spk hld init
+git add -A
+
+# See if the remote repo exists
+repo_result=$(az repos list --org $AZDO_ORG_URL -p $AZDO_PROJECT)
+repo_exists=$(echo $repo_result | jq -r --arg hld_dir "$hld_dir" '.[].name | select(. == $hld_dir ) != null')
+
+if [ "$repo_exists" = "true" ]; then
+    echo "The repo '$hld_dir' already exists "
+    # Get the repo id
+    repo_id=$(echo "$repo_result"  | jq -r --arg hld_dir "$hld_dir" '.[] | select(.name == $hld_dir) | .id')
+    echo "repo_id to delete is $repo_id"
+    # Delete the repo
+    az repos delete --id "$repo_id" --yes --org $AZDO_ORG_URL --p $AZDO_PROJECT
+fi
+
+# Create the remote repo for the local repo
+created_repo_result=$(az repos create --name "$hld_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT)
+
+# Extract out remote repo URL from the above result
+remote_repo_url=$(echo $created_repo_result | jq '.remoteUrl' | tr -d '"' )
+echo "The remote_repo_url is $remote_repo_url"
+
+# Remove the user from the URL
+repo_url=$(getHostandPath "$remote_repo_url")
+
+# We need to manipulate the remote url to insert a PAT token so we can
+git commit -m "inital commit"
+git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
+echo "git push"
+git push -u origin --all
+
+
+
+
+# App Code Mono Repo set up 
 mkdir $mono_repo_dir
 cd $mono_repo_dir
 git init
