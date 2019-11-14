@@ -4,9 +4,9 @@ import * as path from "path";
 import uuid from "uuid/v4";
 import {
   Config,
+  defaultConfigFile,
   loadConfiguration,
-  saveConfiguration,
-  defaultConfigFile
+  saveConfiguration
 } from "../config";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
 

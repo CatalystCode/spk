@@ -4,7 +4,7 @@ import yaml from "js-yaml";
 import os from "os";
 import * as path from "path";
 import { promisify } from "util";
-import { Config, loadConfiguration, defaultConfigFile } from "../../config";
+import { Config, defaultConfigFile, loadConfiguration } from "../../config";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
