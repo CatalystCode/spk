@@ -11,18 +11,22 @@ TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$ACCESS_TOKEN_SECRET" ] || { echo "Provide ACCESS_TOKEN_SECRET"; exit 1;}
 [ ! -z "$AZDO_PROJECT" ] || { echo "Provide AZDO_PROJECT"; exit 1;}
 [ ! -z "$AZDO_ORG" ] || { echo "Provide AZDO_ORG"; exit 1;}
+[ ! -z "$ACR_NAME" ] || { echo "Provide ACR_NAME"; exit 1;}
 AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_ORG"}"
+
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
 echo "SPK_LOCATION: $SPK_LOCATION"
 echo "AZDO_PROJECT: $AZDO_PROJECT"
 echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
+echo "ACR_NAME: $ACR_NAME"
 
 branchName=myFeatureBranch
-FrontEnd=Fabrikam.Acme.FrontEnd
-BackEnd=Fabrikam.Acme.BackEnd
+FrontEnd=fabrikam.acme.frontend
+BackEnd=fabrikam.acme.backend
 hld_dir=fabrikam-hld
+vg_name=fabrikam-vg
 services_dir=services
 mono_repo_dir=fabrikam2019
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
@@ -45,6 +49,7 @@ cd $TEST_WORKSPACE
 # HLD repo set up
 mkdir $hld_dir
 cd $hld_dir
+git init
 spk hld init
 git add -A
 
@@ -70,16 +75,17 @@ echo "The remote_repo_url is $remote_repo_url"
 
 # Remove the user from the URL
 repo_url=$(getHostandPath "$remote_repo_url")
+hld_repo_url=$repo_url
 
 # We need to manipulate the remote url to insert a PAT token so we can
 git commit -m "inital commit"
-git remote rm origin
+# git remote rm origin
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
 cd ..
 
-
+# *** TODO: Get ride of duplication
 
 # App Code Mono Repo set up 
 mkdir $mono_repo_dir
@@ -90,6 +96,22 @@ mkdir $services_dir
 spk project init -m -d $services_dir >> $TEST_WORKSPACE/log.txt
 file_we_expect=("spk.log" "bedrock.yaml" "maintainers.yaml" "hld-lifecycle.yaml")
 validate_directory "$TEST_WORKSPACE/$mono_repo_dir" "${file_we_expect[@]}"
+
+# Does variable group already exist? Delete if so
+vg_result=$(az pipelines variable-group list --org $AZDO_ORG_URL -p $AZDO_PROJECT)
+vg_exists=$(echo $vg_result | jq -r --arg vg_name "$vg_name" '.[].name | select(. == $vg_name ) != null')
+
+if [ "$vg_exists" = "true" ]; then
+    echo "The variable group '$vg_name' already exists "
+    # Get the variable group id
+    vg_id=$(echo "$vg_result"  | jq -r --arg vg_name "$vg_name" '.[] | select(.name == $vg_name) | .id')
+    echo "variable group to delete is $vg_id"
+    # Delete the variable group
+    az pipelines variable-group delete --id "$vg_id" --yes --org $AZDO_ORG_URL --p $AZDO_PROJECT
+fi
+
+# Create variable group
+spk project create-variable-group -r $ACR_NAME -d $hld_repo_url -u $SP_APP_ID -p $SP_PASS -t $SP_TENANT --org-name $AZDO_ORG --project $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET $vg_name >> $TEST_WORKSPACE/log.txt
 
 spk service create $FrontEnd -d $services_dir >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
@@ -131,7 +153,7 @@ echo "The remote_repo_url is $remote_repo_url"
 repo_url=$(getHostandPath "$remote_repo_url")
 
 # We need to manipulate the remote url to insert a PAT token so we can
-# git remote rm origin
+
 git commit -m "inital commit"
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
