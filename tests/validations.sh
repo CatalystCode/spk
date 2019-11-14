@@ -84,14 +84,17 @@ git init
 
 mkdir $services_dir
 spk project init >> $TEST_WORKSPACE/log.txt
-file_we_expect=("spk.log" "bedrock.yaml" "maintainers.yaml" "hld-lifecycle.yaml")
+file_we_expect=("spk.log" ".gitignore" "bedrock.yaml" "maintainers.yaml" "hld-lifecycle.yaml")
 validate_directory "$TEST_WORKSPACE/$mono_repo_dir" "${file_we_expect[@]}"
 
 # Does variable group already exist? Delete if so
-variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name
+variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
 # Create variable group
-spk project create-variable-group -r $ACR_NAME -d $hld_repo_url -u $SP_APP_ID -p $SP_PASS -t $SP_TENANT --org-name $AZDO_ORG --project $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET $vg_name >> $TEST_WORKSPACE/log.txt
+spk project create-variable-group $vg_name -r $ACR_NAME -d $hld_repo_url -u $SP_APP_ID -p $SP_PASS -t $SP_TENANT --org-name $AZDO_ORG --project $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET  #>> $TEST_WORKSPACE/log.txt
+
+# Verify the variable group was created. Fail if not
+variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
 
 spk service create $FrontEnd -d $services_dir >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
@@ -125,7 +128,6 @@ git commit -m "inital commit"
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
-
 
 # First we should check what pipelines exist. If there is a pipeline with the same name we should delete it
 pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $FrontEnd

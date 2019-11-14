@@ -129,15 +129,24 @@ function repo_exists () {
 function variable_group_exists () {
     vg_result=$(az pipelines variable-group list --org $1 -p $2)
     vg_name=$3
+    action=$4
+    echo "Checking if the variable group $vg_name exists..."
     vg_exists=$(echo $vg_result | jq -r --arg vg_name "$vg_name" '.[].name | select(. == $vg_name ) != null')
 
     if [ "$vg_exists" = "true" ]; then
         echo "The variable group '$vg_name' already exists "
-        # Get the variable group id
-        vg_id=$(echo "$vg_result"  | jq -r --arg vg_name "$vg_name" '.[] | select(.name == $vg_name) | .id')
-        echo "variable group to delete is $vg_id"
-        # Delete the variable group
-        az pipelines variable-group delete --id "$vg_id" --yes --org $1 --p $2
+        if [ "$action" == "delete" ]; then
+            # Get the variable group id
+            vg_id=$(echo "$vg_result"  | jq -r --arg vg_name "$vg_name" '.[] | select(.name == $vg_name) | .id')
+            echo "variable group to delete is $vg_id"
+            # Delete the variable group
+            az pipelines variable-group delete --id "$vg_id" --yes --org $1 --p $2
+        fi
+    else
+        echo "The variable group $vg_name does not exist"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
     fi
 }
 
