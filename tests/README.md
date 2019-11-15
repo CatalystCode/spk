@@ -50,7 +50,7 @@ tests.
 | Command                           | Coverage |
 | --------------------------------- | -------- |
 | spk hld init                      | ✅       |
-| spk hld install-manifest-pipeline | 🚫       |
+| spk hld install-manifest-pipeline | ✅       |
 
 ## Ingress Route Management
 
