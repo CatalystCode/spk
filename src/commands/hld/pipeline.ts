@@ -40,16 +40,28 @@ export const installHldToManifestPipelineDecorator = (
     .action(async opts => {
       const { azure_devops } = Config();
 
-      const { hldUrl = azure_devops && azure_devops.hld_repository } = opts;
+      const {
+        hldUrl = azure_devops && azure_devops.hld_repository,
+        manifestUrl = azure_devops && azure_devops.manifest_repository
+      } = opts;
+
+      const manifestRepoName = getRepositoryName(manifestUrl);
 
       const {
         orgName = azure_devops && azure_devops.org,
         personalAccessToken = azure_devops && azure_devops.access_token,
         devopsProject = azure_devops && azure_devops.project,
         hldName = getRepositoryName(hldUrl),
-        manifestUrl = azure_devops && azure_devops.manifest_repository,
-        pipelineName = hldName + "-to-" + getRepositoryName(manifestUrl)
+        pipelineName = hldName + "-to-" + manifestRepoName
       } = opts;
+
+      logger.debug(`orgName: ${orgName}`);
+      logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
+      logger.debug(`devopsProject: ${devopsProject}`);
+      logger.debug(`pipelineName: ${pipelineName}`);
+      logger.debug(`manifestUrl: ${manifestUrl}`);
+      logger.debug(`hldName: ${hldName}`);
+      logger.debug(`hldUrl: ${hldUrl}`);
 
       try {
         if (typeof pipelineName !== "string") {
