@@ -27,8 +27,8 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-const storageAccountName = uuid();
-const storageTableName = uuid();
+const storageAccountName = "teststorage";
+const storageTableName = "testtable";
 const storageResourceGroup = uuid();
 const accessOpts: IAzureAccessOpts = {
   servicePrincipalId: uuid(),
