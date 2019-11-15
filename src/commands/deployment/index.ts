@@ -3,7 +3,6 @@ import { createCommandDecorator } from "./create";
 import { dashboardCommandDecorator } from "./dashboard";
 import { getCommandDecorator } from "./get";
 import { onboardCommandDecorator } from "./onboard";
-import { selfTestCommandDecorator } from "./self-test";
 import { validateCommandDecorator } from "./validate";
 
 /**
@@ -17,7 +16,6 @@ export const deploymentCommand = Command(
     onboardCommandDecorator,
     validateCommandDecorator,
     dashboardCommandDecorator,
-    createCommandDecorator,
-    selfTestCommandDecorator
+    createCommandDecorator
   ]
 );
