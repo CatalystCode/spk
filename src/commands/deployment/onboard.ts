@@ -144,7 +144,6 @@ export const onboard = async (
 
   // Storage account does not exist so create it.
   if (isExist === false) {
-    // if (location === undefined || location === null || location === "") {
     if (!location) {
       throw new Error(
         "the following argument is required: \n -l / --storage-location"
