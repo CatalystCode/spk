@@ -19,7 +19,7 @@ tests.
 - As a developer create a mono-repo and add services
 - As a developer create variable group with variables
 - As a developer create a pipeline from an existing service
-- As a devleper create a service revision from an existing service
+- As a developer create a service revision from an existing service
 
 # Operational Coverage
 
