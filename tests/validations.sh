@@ -51,6 +51,9 @@ mkdir $hld_dir
 cd $hld_dir
 git init
 spk hld init
+file_we_expect=("spk.log" "azure-pipelines.yaml")
+validate_directory "$TEST_WORKSPACE/$hld_dir" "${file_we_expect[@]}"
+
 git add -A
 
 # See if the remote repo exists
