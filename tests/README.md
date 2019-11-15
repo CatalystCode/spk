@@ -97,6 +97,8 @@ tests.
    - SP_TENANT (e.g Service Principal Tenant Id)
    - ACR_NAME (e.g Name of ACR resource that is accessible from above service
      principal)
+   - SPK_DEFINITION_ID ( DefinitionId of the SPK artifact build)
+   - SPK_PROJECT_ID ( Project Id of the AzDO project the SPK build occurs in)
    - FUNC_SCRIPT (e.g.
      https://raw.githubusercontent.com/MY_ORG/spk/master/tests/functions.sh)
    - TEST_SCRIPT (e.g.
@@ -106,7 +108,22 @@ tests.
 4. SPK Binary
    - Provided in pipeline yaml
 
+## How to find Definition and Project Ids
+
+Navigate to your SPK build pipeline in Azure DevOps. Pay attention to the URL in
+the browser. The example below is for teh CatalystCode.spk pipeline. The
+definition id is 128. ![definitionid](./images/definitionid.png)
+
+You can find the project id but navigating tot
+`https://dev.azure.com/{organization}/_apis/projects?api-version=5.0-preview.3`
+in your web browser. Replace {organization} with the name of your org. You will
+get a JSON payload with a array of Azure DevOps projects. Find yours and use the
+top level `Id` field as the Project Id.
+
 ## Testing locally
+
+When testing locally you don't need to do teh above set up. Since there is no
+pipeline.
 
 1. Login into AZ CLI
 2. Install Azure DevOps Extension
