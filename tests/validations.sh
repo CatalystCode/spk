@@ -112,6 +112,8 @@ echo "git push"
 git push -u origin --all
 cd ..
 
+# *** TODO: Get ride of duplication
+
 # First we should check hld pipelines exist. If there is a pipeline with the same name we should delete it
 hld_pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_dir $manifests_dir
 
