@@ -17,7 +17,7 @@ tests.
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
-- As a devloper create variable group with variables
+- As a developer create variable group with variables
 - As a developer create a pipeline from an existing service
 - As a devleper create a service revision from an existing service
 
