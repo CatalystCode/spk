@@ -126,8 +126,8 @@ export const createTestHldLifecyclePipelineYaml = (
           ``,
           `# Update HLD via spk`,
           `git checkout -b "RECONCILE/$(Build.Repository.Name)-$(Build.BuildNumber)"`,
-          `echo "spk hld reconcile $(Build.Repository.Name) $PWD"`,
-          `spk hld reconcile $(Build.Repository.Name) $PWD`,
+          `echo "spk hld reconcile $(Build.Repository.Name) $PWD ./.."`,
+          `spk hld reconcile $(Build.Repository.Name) $PWD ./..`,
           `echo "GIT STATUS"`,
           `git status`,
           `echo "GIT ADD (git add -A)"`,
@@ -216,7 +216,7 @@ export const createTestHldAzurePipelinesYaml = (
         },
         condition: `ne(variables['Build.Reason'], 'PullRequest')`,
         env: {
-          ACCESS_TOKEN_SECRET: "$(ACCESS_TOKEN)",
+          ACCESS_TOKEN_SECRET: "$(PAT)",
           COMMIT_MESSAGE: "$(Build.SourceVersionMessage)",
           REPO: "$(MANIFEST_REPO)",
           BRANCH_NAME: "$(Build.SourceBranchName)"
