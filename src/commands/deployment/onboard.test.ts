@@ -12,7 +12,12 @@ import {
   logger
 } from "../../logger";
 import { IAzureAccessOpts, IConfigYaml } from "../../types";
-import { setConfiguration, validateRequiredArguments } from "./onboard";
+import {
+  setConfiguration,
+  validateRequiredArguments,
+  validateStorageName,
+  validateTableName
+} from "./onboard";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -219,5 +224,68 @@ describe("setConfiguration", () => {
     } catch (err) {
       logger.error(`dirs error: ${err}`);
     }
+  });
+});
+
+describe("validateTableName", () => {
+  test("Should pass with valid name", async () => {
+    const isValid = await validateTableName("deployment");
+    expect(isValid).toBe(true);
+  });
+
+  test("vShould fail when name starts with number", async () => {
+    const isValid = await validateTableName("21deployment");
+    expect(isValid).toBe(false);
+  });
+
+  test("vShould fail when name is > 63 characters", async () => {
+    const isValid = await validateTableName(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaa"
+    );
+    expect(isValid).toBe(false);
+  });
+
+  test("vShould fail when name includes special characters", async () => {
+    const isValid = await validateTableName("deployment$@");
+    expect(isValid).toBe(false);
+  });
+
+  test("vShould fail when name includes special characters", async () => {
+    const isValid = await validateTableName("deployment$@");
+    expect(isValid).toBe(false);
+  });
+});
+
+describe("validateStorageName", () => {
+  test("Should pass with valid name", async () => {
+    const isValid = await validateStorageName("teststorage");
+    expect(isValid).toBe(true);
+  });
+
+  test("Should pass with valid name", async () => {
+    const isValid = await validateStorageName("12teststorage");
+    expect(isValid).toBe(true);
+  });
+
+  test("Should fail with upper case letters in the name", async () => {
+    const isValid = await validateStorageName("teststoragE");
+    expect(isValid).toBe(false);
+  });
+
+  test("Should fail with - in the name", async () => {
+    const isValid = await validateStorageName("test-storage");
+    expect(isValid).toBe(false);
+  });
+
+  test("Should pass with max length name", async () => {
+    const isValid = await validateStorageName("aaaaaaaaaaaaaaaaaaaaaaaa");
+    logger.info(`spin1: ${isValid}`);
+    expect(isValid).toBe(true);
+  });
+
+  test("Should fail with > max length name", async () => {
+    const isValid = await validateStorageName("aaaaaaaaaaaaaaaaaaaaaaaaa");
+    logger.info(`spin1: ${isValid}`);
+    expect(isValid).toBe(false);
   });
 });

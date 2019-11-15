@@ -90,7 +90,9 @@ export const onboardCommandDecorator = (command: commander.Command): void => {
 
         if (errors.length !== 0) {
           logger.error(
-            `the following arguments are required: ${errors.join("")}`
+            `the following arguments are either required or invalid: \n${errors.join(
+              "\n"
+            )}`
           );
           return;
         }
@@ -263,8 +265,26 @@ export const validateRequiredArguments = async (
     errors.push("\n -s / --storage-account-name");
   }
 
+  if (
+    storageAccountName &&
+    (await validateStorageName(storageAccountName)) === false
+  ) {
+    errors.push(
+      "The `-s, / --storage-account-name` argument is not valid. Account names contain only alphanumeric characters in lowercase and must be from 3 to 24 characters long."
+    );
+  }
+
   if (!storageTableName) {
     errors.push("\n -t / --storage-table-name");
+  }
+
+  if (
+    storageTableName &&
+    (await validateTableName(storageTableName)) === false
+  ) {
+    errors.push(
+      "The `t, / --storage-table-name` argument is not valid. Table names contain only alphanumeric characters, cannot begin with a numeric character, case-insensitive, and must be from 3 to 63 characters long."
+    );
   }
 
   if (!storageResourceGroup) {
@@ -288,4 +308,14 @@ export const validateRequiredArguments = async (
   }
 
   return errors;
+};
+
+export const validateTableName = async (name: string): Promise<boolean> => {
+  const regExpression = /^[A-Za-z][A-Za-z0-9]{2,62}$/;
+  return regExpression.test(name);
+};
+
+export const validateStorageName = async (name: string): Promise<boolean> => {
+  const regExpression = /^[0-9a-z][a-z0-9]{2,23}$/;
+  return regExpression.test(name);
 };
