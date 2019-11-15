@@ -25,7 +25,6 @@ Commands:
 - [onboard](#onboard)
 - [dashboard](#dashboard)
 - [variable-group](variable-group.md)
-- [self-test](#selfTest)
 
 Global options:
 
@@ -65,9 +64,14 @@ Usage:
 spk deployment validate|v [options]
 
 Options:
+   -st, --self-test  Run a test for the configured storage account. This will write test data and delete the test data. For more information on the behavior, please check the online documentation.
   -h, --help  Usage information
 
 ```
+
+Note: The purpose of `spk deployment validate --self-test` is to make sure that
+spk will be able to write data to the provided storage account. Once the test
+ends, it will remove the test data that was added.
 
 ### get
 
@@ -133,20 +137,6 @@ Options:
   -k, --key-vault-name <key-vault-name>                            Name of the Azure key vault
   -h, --help                                                       Usage information
 
-```
-
-### self-test
-
-Run a test for the configured storage account. This will write test data and
-delete the test data.
-
-The purpose of this test is to make sure that spk will be able to write data to
-the provided storage account. Once the test fininshes, it will remove the test
-data that was added.
-
-```
-Usage:
-spk deployment self-test
 ```
 
 ## Service Principal
