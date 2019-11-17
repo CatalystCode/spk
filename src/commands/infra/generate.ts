@@ -6,7 +6,7 @@ import path from "path";
 import simpleGit from "simple-git/promise";
 import { logger } from "../../logger";
 import * as infraCommon from "./infra_common";
-import { copyTfTemplate, renameTfvars } from "./scaffold";
+import { copyTfTemplate } from "./scaffold";
 
 const git = simpleGit();
 
@@ -219,7 +219,6 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
       await writeToSpkTfvarsFile(spkTfvarsObject, childDirectory);
       // const templatePath = await parseDefinitionJson(projectPath);
       await copyTfTemplate(templatePath, childDirectory);
-      await renameTfvars(childDirectory);
     } else {
       // If there is not a definition.json in current working directory,
       // then proceed with reading definition.json in project path
@@ -235,7 +234,6 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
       await checkSpkTfvars(generatedDirectory);
       await writeToSpkTfvarsFile(spkTfvarsObject, generatedDirectory);
       await copyTfTemplate(templatePath, generatedDirectory);
-      await renameTfvars(generatedDirectory);
     }
   } catch (err) {
     return err;
