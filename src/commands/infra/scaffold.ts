@@ -131,7 +131,11 @@ export const copyTfTemplate = async (
   envName: string
 ): Promise<boolean> => {
   try {
-    await fsextra.copy(templatePath, envName);
+    await fsextra.copy(templatePath, envName, {
+      filter: file => {
+        return !(file.indexOf("terraform.tfvars") > -1);
+      }
+    });
     logger.info(`Terraform template files copied from ${templatePath}`);
   } catch (err) {
     logger.error(

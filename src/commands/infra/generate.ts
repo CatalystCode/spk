@@ -210,7 +210,11 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
         path.join(parentDirectory, projectPath)
       );
       // Generate Terraform files in generated directory
-      await writeSpkTfvars(parentDefinitionJSON.variables, childDirectory);
+      const spkTfvarsObject = await generateSpkTfvars(
+        parentDefinitionJSON.variables
+      );
+      await checkSpkTfvars(childDirectory);
+      await writeToSpkTfvarsFile(spkTfvarsObject, childDirectory);
       // const templatePath = await parseDefinitionJson(projectPath);
       await copyTfTemplate(templatePath, childDirectory);
       await renameTfvars(childDirectory);
@@ -225,7 +229,9 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
         projectPath + "-generated"
       );
       // Generate Terraform files in generated directory
-      await writeSpkTfvars(definitionJSON.variables, generatedDirectory);
+      const spkTfvarsObject = await generateSpkTfvars(definitionJSON.variables);
+      await checkSpkTfvars(generatedDirectory);
+      await writeToSpkTfvarsFile(spkTfvarsObject, generatedDirectory);
       await copyTfTemplate(templatePath, generatedDirectory);
       await renameTfvars(generatedDirectory);
     }
@@ -270,6 +276,22 @@ export const parseDefinitionJson = async (projectPath: string) => {
 };
 
 /**
+ * Checks if an spk.tfvars
+ *
+ * @param projectPath Path to the definition.json file
+ */
+export const checkSpkTfvars = async (generatedPath: string): Promise<void> => {
+  try {
+    // Remove existing spk.tfvars if it already exists
+    if (fs.existsSync(path.join(generatedPath, "spk.tfvars"))) {
+      fs.unlinkSync(path.join(generatedPath, "spk.tfvars"));
+    }
+  } catch (err) {
+    return err;
+  }
+};
+
+/**
  *
  * Takes in the "variables" block from definition.json file and returns
  * a spk.tfvars file.
@@ -283,38 +305,41 @@ export const parseDefinitionJson = async (projectPath: string) => {
  * key = "value"
  *
  */
-export const writeSpkTfvars = async (
-  definitionJSON: string[],
-  generatedPath: string
-) => {
+export const generateSpkTfvars = async (definitionJSON: string[]) => {
   try {
-    // Remove existing spk.tfvars if it already exists
-    if (fs.existsSync(path.join(generatedPath, "spk.tfvars"))) {
-      fs.unlinkSync(path.join(generatedPath, "spk.tfvars"));
-    }
+    const tfVars: string[] = [];
     // Parse definition.json "variables" block
     const variables = definitionJSON;
     // Restructure the format of variables text
     const tfVariables = JSON.stringify(variables)
-      .replace(/\:/g, "=")
       .replace(/\{|\}/g, "")
       .replace(/\,/g, "\n")
       .split("\n");
     // (re)Create spk.tfvars
     tfVariables.forEach(t => {
-      const tfVar = t.split("=");
-      if (tfVar[0].length > 0) {
-        tfVar[0] = tfVar[0].replace(/\"/g, "");
+      const tfVar = t.split(":");
+      const result = tfVar.slice(0, 1);
+      result.push(tfVar.slice(1).join(":"));
+      if (result[0].length > 0) {
+        result[0] = result[0].replace(/\"/g, "");
       }
-      const newTfVar = tfVar.join(" = ");
-      fs.appendFileSync(
-        path.join(generatedPath, "spk.tfvars"),
-        newTfVar + "\n"
-      );
+      const newTfVar = result.join(" = ");
+      tfVars.push(newTfVar);
     });
+    return tfVars;
   } catch (err) {
-    logger.error(err);
+    logger.error(`There was an error with generating the spk tfvars object.`);
+    return err;
   }
+};
+
+export const writeToSpkTfvarsFile = async (
+  spkTfVars: string[],
+  generatedPath: string
+) => {
+  spkTfVars.forEach(tfvar => {
+    fs.appendFileSync(path.join(generatedPath, "spk.tfvars"), tfvar + "\n");
+  });
 };
 
 /**
