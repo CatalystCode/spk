@@ -129,11 +129,14 @@ export const starterAzurePipelines = async (opts: {
                   projectPathParts.length > 1
                     ? "-" + projectPathParts.slice(-1)[0]
                     : "";
+
                 return {
                   script: generateYamlScript([
+                    `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${projectName} | tr '[:upper:]' '[:lower:]')`,
+                    `echo "Image Name: $BUILD_REPO_NAME"`,
                     `cd ${projectPath}`,
-                    `echo "az acr build -r $(ACR_NAME) --image $(Build.Repository.Name)${projectName}:$(Build.SourceBranchName)-$(Build.BuildNumber) ."`,
-                    `az acr build -r $(ACR_NAME) --image $(Build.Repository.Name)${projectName}:$(Build.SourceBranchName)-$(Build.BuildNumber) .`
+                    `echo "az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber) ."`,
+                    `az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber) .`
                   ]),
                   displayName: "ACR Build and Publish"
                 };
@@ -183,6 +186,8 @@ export const starterAzurePipelines = async (opts: {
                 logger.info(`projectPath: ${projectPath}`);
                 return {
                   script: generateYamlScript([
+                    `export PROJECT_NAME_LOWER=$(echo ${projectName} | tr '[:upper:]' '[:lower:]')`,
+                    `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-$PROJECT_NAME_LOWER | tr '[:upper:]' '[:lower:]')`,
                     `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
                     `. build.sh --source-only`,
                     ``,
@@ -200,8 +205,8 @@ export const starterAzurePipelines = async (opts: {
                     `# --- End Script`,
                     ``,
                     `# Update HLD`,
-                    `git checkout -b "DEPLOY/$(Build.Repository.Name)-${projectName}-$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
-                    `../fab/fab set --subcomponent ${projectName} image.tag=$(Build.SourceBranchName)-$(Build.BuildNumber)`,
+                    `git checkout -b "DEPLOY/$BUILD_REPO_NAME-$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                    `../fab/fab set --subcomponent $PROJECT_NAME_LOWER image.tag=$(Build.SourceBranchName)-$(Build.BuildNumber)`,
                     `echo "GIT STATUS"`,
                     `git status`,
                     `echo "GIT ADD (git add -A)"`,
@@ -213,7 +218,7 @@ export const starterAzurePipelines = async (opts: {
                     ``,
                     `# Commit changes`,
                     `echo "GIT COMMIT"`,
-                    `git commit -m "Updating ${projectName} image tag to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
+                    `git commit -m "Updating $PROJECT_NAME_LOWER image tag to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
                     ``,
                     `# Git Push`,
                     `git_push`,
@@ -222,8 +227,8 @@ export const starterAzurePipelines = async (opts: {
                     `echo 'az extension add --name azure-devops'`,
                     `az extension add --name azure-devops`,
                     ``,
-                    `echo 'az repos pr create --description "Updating ${projectName} to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
-                    `az repos pr create --description "Updating ${projectName} to $(Build.SourceBranchName)-$(Build.BuildNumber)."`
+                    `echo 'az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
+                    `az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."`
                   ]),
                   displayName:
                     "Download Fabrikate, Update HLD, Push changes, Open PR",

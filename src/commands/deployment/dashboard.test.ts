@@ -133,9 +133,11 @@ describe("Extract manifest repository information", () => {
   test("Manifest repository information is successfully extracted", () => {
     (Config as jest.Mock).mockReturnValue({
       azure_devops: {
-        manifest_repository: "dev.azure.com/bhnook/fabrikam/_git/materialized"
+        manifest_repository:
+          "https://dev.azure.com/bhnook/fabrikam/_git/materialized"
       }
     });
+
     let manifestInfo = extractManifestRepositoryInformation();
     expect(manifestInfo).toBeDefined();
     expect(manifestInfo!.githubUsername).toBeUndefined();
