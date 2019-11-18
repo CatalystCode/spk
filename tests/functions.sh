@@ -191,10 +191,8 @@ function verify_pipeline_with_poll () {
     echo "Attempting to verify that the pipeline build for $pipeline_name is successful..."
     pipeline_result=$(az pipelines build definition show --name $pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
     pipeline_id=$(tr '"\""' '"\\"' <<< "$pipeline_result" | jq .id)
-
     echo "$pipeline_name has pipeline id of $pipeline_id"
-    echo "Loop polling interval is $poll_interval seconds"
-    echo "Loop timeout is $poll_timeout seconds"
+
     while [ $SECONDS -lt $end ]; do
         pipeline_builds=$(az pipelines build list --definition-ids $pipeline_id --org $1 --p $2)
         
@@ -220,12 +218,12 @@ function verify_pipeline_with_poll () {
             exit 1 
         fi
         else
-        echo "Pipeline Id $pipeline_id status is $pipeline_status. Sleeping for $poll_interval"
+        echo "Pipeline Id $pipeline_id status is $pipeline_status. Sleeping for $poll_interval seconds"
         sleep $poll_interval
         fi 
     done
     if [ "$loop_result" = "unknown" ]; then
-        echo "Polling the build timed out!"
+        echo "Polling the build timed out after $poll_timeout seconds!"
         exit 1
     fi
 }
@@ -239,6 +237,8 @@ function approve_pull_request () {
         exit 1
     fi
     pull_request_id=$(tr '"\""' '"\\"' <<< "$all_prs" | jq -r --arg pr_title $pr_title '.[] | select(.title == $pr_title) | .pullRequestId')
+    echo "Found pull request id $pull_request_id for '$pr_title'"
     approve_result=$(az repos pr update --id $pull_request_id --auto-complete true -—org $1 --p $2)
+    echo "PR $pull_request_id approved"
     # TODO verify actually successful
 }
