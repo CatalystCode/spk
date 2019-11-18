@@ -2,7 +2,6 @@ import { StorageAccount } from "@azure/arm-storage/esm/models";
 import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
-import { echo } from "shelljs";
 import { Config, defaultConfigFile, readYaml } from "../../config";
 import { setSecret } from "../../lib/azure/keyvault";
 import {
@@ -181,19 +180,21 @@ export const onboard = async (
 
   // print newly created storage account
   if (storageAccount !== undefined) {
-    echo(`${JSON.stringify(storageAccount, null, 2)}\n`);
+    logger.info(`${JSON.stringify(storageAccount, null, 2)}\n`);
   }
 
   if (storageAccount !== undefined && tableCreated === true) {
-    echo(
+    logger.info(
       `Storage account ${accountName} and table ${tableName} are created.\n`
     );
   } else if (storageAccount === undefined && tableCreated === true) {
-    echo(
+    logger.info(
       `Table ${tableName} is created in existing storage account ${accountName}.\n`
     );
   } else if (storageAccount === undefined && tableCreated === false) {
-    echo(`Both storage account ${accountName} and table ${tableName} exist.\n`);
+    logger.info(
+      `Both storage account ${accountName} and table ${tableName} exist.\n`
+    );
   }
 
   // if key vault is not specified, exit without reading storage account key and setting it in the key vault
@@ -205,11 +206,11 @@ export const onboard = async (
     await setSecret(keyVaultName, `${accountName}Key`, accessKey!, opts);
   } else {
     // notify the user to set the environment variable with storage access key
-    echo(
+    logger.info(
       `Please set the storage account access key in environment variable INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.\n`
     );
 
-    echo(`Storage account ${accountName} access key: ${accessKey}\n`);
+    logger.info(`Storage account ${accountName} access key: ${accessKey}\n`);
   }
 
   // save storage account and table names in configuration
