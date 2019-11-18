@@ -129,7 +129,9 @@ spk hld install-manifest-pipeline -o $AZDO_ORG -d $AZDO_PROJECT -p $ACCESS_TOKEN
 
 # Verify the pipeline was created
 pipeline_created=$(az pipelines show --name $hld_dir-to-$manifests_dir --org $AZDO_ORG_URL --p $AZDO_PROJECT)
-# TODO: Verify the pipeline run was successful
+
+# Verify the pipeline run was successful
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_dir-to-$manifests_dir 180 25
 
 # App Code Mono Repo set up 
 mkdir $mono_repo_dir
