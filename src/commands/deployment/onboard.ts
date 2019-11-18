@@ -180,20 +180,20 @@ export const onboard = async (
 
   // print newly created storage account
   if (storageAccount !== undefined) {
-    logger.info(`${JSON.stringify(storageAccount, null, 2)}\n`);
+    logger.info(`${JSON.stringify(storageAccount, null, 2)}`);
   }
 
   if (storageAccount !== undefined && tableCreated === true) {
     logger.info(
-      `Storage account ${accountName} and table ${tableName} are created.\n`
+      `Storage account ${accountName} and table ${tableName} are created.`
     );
   } else if (storageAccount === undefined && tableCreated === true) {
     logger.info(
-      `Table ${tableName} is created in existing storage account ${accountName}.\n`
+      `Table ${tableName} is created in existing storage account ${accountName}.`
     );
   } else if (storageAccount === undefined && tableCreated === false) {
     logger.info(
-      `Both storage account ${accountName} and table ${tableName} exist.\n`
+      `Both storage account ${accountName} and table ${tableName} exist.`
     );
   }
 
@@ -207,10 +207,10 @@ export const onboard = async (
   } else {
     // notify the user to set the environment variable with storage access key
     logger.info(
-      `Please set the storage account access key in environment variable INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.\n`
+      `Please set the storage account access key in environment variable INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.`
     );
 
-    logger.info(`Storage account ${accountName} access key: ${accessKey}\n`);
+    logger.info(`Storage account ${accountName} access key: ${accessKey}`);
   }
 
   // save storage account and table names in configuration
