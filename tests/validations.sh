@@ -194,7 +194,7 @@ pipeline_name="$FrontEnd-pipeline"
 pipeline_created=$(az pipelines show --name $pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify the pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $pipeline_name 180 15
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $pipeline_name 180 25
 # TODO approve the PR this build creates on the HLD
 
 # Start creating a service revision
