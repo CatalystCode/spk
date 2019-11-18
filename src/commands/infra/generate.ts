@@ -333,6 +333,12 @@ export const generateSpkTfvars = async (definitionJSON: string[]) => {
   }
 };
 
+/**
+ * Reads in a tfVars object and returns a spk.tfvars file
+ *
+ * @param spkTfVars spk tfvars object in an array
+ * @param generatedPath Path to write the spk.tfvars file to
+ */
 export const writeToSpkTfvarsFile = async (
   spkTfVars: string[],
   generatedPath: string
