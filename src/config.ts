@@ -83,7 +83,7 @@ const getKeyVaulSecret = async (
   }
 
   if (keyVaultKey === undefined) {
-    keyVaultKey = await spkConfig.introspection!.azure!.key;
+    keyVaultKey = await ((spkConfig.introspection || {}).azure || {}).key;
   }
 
   return keyVaultKey;
@@ -106,7 +106,7 @@ export const Config = (): IConfigYaml => {
   }
 
   const introspectionAzure = {
-    ...spkConfig.introspection!.azure,
+    ...(spkConfig.introspection || {}).azure,
     get key() {
       const { account_name } = (spkConfig.introspection || {}).azure || {};
       return getKeyVaulSecret(spkConfig.key_vault_name, account_name);
@@ -225,7 +225,7 @@ export const loadConfiguration = (filepath: string = defaultConfigFile()) => {
     fs.statSync(filepath);
     dotenv.config();
     const data = readYaml<IConfigYaml>(filepath);
-    spkConfig = loadConfigurationFromLocalEnv(data);
+    spkConfig = loadConfigurationFromLocalEnv(data || {});
   } catch (err) {
     logger.error(`An error occurred while loading configuration\n ${err}`);
     throw err;
