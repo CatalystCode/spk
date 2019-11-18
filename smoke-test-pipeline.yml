@@ -62,6 +62,7 @@ stages:
         export SPK_LOCATION="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
         export SP_PASS=$(SP_PASS)
+        export SP_TENANT=$(SP_TENANT)
 
         # Include dependent scripts
         . ./functions.sh
