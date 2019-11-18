@@ -278,7 +278,7 @@ export const parseDefinitionJson = async (projectPath: string) => {
 /**
  * Checks if an spk.tfvars
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the spk.tfvars file
  */
 export const checkSpkTfvars = async (generatedPath: string): Promise<void> => {
   try {
