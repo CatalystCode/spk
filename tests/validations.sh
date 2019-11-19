@@ -143,6 +143,8 @@ spk project init >> $TEST_WORKSPACE/log.txt
 file_we_expect=("spk.log" ".gitignore" "bedrock.yaml" "maintainers.yaml" "hld-lifecycle.yaml")
 validate_directory "$TEST_WORKSPACE/$mono_repo_dir" "${file_we_expect[@]}"
 
+# TODO: Deploy lifecycle pipeline and verify it runs.
+
 # Does variable group already exist? Delete if so
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
