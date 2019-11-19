@@ -88,8 +88,8 @@ mkdir $hld_dir
 cd $hld_dir
 git init
 spk hld init
-touch component.yaml ## Adding blank component.yaml, though spk hld init may also create a default one in the future.
-file_we_expect=("spk.log" "manifest-generation.yaml" "component.yaml")
+touch component.yaml
+file_we_expect=("spk.log" "manifest-generation.yaml" "component.yaml" ".gitignore")
 validate_directory "$TEST_WORKSPACE/$hld_dir" "${file_we_expect[@]}"
 
 git add -A
@@ -185,14 +185,18 @@ git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
 
-# Deploy lifecycle pipeline and verify it runs.
 lifecycle_pipeline_name="$mono_repo_dir-lifecycle"
 echo "lifecycle_pipeline_name: $lifecycle_pipeline_name"
+
+# First we should check lifecycle pipelines exist. If there is a pipeline with the same name we should delete it
+lifecycle_pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name
+
+# Deploy lifecycle pipeline and verify it runs.
 spk project install-lifecycle-pipeline --org-name $AZDO_ORG --devops-project $AZDO_PROJECT --hld-url $hld_repo_url --repo-url $repo_url --repo-name $mono_repo_dir --pipeline-name $lifecycle_pipeline_name --personal-access-token $ACCESS_TOKEN_SECRET  >> $TEST_WORKSPACE/log.txt
 
 # TODO: Verify the lifecycle pipeline sucessfully runs
 
-# First we should check what pipelines exist. If there is a pipeline with the same name we should delete it
+# First we should check what service build & update pipelines exist. If there is a pipeline with the same name we should delete it
 pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $FrontEnd
 
 pipeline_name="$FrontEnd-pipeline"
@@ -225,4 +229,4 @@ echo "Attempting to approve pull request: '$pr_title'"
 # Get the id of the pr created and set the PR to be approved
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
 
-# TODO hook up helm chart, approve HLD pull request, verify manifest gen pipeline
+echo "Successfully reached the end of the validations scripts."

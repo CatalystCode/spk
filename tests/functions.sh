@@ -181,6 +181,21 @@ function hld_pipeline_exists () {
     fi
 }
 
+function lifecycle_pipeline_exists () {
+    echo "Checking if the lifecycle pipeline already exists."
+    echo "Looking for pipeline of name: ${3}"
+    pipeline_results=$(az pipelines list --org $1 --p $2)
+    pipeline_exists=$(tr '"\""' '"\\"' <<< "$pipeline_results" | jq -r --arg pipeline_name ${3} '.[].name  | select(. == $pipeline_name ) != null')
+    if [ "$pipeline_exists" = "true" ]; then
+        echo "The pipeline '${3}' already exists."
+        # Get the pipeline id. We have to replace single "\" with "\\"
+        pipeline_id=$(tr '"\""' '"\\"' <<<"$pipeline_results"  | jq -r --arg pipeline_name ${3} '.[] | select(.name == $pipeline_name) | .id')
+        echo "pipeline_id to delete is $pipeline_id"
+        # Delete the repo
+        az pipelines delete --id "$pipeline_id" --yes --org $1 --p $2
+    fi
+}
+
 function verify_pipeline_with_poll () {
     local pipeline_name=$3
     poll_timeout=$4
