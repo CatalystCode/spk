@@ -75,3 +75,7 @@ stages:
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
       #failOnStderr: true
       displayName: "Run Tests"
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
+        artifact: test_logs
