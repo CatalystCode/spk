@@ -41,15 +41,8 @@ export const deployLifecyclePipelineCommandDecorator = (
     .option("-e, --hld-url <hld-url>", "HLD Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
     .action(async opts => {
-      const { azure_devops } = Config();
-
-      if (!azure_devops) {
-        logger.error("Azure DevOps config section not found");
-        process.exit(1);
-        return;
-      }
-
       const gitOriginUrl = await getOriginUrl();
+      const { azure_devops } = Config();
 
       const {
         orgName = azure_devops && azure_devops.org,
@@ -60,6 +53,64 @@ export const deployLifecyclePipelineCommandDecorator = (
         repoUrl = getRepositoryUrl(gitOriginUrl),
         hldUrl = azure_devops && azure_devops.hld_repository
       } = opts;
+
+      logger.debug(`orgName: ${orgName}`);
+      logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
+      logger.debug(`pipelineName: ${pipelineName}`);
+      logger.debug(`repoName: ${repoName}`);
+      logger.debug(`repoUrl: ${repoUrl}`);
+      logger.debug(`hldUrl: ${hldUrl}`);
+      logger.debug(`devopsProject: ${devopsProject}`);
+
+      try {
+        if (typeof pipelineName !== "string") {
+          throw new Error(
+            `--pipeline-name must be of type 'string', ${typeof pipelineName} given.`
+          );
+        }
+
+        if (typeof personalAccessToken !== "string") {
+          throw new Error(
+            `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
+          );
+        }
+
+        if (typeof orgName !== "string") {
+          throw new Error(
+            `--org-url must be of type 'string', ${typeof orgName} given.`
+          );
+        }
+
+        if (typeof repoName !== "string") {
+          throw new Error(
+            `--repo-name must be of type 'string', ${typeof repoName} given.`
+          );
+        }
+
+        if (typeof repoUrl !== "string") {
+          throw new Error(
+            `--repo-url must be of type 'string', ${typeof repoUrl} given.`
+          );
+        }
+
+        if (typeof hldUrl !== "string") {
+          throw new Error(
+            `--hld-url must be of type 'string', ${typeof hldUrl} given.`
+          );
+        }
+
+        if (typeof devopsProject !== "string") {
+          throw new Error(
+            `--devops-project must be of type 'string', ${typeof devopsProject} given.`
+          );
+        }
+      } catch (err) {
+        logger.error(
+          `Error occurred validating inputs for install-lifecycle-pipeline`
+        );
+        logger.error(err);
+        process.exit(1);
+      }
 
       try {
         await installPipeline(

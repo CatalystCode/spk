@@ -143,8 +143,6 @@ spk project init >> $TEST_WORKSPACE/log.txt
 file_we_expect=("spk.log" ".gitignore" "bedrock.yaml" "maintainers.yaml" "hld-lifecycle.yaml")
 validate_directory "$TEST_WORKSPACE/$mono_repo_dir" "${file_we_expect[@]}"
 
-# TODO: Deploy lifecycle pipeline and verify it runs.
-
 # Does variable group already exist? Delete if so
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
@@ -186,6 +184,13 @@ git commit -m "inital commit"
 git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
+
+# Deploy lifecycle pipeline and verify it runs.
+lifecycle_pipeline_name="$mono_repo_dir-lifecycle"
+echo "lifecycle_pipeline_name: $lifecycle_pipeline_name"
+spk project install-lifecycle-pipeline --org-name $AZDO_ORG --devops-project $AZDO_PROJECT --hld-url $hld_repo_url --repo-url $repo_url --repo-name $mono_repo_dir --pipeline-name $lifecycle_pipeline_name --personal-access-token $ACCESS_TOKEN_SECRET  >> $TEST_WORKSPACE/log.txt
+
+# TODO: Verify the lifecycle pipeline sucessfully runs
 
 # First we should check what pipelines exist. If there is a pipeline with the same name we should delete it
 pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $FrontEnd
