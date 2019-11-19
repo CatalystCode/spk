@@ -79,3 +79,4 @@ stages:
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
         artifact: test_logs
+      condition: always()
