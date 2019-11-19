@@ -188,11 +188,12 @@ git push -u origin --all
 # First we should check what pipelines exist. If there is a pipeline with the same name we should delete it
 pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $FrontEnd
 
+pipeline_name="$FrontEnd-pipeline"
+
 # Create a pipeline since the code exists in remote repo
-spk service install-build-pipeline -o $AZDO_ORG -r $mono_repo_dir -u $remote_repo_url -d $AZDO_PROJECT -l $services_dir -p $ACCESS_TOKEN_SECRET -v $FrontEnd  >> $TEST_WORKSPACE/log.txt
+spk service install-build-pipeline -o $AZDO_ORG -r $mono_repo_dir -u $remote_repo_url -d $AZDO_PROJECT -l $services_dir -p $ACCESS_TOKEN_SECRET -n $pipeline_name -v $FrontEnd  >> $TEST_WORKSPACE/log.txt
 
 # Verify the pipeline was created
-pipeline_name="$FrontEnd-pipeline"
 pipeline_created=$(az pipelines show --name $pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify the pipeline run was successful
