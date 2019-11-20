@@ -214,31 +214,32 @@ function verify_pipeline_with_poll () {
         # We expect only 1 build right now
         build_count=$(tr '"\""' '"\\"' <<< "$pipeline_builds" | jq '. | length')
         if [ "$build_count" != "1"  ]; then 
-            echo "Expected 1 build for pipeline id $pipeline_id but found $build_count"
+            echo "Expected 1 build for pipeline: $pipeline_name-$pipeline_id but found $build_count"
             exit 1 
         fi
 
         # We use grep because of string matching issues
         echo "Get the build status for build..."
         pipeline_status=$(tr '"\""' '"\\"' <<< "$pipeline_builds" | jq .[0].status)
+        echo "pipeline: $pipeline_name-$pipeline_id:"
         echo "pipeline_status this iteration --> $pipeline_status"
         if [ "$(echo $pipeline_status | grep 'completed')" != "" ]; then
             pipeline_result=$(tr '"\""' '"\\"' <<< "$pipeline_builds" | jq .[0].result)
             if [ "$(echo $pipeline_result | grep 'succeeded')" != "" ]; then
-                echo "Successful build for pipeline id $pipeline_id!"
+                echo "Successful build for pipeline: $pipeline_name-$pipeline_id!"
                 loop_result=$pipeline_result
                 break
             else
-                echo "Expected successful build for pipeline id $pipeline_id but result is $pipeline_result"
+                echo "Expected successful build for pipeline: $pipeline_name-$pipeline_id but result is $pipeline_result"
                 exit 1 
             fi
         else
-        echo "Pipeline Id $pipeline_id status is $pipeline_status. Sleeping for $poll_interval seconds"
+        echo "pipeline: $pipeline_name-$pipeline_id status is $pipeline_status. Sleeping for $poll_interval seconds"
         sleep $poll_interval
         fi 
     done
     if [ "$loop_result" = "unknown" ]; then
-        echo "Polling the build timed out after $poll_timeout seconds!"
+        echo "Polling pipeline: $pipeline_name-$pipeline_id timed out after $poll_timeout seconds!"
         exit 1
     fi
 }
