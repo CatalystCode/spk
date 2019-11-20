@@ -131,13 +131,8 @@ spk hld install-manifest-pipeline -o $AZDO_ORG -d $AZDO_PROJECT -p $ACCESS_TOKEN
 # Verify hld to manifest pipeline was created
 pipeline_created=$(az pipelines show --name $hld_to_manifest_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
-<<<<<<< HEAD
-# Verify the pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_dir-to-$manifests_dir 300 15
-=======
 # Verify hld to manifest pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 180 15
->>>>>>> adding lifecycle pipeline validation. Adding pipeline name to polling logs
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15
 
 # App Code Mono Repo set up 
 mkdir $mono_repo_dir
@@ -216,7 +211,7 @@ spk service install-build-pipeline -o $AZDO_ORG -r $mono_repo_dir -u $remote_rep
 pipeline_created=$(az pipelines show --name $frontend_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify frontend service pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 25
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15
 # TODO approve the PR this build creates on the HLD
 
 # Start creating a service revision
