@@ -99,7 +99,7 @@ export const reconcileHld = async (
 
   // Create Repository Component if it doesn't exist.
   // In a pipeline, the repository component is the name of the application repository.
-  const createRepositoryComponent = `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} -- source ./${repositoryName} --method local`;
+  const createRepositoryComponent = `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`;
 
   await execAndLog(createRepositoryComponent);
 
@@ -114,7 +114,7 @@ export const reconcileHld = async (
 
     // Fab add is idempotent.
     // mkdir -p does not fail if ${pathBase} does not exist.
-    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --source ./${pathBase} --method local && touch ./config/common.yaml`;
+    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --path ./${pathBase} --method local --type component && touch ./config/common.yaml`;
 
     await execAndLog(createSvcInHldCommand);
 
@@ -126,7 +126,8 @@ export const reconcileHld = async (
     // Create ring components.
     const svcPathInHld = path.join(absRepositoryInHldPath, pathBase);
     for (const ring of Object.keys(managedRings)) {
-      const ringPathInHld = path.join(svcPathInHld, ring);
+      const niceRingName = ring.replace("/", "-");
+      const ringPathInHld = path.join(svcPathInHld, niceRingName);
 
       // If the ring component already exists, we do not attempt to create it.
       if (
@@ -134,13 +135,13 @@ export const reconcileHld = async (
         shelljs.test("-d", ringPathInHld)
       ) {
         logger.info(
-          `Ring component: ${ring} already exists, skipping ring generation.`
+          `Ring component: ${niceRingName} already exists, skipping ring generation.`
         );
         continue;
       }
 
       // Otherwise, create the ring in the service.
-      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --source ./${ring} --method local && touch ./config/common.yaml`;
+      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${niceRingName} config && fab add ${niceRingName} --path ./${niceRingName} --method local --type component && touch ./config/common.yaml`;
 
       await execAndLog(createRingInSvcCommand);
 
@@ -154,12 +155,19 @@ export const reconcileHld = async (
         addHelmChartCommand = `fab add chart --source ${chart.git} --path ${chart.path} ${chartVersioning}`;
       } else if ("repository" in chart) {
         addHelmChartCommand = `fab add chart --source ${chart.repository} --path ${chart.chart}`;
+      } else if ("path" in chart && !("git" in chart)) {
+        // TODO: Figure out how many levels deep we are in the tree and add the helm chart encoded
+        // as 'path'.
+        logger.info("LOCAL PATH FOR HELM");
+
+        const localPath = `../../../` + chart.path;
+        addHelmChartCommand = `fab add chart --path ${localPath} --method local --type helm`;
       }
 
       await execAndLog(`cd ${ringPathInHld} && ${addHelmChartCommand}`);
 
       // Create config directory, crate static manifest directory.
-      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --source ./static --method local --type static && touch ./config/common.yaml`;
+      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
 
       await execAndLog(createConfigAndStaticComponentCommand);
 

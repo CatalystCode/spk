@@ -25,8 +25,8 @@ export interface IHelmConfig {
         chart: string; // chart name (eg; zookeeper)
       }
     | ({
-        git: string; // git url to clone (eg; https://github.com/helm/charts.git)
-        path: string; // path in the git repo to the directory containing the Chart.yaml (eg; incubator/zookeeper)
+        git?: string; // git url to clone (eg; https://github.com/helm/charts.git), if git is *not* provided we assume a local helm chart path
+        path: string; // path in the (local - a relative path, or remote - path from root of repository) to the directory containing the Chart.yaml (eg; incubator/zookeeper)
       } & (
         | {
             sha: string; // sha to checkout (eg; 4e61eb234b0ac38956efc1b52a0455a43dba026f)

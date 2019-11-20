@@ -143,15 +143,18 @@ export const Bedrock = (fileDirectory = process.cwd()): IBedrockFile => {
         "path" in chart &&
         ("branch" in chart || "sha" in chart);
       const isHelmBased = "repository" in chart && "chart" in chart;
-      if (!isGitBased && !isHelmBased) {
+      const isLocalBased = "path" in chart && !("git" in chart);
+
+      if (!isGitBased && !isHelmBased && !isLocalBased) {
+        const requiredLocalValues = ["path"];
         const requiredGitValues = ["git", "path", "branch|sha"];
         const requiredHelmValues = ["repository", "chart"];
         return Error(
           `invalid helm configuration found in service ${servicePath}, helm configuration expects a set of keys matching ${JSON.stringify(
             requiredGitValues
-          )} or ${JSON.stringify(requiredHelmValues)}; found: ${JSON.stringify(
-            chart
-          )}`
+          )}, ${JSON.stringify(requiredHelmValues)} or ${JSON.stringify(
+            requiredLocalValues
+          )}; found: ${JSON.stringify(chart)}`
         );
       }
     })
