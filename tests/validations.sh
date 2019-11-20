@@ -119,13 +119,13 @@ cd ..
 # *** TODO: Get rid of duplication
 
 # First we should check hld pipelines exist. If there is a pipeline with the same name we should delete it
-hld_pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_dir $manifests_dir
+hld_to_manifest_pipeline_name=$hld_dir-to-$manifests_dir
+pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name
 
 # Create the hld to manifest pipeline
 echo "hld_dir $hld_dir"
 echo "hld_repo_url $hld_repo_url"
 echo "manifest_repo_url $manifest_repo_url"
-hld_to_manifest_pipeline_name=$hld_dir-to-$manifests_dir
 spk hld install-manifest-pipeline -o $AZDO_ORG -d $AZDO_PROJECT -p $ACCESS_TOKEN_SECRET -r $hld_dir -u https://$hld_repo_url -m https://$manifest_repo_url
 
 # Verify hld to manifest pipeline was created
@@ -191,11 +191,9 @@ git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
 
-lifecycle_pipeline_name="$mono_repo_dir-lifecycle"
-echo "lifecycle_pipeline_name: $lifecycle_pipeline_name"
-
 # First we should check lifecycle pipelines exist. If there is a pipeline with the same name we should delete it
-lifecycle_pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name
+lifecycle_pipeline_name="$mono_repo_dir-lifecycle"
+pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name
 
 # Deploy lifecycle pipeline and verify it runs.
 spk project install-lifecycle-pipeline --org-name $AZDO_ORG --devops-project $AZDO_PROJECT --hld-url $hld_repo_url --repo-url $repo_url --repo-name $mono_repo_dir --pipeline-name $lifecycle_pipeline_name --personal-access-token $ACCESS_TOKEN_SECRET  >> $TEST_WORKSPACE/log.txt
@@ -208,9 +206,8 @@ pipeline_created=$(az pipelines show --name $lifecycle_pipeline_name --org $AZDO
 verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15
 
 # First we should check what service build & update pipelines exist. If there is a pipeline with the same name we should delete it
-pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $FrontEnd
-
 frontend_pipeline_name="$FrontEnd-pipeline"
+pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name
 
 # Create a pipeline since the code exists in remote repo
 spk service install-build-pipeline -o $AZDO_ORG -r $mono_repo_dir -u $remote_repo_url -d $AZDO_PROJECT -l $services_dir -p $ACCESS_TOKEN_SECRET -n $frontend_pipeline_name -v $FrontEnd  >> $TEST_WORKSPACE/log.txt
