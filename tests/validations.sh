@@ -233,3 +233,5 @@ echo "Attempting to approve pull request: '$pr_title'"
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
 
 echo "Successfully reached the end of the validations scripts."
+
+# TODO hook up helm chart, approve HLD pull request, verify manifest gen pipeline
