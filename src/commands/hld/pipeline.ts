@@ -5,6 +5,7 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
+import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { getRepositoryName } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -39,7 +40,7 @@ export const installHldToManifestPipelineDecorator = (
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
     .option(
       "-b, --build-script <build-script-url>",
-      "Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'."
+      `Build Script URL. By default it is '${BUILD_SCRIPT_URL}'.`
     )
     .action(async opts => {
       const { azure_devops } = Config();
@@ -57,7 +58,7 @@ export const installHldToManifestPipelineDecorator = (
         devopsProject = azure_devops && azure_devops.project,
         hldName = getRepositoryName(hldUrl),
         pipelineName = hldName + "-to-" + manifestRepoName,
-        buildScriptUrl = "https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh"
+        buildScriptUrl = BUILD_SCRIPT_URL
       } = opts;
 
       logger.debug(`orgName: ${orgName}`);

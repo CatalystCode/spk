@@ -5,6 +5,7 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
+import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import {
   getOriginUrl,
   getRepositoryName,
@@ -42,7 +43,7 @@ export const deployLifecyclePipelineCommandDecorator = (
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
     .option(
       "-b, --build-script <build-script-url>",
-      "Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'."
+      `Build Script URL. By default it is '${BUILD_SCRIPT_URL}'.`
     )
     .action(async opts => {
       const gitOriginUrl = await getOriginUrl();
