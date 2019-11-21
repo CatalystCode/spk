@@ -240,7 +240,8 @@ function approve_pull_request () {
     pull_request_id=$(echo $all_prs | jq -r --arg pr_title "$pr_title" '.[] | select(.title == $pr_title) | .pullRequestId')
     echo "Found pull request id $pull_request_id for '$pr_title'"
     approve_result=$(az repos pr update --id "$pull_request_id" --auto-complete true --output json )
-    if [ "$(echo $approve_result | jq .mergeStatus | grep 'succeeded')" != "") ] then;
+
+    if [ "$(echo $approve_result | jq '.mergeStatus' | grep 'succeeded')" != "" ]; then
         echo "PR $pull_request_id approved"
     else
         echo "Issue approving PR $pull_request_id"
