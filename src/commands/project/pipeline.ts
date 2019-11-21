@@ -57,7 +57,7 @@ export const deployLifecyclePipelineCommandDecorator = (
         repoName = getRepositoryName(gitOriginUrl),
         repoUrl = getRepositoryUrl(gitOriginUrl),
         hldUrl = azure_devops && azure_devops.hld_repository,
-        buildScriptUrl = "https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh"
+        buildScriptUrl = BUILD_SCRIPT_URL
       } = opts;
 
       logger.debug(`orgName: ${orgName}`);

@@ -61,7 +61,7 @@ export const installBuildPipelineCommandDecorator = (
         packagesDir, // allow to be undefined in the case of a mono-repo
         repoName = getRepositoryName(gitOriginUrl),
         repoUrl = getRepositoryUrl(gitOriginUrl),
-        buildScriptUrl = "https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh"
+        buildScriptUrl = BUILD_SCRIPT_URL
       } = opts;
 
       logger.debug(`orgName: ${orgName}`);
