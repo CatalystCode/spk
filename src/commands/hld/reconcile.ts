@@ -156,10 +156,6 @@ export const reconcileHld = async (
       } else if ("repository" in chart) {
         addHelmChartCommand = `fab add chart --source ${chart.repository} --path ${chart.chart}`;
       } else if ("path" in chart && !("git" in chart)) {
-        // TODO: Figure out how many levels deep we are in the tree and add the helm chart encoded
-        // as 'path'.
-        logger.info("LOCAL PATH FOR HELM");
-
         const localPath = `../../../` + chart.path;
         addHelmChartCommand = `fab add chart --path ${localPath} --method local --type helm`;
       }
