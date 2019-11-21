@@ -507,6 +507,11 @@ const hldLifecyclePipelineYaml = () => {
           `# Clone HLD repo`,
           `git_connect`,
           ``,
+          // TODO: Add logic for checking for components directory, or another via some configuration.
+          `# Copy components direcory from Application repo into HLD repo`,
+          `echo "cp -r ../components/ ./components"`,
+          `cp -r ../components/ ./components`,
+          ``,
           `# Update HLD via spk`,
           `git checkout -b "RECONCILE/$(Build.Repository.Name)-$(Build.BuildNumber)"`,
           `echo "spk hld reconcile $(Build.Repository.Name) $PWD ./.."`,
