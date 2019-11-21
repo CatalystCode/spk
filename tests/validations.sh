@@ -212,10 +212,10 @@ git push --set-upstream origin $branchName
 current_time=$(date +"%Y-%m-%d-%H-%M-%S")
 pr_title="Automated Test PR $current_time"
 echo "Creating pull request: '$pr_title'" 
-spk service create-revision -t $pr_title -d "Adding my new file" --org-name $AZDO_ORG --personal-access-token $ACCESS_TOKEN_SECRET  --remote-url $remote_repo_url >> $TEST_WORKSPACE/log.txt
+spk service create-revision -t "$pr_title" -d "Adding my new file" --org-name $AZDO_ORG --personal-access-token $ACCESS_TOKEN_SECRET --remote-url $remote_repo_url >> $TEST_WORKSPACE/log.txt
 
 echo "Attempting to approve pull request: '$pr_title'" 
 # Get the id of the pr created and set the PR to be approved
-approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT $pr_title
+approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
 
 
