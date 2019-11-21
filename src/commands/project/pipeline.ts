@@ -40,6 +40,10 @@ export const deployLifecyclePipelineCommandDecorator = (
     .option("-u, --repo-url <repo-url>", "Repository URL")
     .option("-e, --hld-url <hld-url>", "HLD Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
+    .option(
+      "-b, --build-script <build-script-url>",
+      "Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'."
+    )
     .action(async opts => {
       const gitOriginUrl = await getOriginUrl();
       const { azure_devops } = Config();

@@ -37,6 +37,10 @@ export const installHldToManifestPipelineDecorator = (
     .option("-u, --hld-url <hld-url>", "HLD Repository URL")
     .option("-m, --manifest-url <manifest-url>", "Manifest Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
+    .option(
+      "-b, --build-script <build-script-url>",
+      "Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'."
+    )
     .action(async opts => {
       const { azure_devops } = Config();
 
@@ -52,7 +56,8 @@ export const installHldToManifestPipelineDecorator = (
         personalAccessToken = azure_devops && azure_devops.access_token,
         devopsProject = azure_devops && azure_devops.project,
         hldName = getRepositoryName(hldUrl),
-        pipelineName = hldName + "-to-" + manifestRepoName
+        pipelineName = hldName + "-to-" + manifestRepoName,
+        buildScriptUrl = "https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh"
       } = opts;
 
       logger.debug(`orgName: ${orgName}`);
@@ -62,6 +67,7 @@ export const installHldToManifestPipelineDecorator = (
       logger.debug(`manifestUrl: ${manifestUrl}`);
       logger.debug(`hldName: ${hldName}`);
       logger.debug(`hldUrl: ${hldUrl}`);
+      logger.debug(`buildScriptUrl: ${buildScriptUrl}`);
 
       try {
         if (typeof pipelineName !== "string") {
@@ -103,6 +109,11 @@ export const installHldToManifestPipelineDecorator = (
         if (typeof devopsProject !== "string") {
           throw new Error(
             `--devops-project must be of type 'string', ${typeof devopsProject} given.`
+          );
+        }
+        if (typeof buildScriptUrl !== "string") {
+          throw new Error(
+            `--devops-project must be of type 'string', ${typeof buildScriptUrl} given.`
           );
         }
       } catch (err) {
@@ -213,6 +224,7 @@ export const installHldToManifestPipeline = async (
  */
 export const requiredPipelineVariables = (
   accessToken: string,
+  bedrockBuildSource: string,
   manifestRepoUrl: string
 ): { [key: string]: BuildDefinitionVariable } => {
   return {

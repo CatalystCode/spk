@@ -164,7 +164,10 @@ export const starterAzurePipelines = async (opts: {
                   `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
                   `chmod +x ./build.sh`
                 ]),
-                displayName: "Download bedrock bash scripts"
+                displayName: "Download bedrock bash scripts",
+                env: {
+                  BEDROCK_BUILD_SCRIPT: "$(BEDROCK_BUILD_SH_SOURCE)"
+                }
               },
               ...cleanedPaths.map(projectPath => {
                 logger.info(`projectPath: ${projectPath}`);
