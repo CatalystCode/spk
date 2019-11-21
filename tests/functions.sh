@@ -107,7 +107,7 @@ function getHostandPath () {
     # extract the path (if any)
     path="$(echo $url | grep / | cut -d/ -f2-)"
     
-    echo "$host/$path"
+    echo "$proto$host/$path"
 }
 
 
