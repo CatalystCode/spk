@@ -12,7 +12,6 @@ import {
 import { logger } from "../../logger";
 import * as infraCommon from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
-import { definitionForAzureRepoPipeline } from "../../lib/pipelines/pipelines";
 
 const git = simpleGit();
 
