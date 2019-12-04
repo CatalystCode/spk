@@ -187,66 +187,73 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
     // First, search for definition.json in current working directory
     const templatePath = await parseDefinitionJson(projectPath);
     const cwdPath = process.cwd();
-    if (fs.existsSync(path.join(cwdPath, "definition.json"))) {
-      // If there exists a definition.json, then read file
-      logger.info(`A definition.json was found in the parent directory.`);
-      const parentDefinitionJSON = await readDefinitionJson(cwdPath);
-      const leafDefinitionJSON = await readDefinitionJson(projectPath);
-      /* Iterate through parent and leaf JSON objects to find matches
-        If there is a match, then replace parent key-value
-        If there is no match between the parent and leaf,
-        then append leaf key-value parent key-value JSON */
-      // Create a generated parent directory
-      const parentDirectory = await createGenerated(cwdPath + "-generated");
+
+    // If there exists a definition.json, then read file
+    const parentDefinitionJSON = await readDefinitionJson(cwdPath);
+    const leafDefinitionJSON = await readDefinitionJson(projectPath);
+    /* Iterate through parent and leaf JSON objects to find matches
+      If there is a match, then replace parent key-value
+      If there is no match between the parent and leaf,
+      then append leaf key-value parent key-value JSON */
+    // Create a generated parent directory
+    const parentDirectory = cwdPath + "-generated";
+    const childDirectory = path.join(parentDirectory, projectPath);
+    if (projectPath === cwdPath) {
+      await createGenerated(parentDirectory);
+      if (parentDefinitionJSON.variables) {
+        const spkTfvarsObject = await generateTfvars(
+          parentDefinitionJSON.variables
+        );
+        await checkTfvars(parentDirectory, "spk.tfvars");
+        await writeTfvarsFile(spkTfvarsObject, parentDirectory, "spk.tfvars");
+        await copyTfTemplate(templatePath, parentDirectory, true);
+      } else {
+        logger.warning(`Variables are not defined in the definition.json`);
+      }
+      if (parentDefinitionJSON.backend) {
+        const backendTfvarsObject = await generateTfvars(
+          parentDefinitionJSON.backend
+        );
+        await checkTfvars(childDirectory, "backend.tfvars");
+        await writeTfvarsFile(
+          backendTfvarsObject,
+          parentDirectory,
+          "backend.tfvars"
+        );
+      } else {
+        logger.warning(
+          `A remote backend configuration is not defined in the definition.json`
+        );
+      }
+    } else {
+      await createGenerated(parentDirectory);
       // Then, create generated child directory
-      const childDirectory = await createGenerated(
-        path.join(parentDirectory, projectPath)
-      );
-      if (parentDefinitionJSON.variables && leafDefinitionJSON.variables) {
+      await createGenerated(childDirectory);
+    }
+    if (typeof parentDefinitionJSON !== "undefined") {
+      if (leafDefinitionJSON) {
         const finalDefinition = await dirIteration(
           parentDefinitionJSON.variables,
           leafDefinitionJSON.variables
         );
         // Generate Terraform files in generated directory
-        const spkTfvarsObject = await generateTfvars(finalDefinition);
+        const combinedSpkTfvarsObject = await generateTfvars(finalDefinition);
         // Write variables to  `spk.tfvars` file
         await checkTfvars(childDirectory, "spk.tfvars");
-        await writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
-      } else {
-        if (leafDefinitionJSON.variables) {
-          // If there is not a variables block in the parent or root definition.json
-          // Then assume the variables are taken from leaf definitions
-          const spkTfvarsObject = await generateTfvars(
-            leafDefinitionJSON.variables
-          );
-          // Write variables to  `spk.tfvars` file
-          await checkTfvars(childDirectory, "spk.tfvars");
-          await writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
-        } else {
-          logger.warning(`Variables are not defined in the definition.json`);
-        }
-      }
-      // Create a backend.tfvars for remote backend configuration
-      if (parentDefinitionJSON.backend && leafDefinitionJSON.backend) {
-        const finalBackendDefinition = await dirIteration(
-          parentDefinitionJSON.backend,
-          leafDefinitionJSON.backend
-        );
-        const backendTfvarsObject = await generateTfvars(
-          finalBackendDefinition
-        );
-        await checkTfvars(childDirectory, "backend.tfvars");
         await writeTfvarsFile(
-          backendTfvarsObject,
+          combinedSpkTfvarsObject,
           childDirectory,
-          "backend.tfvars"
+          "spk.tfvars"
         );
-        // If there is no backend block specified in the parent definition.json,
-        // then create a backend based on the leaf definition.json
-      } else {
-        if (leafDefinitionJSON.backend) {
-          const backendTfvarsObject = await generateTfvars(
+
+        // Create a backend.tfvars for remote backend configuration
+        if (parentDefinitionJSON.backend && leafDefinitionJSON.backend) {
+          const finalBackendDefinition = await dirIteration(
+            parentDefinitionJSON.backend,
             leafDefinitionJSON.backend
+          );
+          const backendTfvarsObject = await generateTfvars(
+            finalBackendDefinition
           );
           await checkTfvars(childDirectory, "backend.tfvars");
           await writeTfvarsFile(
@@ -254,54 +261,41 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
             childDirectory,
             "backend.tfvars"
           );
-        } else {
-          logger.warning(
-            `A remote backend configuration is not defined in the definition.json`
-          );
         }
       }
-      await copyTfTemplate(templatePath, childDirectory, true);
     } else {
-      // If there is not a definition.json in current working directory,
-      // then proceed with reading definition.json in project path
-      const definitionJSON = await readDefinitionJson(projectPath);
-      // Create a generated directory
-      const generatedDirectory = await createGenerated(
-        projectPath + "-generated"
-      );
-      // Generate Terraform files in generated directory
-      // Create a spk.tfvars files for variables
-      if (definitionJSON.variables) {
-        const spkTfvarsObject = await generateTfvars(definitionJSON.variables);
-        await checkTfvars(generatedDirectory, "spk.tfvars");
-        await writeTfvarsFile(
-          spkTfvarsObject,
-          generatedDirectory,
-          "spk.tfvars"
+      if (leafDefinitionJSON.variables) {
+        // If there is not a variables block in the parent or root definition.json
+        // Then assume the variables are taken from leaf definitions
+        const spkTfvarsObject = await generateTfvars(
+          leafDefinitionJSON.variables
         );
+        // Write variables to  `spk.tfvars` file
+        await checkTfvars(childDirectory, "spk.tfvars");
+        await writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
+        await copyTfTemplate(templatePath, childDirectory, true);
       } else {
-        logger.warning(
-          `Unable to generate a spk.tfvars file beause there are no variables defined in the definition.json file.`
-        );
+        logger.warning(`Variables are not defined in the definition.json`);
       }
-      // Create a backend.tfvars file for remote backend
-      if (definitionJSON.backend) {
+      // If there is no backend block specified in the parent definition.json,
+      // then create a backend based on the leaf definition.json
+      if (leafDefinitionJSON.backend) {
         const backendTfvarsObject = await generateTfvars(
-          definitionJSON.backend
+          leafDefinitionJSON.backend
         );
-        await checkTfvars(generatedDirectory, "backend.tfvars");
+        await checkTfvars(childDirectory, "backend.tfvars");
         await writeTfvarsFile(
           backendTfvarsObject,
-          generatedDirectory,
+          childDirectory,
           "backend.tfvars"
         );
       } else {
         logger.warning(
-          `Unable to generate a backend.tfvars file because there is no backend configuration specified in the definition.json file.`
+          `A remote backend configuration is not defined in the definition.json`
         );
       }
-      await copyTfTemplate(templatePath, generatedDirectory, true);
     }
+    await copyTfTemplate(templatePath, childDirectory, true);
   } catch (err) {
     return err;
   }
@@ -335,10 +329,9 @@ export const dirIteration = async (
  */
 export const createGenerated = async (projectPath: string): Promise<string> => {
   try {
-    const newGeneratedPath = projectPath;
-    mkdirp.sync(newGeneratedPath);
-    logger.info(`Created generated directory: ${newGeneratedPath}`);
-    return newGeneratedPath;
+    mkdirp.sync(projectPath);
+    logger.info(`Created generated directory: ${projectPath}`);
+    return projectPath;
   } catch (err) {
     logger.error(`There was a problem creating the generated directory`);
     return err;
@@ -455,8 +448,12 @@ export const writeTfvarsFile = async (
  * @param projectPath Path to the definition.json file
  */
 export const readDefinitionJson = async (projectPath: string) => {
-  const rootDef = path.join(projectPath, "definition.json");
-  const data: string = fs.readFileSync(rootDef, "utf8");
-  const definitionJSON = JSON.parse(data);
-  return definitionJSON;
+  try {
+    const rootDef = path.join(projectPath, "definition.json");
+    const data: string = fs.readFileSync(rootDef, "utf8");
+    const definitionJSON = JSON.parse(data);
+    return definitionJSON;
+  } catch (err) {
+    logger.warn(`No definition.json file was found in ${projectPath}`);
+  }
 };
