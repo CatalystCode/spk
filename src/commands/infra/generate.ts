@@ -4,11 +4,7 @@ import mkdirp from "mkdirp";
 import * as os from "os";
 import path from "path";
 import simpleGit from "simple-git/promise";
-import {
-  getCurrentBranch,
-  getOriginUrl,
-  safeGitUrlForLogging
-} from "../../lib/gitutils";
+import { safeGitUrlForLogging } from "../../lib/gitutils";
 import { logger } from "../../logger";
 import * as infraCommon from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
@@ -206,25 +202,13 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
       const childDirectory = await createGenerated(
         path.join(parentDirectory, projectPath)
       );
-      if (parentDefinitionJSON.variables) {
-        for (const parentKey in parentDefinitionJSON.variables) {
-          if (parentKey) {
-            for (const leafKey in leafDefinitionJSON.variables) {
-              if (parentKey === leafKey) {
-                let parentVal = parentDefinitionJSON.variables[parentKey];
-                parentVal = leafDefinitionJSON.variables[leafKey];
-              } else {
-                // Append to parent variables block
-                const leafVal = leafDefinitionJSON.variables[leafKey];
-                parentDefinitionJSON.variables[leafKey] = leafVal;
-              }
-            }
-          }
-        }
-        // Generate Terraform files in generated directory
-        const spkTfvarsObject = await generateTfvars(
-          parentDefinitionJSON.variables
+      if (parentDefinitionJSON.variables && leafDefinitionJSON.variables) {
+        const finalDefinition = await dirIteration(
+          parentDefinitionJSON.variables,
+          leafDefinitionJSON.variables
         );
+        // Generate Terraform files in generated directory
+        const spkTfvarsObject = await generateTfvars(finalDefinition);
         // Write variables to  `spk.tfvars` file
         await checkTfvars(childDirectory, "spk.tfvars");
         await writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
@@ -243,23 +227,13 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
         }
       }
       // Create a backend.tfvars for remote backend configuration
-      if (parentDefinitionJSON.backend) {
-        for (const parentKey in parentDefinitionJSON.backend) {
-          if (parentKey) {
-            for (const leafKey in leafDefinitionJSON.backend) {
-              if (parentKey === leafKey) {
-                let parentVal = parentDefinitionJSON.backend[parentKey];
-                parentVal = leafDefinitionJSON.backend[leafKey];
-              } else {
-                // Append to parent variables block
-                const leafVal = leafDefinitionJSON.backend[leafKey];
-                parentDefinitionJSON.backend[leafKey] = leafVal;
-              }
-            }
-          }
-        }
+      if (parentDefinitionJSON.backend && leafDefinitionJSON.backend) {
+        const finalBackendDefinition = await dirIteration(
+          parentDefinitionJSON.backend,
+          leafDefinitionJSON.backend
+        );
         const backendTfvarsObject = await generateTfvars(
-          parentDefinitionJSON.backend
+          finalBackendDefinition
         );
         await checkTfvars(childDirectory, "backend.tfvars");
         await writeTfvarsFile(
@@ -331,6 +305,27 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
   } catch (err) {
     return err;
   }
+};
+
+export const dirIteration = async (
+  parentObject: string[],
+  leafObject: string[]
+): Promise<string[]> => {
+  for (const parentKey in parentObject) {
+    if (parentKey) {
+      for (const leafKey in leafObject) {
+        if (parentKey === leafKey) {
+          let parentVal = parentObject[parentKey];
+          parentVal = leafObject[leafKey];
+        } else {
+          // Append to parent variables block
+          const leafVal = leafObject[leafKey];
+          parentObject[leafKey] = leafVal;
+        }
+      }
+    }
+  }
+  return parentObject;
 };
 
 /**
