@@ -1,0 +1,38 @@
+name: discovery-service
+source: https://github.com/Microsoft/bedrock.git
+template: cluster/environments/azure-single-keyvault
+version: v0.12.0
+backend:
+  storage_account_name: storage-account-name
+  access_key: storage-account-access-key
+  container_name: storage-account-container
+  key: tfstate-key
+variables:
+  acr_enabled: "true"
+  address_space: null
+  agent_vm_count: null
+  agent_vm_size: null
+  cluster_name: null
+  dns_prefix: null
+  flux_recreate: null
+  kubeconfig_recreate: null
+  gc_enabled: "true"
+  gitops_poll_interval: 5m
+  gitops_ssh_url: null
+  gitops_url_branch: master
+  gitops_ssh_key: null
+  gitops_path: null
+  keyvault_name: null
+  keyvault_resource_group: null
+  resource_group_name: null
+  ssh_public_key: null
+  service_principal_id: null
+  service_principal_secret: null
+  subnet_prefixes: null
+  vnet_name: null
+  subnet_name: null
+  network_plugin: azure
+  network_policy: azure
+  oms_agent_enabled: "false"
+  enable_acr: "false"
+  acr_name: null

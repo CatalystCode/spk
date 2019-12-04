@@ -66,7 +66,7 @@ describe("Validate generation of sample scaffold definition", () => {
       sampleVarTf
     );
     expect(def.name).toBe("test-scaffold");
-    expect(def.variables.resource_group_name).toBe("<insert value>");
+    expect(def.variables.resource_group_name).toBe(null);
     expect(def.backend.key).toBe("tfstate-azure-simple");
   });
 });
