@@ -277,7 +277,9 @@ export const parseBackendTfvars = (backendData: string) => {
   block.forEach(b => {
     const elt = b.split(":");
     if (elt[0].length > 0) {
-      backend[elt[0]] = elt[1].replace(/\"/g, "");
+      backend[elt[0]] = elt[1]
+        .replace(/\"/g, "")
+        .replace(/(?:\\[rn]|[\r\n]+)+/g, "");
     }
   });
   return backend;
