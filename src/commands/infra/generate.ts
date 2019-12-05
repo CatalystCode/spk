@@ -228,7 +228,7 @@ export const generateConfig = async (projectPath: string): Promise<void> => {
         const backendTfvarsObject = await generateTfvars(
           parentInfraConfig.backend
         );
-        await checkTfvars(childDirectory, "backend.tfvars");
+        await checkTfvars(parentDirectory, "backend.tfvars");
         await writeTfvarsFile(
           backendTfvarsObject,
           parentDirectory,
