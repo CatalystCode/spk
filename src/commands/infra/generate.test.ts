@@ -8,7 +8,7 @@ import {
 } from "../../logger";
 import { IInfraConfigYaml } from "../../types";
 import {
-  generateSpkTfvars,
+  generateTfvars,
   parseDefinitionYaml,
   validateDefinition,
   validateTemplateSource
@@ -91,7 +91,21 @@ describe("Validate spk.tfvars file", () => {
       path.join(mockProjectPath, `definition.yaml`)
     );
     const infraConfig = loadConfigurationFromLocalEnv(data);
-    const spkTfvarsObject = await generateSpkTfvars(infraConfig.variables);
+    const spkTfvarsObject = await generateTfvars(infraConfig.variables);
     expect(spkTfvarsObject).toContain('gitops_poll_interval = "5m"');
+  });
+});
+
+describe("Validate backend.tfvars file", () => {
+  test("Validating that a backend.tfvars is generated and has appropriate format", async () => {
+    const mockProjectPath = "src/commands/infra/mocks";
+    const data = readYaml<IInfraConfigYaml>(
+      path.join(mockProjectPath, `definition.yaml`)
+    );
+    const infraConfig = loadConfigurationFromLocalEnv(data);
+    const backendTfvarsObject = await generateTfvars(infraConfig.backend);
+    expect(backendTfvarsObject).toContain(
+      'storage_account_name = "storage-account-name"'
+    );
   });
 });
