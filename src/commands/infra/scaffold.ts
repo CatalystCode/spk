@@ -317,7 +317,7 @@ export const generateClusterDefinition = async (
   if (Object.keys(fields).length > 0) {
     const fieldDict: { [name: string]: string | null } = {};
     Object.keys(fields).forEach(key => {
-      fieldDict[key] = fields[key] ? fields[key] : null;
+      fieldDict[key] = fields[key] ? fields[key] : "<insert value>";
     });
     def.variables = fieldDict;
   }
