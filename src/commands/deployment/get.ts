@@ -54,7 +54,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
     .option("-i, --image-tag <image-tag>", "Filter by a container image tag")
     .option("-e, --env <environment>", "Filter by environment name")
     .option("-s, --service <service-name>", "Filter by service name")
-    .option("-l, --limit <limit>", "Limit to N most recent deployments")
+    .option("-t, --top <top>", "Return only top N most recent deployments")
     .option(
       "-o, --output <output-format>",
       "Output the information one of the following: normal, wide, JSON"
@@ -72,7 +72,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
             opts.commitId,
             opts.service,
             opts.deploymentId,
-            opts.limit
+            opts.top
           );
         } else {
           await getDeployments(
@@ -83,7 +83,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
             opts.commitId,
             opts.service,
             opts.deploymentId,
-            opts.limit
+            opts.top
           );
         }
       } catch (err) {
