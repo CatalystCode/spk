@@ -94,20 +94,22 @@ If you wish to run these tests locally, skip ahead to
    following key/values:
    - AZDO_PROJECT (e.g. `bedrock`)
    - AZDO_ORG (e.g. `epicstuff`)
-   - AZDO_PAT (e.g. Personal Access Token with _read/write/manage_ access to
+   - AZDO*PAT (e.g. Personal Access Token with \_read/write/manage* access to
      AZDO_PROJECT) <-- 🔒
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
    - SP_TENANT (e.g Service Principal Tenant Id)
    - ACR_NAME (e.g Name of ACR resource that is accessible from above service
      principal)
+   - SPK_LOCATION - The full path to the spk executable file respectively to the
+     OS.
    - SPK_DEFINITION_ID ( DefinitionId of the SPK artifact build)
    - SPK_PROJECT_ID ( Project Id of the AzDO project the SPK build occurs in)
    - FUNC_SCRIPT (e.g.
      https://raw.githubusercontent.com/MY_ORG/spk/master/tests/functions.sh)
    - TEST_SCRIPT (e.g.
      https://raw.githubusercontent.com/MY_ORG/spk/master/tests/validations.sh)
-3. Azure CLI with Azure DevOps Extension
+3. [Azure CLI with Azure DevOps Extension](https://docs.microsoft.com/en-us/azure/devops/cli/?view=azure-devops)
    - Provided in pipeline yaml
 4. SPK Binary
    - Provided in pipeline yaml
