@@ -83,7 +83,8 @@ git commit -m "inital commit"
 git tag "$tf_template_version"
 
 # git remote rm origin
-git remote add origin https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url
+source=https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url
+git remote add origin "$source"
 echo "git push"
 git push -u origin --all
 git push origin "$tf_template_version"
@@ -98,4 +99,4 @@ git init
 pwd
 echo "../$terraform_template_dir"
 echo "$tf_template_version"
-spk infra scaffold -n discovery-service -s "../$terraform_template_dir" -v "$tf_template_version" -t "template"
+spk infra scaffold -n discovery-service --source "$source" --version "$tf_template_version" --template "template"
