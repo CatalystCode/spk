@@ -30,9 +30,15 @@ terraform_template_dir=discovery-tf-template
 tf_template_version=v0.0.1
 infra_hld_dir=discovery-infra-hld
 vg_name=discovery-vg
-services_dir=services
-mono_repo_dir=discovery2019
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
+
+validation_test_yaml="name: discovery-infra-hld
+source: https://infra_account:wox2r6ym24zoddtwqvhaxhobnjpmsrq7v42znskvymv7fw3gxvza@naros32.visualstudio.com/spk-testing/_git/discovery-tf-template
+template: template
+version: v0.0.1
+variables:
+  rg_name: <insert value>
+"
 
 shopt -s expand_aliases
 alias spk=$SPK_LOCATION
@@ -92,11 +98,16 @@ git push origin "$tf_template_version"
 
 # Scaffold an Infra-HLD repo from TF Template ------------------
 cd ../..
-mkdir $infra_hld_dir
-cd $infra_hld_dir
-git init
 # Single Cluster scaffold for template
 pwd
 echo "../$terraform_template_dir"
 echo "$tf_template_version"
-spk infra scaffold -n discovery-service --source "$source" --version "$tf_template_version" --template "template"
+# spk infra scaffold -n $infra_hld_dir --source "$source" --version "$tf_template_version" --template "template"
+spk infra scaffold -n $infra_hld_dir --source https://infra_account:wox2r6ym24zoddtwqvhaxhobnjpmsrq7v42znskvymv7fw3gxvza@naros32.visualstudio.com/spk-testing/_git/discovery-tf-template --version v0.0.1 --template "template"
+# Validate the definition in the Infra-HLD repo ------------------
+file_we_expect=("definition.yaml")
+validate_directory "$TEST_WORKSPACE/$infra_hld_dir" "${file_we_expect[@]}"
+# Validate the contents of the definition.yaml
+echo $validation_test_yaml
+#validate_file "$TEST_WORKSPACE/$infra_hld_dir/definition.yaml" $validation_test_yaml
+

@@ -232,3 +232,16 @@ function approve_pull_request () {
         exit 1
     fi
 }
+
+function validate_file () {
+    echo "Validatng file $1"
+    str="test"
+    echo "This is what you will be Validating it with $2"
+    if [[ $(< $1) != $2 ]]; then
+        echo "Issue validating file content with provided content in $1"
+        exit 1
+    else
+        echo "File contents have been successfully validated in $1"
+    fi
+
+}
