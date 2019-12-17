@@ -53,13 +53,15 @@ cd $TEST_WORKSPACE
 mkdir $terraform_template_dir
 cd $terraform_template_dir
 git init
+mkdir template
+cd template
 tfTemplate=$'resource "azurerm_resource_group" "example"{\n name= "${var.rg_name}"\n location = "${var.rg_location}"\n}'
 tfVars=$'variable "rg_name" { \n type = "string" \n } \n variable "rg_location" { \n type = "string" \n }'
 touch main.tf variables.tf
 echo "$tfVars" >> variables.tf
 echo "$tfTemplate" >> main.tf
 file_we_expect=("variables.tf" "main.tf")
-validate_directory "$TEST_WORKSPACE/$terraform_template_dir" "${file_we_expect[@]}"
+validate_directory "$TEST_WORKSPACE/$terraform_template_dir/template" "${file_we_expect[@]}"
 # The TF Template requires a git release for a version to be targeted for spk scaffold
 git add -A
 
@@ -84,10 +86,11 @@ git tag "$tf_template_version"
 git remote add origin https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url
 echo "git push"
 git push -u origin --all
+git push origin "$tf_template_version"
 
 
 # Scaffold an Infra-HLD repo from TF Template ------------------
-cd ..
+cd ../..
 mkdir $infra_hld_dir
 cd $infra_hld_dir
 git init
@@ -95,4 +98,4 @@ git init
 pwd
 echo "../$terraform_template_dir"
 echo "$tf_template_version"
-spk infra scaffold -n discovery-service -s "../$terraform_template_dir" -v "$tf_template_version" -t "."
+spk infra scaffold -n discovery-service -s "../$terraform_template_dir" -v "$tf_template_version" -t "template"
