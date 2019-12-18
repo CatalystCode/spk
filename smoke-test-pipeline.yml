@@ -62,25 +62,28 @@ stages:
         git config --global user.email "me@microsoft.com"
         git config --global user.name "Service Account"
 
-        #Set ENV VARs
+        # Set ENV VARs
         export SPK_LOCATION="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
         export SP_PASS=$(SP_PASS)
         export SP_TENANT=$(SP_TENANT)
 
+        # Add to downstreams (Needs Fix)
+        echo "##vso[task.setvariable variable=SPK_LOCATION]$SPK_LOCATION"
+        echo "##vso[task.setvariable variable=ACCESS_TOKEN_SECRET]$ACCESS_TOKEN_SECRET"
+        echo "##vso[task.setvariable variable=SP_PASS]$SP_PASS"
+        echo "##vso[task.setvariable variable=SP_TENANT]$SP_TENANT"
+
         # Include dependent scripts
         . ./functions.sh
-      displayName: "Setup Test Environment"
-    - bash: | 
+
         # Run the test
         bash ./validations.sh
 
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
-      displayName: "Run Services Validation Tests"
 
-    - bash: | 
         # Run the infra test
         bash ./infra-validations.sh
 
@@ -88,7 +91,7 @@ stages:
         status=$?
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
       #failOnStderr: true
-      displayName: "Run Infrastructure Validation Tests"
+      displayName: "Run Validation Tests"
     - task: PublishPipelineArtifact@1
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
