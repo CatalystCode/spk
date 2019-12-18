@@ -70,8 +70,8 @@ steps:
       checkCoverage: true
       coverageFailOption: 'Previous Value'
       coverageType: branches
-      buildConfiguration: '$(BuildConfiguration)'
-      buildPlatform: '$(BuildPlatform)'
+      buildConfiguration: ''
+      buildPlatform: ''
       explicitFilter: true
       baseDefinitionId: 128
       baseBranchRef: refs/heads/master
