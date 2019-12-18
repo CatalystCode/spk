@@ -11,7 +11,7 @@ interface ITraefikMiddleware {
     namespace?: string;
   };
   spec: {
-    stringPrefix: {
+    stripPrefix: {
       forceSlash: boolean;
       prefixes: string[];
     };
@@ -38,7 +38,7 @@ export const TraefikMiddleware = (
       ...(() => (!!namespace ? { namespace } : {}))()
     },
     spec: {
-      stringPrefix: {
+      stripPrefix: {
         forceSlash,
         prefixes
       }
