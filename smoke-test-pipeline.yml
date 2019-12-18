@@ -23,7 +23,7 @@ stages:
         project: $(SPK_PROJECT_ID)
         definition: $(SPK_DEFINITION_ID)
         buildVersionToDownload: 'latestFromBranch'
-        branchName: 'refs/heads/master'
+        branchName: 'refs/heads/nate.infra.integration.infra'
         itemPattern: "spk*"
         artifactName: 'spk_linux_node_12'
         targetPath: '$(System.DefaultWorkingDirectory)'
