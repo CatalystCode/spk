@@ -60,7 +60,7 @@ steps:
       artifact: spk_linux_node_12
     condition: and(eq(variables['Agent.JobStatus'], 'Succeeded'), endsWith(variables['Agent.JobName'], 'node_12_x'))
 
-  - task: mspremier.BuildQualityChecks.QualityChecks-task.BuildQualityChecks@5
+  - task: mspremier.BuildQualityChecks.QualityChecks-task.BuildQualityChecks@6
     displayName: 'Check build quality'
     inputs:
       checkWarnings: false
