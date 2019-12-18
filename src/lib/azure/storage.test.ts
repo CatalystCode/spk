@@ -111,6 +111,28 @@ describe("get storage account key", () => {
     }
     expect(key).toBeUndefined();
   });
+  test("get storage account key", async () => {
+    jest.spyOn(storage, "getStorageManagementClient").mockImplementationOnce(
+      async (opts: IAzureAccessOpts = {}): Promise<any> => {
+        return {
+          storageAccounts: {
+            listKeys: (resourceGroup: string, accountName: string) => {
+              return { keys: [{ value: "testkey" }] };
+            }
+          }
+        };
+      }
+    );
+    try {
+      const key = await storage.getStorageAccountKey(
+        "testResourceGroup",
+        "testAccountName"
+      );
+      expect(key).toBe("testkey");
+    } catch (err) {
+      logger.error(err);
+    }
+  });
 });
 
 describe("create resource group", () => {
@@ -257,6 +279,24 @@ describe("get storage account", () => {
       await storage.getStorageAccount("testResourceGroup", "");
     } catch (err) {
       expect(err.message).toEqual("\nInvalid accountName");
+    }
+  });
+});
+
+describe("create table if it doesn't exist", () => {
+  test("invalid account name", async () => {
+    try {
+      await storage.createTableIfNotExists("", "tableName", "accessKey");
+    } catch (err) {
+      expect(err.message).toEqual("\nInvalid accountName");
+    }
+  });
+
+  test("invalid account name", async () => {
+    try {
+      await storage.createTableIfNotExists("testAccountName", "", "accesKey");
+    } catch (err) {
+      expect(err.message).toEqual("\nInvalid tableName");
     }
   });
 });
