@@ -102,8 +102,7 @@ cd ../..
 pwd
 echo "../$terraform_template_dir"
 echo "$tf_template_version"
-# spk infra scaffold -n $infra_hld_dir --source "$source" --version "$tf_template_version" --template "template"
-spk infra scaffold -n $infra_hld_dir --source https://infra_account:wox2r6ym24zoddtwqvhaxhobnjpmsrq7v42znskvymv7fw3gxvza@naros32.visualstudio.com/spk-testing/_git/discovery-tf-template --version v0.0.1 --template "template"
+spk infra scaffold -n $infra_hld_dir --source "$source" --version "$tf_template_version" --template "template"
 # Validate the definition in the Infra-HLD repo ------------------
 file_we_expect=("definition.yaml")
 validate_directory "$TEST_WORKSPACE/$infra_hld_dir" "${file_we_expect[@]}"
