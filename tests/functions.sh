@@ -235,11 +235,11 @@ function approve_pull_request () {
 
 function validate_file () {
     echo "Validatng file $1"
-    if [[ $(< $1) != $2 ]]; then
+    if grep -q $2 $1;
+    then
+        echo "File contents have been successfully validated in $1"
+    else
         echo "Issue validating file content with provided content in $1"
         exit 1
-    else
-        echo "File contents have been successfully validated in $1"
     fi
-
 }
