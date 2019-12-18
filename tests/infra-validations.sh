@@ -29,7 +29,6 @@ echo "ACR_NAME: $ACR_NAME"
 terraform_template_dir=discovery-tf-template
 tf_template_version=v0.0.1
 infra_hld_dir=discovery-infra-hld
-vg_name=discovery-vg
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
 
 validation_test_yaml="foobar"

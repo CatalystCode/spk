@@ -14,12 +14,18 @@ tests.
 
 - This file has simple functions that are reused by `validations.sh`.
 
+`infra-validations.sh`
+
+- This file orchestrates infrastructure scenarios and is design to fail on first
+  error.
+
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
 - As a developer create variable group with variables
 - As a developer create a pipeline from an existing service
 - As a developer create a service revision from an existing service
+- As a developer create an HLD of a terraform template for infra deployment.
 
 # Operational Coverage
 
@@ -78,7 +84,7 @@ tests.
 
 | Command                    | Coverage |
 | -------------------------- | -------- |
-| spk infra scaffold         | 🚫       |
+| spk infra scaffold         | ✅       |
 | spk infra validate onboard | 🚫       |
 | spk infra generate         | 🚫       |
 
@@ -147,3 +153,4 @@ pipeline. Instead run these steps:
    </pre>
 4. Navigate to this directory in shell
 5. RUN --> `$ sh validations.sh`
+6. RUN --> `$ sh infra-validations.sh`
