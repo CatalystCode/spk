@@ -63,6 +63,9 @@ steps:
   - task: mspremier.BuildQualityChecks.QualityChecks-task.BuildQualityChecks@5
     displayName: 'Check build quality'
     inputs:
+      checkWarnings: false
+      warningFailOption: fixed
+      warningFilters: ''
       showStatistics: true
       checkCoverage: true
       coverageFailOption: 'Previous Value'
