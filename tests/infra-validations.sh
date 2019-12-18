@@ -60,7 +60,7 @@ touch main.tf variables.tf
 echo "$tfVars" >> variables.tf
 echo "$tfTemplate" >> main.tf
 file_we_expect=("variables.tf" "main.tf")
-validate_directory "$TEST_WORKSPACE/$terraform_template_dir/template" "${file_we_expect[@]}"
+validate_directory "$TEST_WORKSPACE/$terraform_template_dir/template" "${file_we_expect[@]}" >> $TEST_WORKSPACE/log.txt
 # The TF Template requires a git release for a version to be targeted for spk scaffold
 git add -A
 
@@ -68,7 +68,7 @@ git add -A
 repo_exists $AZDO_ORG_URL $AZDO_PROJECT $terraform_template_dir
 
 # Create the remote repo for the local repo
-created_repo_result=$(az repos create --name "$terraform_template_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT)
+created_repo_result=$(az repos create --name "$terraform_template_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT) >> $TEST_WORKSPACE/log.txt
 
 # Extract out remote repo URL from the above result
 remote_repo_url=$(echo $created_repo_result | jq '.remoteUrl' | tr -d '"' )
@@ -76,7 +76,6 @@ echo "The remote_repo_url is $remote_repo_url"
 
 # Remove the user from the URL
 repo_url=$(getHostandPath "$remote_repo_url")
-manifest_repo_url=$repo_url
 
 git commit -m "inital commit"
 git tag "$tf_template_version"
@@ -95,9 +94,9 @@ cd ../..
 pwd
 echo "../$terraform_template_dir"
 echo "$tf_template_version"
-spk infra scaffold -n $infra_hld_dir --source "$source" --version "$tf_template_version" --template "template"
+spk infra scaffold -n $infra_hld_dir --source "$source" --version "$tf_template_version" --template "template" >> $TEST_WORKSPACE/log.txt
 # Validate the definition in the Infra-HLD repo ------------------
 file_we_expect=("definition.yaml")
 validate_directory "$TEST_WORKSPACE/$infra_hld_dir" "${file_we_expect[@]}"
 # Validate the contents of the definition.yaml
-validate_file "$TEST_WORKSPACE/$infra_hld_dir/definition.yaml" $validation_test_yaml
+validate_file "$TEST_WORKSPACE/$infra_hld_dir/definition.yaml" $validation_test_yaml >> $TEST_WORKSPACE/log.txt
