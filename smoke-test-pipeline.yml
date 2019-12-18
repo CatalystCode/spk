@@ -70,15 +70,17 @@ stages:
 
         # Include dependent scripts
         . ./functions.sh
-
+      displayName: "Setup Test Environment"
+    - bash: | 
         # Run the test
         bash ./validations.sh
 
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
+      displayName: "Run Services Validation Tests"
 
-
+    - bash: | 
         # Run the infra test
         bash ./infra-validations.sh
 
@@ -86,7 +88,7 @@ stages:
         status=$?
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
       #failOnStderr: true
-      displayName: "Run Tests"
+      displayName: "Run Infrastructure Validation Tests"
     - task: PublishPipelineArtifact@1
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
