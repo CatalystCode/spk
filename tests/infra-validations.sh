@@ -48,7 +48,7 @@ fi
 
 cd $TEST_WORKSPACE
 
-# Setup simple TF Tepmlate ------------------
+# Setup simple TF Template ------------------
 mkdir $terraform_template_dir
 cd $terraform_template_dir
 git init
