@@ -163,9 +163,10 @@ tag.
   git commit -m "Adding $SERVICE_NAME to the repository."
   git push -u origin --all
   ```
-- Deploy the service's multistage build pipeline via `spk`
+- Deploy the service's multistage build pipeline via `spk` (optional flag
+  parameters can be used if `spk` was not intialized)
   ```
-  TBD
+  spk service install-build-pipeline $SERVICE_NAME
   ```
 
 ##### Creating a Service Revision
