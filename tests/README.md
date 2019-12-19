@@ -16,8 +16,8 @@ tests.
 
 `infra-validations.sh`
 
-- This file orchestrates infrastructure scenarios and is design to fail on first
-  error.
+- This file orchestrates infrastructure scenarios and is designed to fail on
+  first error.
 
 # Scenarios Exercised So Far
 
@@ -100,7 +100,7 @@ If you wish to run these tests locally, skip ahead to
    following key/values:
    - AZDO_PROJECT (e.g. `bedrock`)
    - AZDO_ORG (e.g. `epicstuff`)
-   - AZDO_PAT (e.g. Personal Access Token with _read/write/manage_ access to
+   - AZDO*PAT (e.g. Personal Access Token with \_read/write/manage* access to
      AZDO_PROJECT) <-- 🔒
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
