@@ -120,6 +120,9 @@ builds and deploys the latest Docker image to Azure Container Registry and
 updates the associated configuation in the HLD repository with the latest image
 tag.
 
+-TBD Section on packages directory and manging monorepositories vs single
+application repositories
+
 ##### Initializing an Application Repository
 
 - [Create a repository in the given AzDO project.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
