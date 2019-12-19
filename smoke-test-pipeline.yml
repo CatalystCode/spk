@@ -68,12 +68,6 @@ stages:
         export SP_PASS=$(SP_PASS)
         export SP_TENANT=$(SP_TENANT)
 
-        # Add to downstreams (Needs Fix)
-        echo "##vso[task.setvariable variable=SPK_LOCATION]$SPK_LOCATION"
-        echo "##vso[task.setvariable variable=ACCESS_TOKEN_SECRET]$ACCESS_TOKEN_SECRET"
-        echo "##vso[task.setvariable variable=SP_PASS]$SP_PASS"
-        echo "##vso[task.setvariable variable=SP_TENANT]$SP_TENANT"
-
         # Include dependent scripts
         . ./functions.sh
 
