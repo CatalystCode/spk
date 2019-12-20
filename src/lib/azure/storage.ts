@@ -234,7 +234,6 @@ export const getStorageAccount = async (
     );
 
     if (typeof accounts === "undefined" || accounts === null) {
-      logger.info("__no");
       logger.debug(`No storage accounts found in ${resourceGroup}`);
     } else {
       logger.debug(
