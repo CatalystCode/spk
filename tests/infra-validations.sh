@@ -100,3 +100,16 @@ file_we_expect=("definition.yaml")
 validate_directory "$TEST_WORKSPACE/$infra_hld_dir" "${file_we_expect[@]}"
 # Validate the contents of the definition.yaml
 validate_file "$TEST_WORKSPACE/$infra_hld_dir/definition.yaml" $validation_test_yaml >> $TEST_WORKSPACE/log.txt
+
+# Generate TF Files from Infra HLDs ------------------
+cd discovery-service
+spk infra generate
+
+# Verify that the Terraform files generation was successful
+# Confirm that generated directory created, spk.tfvars created, and tf templates copied
+generated_directory="$TEST_WORKSPACE/$infra_hld_dir/discovery-service-generated"
+file_we_expect=("spk.tfvars" "main.tf" "variables.tf")
+validate_directory "$generated_directory" "${file_we_expect[@]}"
+
+# Confirm contents of the spk.tfvars file are correct
+validate_file "$generated_directory/spk.tfvars" 'rg_name = "<insert value>"'
