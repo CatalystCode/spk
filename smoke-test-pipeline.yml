@@ -152,6 +152,6 @@ stages:
       displayName: "Run Validation Tests"
     - task: PublishPipelineArtifact@1
       inputs:
-        path: $(System.DefaultWorkingDirectory)/spk-env/infra_log.txt
+        path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
         artifact: infra_test_logs
       condition: always()
