@@ -150,8 +150,3 @@ stages:
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
       #failOnStderr: true
       displayName: "Run Validation Tests"
-    - task: PublishPipelineArtifact@1
-      inputs:
-        path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
-        artifact: test_logs
-      condition: always()
