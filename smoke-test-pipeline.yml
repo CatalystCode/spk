@@ -141,7 +141,9 @@ stages:
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
-      displayName: "Run Validation Tests"
+
+      #failOnStderr: true
+      displayName: "Run Infra Validation Tests"
     - task: PublishPipelineArtifact@1
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
