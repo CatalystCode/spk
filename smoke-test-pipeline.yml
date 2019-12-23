@@ -74,9 +74,6 @@ stages:
         status=$?
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
 
-        # Get exit status
-        status=$?
-        [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
       #failOnStderr: true
       displayName: "Run Validation Tests"
     - task: PublishPipelineArtifact@1
@@ -138,17 +135,12 @@ stages:
         # Include dependent scripts
         . ./functions.sh
 
-        # Get exit status
-        status=$?
-        [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
-
         # Run the infra test
         bash ./infra-validations.sh
 
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
-      #failOnStderr: true
       displayName: "Run Validation Tests"
     - task: PublishPipelineArtifact@1
       inputs:
