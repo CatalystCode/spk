@@ -125,6 +125,10 @@ stages:
         echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"
         az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"
 
+        # Step up git identity
+        git config --global user.email "me@microsoft.com"
+        git config --global user.name "Service Account"
+
         # Set ENV VARs
         export SPK_LOCATION="$(pwd)/spk-linux"
         export ACCESS_TOKEN_SECRET=$(AZDO_PAT)
@@ -144,6 +148,7 @@ stages:
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
+      #failOnStderr: true
       displayName: "Run Validation Tests"
     - task: PublishPipelineArtifact@1
       inputs:
