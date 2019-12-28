@@ -174,7 +174,23 @@ application repositories
 
 ##### Creating a Service Revision
 
-TBD
+- Create and checkout a new git branch
+  ```
+  git branch <my-new-feature-branch>
+  git checkout <my-new-feature-branch>
+  ```
+- Make code changes and commit
+  ```
+  echo "# My New Added File" >> myNewFile.md
+  git add myNewFile.md
+  git commit -m "Adding my new file"
+  git push --set-upstream origin <my-new-feature-branch>
+  ```
+- Create Service Revision via `spk` (optional flag parameters can be used if
+  `spk` was not intialized)
+  ```
+  spk service create-revision
+  ```
 
 ### Varible Groups
 
