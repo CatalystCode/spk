@@ -60,61 +60,18 @@ export const deployLifecyclePipelineCommandDecorator = (
         buildScriptUrl = BUILD_SCRIPT_URL
       } = opts;
 
-      logger.debug(`orgName: ${orgName}`);
-      logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
-      logger.debug(`pipelineName: ${pipelineName}`);
-      logger.debug(`repoName: ${repoName}`);
-      logger.debug(`repoUrl: ${repoUrl}`);
-      logger.debug(`hldUrl: ${hldUrl}`);
-      logger.debug(`devopsProject: ${devopsProject}`);
-      logger.debug(`buildScriptUrl: ${buildScriptUrl}`);
-
-      try {
-        if (typeof pipelineName !== "string") {
-          throw new Error(
-            `--pipeline-name must be of type 'string', ${typeof pipelineName} given.`
-          );
-        }
-        if (typeof personalAccessToken !== "string") {
-          throw new Error(
-            `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
-          );
-        }
-        if (typeof orgName !== "string") {
-          throw new Error(
-            `--org-url must be of type 'string', ${typeof orgName} given.`
-          );
-        }
-        if (typeof repoName !== "string") {
-          throw new Error(
-            `--repo-name must be of type 'string', ${typeof repoName} given.`
-          );
-        }
-        if (typeof repoUrl !== "string") {
-          throw new Error(
-            `--repo-url must be of type 'string', ${typeof repoUrl} given.`
-          );
-        }
-        if (typeof hldUrl !== "string") {
-          throw new Error(
-            `--hld-url must be of type 'string', ${typeof hldUrl} given.`
-          );
-        }
-        if (typeof devopsProject !== "string") {
-          throw new Error(
-            `--devops-project must be of type 'string', ${typeof devopsProject} given.`
-          );
-        }
-        if (typeof buildScriptUrl !== "string") {
-          throw new Error(
-            `--build-script must be of type 'string', ${typeof buildScriptUrl} given.`
-          );
-        }
-      } catch (err) {
-        logger.error(
-          `Error occurred validating inputs for project install-lifecycle-pipeline`
-        );
-        logger.error(err);
+      if (
+        !isValidConfig(
+          orgName,
+          devopsProject,
+          pipelineName,
+          repoUrl,
+          hldUrl,
+          hldUrl,
+          buildScriptUrl,
+          personalAccessToken
+        )
+      ) {
         process.exit(1);
       }
 
@@ -138,6 +95,76 @@ export const deployLifecyclePipelineCommandDecorator = (
         process.exit(1);
       }
     });
+};
+
+export const isValidConfig = (
+  orgName: any,
+  devopsProject: any,
+  pipelineName: any,
+  repoName: any,
+  repoUrl: any,
+  hldUrl: any,
+  buildScriptUrl: any,
+  personalAccessToken: any
+): boolean => {
+  const missingConfig = [];
+
+  logger.debug(`orgName: ${orgName}`);
+  logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
+  logger.debug(`pipelineName: ${pipelineName}`);
+  logger.debug(`repoName: ${repoName}`);
+  logger.debug(`repoUrl: ${repoUrl}`);
+  logger.debug(`hldUrl: ${hldUrl}`);
+  logger.debug(`devopsProject: ${devopsProject}`);
+  logger.debug(`buildScriptUrl: ${buildScriptUrl}`);
+
+  if (typeof pipelineName !== "string") {
+    missingConfig.push(
+      `--pipeline-name must be of type 'string', ${typeof pipelineName} given.`
+    );
+  }
+  if (typeof personalAccessToken !== "string") {
+    missingConfig.push(
+      `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
+    );
+  }
+  if (typeof orgName !== "string") {
+    missingConfig.push(
+      `--org-url must be of type 'string', ${typeof orgName} given.`
+    );
+  }
+  if (typeof repoName !== "string") {
+    missingConfig.push(
+      `--repo-name must be of type 'string', ${typeof repoName} given.`
+    );
+  }
+  if (typeof repoUrl !== "string") {
+    missingConfig.push(
+      `--repo-url must be of type 'string', ${typeof repoUrl} given.`
+    );
+  }
+  if (typeof hldUrl !== "string") {
+    missingConfig.push(
+      `--hld-url must be of type 'string', ${typeof hldUrl} given.`
+    );
+  }
+  if (typeof devopsProject !== "string") {
+    missingConfig.push(
+      `--devops-project must be of type 'string', ${typeof devopsProject} given.`
+    );
+  }
+  if (typeof buildScriptUrl !== "string") {
+    missingConfig.push(
+      `--build-script must be of type 'string', ${typeof buildScriptUrl} given.`
+    );
+  }
+
+  if (missingConfig.length > 0) {
+    logger.error("Error in configuration: " + missingConfig.join(" "));
+    return false;
+  }
+
+  return true;
 };
 
 /**
