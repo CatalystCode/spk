@@ -97,6 +97,18 @@ export const deployLifecyclePipelineCommandDecorator = (
     });
 };
 
+/**
+ *
+ * Validates the pipeline configuration
+ * @param orgName URL to the Azure DevOps organization that you are using.
+ * @param devopsProject Name of the devops project
+ * @param pipelineName Name of this build pipeline in AzDo
+ * @param repoName Name of repo
+ * @param repoUrl Repo URL
+ * @param hldUrl  URL of the HLD
+ * @param buildScriptUrl Build Script URL
+ * @param personalAccessToken Personal Access token with access to the HLD repository and materialized manifest repository.
+ */
 export const isValidConfig = (
   orgName: any,
   devopsProject: any,

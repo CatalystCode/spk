@@ -8,12 +8,12 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 
+import { logger } from "@azure/identity";
 import {
   installLifecyclePipeline,
   isValidConfig,
   requiredPipelineVariables
 } from "./pipeline";
-import { logger } from "@azure/identity";
 
 beforeAll(() => {
   enableVerboseLogging();

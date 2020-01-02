@@ -2,13 +2,13 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import uuid from "uuid/v4";
+import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
 import { initialize } from "./init";
-import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 jest.mock("../../lib/gitutils");
 
 beforeAll(() => {
