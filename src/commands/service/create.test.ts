@@ -294,9 +294,7 @@ describe("Adding a service to a repo directory", () => {
     await writeSampleBedrockFileToDir(path.join(randomTmpDir, "bedrock.yaml"));
 
     const packageDir = "packages";
-
     const serviceName = uuid();
-
     const variableGroupName = uuid();
 
     logger.info(
@@ -336,9 +334,7 @@ describe("Adding a service to a repo directory", () => {
     await writeSampleBedrockFileToDir(path.join(randomTmpDir, "bedrock.yaml"));
 
     const packageDir = "packages";
-
     const serviceName = uuid();
-
     const variableGroupName = uuid();
 
     logger.info(
