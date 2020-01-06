@@ -13,7 +13,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { IAzureAccessOpts, IConfigYaml } from "../../types";
+import { IAzureAccessOpts } from "../../types";
 import {
   onboard,
   setConfiguration,
@@ -21,7 +21,6 @@ import {
   validateStorageName,
   validateTableName
 } from "./onboard";
-import { emptyStatement } from "@babel/types";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -50,22 +49,13 @@ jest.spyOn(config, "defaultConfigFile").mockImplementation((): string => {
 });
 
 jest.spyOn(storage, "isStorageAccountExist").mockImplementation(
-  async (
-    resourceGroup: string,
-    accountName: string,
-    opts: IAzureAccessOpts = {}
-  ): Promise<any> => {
+  async (): Promise<any> => {
     return false;
   }
 );
 
 jest.spyOn(storage, "createStorageAccount").mockImplementation(
-  async (
-    resourceGroup: string,
-    accountName: string,
-    location: string,
-    opts: IAzureAccessOpts = {}
-  ): Promise<any> => {
+  async (): Promise<any> => {
     return {
       location: "westus",
       name: "testAccount"
@@ -74,12 +64,7 @@ jest.spyOn(storage, "createStorageAccount").mockImplementation(
 );
 
 jest.spyOn(keyvault, "setSecret").mockImplementation(
-  async (
-    keyVaultName: string,
-    secretName: string,
-    secretValue: string,
-    opts: IAzureAccessOpts = {}
-  ): Promise<any> => {
+  async (): Promise<any> => {
     return true;
   }
 );
@@ -89,11 +74,7 @@ jest.spyOn(logger, "info");
 describe("onboard", () => {
   test("empty location", async () => {
     jest.spyOn(storage, "isStorageAccountExist").mockImplementationOnce(
-      async (
-        resourceGroup: string,
-        accountName: string,
-        opts: IAzureAccessOpts = {}
-      ): Promise<any> => {
+      async (): Promise<any> => {
         return false;
       }
     );
@@ -119,11 +100,7 @@ describe("onboard", () => {
 
   test("no access key", async () => {
     jest.spyOn(storage, "getStorageAccountKey").mockImplementationOnce(
-      async (
-        resourceGroup: string,
-        accountName: string,
-        opts: IAzureAccessOpts = {}
-      ): Promise<any> => {
+      async (): Promise<any> => {
         return undefined;
       }
     );
@@ -149,21 +126,13 @@ describe("onboard", () => {
 
   test("create storage account", async () => {
     jest.spyOn(storage, "getStorageAccountKey").mockImplementationOnce(
-      async (
-        resourceGroup: string,
-        accountName: string,
-        opts: IAzureAccessOpts = {}
-      ): Promise<any> => {
+      async (): Promise<any> => {
         return "kZ83JRndk27402nB";
       }
     );
 
     jest.spyOn(storage, "createTableIfNotExists").mockImplementationOnce(
-      async (
-        accountName: string,
-        tableName: string,
-        accessKey: string
-      ): Promise<boolean> => {
+      async (): Promise<boolean> => {
         return true;
       }
     );
