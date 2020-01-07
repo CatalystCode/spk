@@ -136,8 +136,9 @@ Paste the following task in its corresponding `azure-pipelines.yml`:
   displayName: Update manifest pipeline details in Spektate db
 ```
 
-**Note:** To download a specific `spk` version, set the `VERSION` environment
-variable to the desired version. Eg. `v0.2.0`.
+**spk version:** To download a specific `spk` version, set the `VERSION`
+environment variable to the desired version. Eg. `v0.2.0`. With this,
+`get_spk_version` will fetch the specified version.
 
 This task will update the service introspection storage table for every build
 that runs from the source repository. This information will be available for use
@@ -167,9 +168,7 @@ Paste the following task towards the end of your release step in the release
 pipeline in the Azure DevOps portal:
 
 ```yaml
-latest_commit=$(git rev-parse --short HEAD) VERSION_TO_DOWNLOAD=$(curl -s
-"https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep
-"tag_name" | sed -E 's/.*"([^"]+)".*/\1/') echo "Downloading the latest SPK
+latest_commit=$(git rev-parse --short HEAD) echo "Downloading the latest SPK
 version" curl
 https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh
 > build.sh chmod +x build.sh . ./build.sh --source-only get_spk_version
