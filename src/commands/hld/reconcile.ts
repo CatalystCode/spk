@@ -12,6 +12,7 @@ import yaml from "js-yaml";
 import { promisify } from "util";
 
 import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
+import { TraefikMiddleware } from "../../lib/traefik/middleware";
 
 const exec = promisify(child_process.exec);
 
@@ -99,7 +100,7 @@ export const reconcileHld = async (
 
   // Create Repository Component if it doesn't exist.
   // In a pipeline, the repository component is the name of the application repository.
-  const createRepositoryComponent = `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} -- source ./${repositoryName} --method local`;
+  const createRepositoryComponent = `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} -- path ./${repositoryName} --method local`;
 
   await execAndLog(createRepositoryComponent);
 
@@ -114,7 +115,7 @@ export const reconcileHld = async (
 
     // Fab add is idempotent.
     // mkdir -p does not fail if ${pathBase} does not exist.
-    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --source ./${pathBase} --method local && touch ./config/common.yaml`;
+    const createSvcInHldCommand = `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --path ./${pathBase} --method local --type component && touch ./config/common.yaml`;
 
     await execAndLog(createSvcInHldCommand);
 
@@ -140,7 +141,7 @@ export const reconcileHld = async (
       }
 
       // Otherwise, create the ring in the service.
-      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --source ./${ring} --method local && touch ./config/common.yaml`;
+      const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --path ./${ring} --method local --type component && touch ./config/common.yaml`;
 
       await execAndLog(createRingInSvcCommand);
 
@@ -159,19 +160,38 @@ export const reconcileHld = async (
       await execAndLog(`cd ${ringPathInHld} && ${addHelmChartCommand}`);
 
       // Create config directory, crate static manifest directory.
-      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --source ./static --method local --type static && touch ./config/common.yaml`;
+      const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
 
       await execAndLog(createConfigAndStaticComponentCommand);
 
-      // Create Ingress Route.
+      // Create Middlewares
       const staticComponentPathInRing = path.join(ringPathInHld, "static");
+      const middlewaresPathInStaticComponent = path.join(
+        staticComponentPathInRing,
+        "middlewares.yaml"
+      );
+
+      const servicePrefix = `/${serviceName}`;
+      const middlewares = TraefikMiddleware(serviceName, ring, [servicePrefix]);
+      const middlewareYaml = yaml.safeDump(middlewares, {
+        lineWidth: Number.MAX_SAFE_INTEGER
+      });
+
+      logger.info(
+        `Writing Middlewares YAML to ${middlewaresPathInStaticComponent}`
+      );
+      writeFileSync(middlewaresPathInStaticComponent, middlewareYaml);
+
+      // Create Ingress Route.
       const ingressRoutePathInStaticComponent = path.join(
         staticComponentPathInRing,
         "ingress-route.yaml"
       );
 
       // TODO: figure out a way to grab the port from _somewhere_; store in bedrock.yaml?
-      const ingressRoute = TraefikIngressRoute(serviceName, ring, 8000);
+      const ingressRoute = TraefikIngressRoute(serviceName, ring, 8000, {
+        middlewares: [middlewares.metadata.name]
+      });
       const routeYaml = yaml.safeDump(ingressRoute, {
         lineWidth: Number.MAX_SAFE_INTEGER
       });

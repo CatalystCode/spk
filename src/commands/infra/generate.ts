@@ -1,15 +1,13 @@
 import commander from "commander";
-import fs, { chmod } from "fs";
+import fs from "fs";
 import mkdirp from "mkdirp";
-import * as os from "os";
 import path from "path";
+import process from "process";
 import simpleGit from "simple-git/promise";
-import {
-  getCurrentBranch,
-  getOriginUrl,
-  safeGitUrlForLogging
-} from "../../lib/gitutils";
+import { loadConfigurationFromLocalEnv, readYaml } from "../../config";
+import { safeGitUrlForLogging } from "../../lib/gitutils";
 import { logger } from "../../logger";
+import { IInfraConfigYaml } from "../../types";
 import * as infraCommon from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
 
@@ -27,7 +25,7 @@ export const generateCommandDecorator = (command: commander.Command): void => {
     .description("Generate scaffold for terraform cluster deployment.")
     .option(
       "-p, --project <path to project folder to generate> ",
-      "Location of the definition.json file that will be generated"
+      "Location of the definition.yaml file that will be generated"
     )
     .action(async opts => {
       try {
@@ -42,8 +40,10 @@ export const generateCommandDecorator = (command: commander.Command): void => {
           );
         }
         await validateDefinition(opts.project);
-        const jsonSource = await validateTemplateSource(opts.project);
-        await validateRemoteSource(jsonSource);
+        const yamlSource = await validateTemplateSource(
+          path.join(opts.project, "definition.yaml")
+        );
+        await validateRemoteSource(yamlSource);
         await generateConfig(opts.project);
       } catch (err) {
         logger.error(
@@ -55,9 +55,9 @@ export const generateCommandDecorator = (command: commander.Command): void => {
 };
 
 /**
- * Checks if definition.json is present locally to provided project path
+ * Checks if definition.yaml is present locally to provided project path
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  */
 export const validateDefinition = async (
   projectPath: string
@@ -65,14 +65,14 @@ export const validateDefinition = async (
   try {
     // If templates folder does not exist, create cache templates directory
     mkdirp.sync(infraCommon.spkTemplatesPath);
-    if (!fs.existsSync(path.join(projectPath, "definition.json"))) {
+    if (!fs.existsSync(path.join(projectPath, "definition.yaml"))) {
       logger.error(
-        `Provided project path for generate is invalid or definition.json cannot be found: ${projectPath}`
+        `Provided project path for generate is invalid or definition.yaml cannot be found: ${projectPath}`
       );
       return false;
     }
     logger.info(
-      `Project folder found. Extracting information from definition.json files.`
+      `Project folder found. Extracting information from definition.yaml files.`
     );
   } catch (err) {
     logger.error(`Unable to validate project folder path: ${err}`);
@@ -82,36 +82,37 @@ export const validateDefinition = async (
 };
 
 /**
- * Checks if working definition.json is present in the provided
+ * Checks if working definition.yaml is present in the provided
  * project path with validated source & version
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  */
 export const validateTemplateSource = async (
   projectPath: string
 ): Promise<string[]> => {
   try {
-    const definitionJSON = await readDefinitionJson(projectPath);
-    const safeLoggingUrl = safeGitUrlForLogging(definitionJSON.source);
+    const data = readYaml<IInfraConfigYaml>(projectPath);
+    const infraConfig = loadConfigurationFromLocalEnv(data || {});
+    const safeLoggingUrl = safeGitUrlForLogging(infraConfig.source);
     // TO DO : Check for malformed JSON
-    if (!(definitionJSON.template && definitionJSON.source)) {
+    if (!(infraConfig.template && infraConfig.source)) {
       logger.info(
-        `The definition.json file is invalid. There is a missing field for the definition file's sources. Template: ${definitionJSON.template} source: ${safeLoggingUrl} version: ${definitionJSON.version}`
+        `The definition.yaml file is invalid. There is a missing field for the definition file's sources. Template: ${infraConfig.template} source: ${safeLoggingUrl} version: ${infraConfig.version}`
       );
       return [];
     }
     logger.info(
-      `Checking for locally stored template: ${definitionJSON.template} from remote repository: ${safeLoggingUrl} at version: ${definitionJSON.version}`
+      `Checking for locally stored template: ${infraConfig.template} from remote repository: ${safeLoggingUrl} at version: ${infraConfig.version}`
     );
     const sources = [
-      definitionJSON.source,
-      definitionJSON.template,
-      definitionJSON.version
+      infraConfig.source,
+      infraConfig.template,
+      infraConfig.version
     ];
     return sources;
   } catch (_) {
     logger.error(
-      `Unable to validate project folder definition.json file. Is it malformed?`
+      `Unable to validate project folder definition.yaml file. Is it malformed?`
     );
     return [];
   }
@@ -120,7 +121,7 @@ export const validateTemplateSource = async (
 /**
  * Checks if provided source, template and version are valid. TODO/ Private Repo, PAT, ssh-key agent
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  */
 export const validateRemoteSource = async (
   definitionJSON: string[]
@@ -184,82 +185,165 @@ export const validateRemoteSource = async (
 /**
  * Creates "generated" directory if it does not already exists
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  */
 export const generateConfig = async (projectPath: string): Promise<void> => {
   try {
-    // First, search for definition.json in current working directory
-    const templatePath = await parseDefinitionJson(projectPath);
+    // First, search for definition.yaml in current working directory
+    const templatePath = await parseDefinitionYaml(projectPath);
     const cwdPath = process.cwd();
-    if (fs.existsSync(path.join(cwdPath, "definition.json"))) {
-      // If there exists a definition.json, then read file
-      logger.info(`A definition.json was found in the parent directory.`);
-      const parentDefinitionJSON = await readDefinitionJson(cwdPath);
-      const leafDefinitionJSON = await readDefinitionJson(projectPath);
-      /* Iterate through parent and leaf JSON objects to find matches
-        If there is a match, then replace parent key-value
-        If there is no match between the parent and leaf,
-        then append leaf key-value parent key-value JSON */
-      for (const parentKey in parentDefinitionJSON.variables) {
-        if (parentKey) {
-          for (const leafKey in leafDefinitionJSON.variables) {
-            if (parentKey === leafKey) {
-              let parentVal = parentDefinitionJSON.variables[parentKey];
-              parentVal = leafDefinitionJSON.variables[leafKey];
-            } else {
-              // Append to parent variables block
-              const leafVal = leafDefinitionJSON.variables[leafKey];
-              parentDefinitionJSON.variables[leafKey] = leafVal;
-            }
-          }
+
+    // If there exists a definition.yaml, then read file
+    // const parentDefinitionJSON = await readDefinitionJson(cwdPath);
+    // const leafDefinitionJSON = await readDefinitionJson(projectPath);
+
+    const parentData = readYaml<IInfraConfigYaml>(
+      path.join(cwdPath, "definition.yaml")
+    );
+    const parentInfraConfig = loadConfigurationFromLocalEnv(parentData || {});
+    const leafData = readYaml<IInfraConfigYaml>(
+      path.join(projectPath, "definition.yaml")
+    );
+    const leafInfraConfig = loadConfigurationFromLocalEnv(leafData || {});
+    /* Iterate through parent and leaf JSON objects to find matches
+      If there is a match, then replace parent key-value
+      If there is no match between the parent and leaf,
+      then append leaf key-value parent key-value JSON */
+    // Create a generated parent directory
+    const parentDirectory = cwdPath + "-generated";
+    const childDirectory = path.join(parentDirectory, projectPath);
+    if (projectPath === cwdPath) {
+      await createGenerated(parentDirectory);
+      if (parentInfraConfig.variables) {
+        const spkTfvarsObject = await generateTfvars(
+          parentInfraConfig.variables
+        );
+        await checkTfvars(parentDirectory, "spk.tfvars");
+        await writeTfvarsFile(spkTfvarsObject, parentDirectory, "spk.tfvars");
+        await copyTfTemplate(templatePath, parentDirectory, true);
+      } else {
+        logger.warning(`Variables are not defined in the definition.yaml`);
+      }
+      if (parentInfraConfig.backend) {
+        const backendTfvarsObject = await generateTfvars(
+          parentInfraConfig.backend
+        );
+        await checkTfvars(parentDirectory, "backend.tfvars");
+        await writeTfvarsFile(
+          backendTfvarsObject,
+          parentDirectory,
+          "backend.tfvars"
+        );
+      } else {
+        logger.warning(
+          `A remote backend configuration is not defined in the definition.yaml`
+        );
+      }
+    } else {
+      await createGenerated(parentDirectory);
+      // Then, create generated child directory
+      await createGenerated(childDirectory);
+    }
+    if (typeof parentInfraConfig !== "undefined") {
+      if (leafInfraConfig) {
+        const finalDefinition = await dirIteration(
+          parentInfraConfig.variables,
+          leafInfraConfig.variables
+        );
+        // Generate Terraform files in generated directory
+        const combinedSpkTfvarsObject = await generateTfvars(finalDefinition);
+        // Write variables to  `spk.tfvars` file
+        await checkTfvars(childDirectory, "spk.tfvars");
+        await writeTfvarsFile(
+          combinedSpkTfvarsObject,
+          childDirectory,
+          "spk.tfvars"
+        );
+
+        // Create a backend.tfvars for remote backend configuration
+        if (parentInfraConfig.backend && leafInfraConfig.backend) {
+          const finalBackendDefinition = await dirIteration(
+            parentInfraConfig.backend,
+            leafInfraConfig.backend
+          );
+          const backendTfvarsObject = await generateTfvars(
+            finalBackendDefinition
+          );
+          await checkTfvars(childDirectory, "backend.tfvars");
+          await writeTfvarsFile(
+            backendTfvarsObject,
+            childDirectory,
+            "backend.tfvars"
+          );
         }
       }
-      // Create a generated parent directory
-      const parentDirectory = await createGenerated(cwdPath + "-generated");
-      // Then, create generated child directory
-      const childDirectory = await createGenerated(
-        path.join(parentDirectory, projectPath)
-      );
-      // Generate Terraform files in generated directory
-      const spkTfvarsObject = await generateSpkTfvars(
-        parentDefinitionJSON.variables
-      );
-      await checkSpkTfvars(childDirectory);
-      await writeToSpkTfvarsFile(spkTfvarsObject, childDirectory);
-      // const templatePath = await parseDefinitionJson(projectPath);
-      await copyTfTemplate(templatePath, childDirectory);
     } else {
-      // If there is not a definition.json in current working directory,
-      // then proceed with reading definition.json in project path
-      // await createGenerated(projectPath)
-      // logger.info(`A definition.json was not found in the parent directory.`)
-      const definitionJSON = await readDefinitionJson(projectPath);
-      // Create a generated directory
-      const generatedDirectory = await createGenerated(
-        projectPath + "-generated"
-      );
-      // Generate Terraform files in generated directory
-      const spkTfvarsObject = await generateSpkTfvars(definitionJSON.variables);
-      await checkSpkTfvars(generatedDirectory);
-      await writeToSpkTfvarsFile(spkTfvarsObject, generatedDirectory);
-      await copyTfTemplate(templatePath, generatedDirectory);
+      if (leafInfraConfig.variables) {
+        // If there is not a variables block in the parent or root definition.yaml
+        // Then assume the variables are taken from leaf definitions
+        const spkTfvarsObject = await generateTfvars(leafInfraConfig.variables);
+        // Write variables to  `spk.tfvars` file
+        await checkTfvars(childDirectory, "spk.tfvars");
+        await writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
+        await copyTfTemplate(templatePath, childDirectory, true);
+      } else {
+        logger.warning(`Variables are not defined in the definition.yaml`);
+      }
+      // If there is no backend block specified in the parent definition.yaml,
+      // then create a backend based on the leaf definition.yaml
+      if (leafInfraConfig.backend) {
+        const backendTfvarsObject = await generateTfvars(
+          leafInfraConfig.backend
+        );
+        await checkTfvars(childDirectory, "backend.tfvars");
+        await writeTfvarsFile(
+          backendTfvarsObject,
+          childDirectory,
+          "backend.tfvars"
+        );
+      } else {
+        logger.warning(
+          `A remote backend configuration is not defined in the definition.yaml`
+        );
+      }
     }
+    await copyTfTemplate(templatePath, childDirectory, true);
   } catch (err) {
     return err;
   }
 };
 
+export const dirIteration = async (
+  parentObject: any,
+  leafObject: any
+): Promise<string[]> => {
+  for (const parentKey in parentObject) {
+    if (parentKey) {
+      for (const leafKey in leafObject) {
+        if (parentKey === leafKey) {
+          let parentVal = parentObject[parentKey];
+          parentVal = leafObject[leafKey];
+        } else {
+          // Append to parent variables block
+          const leafVal = leafObject[leafKey];
+          parentObject[leafKey] = leafVal;
+        }
+      }
+    }
+  }
+  return parentObject;
+};
+
 /**
  * Creates "generated" directory if it does not already exists
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  */
 export const createGenerated = async (projectPath: string): Promise<string> => {
   try {
-    const newGeneratedPath = projectPath;
-    mkdirp.sync(newGeneratedPath);
-    logger.info(`Created generated directory: ${newGeneratedPath}`);
-    return newGeneratedPath;
+    mkdirp.sync(projectPath);
+    logger.info(`Created generated directory: ${projectPath}`);
+    return projectPath;
   } catch (err) {
     logger.error(`There was a problem creating the generated directory`);
     return err;
@@ -267,45 +351,60 @@ export const createGenerated = async (projectPath: string): Promise<string> => {
 };
 
 /**
- * Parses the definition.json file and returns the appropriate template path
+ * Parses the definition.yaml file and returns the appropriate template path
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  * @param generatedPath Path to the generated directory
  */
-export const parseDefinitionJson = async (projectPath: string) => {
-  const definitionJSON = await readDefinitionJson(projectPath);
-  const source = definitionJSON.source;
+export const parseDefinitionYaml = async (projectPath: string) => {
+  const data = readYaml<IInfraConfigYaml>(
+    path.join(projectPath, `definition.yaml`)
+  );
+  const infraConfig = loadConfigurationFromLocalEnv(data || {});
+  const source = infraConfig.source;
   const sourceFolder = await infraCommon.repoCloneRegex(source);
   const templatePath = path.join(
     infraCommon.spkTemplatesPath,
     sourceFolder,
-    definitionJSON.template
+    infraConfig.template
   );
   return templatePath;
 };
 
 /**
- * Checks if an spk.tfvars
+ * Checks if an spk.tfvars already exists
  *
  * @param projectPath Path to the spk.tfvars file
  */
-export const checkSpkTfvars = async (generatedPath: string): Promise<void> => {
+export const checkTfvars = async (
+  generatedPath: string,
+  tfvarsFilename: string
+): Promise<void> => {
   try {
     // Remove existing spk.tfvars if it already exists
-    if (fs.existsSync(path.join(generatedPath, "spk.tfvars"))) {
-      fs.unlinkSync(path.join(generatedPath, "spk.tfvars"));
+    if (fs.existsSync(path.join(generatedPath, tfvarsFilename))) {
+      fs.unlinkSync(path.join(generatedPath, tfvarsFilename));
     }
   } catch (err) {
     return err;
   }
 };
 
+export const generateBackendTfvars = async (definitionJSON: string[]) => {
+  try {
+    const backendTfvars: string[] = [];
+    const backendConfig = definitionJSON;
+  } catch (err) {
+    logger.error(err);
+  }
+};
+
 /**
  *
- * Takes in the "variables" block from definition.json file and returns
+ * Takes in the "variables" block from definitio.yaml file and returns
  * a spk.tfvars file.
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  * @param generatedPath Path to the generated directory
  *
  * Regex will replace ":" with "=", and remove double quotes around
@@ -314,11 +413,11 @@ export const checkSpkTfvars = async (generatedPath: string): Promise<void> => {
  * key = "value"
  *
  */
-export const generateSpkTfvars = async (definitionJSON: string[]) => {
+export const generateTfvars = async (definition: any) => {
   try {
     const tfVars: string[] = [];
-    // Parse definition.json "variables" block
-    const variables = definitionJSON;
+    // Parse definition.yaml "variables" block
+    const variables = definition;
     // Restructure the format of variables text
     const tfVariables = JSON.stringify(variables)
       .replace(/\{|\}/g, "")
@@ -348,23 +447,24 @@ export const generateSpkTfvars = async (definitionJSON: string[]) => {
  * @param spkTfVars spk tfvars object in an array
  * @param generatedPath Path to write the spk.tfvars file to
  */
-export const writeToSpkTfvarsFile = async (
+export const writeTfvarsFile = async (
   spkTfVars: string[],
-  generatedPath: string
+  generatedPath: string,
+  tfvarsFilename: string
 ) => {
   spkTfVars.forEach(tfvar => {
-    fs.appendFileSync(path.join(generatedPath, "spk.tfvars"), tfvar + "\n");
+    fs.appendFileSync(path.join(generatedPath, tfvarsFilename), tfvar + "\n");
   });
 };
 
 /**
- * Reads a definition.json and returns a JSON object
+ * Reads a definition.yaml and returns a JSON object
  *
- * @param projectPath Path to the definition.json file
+ * @param projectPath Path to the definition.yaml file
  */
-export const readDefinitionJson = async (projectPath: string) => {
-  const rootDef = path.join(projectPath, "definition.json");
+/* export const readDefinitionJson = async (projectPath: string) => {
+  const rootDef = path.join(projectPath, "definition.yaml");
   const data: string = fs.readFileSync(rootDef, "utf8");
   const definitionJSON = JSON.parse(data);
   return definitionJSON;
-};
+};*/

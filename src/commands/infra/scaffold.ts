@@ -1,7 +1,7 @@
-import child_process, { exec } from "child_process";
 import commander from "commander";
 import fs from "fs";
 import fsextra from "fs-extra";
+import yaml from "js-yaml";
 import path from "path";
 import { Config } from "../../config";
 import { logger } from "../../logger";
@@ -71,7 +71,11 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
           sourceFolder
         );
         await validateRemoteSource(scaffoldDefinition);
-        await copyTfTemplate(path.join(sourcePath, opts.template), opts.name);
+        await copyTfTemplate(
+          path.join(sourcePath, opts.template),
+          opts.name,
+          false
+        );
         await validateVariablesTf(
           path.join(sourcePath, opts.template, "variables.tf")
         );
@@ -100,7 +104,7 @@ export const validateVariablesTf = async (
       return false;
     }
     logger.info(
-      `Terraform variables.tf file found. Attempting to generate definition.json file.`
+      `Terraform variables.tf file found. Attempting to generate definition.yaml file.`
     );
   } catch (_) {
     logger.error(`Unable to validate Terraform variables.tf.`);
@@ -153,14 +157,33 @@ export const renameTfvars = async (dir: string): Promise<void> => {
  */
 export const copyTfTemplate = async (
   templatePath: string,
-  envName: string
+  envName: string,
+  generation: boolean
 ): Promise<boolean> => {
   try {
-    await fsextra.copy(templatePath, envName, {
-      filter: file => {
-        return !(file.indexOf("terraform.tfvars") > -1);
-      }
-    });
+    if (generation === true) {
+      await fsextra.copy(templatePath, envName, {
+        filter: file => {
+          if (
+            file.indexOf("terraform.tfvars") !== -1 ||
+            file.indexOf("backend.tfvars") !== -1
+          ) {
+            return false;
+          }
+          return true;
+        }
+      });
+    } else {
+      await fsextra.copy(templatePath, envName, {
+        filter: file => {
+          // return !(file.indexOf("terraform.tfvars") > -1);
+          if (file.indexOf("terraform.tfvars") !== -1) {
+            return false;
+          }
+          return true;
+        }
+      });
+    }
     logger.info(`Terraform template files copied from ${templatePath}`);
   } catch (err) {
     logger.error(
@@ -184,7 +207,7 @@ export const removeTemplateFiles = async (envPath: string): Promise<void> => {
       throw err;
     }
     for (const file of files) {
-      if (file !== "definition.json") {
+      if (file !== "definition.yaml") {
         fs.unlinkSync(path.join(envPath, file));
       }
     }
@@ -244,7 +267,7 @@ export const parseVariablesTf = (data: string) => {
 };
 
 /**
- * Parses and reformats the backend.tfvars
+ * Parses and reformats a backend object
  *
  * @param backendTfvarData path to the directory of backend.tfvars
  */
@@ -254,14 +277,16 @@ export const parseBackendTfvars = (backendData: string) => {
   block.forEach(b => {
     const elt = b.split(":");
     if (elt[0].length > 0) {
-      backend[elt[0]] = elt[1].replace(/\"/g, "");
+      backend[elt[0]] = elt[1]
+        .replace(/\"/g, "")
+        .replace(/(?:\\[rn]|[\r\n]+)+/g, "");
     }
   });
   return backend;
 };
 
 /**
- * Generates cluster definition as definition.json
+ * Generates cluster definition as definition object
  *
  * @param name name of destination directory
  * @param source git url of source repo
@@ -301,7 +326,7 @@ export const generateClusterDefinition = async (
 
 /**
  * Given a Bedrock template, source URL, and version, this function creates a
- * primary base json definition for generating cluster definitions from.
+ * primary base definition for generating cluster definitions from.
  *
  * @param name Name of the cluster definition
  * @param bedrockSource The source repo for the bedrock definition
@@ -337,14 +362,15 @@ export const scaffold = async (
           backendData,
           data
         );
+        const definitionYaml = yaml.safeDump(baseDef);
         if (baseDef) {
           fs.mkdir(name, (e: any) => {
             const confPath: string = path.format({
-              base: "definition.json",
+              base: "definition.yaml",
               dir: name,
               root: "/ignored"
             });
-            fs.writeFileSync(confPath, JSON.stringify(baseDef, null, 2));
+            fs.writeFileSync(confPath, definitionYaml, "utf8");
             return true;
           });
         } else {
