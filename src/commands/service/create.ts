@@ -56,6 +56,11 @@ export const createCommandDecorator = (command: commander.Command): void => {
       ""
     )
     .option(
+      "-n, --display-name <display-name>",
+      "Display name os the service.",
+      ""
+    )
+    .option(
       "-m, --maintainer-name <maintainer-name>",
       "The name of the primary maintainer for this service.",
       "maintainer name"
@@ -76,6 +81,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
     )
     .action(async (serviceName, opts) => {
       const {
+        displayName,
         helmChartChart,
         helmChartRepository,
         helmConfigBranch,
@@ -141,6 +147,11 @@ export const createCommandDecorator = (command: commander.Command): void => {
             `packagesDir must be of type 'string', ${typeof packagesDir} given.`
           );
         }
+        if (typeof displayName !== "string") {
+          throw new Error(
+            `displayName must be of type 'string', ${typeof displayName} given.`
+          );
+        }
         if (typeof maintainerName !== "string") {
           throw new Error(
             `maintainerName must be of type 'string', ${typeof maintainerName} given.`
@@ -167,6 +178,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
         }
 
         await createService(projectPath, serviceName, packagesDir, gitPush, {
+          displayName,
           helmChartChart,
           helmChartRepository,
           helmConfigBranch,
@@ -201,6 +213,7 @@ export const createService = async (
   packagesDir: string,
   gitPush: boolean,
   opts?: {
+    displayName: string;
     helmChartChart: string;
     helmChartRepository: string;
     helmConfigBranch: string;
@@ -212,6 +225,7 @@ export const createService = async (
   }
 ) => {
   const {
+    displayName,
     helmChartChart,
     helmChartRepository,
     helmConfigBranch,
@@ -221,6 +235,7 @@ export const createService = async (
     maintainerEmail,
     variableGroups
   } = opts || {
+    displayName: "",
     helmChartChart: "",
     helmChartRepository: "",
     helmConfigBranch: "",
@@ -235,7 +250,7 @@ export const createService = async (
     `Adding Service: ${serviceName}, to Project: ${rootProjectPath} under directory: ${packagesDir}`
   );
   logger.info(
-    `MaintainerName: ${maintainerName}, MaintainerEmail: ${maintainerEmail}`
+    `DisplayName: ${displayName}, MaintainerName: ${maintainerName}, MaintainerEmail: ${maintainerEmail}`
   );
 
   const newServiceDir = path.join(rootProjectPath, packagesDir, serviceName);
@@ -293,6 +308,7 @@ export const createService = async (
   addNewServiceToBedrockFile(
     path.join(rootProjectPath, "bedrock.yaml"),
     newServiceRelativeDir,
+    displayName,
     helmConfig
   );
 
