@@ -57,7 +57,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
     )
     .option(
       "-n, --display-name <display-name>",
-      "Display name os the service.",
+      "Display name of the service.",
       ""
     )
     .option(
