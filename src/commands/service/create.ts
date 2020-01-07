@@ -215,7 +215,7 @@ export const isValidConfig = (
     );
   }
   if (typeof displayName !== "string") {
-    throw new Error(
+    missingConfig.push(
       `displayName must be of type 'string', ${typeof displayName} given.`
     );
   }

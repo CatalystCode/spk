@@ -38,7 +38,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(true);
   });
@@ -56,7 +57,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -74,7 +76,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -92,7 +95,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -110,7 +114,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -128,7 +133,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -146,7 +152,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -164,7 +171,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -182,7 +190,8 @@ describe("validate pipeline config", () => {
         undefined,
         "test@maintainer.com",
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -200,7 +209,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         undefined,
         true,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -218,7 +228,8 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         undefined,
-        "testVariableGroup"
+        "testVariableGroup",
+        "testDisplayName"
       )
     ).toBe(false);
   });
@@ -236,6 +247,26 @@ describe("validate pipeline config", () => {
         "test-maintainer",
         "test@maintainer.com",
         true,
+        undefined,
+        "testDisplayName"
+      )
+    ).toBe(false);
+  });
+
+  it("invalid displayName", () => {
+    expect(
+      isValidConfig(
+        "testHelmChart",
+        "testHelmRepo",
+        "testHelmConfigBranch",
+        "testHelmConfigGit",
+        "/test/path",
+        "testService",
+        "test/packages",
+        "test-maintainer",
+        "test@maintainer.com",
+        true,
+        "testVariableGroup",
         undefined
       )
     ).toBe(false);
