@@ -123,7 +123,8 @@ export const createCommandDecorator = (command: commander.Command): void => {
             maintainerName,
             maintainerEmail,
             gitPush,
-            variableGroupName
+            variableGroupName,
+            displayName
           )
         ) {
           process.exit(1);
@@ -177,7 +178,8 @@ export const isValidConfig = (
   maintainerName: any,
   maintainerEmail: any,
   gitPush: any,
-  variableGroupName: any
+  variableGroupName: any,
+  displayName: any
 ): boolean => {
   const missingConfig = [];
 
