@@ -40,39 +40,16 @@ describe("validate pipeline config", () => {
   ];
 
   it("config is valid", () => {
-    expect(
-      isValidConfig(
-        configValues[0],
-        configValues[1],
-        configValues[2],
-        configValues[3],
-        configValues[4],
-        configValues[5],
-        configValues[6],
-        configValues[7],
-        configValues[8],
-        configValues[9],
-        configValues[10]
-      )
-    ).toBe(true);
+    expect(isValidConfig.apply(undefined, configValues as any)).toBe(true);
   });
 
   it("undefined parameters", () => {
-    for (let i = 0; i < configValues.length; i++) {
+    for (const i of configValues.keys()) {
+      const configValuesWithInvalidValue = configValues.map((value, j) =>
+        i === j ? undefined : value
+      );
       expect(
-        isValidConfig(
-          i === 0 ? undefined : configValues[0],
-          i === 1 ? undefined : configValues[1],
-          i === 2 ? undefined : configValues[2],
-          i === 3 ? undefined : configValues[3],
-          i === 4 ? undefined : configValues[4],
-          i === 5 ? undefined : configValues[5],
-          i === 6 ? undefined : configValues[6],
-          i === 7 ? undefined : configValues[7],
-          i === 8 ? undefined : configValues[8],
-          i === 9 ? undefined : configValues[9],
-          i === 10 ? undefined : configValues[10]
-        )
+        isValidConfig.apply(undefined, configValuesWithInvalidValue as any)
       ).toBe(false);
     }
   });
