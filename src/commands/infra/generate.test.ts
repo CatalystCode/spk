@@ -32,9 +32,9 @@ describe("Validate sources in definition.yaml files", () => {
     let mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
     const expectedArrayWest = [
       "A",
-      "https://github.com/Microsoft/bedrock",
+      "https://github.com/yradsmikham/spk-source",
       "cluster/environments/azure-single-keyvault",
-      "v0.12.0"
+      "v0.0.2"
     ];
     let sourceConfiguration = await validateDefinition(
       mockParentPath,
@@ -50,9 +50,9 @@ describe("Validate sources in definition.yaml files", () => {
     mockProjectPath = "src/commands/infra/mocks/discovery-service/east";
     const expectedArrayEast = [
       "B",
-      "https://github.com/Microsoft/bedrock",
+      "https://github.com/yradsmikham/spk-source",
       "cluster/environments/azure-single-keyvault",
-      "v0.12.0"
+      "v0.0.1"
     ];
     sourceConfiguration = await validateDefinition(
       mockParentPath,
@@ -69,9 +69,9 @@ describe("Validate sources in definition.yaml files", () => {
     mockProjectPath = "src/commands/infra/mocks/discovery-service/central";
     const expectedArrayCentral = [
       "A",
-      "https://github.com/Microsoft/bedrock",
+      "https://github.com/yradsmikham/spk-source",
       "cluster/environments/azure-single-keyvault",
-      "v0.12.0"
+      "v0.0.1"
     ];
     sourceConfiguration = await validateDefinition(
       mockParentPath,
@@ -101,13 +101,13 @@ describe("Validate remote git source", () => {
       path.join(mockProjectPath, `definition.yaml`)
     );
     const sourceBoolean = await validateRemoteSource(sourceArray);
-    expect(sourceBoolean).toBe(true);
+    expect(sourceBoolean).toBe(false);
   });
 });
 
 jest.spyOn(generate, "gitClone").mockImplementation(
   (source: string, sourcePath: string): Promise<void> => {
-    logger.info(`gitClone function mocked. AY AY`);
+    logger.info(`gitClone function mocked.`);
     return new Promise(resolve => {
       resolve();
     });
