@@ -56,6 +56,11 @@ export const createCommandDecorator = (command: commander.Command): void => {
       ""
     )
     .option(
+      "-n, --display-name <display-name>",
+      "Display name of the service.",
+      ""
+    )
+    .option(
       "-m, --maintainer-name <maintainer-name>",
       "The name of the primary maintainer for this service.",
       "maintainer name"
@@ -76,6 +81,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
     )
     .action(async (serviceName, opts) => {
       const {
+        displayName,
         helmChartChart,
         helmChartRepository,
         helmConfigBranch,
@@ -105,68 +111,27 @@ export const createCommandDecorator = (command: commander.Command): void => {
 
         logger.info(`variable name: ${variableGroupName}`);
 
-        // Type check all parsed command line args here.
-        if (typeof helmChartChart !== "string") {
-          throw new Error(
-            `helmChartChart must be of type 'string', ${typeof helmChartChart} given.`
-          );
-        }
-        if (typeof helmChartRepository !== "string") {
-          throw new Error(
-            `helmChartRepository must be of type 'string', ${typeof helmChartRepository} given.`
-          );
-        }
-        if (typeof helmConfigBranch !== "string") {
-          throw new Error(
-            `helmConfigBranch must be of type 'string', ${typeof helmConfigBranch} given.`
-          );
-        }
-        if (typeof helmConfigGit !== "string") {
-          throw new Error(
-            `helmConfigGit must be of type 'string', ${typeof helmConfigGit} given.`
-          );
-        }
-        if (typeof helmConfigPath !== "string") {
-          throw new Error(
-            `helmConfigPath must be of type 'string', ${typeof helmConfigPath} given.`
-          );
-        }
-        if (typeof serviceName !== "string") {
-          throw new Error(
-            `serviceName must be of type 'string', ${typeof serviceName} given.`
-          );
-        }
-        if (typeof packagesDir !== "string") {
-          throw new Error(
-            `packagesDir must be of type 'string', ${typeof packagesDir} given.`
-          );
-        }
-        if (typeof maintainerName !== "string") {
-          throw new Error(
-            `maintainerName must be of type 'string', ${typeof maintainerName} given.`
-          );
-        }
-        if (typeof maintainerEmail !== "string") {
-          throw new Error(
-            `maintainerEmail must be of type 'string', ${typeof maintainerEmail} given.`
-          );
-        }
-        if (typeof gitPush !== "boolean") {
-          throw new Error(
-            `gitPush must be of type 'boolean', ${typeof gitPush} given.`
-          );
-        }
         if (
-          variableGroupName !== null &&
-          variableGroupName !== undefined &&
-          typeof variableGroupName !== "string"
+          !isValidConfig(
+            helmChartChart,
+            helmChartRepository,
+            helmConfigBranch,
+            helmConfigGit,
+            helmConfigPath,
+            serviceName,
+            packagesDir,
+            maintainerName,
+            maintainerEmail,
+            gitPush,
+            variableGroupName,
+            displayName
+          )
         ) {
-          throw new Error(
-            `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
-          );
+          process.exit(1);
         }
 
         await createService(projectPath, serviceName, packagesDir, gitPush, {
+          displayName,
           helmChartChart,
           helmChartRepository,
           helmConfigBranch,
@@ -189,6 +154,110 @@ export const createCommandDecorator = (command: commander.Command): void => {
 };
 
 /**
+ * Validates the pipeline configuration
+ * @param helmChartChart Helm chart chart
+ * @param helmChartRepository  Helm chart repository
+ * @param helmConfigBranch Helm chart branch
+ * @param helmConfigGit Helm git
+ * @param helmConfigPath Helm config path
+ * @param serviceName Service name
+ * @param packagesDir Packages directory
+ * @param maintainerName Name of maintainer
+ * @param maintainerEmail Email of maintainer
+ * @param gitPush Push to git
+ * @param variableGroupName Variable group name
+ */
+export const isValidConfig = (
+  helmChartChart: any,
+  helmChartRepository: any,
+  helmConfigBranch: any,
+  helmConfigGit: any,
+  helmConfigPath: any,
+  serviceName: any,
+  packagesDir: any,
+  maintainerName: any,
+  maintainerEmail: any,
+  gitPush: any,
+  variableGroupName: any,
+  displayName: any
+): boolean => {
+  const missingConfig = [];
+
+  // Type check all parsed command line args here.
+  if (typeof helmChartChart !== "string") {
+    missingConfig.push(
+      `helmChartChart must be of type 'string', ${typeof helmChartChart} given.`
+    );
+  }
+  if (typeof helmChartRepository !== "string") {
+    missingConfig.push(
+      `helmChartRepository must be of type 'string', ${typeof helmChartRepository} given.`
+    );
+  }
+  if (typeof helmConfigBranch !== "string") {
+    missingConfig.push(
+      `helmConfigBranch must be of type 'string', ${typeof helmConfigBranch} given.`
+    );
+  }
+  if (typeof helmConfigGit !== "string") {
+    missingConfig.push(
+      `helmConfigGit must be of type 'string', ${typeof helmConfigGit} given.`
+    );
+  }
+  if (typeof helmConfigPath !== "string") {
+    missingConfig.push(
+      `helmConfigPath must be of type 'string', ${typeof helmConfigPath} given.`
+    );
+  }
+  if (typeof serviceName !== "string") {
+    missingConfig.push(
+      `serviceName must be of type 'string', ${typeof serviceName} given.`
+    );
+  }
+  if (typeof displayName !== "string") {
+    missingConfig.push(
+      `displayName must be of type 'string', ${typeof displayName} given.`
+    );
+  }
+  if (typeof packagesDir !== "string") {
+    missingConfig.push(
+      `packagesDir must be of type 'string', ${typeof packagesDir} given.`
+    );
+  }
+  if (typeof maintainerName !== "string") {
+    missingConfig.push(
+      `maintainerName must be of type 'string', ${typeof maintainerName} given.`
+    );
+  }
+  if (typeof maintainerEmail !== "string") {
+    missingConfig.push(
+      `maintainerEmail must be of type 'string', ${typeof maintainerEmail} given.`
+    );
+  }
+  if (typeof gitPush !== "boolean") {
+    missingConfig.push(
+      `gitPush must be of type 'boolean', ${typeof gitPush} given.`
+    );
+  }
+  if (
+    variableGroupName === null ||
+    variableGroupName === undefined ||
+    typeof variableGroupName !== "string"
+  ) {
+    missingConfig.push(
+      `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
+    );
+  }
+
+  if (missingConfig.length > 0) {
+    logger.error("Error in configuration: " + missingConfig.join(" "));
+    return false;
+  }
+
+  return true;
+};
+
+/**
  * Create a service in a bedrock project directory.
  *
  * @param rootProjectPath
@@ -201,6 +270,7 @@ export const createService = async (
   packagesDir: string,
   gitPush: boolean,
   opts?: {
+    displayName: string;
     helmChartChart: string;
     helmChartRepository: string;
     helmConfigBranch: string;
@@ -212,6 +282,7 @@ export const createService = async (
   }
 ) => {
   const {
+    displayName,
     helmChartChart,
     helmChartRepository,
     helmConfigBranch,
@@ -221,6 +292,7 @@ export const createService = async (
     maintainerEmail,
     variableGroups
   } = opts || {
+    displayName: "",
     helmChartChart: "",
     helmChartRepository: "",
     helmConfigBranch: "",
@@ -235,7 +307,7 @@ export const createService = async (
     `Adding Service: ${serviceName}, to Project: ${rootProjectPath} under directory: ${packagesDir}`
   );
   logger.info(
-    `MaintainerName: ${maintainerName}, MaintainerEmail: ${maintainerEmail}`
+    `DisplayName: ${displayName}, MaintainerName: ${maintainerName}, MaintainerEmail: ${maintainerEmail}`
   );
 
   const newServiceDir = path.join(rootProjectPath, packagesDir, serviceName);
@@ -293,6 +365,7 @@ export const createService = async (
   addNewServiceToBedrockFile(
     path.join(rootProjectPath, "bedrock.yaml"),
     newServiceRelativeDir,
+    displayName,
     helmConfig
   );
 
