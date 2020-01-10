@@ -1,4 +1,3 @@
-import fs, { chmod } from "fs";
 import path from "path";
 import { loadConfigurationFromLocalEnv, readYaml } from "../../config";
 import {
@@ -148,7 +147,7 @@ jest
   .spyOn(generate, "writeTfvarsFile")
   .mockImplementation(
     (spkTfvars: string[], generatedPath: string, tfvarsFilename: string) => {
-      logger.info(`checkTfvars function mocked.`);
+      logger.info(`writeTfvarsFile function mocked.`);
       return new Promise(resolve => {
         resolve();
       });
