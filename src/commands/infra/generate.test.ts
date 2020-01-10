@@ -18,12 +18,10 @@ import * as generate from "./generate";
 
 beforeAll(() => {
   enableVerboseLogging();
-  jest.setTimeout(10000);
 });
 
 afterAll(() => {
   disableVerboseLogging();
-  jest.setTimeout(5000);
 });
 
 describe("Validate sources in definition.yaml files", () => {
