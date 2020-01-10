@@ -111,7 +111,7 @@ export const validateTemplateSources = async (
 ): Promise<string[]> => {
   try {
     const sourceVals = ["source", "template", "version"];
-    let sources = [configuration];
+    const sources = [configuration];
     /* Configuration A indicates that there is a parent definition.yaml
        and a leaf definition.yaml */
     if (configuration === "A") {
