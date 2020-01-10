@@ -62,7 +62,8 @@ export const generateCommandDecorator = (command: commander.Command): void => {
 /**
  * Checks if definition.yaml is present locally to provided project path
  *
- * @param projectPath Path to the definition.yaml file
+ *  @param parentPath Path to the parent definition.yaml file
+ *  @param projectPath Path to the leaf definition.yaml file
  */
 export const validateDefinition = async (
   parentPath: string,
@@ -176,7 +177,7 @@ export const validateTemplateSources = async (
 /**
  * Checks if provided source, template and version are valid. TODO/ Private Repo, PAT, ssh-key agent
  *
- * @param projectPath Path to the definition.yaml file
+ * @param definitionJSON definition object in JSON format
  */
 export const validateRemoteSource = async (
   definitionJSON: string[]
@@ -253,7 +254,9 @@ export const gitClone = async (
 /**
  * Creates "generated" directory if it does not already exists
  *
- * @param projectPath Path to the definition.yaml file
+ * @param parentPath Path to the parent definition.yaml file
+ * @param projectPath Path to the leaf definition.yaml file
+ * @param sources Array of source configuration
  */
 export const generateConfig = async (
   parentPath: string,
@@ -517,7 +520,8 @@ export const createGenerated = async (projectPath: string): Promise<string> => {
 /**
  * Checks if an spk.tfvars already exists
  *
- * @param projectPath Path to the spk.tfvars file
+ * @param generatedPath Path to the spk.tfvars file
+ * @param tfvarsFilename Name of .tfvars file
  */
 export const checkTfvars = async (
   generatedPath: string,
@@ -538,8 +542,7 @@ export const checkTfvars = async (
  * Takes in the "variables" block from definitio.yaml file and returns
  * a spk.tfvars file.
  *
- * @param projectPath Path to the definition.yaml file
- * @param generatedPath Path to the generated directory
+ * @param definition definition object to manipulate with regex
  *
  * Regex will replace ":" with "=", and remove double quotes around
  * each key to resemble:
@@ -580,6 +583,7 @@ export const generateTfvars = async (definition: any) => {
  *
  * @param spkTfVars spk tfvars object in an array
  * @param generatedPath Path to write the spk.tfvars file to
+ * @param tfvarsFileName Name of the .tfvaras file
  */
 export const writeTfvarsFile = async (
   spkTfVars: string[],
