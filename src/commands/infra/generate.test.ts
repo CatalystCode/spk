@@ -8,11 +8,9 @@ import {
 } from "../../logger";
 import { IInfraConfigYaml } from "../../types";
 import {
-  checkTfvars,
   dirIteration,
   generateTfvars,
   validateDefinition,
-  validateRemoteSource,
   validateTemplateSources
 } from "./generate";
 
