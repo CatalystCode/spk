@@ -9,6 +9,7 @@ import {
 import { IInfraConfigYaml } from "../../types";
 import {
   dirIteration,
+  generateConfig,
   generateTfvars,
   validateDefinition,
   validateRemoteSource,
@@ -28,7 +29,7 @@ afterAll(() => {
 
 describe("Validate sources in definition.yaml files", () => {
   test("Validating that a provided project folder contains definition.yaml files with valid source, version, and template", async () => {
-    const mockParentPath = "src/commands/infra/mocks/discovery-service";
+    let mockParentPath = "src/commands/infra/mocks/discovery-service";
     let mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
     const expectedArrayWest = [
       "A",
@@ -46,6 +47,8 @@ describe("Validate sources in definition.yaml files", () => {
       path.join(mockProjectPath, `definition.yaml`)
     );
     expect(returnArray).toEqual(expectedArrayWest);
+
+    await generateConfig(mockProjectPath, returnArray);
 
     mockProjectPath = "src/commands/infra/mocks/discovery-service/east";
     const expectedArrayEast = [
@@ -84,11 +87,19 @@ describe("Validate sources in definition.yaml files", () => {
     );
 
     expect(returnArray).toEqual(expectedArrayCentral);
+
+    mockParentPath = "src/commands/infra/mocks";
+    sourceConfiguration = await validateDefinition(
+      mockParentPath,
+      mockParentPath
+    );
+
+    expect(sourceConfiguration).toEqual("");
   });
 });
 
 describe("Validate remote git source", () => {
-  test("Validating that a spk.tfvars is generated and has appropriate format", async () => {
+  test("Validating that a git source is cloned to .spk/templates", async () => {
     const mockParentPath = "src/commands/infra/mocks/discovery-service";
     const mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
     const sourceConfiguration = await validateDefinition(
@@ -113,6 +124,35 @@ jest.spyOn(generate, "gitClone").mockImplementation(
     });
   }
 );
+
+jest.spyOn(generate, "createGenerated").mockImplementation(
+  (projectPath: string): Promise<string> => {
+    logger.info(`createGenerated function mocked.`);
+    return new Promise(resolve => {
+      resolve();
+    });
+  }
+);
+
+jest.spyOn(generate, "checkTfvars").mockImplementation(
+  (generatedPath: string, tfvarsFilename: string): Promise<void> => {
+    logger.info(`checkTfvars function mocked.`);
+    return new Promise(resolve => {
+      resolve();
+    });
+  }
+);
+
+jest
+  .spyOn(generate, "writeTfvarsFile")
+  .mockImplementation(
+    (spkTfvars: string[], generatedPath: string, tfvarsFilename: string) => {
+      logger.info(`checkTfvars function mocked.`);
+      return new Promise(resolve => {
+        resolve();
+      });
+    }
+  );
 
 describe("Validate replacement of variables between parent and leaf definitions", () => {
   test("Validating that leaf definitions take precedence when generating multi-cluster definitions", async () => {
