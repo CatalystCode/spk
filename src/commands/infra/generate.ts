@@ -49,7 +49,7 @@ export const generateCommandDecorator = (command: commander.Command): void => {
           path.join(opts.project, `definition.yaml`)
         );
         await validateRemoteSource(sourceConfig);
-        await generateConfig(opts.project, sourceConfig);
+        await generateConfig(process.cwd(), opts.project, sourceConfig);
       } catch (err) {
         logger.error(
           "Error occurred while generating project deployment files"
@@ -256,6 +256,7 @@ export const gitClone = async (
  * @param projectPath Path to the definition.yaml file
  */
 export const generateConfig = async (
+  parentPath: string,
   projectPath: string,
   sources: string[]
 ): Promise<void> => {
@@ -268,14 +269,14 @@ export const generateConfig = async (
       sourceFolder,
       sources[2]
     );
-    const cwdPath = process.cwd();
-    const parentDirectory = cwdPath + "-generated";
+    // const cwdPath = process.cwd();
+    const parentDirectory = parentPath + "-generated";
     const childDirectory = path.join(parentDirectory, projectPath);
     if (configuration === "A") {
       /* First, search for definition.yaml in current working directory.
          If there exists a definition.yaml, then read file. */
       const parentData = readYaml<IInfraConfigYaml>(
-        path.join(cwdPath, "definition.yaml")
+        path.join(parentPath, "definition.yaml")
       );
       const parentInfraConfig = loadConfigurationFromLocalEnv(parentData || {});
       const leafData = readYaml<IInfraConfigYaml>(
@@ -290,7 +291,7 @@ export const generateConfig = async (
 
       /* if the "--project" argument is not specified, then it is assumed
        that the current working directory is the project path. */
-      if (projectPath === cwdPath) {
+      if (projectPath === parentPath) {
         await createGenerated(parentDirectory);
         if (parentInfraConfig.variables) {
           const spkTfvarsObject = await generateTfvars(
@@ -391,10 +392,10 @@ export const generateConfig = async (
       await copyTfTemplate(templatePath, childDirectory, true);
     } else if (configuration === "B") {
       const parentData = readYaml<IInfraConfigYaml>(
-        path.join(cwdPath, "definition.yaml")
+        path.join(parentPath, "definition.yaml")
       );
       const parentInfraConfig = loadConfigurationFromLocalEnv(parentData || {});
-      if (projectPath === cwdPath) {
+      if (projectPath === parentPath) {
         await createGenerated(parentDirectory);
         if (parentInfraConfig.variables) {
           const spkTfvarsObject = await generateTfvars(

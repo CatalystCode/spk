@@ -47,8 +47,7 @@ describe("Validate sources in definition.yaml files", () => {
       path.join(mockProjectPath, `definition.yaml`)
     );
     expect(returnArray).toEqual(expectedArrayWest);
-
-    await generateConfig(mockProjectPath, returnArray);
+    await generateConfig(mockParentPath, mockProjectPath, returnArray);
 
     mockProjectPath = "src/commands/infra/mocks/discovery-service/east";
     const expectedArrayEast = [
@@ -68,6 +67,7 @@ describe("Validate sources in definition.yaml files", () => {
     );
 
     expect(returnArray).toEqual(expectedArrayEast);
+    await generateConfig(mockParentPath, mockProjectPath, returnArray);
 
     mockProjectPath = "src/commands/infra/mocks/discovery-service/central";
     const expectedArrayCentral = [
@@ -87,6 +87,7 @@ describe("Validate sources in definition.yaml files", () => {
     );
 
     expect(returnArray).toEqual(expectedArrayCentral);
+    await generateConfig(mockParentPath, mockProjectPath, returnArray);
 
     mockParentPath = "src/commands/infra/mocks";
     sourceConfiguration = await validateDefinition(
