@@ -96,7 +96,7 @@ export const validateDefinition = async (
   }
 };
 
-/*
+/**
  * Checks if working definition.yaml(s) is present
  * with validated source, template, and version
  *
@@ -221,8 +221,7 @@ export const validateRemoteSource = async (
           `${safeLoggingUrl} already cloned. Performing 'git pull'...`
         );
       } else {
-        await git.clone(source, `${sourcePath}`);
-        logger.info(`Cloning ${safeLoggingUrl} was successful.`);
+        await gitClone(source, sourcePath);
       }
       // Checkout tagged version
       logger.info(`Checking out template version: ${version}`);
@@ -235,6 +234,20 @@ export const validateRemoteSource = async (
     return false;
   }
   return true;
+};
+
+/**
+ * Performs a 'git clone...'
+ *
+ * @param source git url to clone
+ * @param sourcePath location to clone repo to
+ */
+export const gitClone = async (
+  source: string,
+  sourcePath: string
+): Promise<void> => {
+  await git.clone(source, `${sourcePath}`);
+  logger.info(`Cloning source repo to .spk/templates was successful.`);
 };
 
 /**

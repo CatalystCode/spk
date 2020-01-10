@@ -11,8 +11,10 @@ import {
   dirIteration,
   generateTfvars,
   validateDefinition,
+  validateRemoteSource,
   validateTemplateSources
 } from "./generate";
+import * as generate from "./generate";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -63,8 +65,54 @@ describe("Validate sources in definition.yaml files", () => {
     );
 
     expect(returnArray).toEqual(expectedArrayEast);
+
+    mockProjectPath = "src/commands/infra/mocks/discovery-service/central";
+    const expectedArrayCentral = [
+      "A",
+      "https://github.com/Microsoft/bedrock",
+      "cluster/environments/azure-single-keyvault",
+      "v0.12.0"
+    ];
+    sourceConfiguration = await validateDefinition(
+      mockParentPath,
+      mockProjectPath
+    );
+    returnArray = await validateTemplateSources(
+      sourceConfiguration,
+      path.join(mockParentPath, `definition.yaml`),
+      path.join(mockProjectPath, `definition.yaml`)
+    );
+
+    expect(returnArray).toEqual(expectedArrayCentral);
   });
 });
+
+describe("Validate remote git source", () => {
+  test("Validating that a spk.tfvars is generated and has appropriate format", async () => {
+    const mockParentPath = "src/commands/infra/mocks/discovery-service";
+    const mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
+    const sourceConfiguration = await validateDefinition(
+      mockParentPath,
+      mockProjectPath
+    );
+    const sourceArray = await validateTemplateSources(
+      sourceConfiguration,
+      path.join(mockParentPath, `definition.yaml`),
+      path.join(mockProjectPath, `definition.yaml`)
+    );
+    const sourceBoolean = await validateRemoteSource(sourceArray);
+    expect(sourceBoolean).toBe(true);
+  });
+});
+
+jest.spyOn(generate, "gitClone").mockImplementation(
+  (source: string, sourcePath: string): Promise<void> => {
+    logger.info(`gitClone function mocked. AY AY`);
+    return new Promise(resolve => {
+      resolve();
+    });
+  }
+);
 
 describe("Validate replacement of variables between parent and leaf definitions", () => {
   test("Validating that leaf definitions take precedence when generating multi-cluster definitions", async () => {
