@@ -146,8 +146,11 @@ stages:
 
       #failOnStderr: true
       displayName: "Run Infra Validation Tests"
+      dependsOn: "Download integration test scripts"
+      timeoutInMinutes: 10
     - task: PublishPipelineArtifact@1
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
         artifact: infra_test_logs
+      dependsOn: "Run Infra Validation Tests"
       condition: always()
