@@ -43,7 +43,6 @@ stages:
         curl $TEST_SCRIPT >| validations.sh
         chmod +x ./validations.sh
       displayName: "Download integration test scripts"
-      # failOnStderr: true
       env:
         FUNC_SCRIPT: $(FUNC_SCRIPT)
         TEST_SCRIPT: $(TEST_SCRIPT)
@@ -112,7 +111,6 @@ stages:
         curl $TEST_SCRIPT2 >| infra-validations.sh
         chmod +x ./infra-validations.sh
       displayName: "Download integration test scripts"
-      failOnStderr: true
       env:
         FUNC_SCRIPT: $(FUNC_SCRIPT)
         TEST_SCRIPT2: $(TEST_SCRIPT2)
