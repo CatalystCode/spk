@@ -34,6 +34,7 @@ stages:
         alias spk="$(pwd)/spk-linux"
         spk --version
       displayName: "Verify SPK downloaded and executable"
+      failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
         curl $FUNC_SCRIPT >| functions.sh
@@ -42,6 +43,7 @@ stages:
         curl $TEST_SCRIPT >| validations.sh
         chmod +x ./validations.sh
       displayName: "Download integration test scripts"
+      failOnStderr: true
       env:
         FUNC_SCRIPT: $(FUNC_SCRIPT)
         TEST_SCRIPT: $(TEST_SCRIPT)
@@ -73,9 +75,8 @@ stages:
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
-
-      #failOnStderr: true
       displayName: "Run Validation Tests"
+      timeoutInMinutes: 15
     - task: PublishPipelineArtifact@1
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
@@ -143,10 +144,8 @@ stages:
         # Get exit status
         status=$?
         [ $status -eq 0 ] && echo "Infra Test Done!" || (echo "Infra Test had issues" && exit 1)
-
-      #failOnStderr: true
       displayName: "Run Infra Validation Tests"
-      timeoutInMinutes: 10
+      timeoutInMinutes: 15
     - task: PublishPipelineArtifact@1
       inputs:
         path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
