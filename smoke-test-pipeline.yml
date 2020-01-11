@@ -13,7 +13,7 @@ variables:
 stages:
 - stage: integration_tests
   jobs:
-  - job: "setup_env_and_run_tests"
+  - job: rings_integration_tests
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
