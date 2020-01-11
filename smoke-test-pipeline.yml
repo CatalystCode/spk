@@ -43,7 +43,7 @@ stages:
         curl $TEST_SCRIPT >| validations.sh
         chmod +x ./validations.sh
       displayName: "Download integration test scripts"
-      failOnStderr: true
+      # failOnStderr: true
       env:
         FUNC_SCRIPT: $(FUNC_SCRIPT)
         TEST_SCRIPT: $(TEST_SCRIPT)
