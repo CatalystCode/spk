@@ -70,9 +70,9 @@ steps:
       checkCoverage: true
       coverageFailOption: build
       coverageType: branches
-      buildConfiguration: ''
-      buildPlatform: ''
-      explicitFilter: true
+      # buildConfiguration: ''
+      # buildPlatform: ''
+      # explicitFilter: true
       baseDefinitionId: $(SPK_DEFINITION_ID)
       baseBranchRef: refs/heads/master
       runTitle: 'Code Coverage Evaluation'
