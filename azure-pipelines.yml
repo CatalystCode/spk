@@ -68,7 +68,7 @@ steps:
       warningFilters: ''
       showStatistics: true
       checkCoverage: true
-      coverageFailOption: 'Previous Value'
+      coverageFailOption: build
       coverageType: branches
       buildConfiguration: ''
       buildPlatform: ''
