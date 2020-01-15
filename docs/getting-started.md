@@ -42,7 +42,7 @@ This guide assumes a few things:
 
 ### Setup spk
 
-Make sure to download the latest version of spk from the
+Make sure to download the latest version of `spk` from the
 [releases](https://github.com/catalystcode/spk/releases) page and add it to your
 PATH.
 
@@ -53,6 +53,10 @@ user would like to set some base parameters for each `spk` command run, then
 they should first run `spk init -f <spk-config.yaml>` where `spk-config.yaml`
 the path to a configuation file. A sample configuration file with definitions
 can be found [here](./../spk-config.yaml).
+
+> NOTE: When generating the Personal Access Token (needed in `spk` `config.yaml`), please grant
+> * Build (Read & execute)
+> * Variable Groups (Read, create, & manage)
 
 For managing projects, repositories, and pipelines via `spk`, only the
 `azure_devops` needs to be configured.
