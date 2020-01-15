@@ -42,7 +42,7 @@ This guide assumes a few things:
 
 ### Setup spk
 
-Make sure to download the latest version of spk from the
+Make sure to download the latest version of `spk` from the
 [releases](https://github.com/catalystcode/spk/releases) page and add it to your
 PATH.
 
@@ -53,6 +53,10 @@ user would like to set some base parameters for each `spk` command run, then
 they should first run `spk init -f <spk-config.yaml>` where `spk-config.yaml`
 the path to a configuation file. A sample configuration file with definitions
 can be found [here](./../spk-config.yaml).
+
+> NOTE: When generating the Personal Access Token (needed in `spk` `config.yaml`), please grant
+> * Build (Read & execute)
+> * Variable Groups (Read, create, & manage)
 
 For managing projects, repositories, and pipelines via `spk`, only the
 `azure_devops` needs to be configured.
@@ -138,7 +142,7 @@ application repositories
   was not intialized)
   ```
   VARIABLE_GROUP_NAME=<my-vg-name>
-  spk project create-variable-group $VARIABLE_GROUP_NAME -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
+  spk project create-variable-group $VARIABLE_GROUP_NAME -d $HLD_REPO_URL -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
   git add -A
   git commit -m "Adding Project Variable Group."
   git push -u origin --all
