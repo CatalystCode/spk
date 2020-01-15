@@ -64,6 +64,8 @@ export const scaffoldCommandDecorator = (command: commander.Command): void => {
             );
           }
         }
+        /* scaffoldDefinition will take in a definition object with a
+           null configuration. Hence, the first index is "" */
         const scaffoldDefinition = [
           "",
           opts.source,
