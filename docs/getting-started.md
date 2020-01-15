@@ -142,7 +142,7 @@ application repositories
   was not intialized)
   ```
   VARIABLE_GROUP_NAME=<my-vg-name>
-  spk project create-variable-group $VARIABLE_GROUP_NAME -d $HLD_REPO_URL -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
+  spk project create-variable-group $VARIABLE_GROUP_NAME -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
   git add -A
   git commit -m "Adding Project Variable Group."
   git push -u origin --all
