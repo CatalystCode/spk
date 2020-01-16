@@ -108,6 +108,7 @@ Generate a new Personal Access Token (PAT) to grant `spk` permissions in the
 Azure Devops Project. Please grant PAT the following permissions:
 
 - Build (Read & execute)
+- Code (Read, write, & manage)
 - Variable Groups (Read, create, & manage) For help, follow the
   [guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page).
 
