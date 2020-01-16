@@ -37,10 +37,10 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl --fail $FUNC_SCRIPT >| functions.sh 2>/dev/null || {echo "Download Failed"; exit 1}
+        curl --fail $FUNC_SCRIPT > functions.sh 2>/dev/null || { echo "Download Failed"; exit 1 }
         chmod +x ./functions.sh
         echo "TEST_SCRIPT: $TEST_SCRIPT"
-        curl --fail $TEST_SCRIPT >| validations.sh 2>/dev/null || {echo "Download Failed"; exit 1}
+        curl --fail $TEST_SCRIPT > validations.sh 2>/dev/null || { echo "Download Failed"; exit 1 }
         chmod +x ./validations.sh
       displayName: "Download integration test scripts"
       env:
