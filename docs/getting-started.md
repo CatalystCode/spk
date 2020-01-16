@@ -8,9 +8,14 @@ This is a work in progress guide on managing a project with
 
 - [Managing a bedrock project with spk](#managing-a-bedrock-project-with-spk)
   - [Table of Contents](#table-of-contents)
+  - [Using SPK with Bedrock](#using-spk-with-bedrock)
   - [Requirements](#requirements)
   - [Components](#components)
-    - [Setup spk](#setup-spk)
+      - [Cloud Resource Diagram](#cloud-resource-diagram)
+    - [SPK](#spk)
+      - [Setup SPK](#setup-spk)
+      - [Generating Personal Access Token](#generating-personal-access-token)
+      - [Create spk config file](#create-spk-config-file)
       - [Initializing spk](#initializing-spk)
     - [Repositories](#repositories)
       - [Materialized Manifests Repository](#materialized-manifests-repository)
@@ -24,42 +29,107 @@ This is a work in progress guide on managing a project with
     - [Varible Groups](#varible-groups)
     - [Pipelines](#pipelines)
 
+## Using SPK with Bedrock
+
+1. First, make sure [Requirements](#requirements) are met
+2. Create the required repositories (High Level Definition Repository,
+   Materialized Manifests Repository) if they do not exist in the Azure Devops
+   Project. Follow the guide
+   [here](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
+3. [Setup spk](#setup-spk)
+4. Optional:
+   [Initialize the Materialized Manifest Repository](#initializing-the-materialized-manifests-repository)
+5. [Initialize the High Level Definition Repository](#initializing-the-high-level-definition-repository)
+6. [Initialize the Bedrock Application Repository](#initializing-an-application-repository)
+7. [Add a service to the Bedrock Application Repository](#adding-a-service-to-a-application-repository)
+8. Optional: [Create a Service Revision](#creating-a-service-revision)
+
+**Notes:**
+
+> - Steps 2-5 typically only need to be done once. Multiple clusters may be
+>   configured to sync from the single Materialized Manifest Repositories, and
+>   multiple Project repositories can be pointed to the single High Level
+>   Definition Repository.
+> - Step 6 can be repeated anytime you may need to create another Bedrock
+>   project.
+> - Step 7 can be run as many times as required to add a service to a Bedrock
+>   project.
+
 ## Requirements
 
 This guide assumes a few things:
 
 1. The application code and supporting repositories are hosted on
    [Azure Devops](https://azure.microsoft.com/en-us/services/devops/).
-2. The application is packaged and run through a Docker image hosted on
+   - If starting from scratch, then first create a new Azure Devops Organization
+     following the guide
+     [here](https://docs.microsoft.com/en-us/azure/devops/user-guide/sign-up-invite-teammates?view=azure-devops),
+     then create a project following the guide
+     [here](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page).
+2. Inside the Azure Devops project, there exists repositories for:
+   1. Materialized Manifests
+   2. High Level Definitions Create the required repositories if they do not
+      exist in the Azure Devops Project. Follow the guide
+      [here](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
+3. The application is packaged and run through a Docker image hosted on
    [Azure Container Registry](https://azure.microsoft.com/en-us/services/container-registry/)
-3. The user running `spk` has full access to the above resources.
-4. The user is running the latest `spk`
+4. The user running `spk` has full access to the above resources.
+5. The user is running the latest `spk`
    [release](https://github.com/catalystcode/spk/releases).
-5. The user has
+6. The user has
    [Azure CLI installed](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest).
 
 ## Components
 
-### Setup spk
+#### Cloud Resource Diagram
+
+![spk resources](/docs/images/spk-resource-diagram.png "Bedrock SPK Resources")
+
+### SPK
+
+`spk` is the Command Line Interface that provides automation around defining and
+operating Kubernetes clusters with Bedrock principles.
+
+#### Setup SPK
 
 Make sure to download the latest version of `spk` from the
 [releases](https://github.com/catalystcode/spk/releases) page and add it to your
 PATH.
 
+To setup a local configuration:
+
+1. [Generate a Personal Access Token](#generating-personal-access-token)
+2. [Create a spk config file](#create-spk-config-file)
+3. [Initialize spk](#initializing-spk)
+
+#### Generating Personal Access Token
+
+Generate a new Personal Access Token (PAT) to grant `spk` permissions in the
+Azure Devops Project. Please grant PAT the following permissions:
+
+- Build (Read & execute)
+- Variable Groups (Read, create, & manage) For help, follow the
+  [guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page).
+
+#### Create spk config file
+
+Create a copy of `spk-config.yaml` from the starter
+[template](./../spk-config.yaml) with the appropriate values for the
+`azure_devops` section.
+
+**Note:** This `spk-config.yaml` should not be commited anywhere, as it contains
+sensitive credentials.
+
 #### Initializing spk
 
-`spk` commands can usually accept parameters via option flags; however, if a
-user would like to set some base parameters for each `spk` command run, then
-they should first run `spk init -f <spk-config.yaml>` where `spk-config.yaml`
-the path to a configuation file. A sample configuration file with definitions
-can be found [here](./../spk-config.yaml).
+Run `spk init -f <spk-config.yaml>` where `<spk-config.yaml>` the path to the
+configuation file.
 
-> NOTE: When generating the Personal Access Token (needed in `spk` `config.yaml`), please grant
-> * Build (Read & execute)
-> * Variable Groups (Read, create, & manage)
-
-For managing projects, repositories, and pipelines via `spk`, only the
-`azure_devops` needs to be configured.
+**Note:** When running `spk init -f <spk-config.yaml>`, `spk` will copy the
+values from the config file and store it into local memory elsewhere. If you
+wish to utilize `spk` with another project or target, then you must rerun
+`spk init` with another configuration first OR, you may overwrite each commands
+via flags.
 
 ### Repositories
 
