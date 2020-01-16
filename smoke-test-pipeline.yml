@@ -37,7 +37,7 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl --fail $FUNC_SCRIPT> function.sh 2>/dev/null
+        curl --fail $FUNC_SCRIPT > function.sh 2>/dev/null
         if [ $? -ne 0 ]; then
             echo "Error finding FUNC_SCRIPT: $FUNC_SCRIPT"
             exit 1
@@ -113,14 +113,14 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl $FUNC_SCRIPT >| functions.sh 2>/dev/null || { echo "Download Failed"; exit 1 }
+        curl $FUNC_SCRIPT > functions.sh 2>/dev/null 
         if [ $? -ne 0 ]; then
             echo "Error finding FUNC_SCRIPT: $FUNC_SCRIPT"
             exit 1
         fi
         chmod +x ./functions.sh
         echo "TEST_SCRIPT2: $TEST_SCRIPT2"
-        curl $TEST_SCRIPT2 >| infra-validations.sh 2>/dev/null || { echo "Download Failed"; exit 1 }
+        curl $TEST_SCRIPT2 > infra-validations.sh 2>/dev/null
         if [ $? -ne 0 ]; then
             echo "Error finding TEST_SCRIPT2: $TEST_SCRIPT2"
             exit 1
