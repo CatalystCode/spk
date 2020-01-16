@@ -105,10 +105,10 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl $FUNC_SCRIPT >| functions.sh 2>/dev/null || {echo "Download Failed"; exit 1}
+        curl $FUNC_SCRIPT >| functions.sh 2>/dev/null || { echo "Download Failed"; exit 1 }
         chmod +x ./functions.sh
         echo "TEST_SCRIPT2: $TEST_SCRIPT2"
-        curl $TEST_SCRIPT2 >| infra-validations.sh 2>/dev/null || {echo "Download Failed"; exit 1}
+        curl $TEST_SCRIPT2 >| infra-validations.sh 2>/dev/null || { echo "Download Failed"; exit 1 }
         chmod +x ./infra-validations.sh
       displayName: "Download integration test scripts"
       env:
