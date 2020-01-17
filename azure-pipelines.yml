@@ -62,9 +62,11 @@ steps:
 
   - bash: |
       [ -z "$COVERAGE_VARIANCE" ] && { echo "Missing COVERAGE_VARIANCE variable"; exit 1; }
-      echo "Code coverage variance value is: $(COVERAGE_VARIANCE)"
+      echo "Code coverage variance value is: $COVERAGE_VARIANCE"
     displayName: 'Build quality pre-validation'  
     failOnStderr: true
+    env:
+        COVERAGE_VARIANCE: $(COVERAGE_VARIANCE)
     condition: and(eq(variables['Agent.JobStatus'], 'Succeeded'), endsWith(variables['Agent.JobName'], 'node_12_x'))
 
   - task: mspremier.BuildQualityChecks.QualityChecks-task.BuildQualityChecks@6
