@@ -14,7 +14,6 @@ import {
 import { IBedrockFile } from "../../types";
 import {
   create,
-  isBedrockFileExists,
   setVariableGroupInBedrockFile,
   validateRequiredArguments
 } from "./create-variable-group";
@@ -306,56 +305,5 @@ describe("setVariableGroupInBedrockFile", () => {
     logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
     expect(bedrockFile.variableGroups![0]).toBe(prevariableGroupName);
     expect(bedrockFile.variableGroups![1]).toBe(variableGroupName);
-  });
-});
-
-describe("isBedrockFileExists", () => {
-  test("Should fail when empty file directory is passed", async () => {
-    let invalidDirError: Error | undefined;
-
-    try {
-      logger.info("calling create");
-      await isBedrockFileExists("");
-    } catch (err) {
-      invalidDirError = err;
-    }
-    expect(invalidDirError).toBeDefined();
-  });
-
-  test("Should return false when bedrock file does not exist", async () => {
-    // Create random directory to initialize
-    const randomTmpDir = path.join(os.tmpdir(), uuid());
-    fs.mkdirSync(randomTmpDir);
-
-    const exists = await isBedrockFileExists(randomTmpDir);
-
-    logger.info(`bedrock.yaml file exists: ${exists}`);
-
-    expect(exists).toBe(false);
-  });
-
-  test("Should return true when bedrock file exists", async () => {
-    // Create random directory to initialize
-    const randomTmpDir = path.join(os.tmpdir(), uuid());
-    fs.mkdirSync(randomTmpDir);
-
-    logger.info(`random temp dir: ${randomTmpDir}`);
-
-    // create bedrock file to simulate the the use case that `spk project init` ran before
-    const bedrockFileData: IBedrockFile = {
-      rings: {},
-      services: {},
-      variableGroups: []
-    };
-
-    const asYaml = yaml.safeDump(bedrockFileData, {
-      lineWidth: Number.MAX_SAFE_INTEGER
-    });
-    fs.writeFileSync(path.join(randomTmpDir, "bedrock.yaml"), asYaml);
-
-    const exists = await isBedrockFileExists(randomTmpDir);
-    logger.info(`bedrock.yaml file exists: ${exists} in ${randomTmpDir}`);
-
-    expect(exists).toBe(true);
   });
 });

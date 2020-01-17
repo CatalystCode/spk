@@ -18,6 +18,7 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
+import { isBedrockFileExists } from "./index";
 
 export const deployLifecyclePipelineCommandDecorator = (
   command: commander.Command
@@ -46,6 +47,16 @@ export const deployLifecyclePipelineCommandDecorator = (
       `Build Script URL. By default it is '${BUILD_SCRIPT_URL}'.`
     )
     .action(async opts => {
+      const projectPath = process.cwd();
+      logger.verbose(`project path: ${projectPath}`);
+
+      if ((await isBedrockFileExists(projectPath)) === false) {
+        logger.error(
+          "Please run `spk project init` command before running this command to initialize the project."
+        );
+        return;
+      }
+
       const gitOriginUrl = await getOriginUrl();
       const { azure_devops } = Config();
 

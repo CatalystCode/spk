@@ -12,6 +12,7 @@ import {
   IVariableGroupData,
   IVariableGroupDataVariable
 } from "../../types";
+import { isBedrockFileExists } from "./index";
 
 /**
  * Adds the create command to the variable-group command object
@@ -326,23 +327,4 @@ export const setVariableGroupInBedrockFile = async (
 
   // Write out
   write(bedrockFile, absProjectRoot);
-};
-
-/**
- * Checks if the default bedrock.yaml exists
- *
- * @param rootProjectPath Path to generate/update the the bedrock.yaml file in
- */
-export const isBedrockFileExists = async (rootProjectPath: string) => {
-  if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
-    throw new Error("Project root path is not valid");
-  }
-
-  const absProjectPath = path.resolve(rootProjectPath);
-
-  // Check if a bedrock.yaml already exists
-  const bedrockFilePath = path.join(absProjectPath, "bedrock.yaml");
-  const exists = fs.existsSync(bedrockFilePath);
-  logger.verbose(`bedrockFilePath path: ${bedrockFilePath}, exists: ${exists}`);
-  return exists;
 };
