@@ -15,6 +15,9 @@ strategy:
 pool:
   vmImage: "ubuntu-latest"
 
+variables:
+- group: 'spk-vg'
+
 steps:
   - task: NodeTool@0
     inputs:
