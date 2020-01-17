@@ -1,5 +1,6 @@
 import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import commander from "commander";
+import fs from "fs";
 import path from "path";
 import { echo } from "shelljs";
 import { Bedrock, Config, write } from "../../config";
@@ -56,6 +57,16 @@ export const createVariablegroupCommandDecorator = (
     )
     .action(async (variableGroupName, opts) => {
       try {
+        const projectPath = process.cwd();
+        logger.verbose(`project path: ${projectPath}`);
+
+        if ((await isBedrockFileExists(projectPath)) === false) {
+          logger.error(
+            "Please run `spk project init` command before running this command to initialize the project."
+          );
+          return;
+        }
+
         const {
           registryName,
           servicePrincipalId,
@@ -109,7 +120,6 @@ export const createVariablegroupCommandDecorator = (
         );
 
         // set the variable group name
-        const projectPath = process.cwd();
         await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
 
         // print newly created variable group
@@ -296,25 +306,14 @@ export const setVariableGroupInBedrockFile = async (
 
   let bedrockFile: IBedrockFile | undefined;
 
-  // Get bedrock.yaml if it already exists
-  try {
-    bedrockFile = Bedrock(rootProjectPath);
-    bedrockFile.variableGroups = bedrockFile.variableGroups
-      ? bedrockFile.variableGroups
-      : [];
-  } catch (err) {
-    logger.info(
-      `No bedrock.yaml found at ${absProjectRoot}, creating a new file to add variable group`
-    );
-  }
+  // Get bedrock.yaml
+  bedrockFile = Bedrock(rootProjectPath);
+  bedrockFile.variableGroups = bedrockFile.variableGroups
+    ? bedrockFile.variableGroups
+    : [];
 
-  // if fies does not exist, create it
-  if (bedrockFile === undefined) {
-    bedrockFile = {
-      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
-      services: {}, // service property is not optional so set it to null
-      variableGroups: []
-    };
+  if (typeof bedrockFile === "undefined") {
+    throw new Error(`bedrock.yaml file does not exist`);
   }
 
   // add new variabe group
@@ -322,4 +321,23 @@ export const setVariableGroupInBedrockFile = async (
 
   // Write out
   write(bedrockFile, absProjectRoot);
+};
+
+/**
+ * Checks if the default bedrock.yaml exists
+ *
+ * @param rootProjectPath Path to generate/update the the bedrock.yaml file in
+ */
+export const isBedrockFileExists = async (rootProjectPath: string) => {
+  if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
+    throw new Error("Project root path is not valid");
+  }
+
+  const absProjectPath = path.resolve(rootProjectPath);
+
+  // Check if a bedrock.yaml already exists
+  const bedrockFilePath = path.join(absProjectPath, "bedrock.yaml");
+  const exists = fs.existsSync(bedrockFilePath);
+  logger.verbose(`bedrockFilePath path: ${bedrockFilePath}, exists: ${exists}`);
+  return exists;
 };

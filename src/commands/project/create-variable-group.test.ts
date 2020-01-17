@@ -1,5 +1,6 @@
 // imports
 import fs from "fs";
+import yaml from "js-yaml";
 import os from "os";
 import path from "path";
 import uuid from "uuid/v4";
@@ -13,6 +14,7 @@ import {
 import { IBedrockFile } from "../../types";
 import {
   create,
+  isBedrockFileExists,
   setVariableGroupInBedrockFile,
   validateRequiredArguments
 } from "./create-variable-group";
@@ -205,7 +207,6 @@ describe("create", () => {
 
 describe("setVariableGroupInBedrockFile", () => {
   test("Should fail with empty arguments", async () => {
-    const projectPath = process.cwd();
     let invalidGroupNameError: Error | undefined;
     try {
       logger.info("calling create");
@@ -217,7 +218,6 @@ describe("setVariableGroupInBedrockFile", () => {
   });
 
   test("Should fail with empty variable group name", async () => {
-    const projectPath = process.cwd();
     let invalidGroupNameError: Error | undefined;
     try {
       logger.info("calling create");
@@ -229,7 +229,6 @@ describe("setVariableGroupInBedrockFile", () => {
   });
 
   test("Should fail with empty directory", async () => {
-    const projectPath = process.cwd();
     let invalidGroupNameError: Error | undefined;
     try {
       logger.info("calling create");
@@ -240,40 +239,19 @@ describe("setVariableGroupInBedrockFile", () => {
     expect(invalidGroupNameError).toBeDefined();
   });
 
-  test("Should pass adding a variable group name when no bedrock file exists", async () => {
+  test("Should fail adding a variable group name when no bedrock file exists", async () => {
     // Create random directory to initialize
     const randomTmpDir = path.join(os.tmpdir(), uuid());
     fs.mkdirSync(randomTmpDir);
 
-    await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
+    let noFileError: Error | undefined;
 
-    const filePath = path.join(randomTmpDir, "bedrock.yaml");
-    expect(fs.existsSync(filePath)).toBe(true);
-
-    const bedrockFileData = readYaml<IBedrockFile>(filePath);
-    logger.info(`filejson: ${JSON.stringify(bedrockFileData)}`);
-    expect(bedrockFileData.variableGroups![0]).toBe(variableGroupName);
-  });
-
-  test("Should pass adding a valid variable group name when bedrock file exists with undefined variableGroups", async () => {
-    // Create random directory to initialize
-    const randomTmpDir = path.join(os.tmpdir(), uuid());
-    fs.mkdirSync(randomTmpDir);
-
-    const bedrockFileData: IBedrockFile = {
-      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
-      services: {}, // service property is not optional so set it to null
-      variableGroups: undefined
-    };
-
-    await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
-
-    const bedrockFilePath = path.join(randomTmpDir, "bedrock.yaml");
-    expect(fs.existsSync(bedrockFilePath)).toBe(true);
-
-    const bedrockFile = readYaml<IBedrockFile>(bedrockFilePath);
-    logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
-    expect(bedrockFile.variableGroups![0]).toBe(variableGroupName);
+    try {
+      await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
+    } catch (err) {
+      noFileError = err;
+    }
+    expect(noFileError).toBeDefined();
   });
 
   test("Should pass adding a valid variable group name when bedrock file exists with empty variableGroups", async () => {
@@ -281,11 +259,18 @@ describe("setVariableGroupInBedrockFile", () => {
     const randomTmpDir = path.join(os.tmpdir(), uuid());
     fs.mkdirSync(randomTmpDir);
 
+    // create bedrock file to simulate the the use case that `spk project init` ran before
     const bedrockFileData: IBedrockFile = {
-      rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
-      services: {}, // service property is not optional so set it to null
+      rings: {},
+      services: {},
       variableGroups: []
     };
+
+    const asYaml = yaml.safeDump(bedrockFileData, {
+      lineWidth: Number.MAX_SAFE_INTEGER
+    });
+
+    fs.writeFileSync(path.join(randomTmpDir, "bedrock.yaml"), asYaml);
 
     await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
 
@@ -297,7 +282,7 @@ describe("setVariableGroupInBedrockFile", () => {
     expect(bedrockFile.variableGroups![0]).toBe(variableGroupName);
   });
 
-  test("Should pass adding a valid variable group name when bedrock file exists when variableGroups length is already 1", async () => {
+  test("Should pass adding a valid variable group name when bedrock file exists when variableGroups length is > 0", async () => {
     // Create random directory to initialize
     const randomTmpDir = path.join(os.tmpdir(), uuid());
     fs.mkdirSync(randomTmpDir);
@@ -321,5 +306,56 @@ describe("setVariableGroupInBedrockFile", () => {
     logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
     expect(bedrockFile.variableGroups![0]).toBe(prevariableGroupName);
     expect(bedrockFile.variableGroups![1]).toBe(variableGroupName);
+  });
+});
+
+describe("isBedrockFileExists", () => {
+  test("Should fail when empty file directory is passed", async () => {
+    let invalidDirError: Error | undefined;
+
+    try {
+      logger.info("calling create");
+      await isBedrockFileExists("");
+    } catch (err) {
+      invalidDirError = err;
+    }
+    expect(invalidDirError).toBeDefined();
+  });
+
+  test("Should return false when bedrock file does not exist", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+
+    const exists = await isBedrockFileExists(randomTmpDir);
+
+    logger.info(`bedrock.yaml file exists: ${exists}`);
+
+    expect(exists).toBe(false);
+  });
+
+  test("Should return true when bedrock file exists", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+
+    logger.info(`random temp dir: ${randomTmpDir}`);
+
+    // create bedrock file to simulate the the use case that `spk project init` ran before
+    const bedrockFileData: IBedrockFile = {
+      rings: {},
+      services: {},
+      variableGroups: []
+    };
+
+    const asYaml = yaml.safeDump(bedrockFileData, {
+      lineWidth: Number.MAX_SAFE_INTEGER
+    });
+    fs.writeFileSync(path.join(randomTmpDir, "bedrock.yaml"), asYaml);
+
+    const exists = await isBedrockFileExists(randomTmpDir);
+    logger.info(`bedrock.yaml file exists: ${exists} in ${randomTmpDir}`);
+
+    expect(exists).toBe(true);
   });
 });
