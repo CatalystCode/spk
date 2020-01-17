@@ -7,7 +7,11 @@ import { Bedrock, Config, write } from "../../config";
 import { IAzureDevOpsOpts } from "../../lib/git";
 import { addVariableGroup } from "../../lib/pipelines/variableGroup";
 import { logger } from "../../logger";
-import { IBedrockFile, IHelmConfig, IVariableGroupData } from "../../types";
+import {
+  IBedrockFile,
+  IVariableGroupData,
+  IVariableGroupDataVariable
+} from "../../types";
 
 /**
  * Adds the create command to the variable-group command object
@@ -171,7 +175,7 @@ export const create = async (
     );
 
     // validate variable group type"
-    const vars: any = {
+    const vars: IVariableGroupDataVariable = {
       ACR_NAME: {
         value: registryName
       },
@@ -195,11 +199,12 @@ export const create = async (
         value: tenantId
       }
     };
+
     const variableGroupData: IVariableGroupData = {
       description: "Created from spk CLI",
       name: variableGroupName,
       type: "Vsts",
-      variables: vars
+      variables: [vars]
     };
 
     return await addVariableGroup(variableGroupData, accessOpts);
