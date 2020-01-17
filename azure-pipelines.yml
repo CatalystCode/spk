@@ -68,9 +68,11 @@ steps:
       warningFilters: ''
       showStatistics: true
       checkCoverage: true
-      coverageFailOption: build
-      coverageType: branches
+      coverageFailOption: build # We are comparing against the previous build in baseBranchRef
+      coverageType: branches # We are looking at code branch coverage, not line coverage
       coverageDeltaType: percentage
+      allowCoverageVariance: true
+      coverageVariance: .75 # We will tolerate a 0.75% reduction in code coverage when comparing
       baseDefinitionId: $(SPK_DEFINITION_ID)
       baseBranchRef: refs/heads/master
       runTitle: 'Code Coverage Evaluation'
