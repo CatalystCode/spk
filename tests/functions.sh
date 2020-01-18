@@ -1,6 +1,6 @@
 print_array () {
     #usage: print_array "${my_array[@]}"
-    arr=("$@")
+    arr=( "$@" )
     for i in "${arr[@]}";
     do
         :
@@ -144,6 +144,46 @@ function variable_group_exists () {
         fi
     else
         echo "The variable group $vg_name does not exist"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
+    fi
+}
+
+function storage_account_exists () {
+    sa_name=$1
+    rg=$2
+    s=$3
+    sa_result=$(az storage account list --resource-group $rg --subscription $s)
+    sa_exists=$(echo $sa_result | jq -r --arg sa_name "$sa_name" '.[].name | select(. == $sa_name ) != null')
+    action=$4
+    
+    if [ "$sa_exists" = "true" ]; then
+        echo "The storage account '$sa_name' exists "
+        if [ "$action" == "delete" ]; then
+            echo "Delete storage account '$sa_name'"
+            az storage account delete -n $sa_name -g $rg --subscription $s --yes
+        fi
+     else
+        echo "The storage account $sa_name does not exist"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
+    fi
+}
+
+function storage_account_table_exists () {
+    t=$1
+    sa_name=$2
+    s=$3
+    action=$4
+    sat_result=$(az storage table exists -n $t --account-name $sa_name --subscription $s)
+    sat_exists=$(echo $sat_result | jq '.exists | . == true')
+
+    if [ "$sat_exists" = "true" ]; then
+        echo "The table '$t' exists "
+     else
+        echo "The table $sa_name does not exist"
         if [ "$action" == "fail" ]; then
             exit 1
         fi
