@@ -11,7 +11,7 @@ This is a work in progress guide on managing a project with
   - [Using SPK with Bedrock](#using-spk-with-bedrock)
   - [Requirements](#requirements)
   - [Components](#components)
-      - [Cloud Resource Diagram](#cloud-resource-diagram)
+    - [Cloud Resource Diagram](#cloud-resource-diagram)
     - [SPK](#spk)
       - [Setup SPK](#setup-spk)
       - [Generating Personal Access Token](#generating-personal-access-token)
@@ -46,14 +46,13 @@ This is a work in progress guide on managing a project with
 
 **Notes:**
 
-> - Steps 2-5 typically only need to be done once. Multiple clusters may be
->   configured to sync from the single Materialized Manifest Repositories, and
->   multiple Project repositories can be pointed to the single High Level
->   Definition Repository.
-> - Step 6 can be repeated anytime you may need to create another Bedrock
->   project.
-> - Step 7 can be run as many times as required to add a service to a Bedrock
->   project.
+- Steps 2-5 typically only need to be done once. Multiple clusters may be
+  configured to sync from the single Materialized Manifest Repositories, and
+  multiple Project repositories can be pointed to the single High Level
+  Definition Repository.
+- Step 6 can be repeated anytime you may need to create another Bedrock project.
+- Step 7 can be run as many times as required to add a service to a Bedrock
+  project.
 
 ## Requirements
 
@@ -109,8 +108,10 @@ Azure Devops Project. Please grant PAT the following permissions:
 
 - Build (Read & execute)
 - Code (Read, write, & manage)
-- Variable Groups (Read, create, & manage) For help, follow the
-  [guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page).
+- Variable Groups (Read, create, & manage)
+
+For help, follow the
+[guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page).
 
 #### Create spk config file
 
