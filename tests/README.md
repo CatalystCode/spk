@@ -19,6 +19,11 @@ tests.
 - This file orchestrates infrastructure scenarios and is designed to fail on
   first error.
 
+`introspection-validations.sh`
+
+- This file orchestrates the service introspection scenarios and is designed to
+  fail on first error.
+
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
@@ -75,7 +80,7 @@ tests.
 | Command                  | Coverage |
 | ------------------------ | -------- |
 | spk deployment get       | 🚫       |
-| spk deployment onboard   | 🚫       |
+| spk deployment onboard   | ✅       |
 | spk deployment validate  | 🚫       |
 | spk deployment dashboard | 🚫       |
 | spk deployment create    | 🚫       |
@@ -102,6 +107,8 @@ If you wish to run these tests locally, skip ahead to
    - AZDO_ORG (e.g. `epicstuff`)
    - AZDO_PAT (e.g. Personal Access Token with **read/write/manage** access to
      AZDO_PROJECT) <-- 🔒
+   - AZ_SUBSCRIPTION_ID - The ID for the Azure Subscription
+   - AZ_RESOURCE_GROUP - The name of an Azure resource group
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
    - SP_TENANT (e.g Service Principal Tenant Id)
