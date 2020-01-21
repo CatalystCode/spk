@@ -6,9 +6,6 @@ set -e
 . ./functions.sh
 
 # To-do: DOCUMENTATION
-# AZ_SUBSCRIPTION_ID, AZ_RESOURCE_GROUP
-# service principal with get and list access
-
 
 TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$SPK_LOCATION" ] || { echo "Provide SPK_LOCATION"; exit 1;}
@@ -44,11 +41,10 @@ alias spk=$SPK_LOCATION
 echo "SPK Version: $(spk --version)"
 echo "Running from $(pwd)"
 
-# spk deployment onboard validation
+# spk deployment onboard validation test
 storage_account_exists $sa_name $AZ_RESOURCE_GROUP $AZ_SUBSCRIPTION_ID "delete"
 spk deployment onboard -s $sa_name -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $AZ_SUBSCRIPTION_ID --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
 storage_account_exists $sa_name $AZ_RESOURCE_GROUP $AZ_SUBSCRIPTION_ID "fail"
 storage_account_table_exists $sat_name $sa_name $AZ_SUBSCRIPTION_ID "fail"
 
-# create storage account for spk deployment get etc.
-
+echo "Successfully reached the end of the introspection validations script."

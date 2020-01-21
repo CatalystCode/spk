@@ -162,7 +162,10 @@ pipeline. Instead run these steps:
    export SP_PASS=<b>REPLACE_ME</b>
    export SP_APP_ID=<b>REPLACE_ME</b>
    export SP_TENANT=<b>REPLACE_ME</b>
+   export AZ_SUBSCRIPTION_ID=<b>REPLACE_ME</b>
+   export AZ_RESOURCE_GROUP=<b>REPLACE_ME</b>
    </pre>
 4. Navigate to this directory in shell
 5. RUN --> `$ sh validations.sh`
 6. RUN --> `$ sh infra-validations.sh`
+7. RUN --> `$ sh introspection-validations.sh`
