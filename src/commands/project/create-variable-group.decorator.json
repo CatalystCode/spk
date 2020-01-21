@@ -28,7 +28,7 @@
       "description": "The Azure AD tenant id of service principal.",
       "required": true
     },
-    "organization-name": {
+    "org-name": {
       "arg": "--org-name <organization-name>",
       "description": "Azure DevOps organization name; falls back to azure_devops.org in spk config.",
       "required": true

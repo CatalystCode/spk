@@ -1,4 +1,3 @@
-// imports
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -13,6 +12,7 @@ import {
 import { IBedrockFile } from "../../types";
 import {
   create,
+  execute,
   setVariableGroupInBedrockFile,
   validateRequiredArguments
 } from "./create-variable-group";
@@ -29,7 +29,7 @@ const registryName = uuid();
 const variableGroupName = uuid();
 const hldRepoUrl = uuid();
 const servicePrincipalId = uuid();
-const servicePrincipalPassword = uuid();
+const servicePrincipalPassword: string = uuid();
 const tenant = uuid();
 
 const orgName = uuid();
@@ -135,6 +135,45 @@ describe("validateRequiredArguments", () => {
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
+  });
+});
+
+describe("test execute function", () => {
+  it("missing variable name", async () => {
+    const exitFn = jest.fn();
+    await execute(
+      "",
+      {
+        hldRepoUrl,
+        orgName,
+        personalAccessToken,
+        project,
+        registryName,
+        servicePrincipalId,
+        servicePrincipalPassword,
+        tenant
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
+  });
+  it("missing registry name", async () => {
+    const exitFn = jest.fn();
+    await execute(
+      variableGroupName,
+      {
+        hldRepoUrl,
+        orgName,
+        personalAccessToken,
+        project,
+        registryName: undefined,
+        servicePrincipalId,
+        servicePrincipalPassword,
+        tenant
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
   });
 });
 

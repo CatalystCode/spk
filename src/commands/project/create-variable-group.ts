@@ -51,7 +51,7 @@ export const validateRequiredArguments = (
 ): string[] => {
   return validateForRequiredValues(decorator, {
     "hld-repo-url": hldRepoUrl,
-    "organization-name": accessOpts.orgName,
+    "org-name": accessOpts.orgName,
     "personal-access-token": accessOpts.personalAccessToken,
     project: accessOpts.project,
     "registry-name": registryName,
@@ -67,66 +67,75 @@ export const validateRequiredArguments = (
  * @param variableGroupName Variable Group Name
  * @param opts Option object from command
  */
-const execute = async (variableGroupName: string, opts: ICommandOptions) => {
-  try {
-    const { azure_devops } = Config();
+export const execute = async (
+  variableGroupName: string,
+  opts: ICommandOptions,
+  exitFn: (status: number) => void
+) => {
+  if (!hasValue(variableGroupName)) {
+    exitFn(1);
+  } else {
+    try {
+      const { azure_devops } = Config();
 
-    const {
-      registryName,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-      hldRepoUrl = azure_devops && azure_devops.hld_repository,
-      orgName = azure_devops && azure_devops.org,
-      personalAccessToken = azure_devops && azure_devops.access_token,
-      project = azure_devops && azure_devops.project
-    } = opts;
+      const {
+        registryName,
+        servicePrincipalId,
+        servicePrincipalPassword,
+        tenant,
+        hldRepoUrl = azure_devops && azure_devops.hld_repository,
+        orgName = azure_devops && azure_devops.org,
+        personalAccessToken = azure_devops && azure_devops.access_token,
+        project = azure_devops && azure_devops.project
+      } = opts;
 
-    const accessOpts: IAzureDevOpsOpts = {
-      orgName,
-      personalAccessToken,
-      project
-    };
+      const accessOpts: IAzureDevOpsOpts = {
+        orgName,
+        personalAccessToken,
+        project
+      };
 
-    logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
+      logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
 
-    const errors = validateRequiredArguments(
-      registryName,
-      hldRepoUrl,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-      accessOpts
-    );
+      const errors = validateRequiredArguments(
+        registryName,
+        hldRepoUrl,
+        servicePrincipalId,
+        servicePrincipalPassword,
+        tenant,
+        accessOpts
+      );
 
-    if (errors.length !== 0) {
-      process.exit(1);
+      if (errors.length !== 0) {
+        exitFn(1);
+      } else {
+        const variableGroup = await create(
+          variableGroupName,
+          registryName,
+          hldRepoUrl,
+          servicePrincipalId,
+          servicePrincipalPassword,
+          tenant,
+          accessOpts
+        );
+
+        // set the variable group name
+        const projectPath = process.cwd();
+        await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
+
+        // print newly created variable group
+        echo(JSON.stringify(variableGroup, null, 2));
+
+        logger.info(
+          "Successfully created a variable group in Azure DevOps project!"
+        );
+        exitFn(0);
+      }
+    } catch (err) {
+      logger.error(`Error occurred while creating variable group`);
+      logger.error(err);
+      exitFn(1);
     }
-    const variableGroup = await create(
-      variableGroupName,
-      registryName,
-      hldRepoUrl,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-      accessOpts
-    );
-
-    // set the variable group name
-    const projectPath = process.cwd();
-    await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
-
-    // print newly created variable group
-    echo(JSON.stringify(variableGroup, null, 2));
-
-    logger.info(
-      "Successfully created a variable group in Azure DevOps project!"
-    );
-    process.exit(0);
-  } catch (err) {
-    logger.error(`Error occurred while creating variable group`);
-    logger.error(err);
-    process.exit(1);
   }
 };
 
@@ -136,7 +145,11 @@ const execute = async (variableGroupName: string, opts: ICommandOptions) => {
  * @param command Commander command object to decorate
  */
 export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(execute);
+  buildCmd(command, decorator).action(
+    async (variableGroupName: string, opts: ICommandOptions) => {
+      await execute(variableGroupName, opts, process.exit);
+    }
+  );
 };
 
 /**
