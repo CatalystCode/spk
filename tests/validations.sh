@@ -15,8 +15,8 @@ TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$SP_APP_ID" ] || { echo "Provide SP_APP_ID"; exit 1;}
 [ ! -z "$SP_PASS" ] || { echo "Provide SP_PASS"; exit 1;}
 [ ! -z "$SP_TENANT" ] || { echo "Provide SP_TENANT"; exit 1;}
+[ ! -z "$AZ_RESOURCE_GROUP" ] || { echo "Provide AZ_RESOURCE_GROUP"; exit 1;}
 AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_ORG"}"
-
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
 echo "SPK_LOCATION: $SPK_LOCATION"
@@ -24,6 +24,7 @@ echo "AZDO_PROJECT: $AZDO_PROJECT"
 echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 echo "ACR_NAME: $ACR_NAME"
+echo "AZ_RESOURCE_GROUP: $AZ_RESOURCE_GROUP"
 
 branchName=myFeatureBranch
 FrontEnd=fabrikam.acme.frontend
@@ -34,6 +35,9 @@ vg_name=fabrikam-vg
 services_dir=services
 mono_repo_dir=fabrikam2019
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
+
+# introspection
+sa_name=fabrikamsatst
 
 shopt -s expand_aliases
 alias spk=$SPK_LOCATION

@@ -172,6 +172,68 @@ function storage_account_exists () {
     fi
 }
 
+function storage_account_exists2 () {
+    sa_name=$1
+    rg=$2
+    sa_result=$(az storage account list --resource-group $rg)
+    sa_exists=$(echo $sa_result | jq -r --arg sa_name "$sa_name" '.[].name | select(. == $sa_name ) != null')
+    action=$3
+    
+    if [ "$sa_exists" = "true" ]; then
+        echo "The storage account '$sa_name' exists "
+        if [ "$action" == "delete" ]; then
+            echo "Delete storage account '$sa_name'"
+            az storage account delete -n $sa_name -g $rg --yes
+        fi
+     else
+        echo "The storage account $sa_name does not exist"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
+        if [ "$action" == "create" ]; then
+            echo "Create storage account '$sa_name'"
+            az storage account create -n $sa_name -g $rg
+        fi
+    fi
+}
+
+function storage_account_cors_enabled () {
+    sa_name=$1
+    action=$2
+    cors_enabled_result=$(az storage cors list --services t --account-name $sa_name | jq '.[] | select((.Service=="table") and (.AllowedMethods=="GET") and (.AllowedOrigins=="http://localhost:4040")) != null')
+
+    if [ "$cors_enabled_result" = "true" ]; then
+        echo "The storage account '$sa_name' has cors enabled"
+    else
+        echo "The storage account '$sa_name' does not have cors enabled"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
+        if [ "$action" == "enable" ]; then
+            echo "Enable cors in storage account '$sa_name'"
+            az storage cors add --methods "GET" --origins "http://localhost:4040" --services t --allowed-headers "*" --exposed-headers "*" --account-name $sa_name
+        fi
+        if [ "$action" == "wait" ]; then
+            total_wait_seconds=25
+            start=0
+            wait_seconds=5
+            while [ $start -lt $total_wait_seconds ]; do
+                cors_enabled_result=$(az storage cors list --services t --account-name $sa_name | jq '.[] | select((.Service=="table") and (.AllowedMethods=="GET") and (.AllowedOrigins=="http://localhost:4040")) != null')
+                if [ "$cors_enabled_result" = "true" ]; then
+                    echo "The storage account '$sa_name' has cors: $cors_enabled_result"
+                    break
+                fi
+                echo "Wait $wait_seconds seconds..."
+                sleep $wait_seconds
+                start=$((start + wait_seconds))
+            done
+            if [ "$cors_enabled_result" != "true" ]; then
+                echo "The storage account '$sa_name' does not have cors enabled"
+            fi
+        fi
+    fi
+}
+
 function storage_account_table_exists () {
     t=$1
     sa_name=$2
@@ -186,6 +248,27 @@ function storage_account_table_exists () {
         echo "The table $sa_name does not exist"
         if [ "$action" == "fail" ]; then
             exit 1
+        fi
+    fi
+}
+
+function storage_account_table_exists2 () {
+    t=$1
+    sat_name=$2
+    action=$3
+    s=$(az account list -o json | jq '.[] | select(.isDefault==true) | .id')
+    sat_result=$(az storage table exists -n $t --account-name $sat_name --subscription $s)
+    sat_exists=$(echo $sat_result | jq '.exists | . == true')
+
+    if [ "$sat_exists" = "true" ]; then
+        echo "The table '$t' exists "
+     else
+        echo "The table $sat_name does not exist"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
+        if [ "$action" == "create" ]; then
+            echo "Create the table $sat_name"
         fi
     fi
 }
