@@ -157,11 +157,11 @@ deploy all manifests in this repository to the cluster in a set interval.
 
 #### High Level Definition Repository
 
-This repository holds all the bedrock "High Level Defenition" (HLD) yaml files
+This repository holds all the bedrock "High Level Definition" (HLD) yaml files
 and associated configurations. These HLDs and configs are consumed via
 [fabrikate](https://github.com/microsoft/fabrikate) to produce kubernetes
 manifests. This is typically done via an Azure DevOps pipeline, and the
-manifests output by fabrikate are placed into the Materialied Manifests
+manifests output by fabrikate are placed into the Materialized Manifests
 repository.
 
 ##### Initializing the High Level Definition Repository
