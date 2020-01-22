@@ -1,6 +1,6 @@
 print_array () {
     #usage: print_array "${my_array[@]}"
-    arr=( "$@" )
+    arr=("$@")
     for i in "${arr[@]}";
     do
         :
@@ -153,16 +153,15 @@ function variable_group_exists () {
 function storage_account_exists () {
     sa_name=$1
     rg=$2
-    s=$3
-    sa_result=$(az storage account list --resource-group $rg --subscription $s)
+    sa_result=$(az storage account list --resource-group $rg)
     sa_exists=$(echo $sa_result | jq -r --arg sa_name "$sa_name" '.[].name | select(. == $sa_name ) != null')
-    action=$4
+    action=$3
     
     if [ "$sa_exists" = "true" ]; then
         echo "The storage account '$sa_name' exists "
         if [ "$action" == "delete" ]; then
             echo "Delete storage account '$sa_name'"
-            az storage account delete -n $sa_name -g $rg --subscription $s --yes
+            az storage account delete -n $sa_name -g $rg --yes
         fi
      else
         echo "The storage account $sa_name does not exist"
@@ -175,9 +174,8 @@ function storage_account_exists () {
 function storage_account_table_exists () {
     t=$1
     sa_name=$2
-    s=$3
-    action=$4
-    sat_result=$(az storage table exists -n $t --account-name $sa_name --subscription $s)
+    action=$3
+    sat_result=$(az storage table exists -n $t --account-name $sa_name)
     sat_exists=$(echo $sat_result | jq '.exists | . == true')
 
     if [ "$sat_exists" = "true" ]; then
