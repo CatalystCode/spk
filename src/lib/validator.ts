@@ -11,7 +11,7 @@ export interface IValidationValue {
  *
  * @param val Value to inspect
  */
-export const hasValue = (val: undefined | null | string): boolean => {
+export const hasValue = (val: undefined | null | string): val is string => {
   return val !== undefined && val !== null && val !== "";
 };
 
