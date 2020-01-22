@@ -49,11 +49,16 @@ export interface IBedrockFile {
     };
   };
   services: {
-    [relativeDirectory: string]: {
-      helm: IHelmConfig;
-    };
+    [relativeDirectory: string]: IBedrockServiceConfig;
   };
   variableGroups?: string[];
+}
+
+export interface IBedrockServiceConfig {
+  displayName?:  string;
+  middlewares?: string[];
+  helm: IHelmConfig;
+  disableRouteScaffold?: boolean;
 }
 
 /**
@@ -130,15 +135,15 @@ export interface IServiceEndpointData {
   tenant_id: string;
 }
 
+export interface IVariableGroupDataVariable {
+  [key: string]: AzureKeyVaultVariableValue;
+}
+
 export interface IVariableGroupData {
   name: string;
   description: string;
   type: string;
-  variables: [
-    {
-      [key: string]: AzureKeyVaultVariableValue;
-    }
-  ];
+  variables: IVariableGroupDataVariable[];
   key_vault_provider?: {
     name: string;
     service_endpoint: IServiceEndpointData;

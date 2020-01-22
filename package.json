@@ -6,7 +6,7 @@
   "contributors": [],
   "license": "MIT",
   "scripts": {
-    "build": "shx rm -rf dist && webpack && pkg dist/spk.js && shx mv spk-{linux,macos,win.exe} dist",
+    "build": "shx rm -rf dist && webpack && pkg -t node12-linux-x64,node12-macos-x64,node12-win-x64 dist/spk.js && shx mv spk-{linux,macos,win.exe} dist",
     "lint": "tslint 'src/**/*.ts{,x}'",
     "lint-fix": "tslint --fix 'src/**/*.ts{,x}'",
     "test": "jest --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",
@@ -81,7 +81,7 @@
     "open": "^6.4.0",
     "shelljs": "^0.8.3",
     "simple-git": "^1.126.0",
-    "spektate": "^0.1.13",
+    "spektate": "^0.1.16",
     "uuid": "^3.3.3",
     "winston": "^3.2.1"
   },

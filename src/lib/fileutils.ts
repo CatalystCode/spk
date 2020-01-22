@@ -617,14 +617,18 @@ export const generateGitIgnoreFile = (
 export const addNewServiceToBedrockFile = (
   bedrockFilePath: string,
   newServicePath: string,
-  helmConfig: IHelmConfig
+  svcDisplayName: string,
+  helmConfig: IHelmConfig,
+  middlewares: string[] = []
 ) => {
   const bedrockFile = yaml.safeLoad(
     fs.readFileSync(bedrockFilePath, "utf8")
   ) as IBedrockFile;
 
   bedrockFile.services["./" + newServicePath] = {
-    helm: helmConfig
+    displayName: svcDisplayName,
+    helm: helmConfig,
+    middlewares
   };
 
   logger.info("Updating bedrock.yaml");

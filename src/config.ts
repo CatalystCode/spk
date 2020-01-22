@@ -11,6 +11,7 @@ import { IBedrockFile, IConfigYaml, IMaintainersFile } from "./types";
 // State
 ////////////////////////////////////////////////////////////////////////////////
 let spkConfig: IConfigYaml = {}; // DANGEROUS! this var is globally retrievable and mutable via Config()
+let hasWarnedAboutUninitializedConfig = false; // has emitted an initialization warning if global config does not exist
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +84,7 @@ const getKeyVaultSecret = async (
   }
 
   if (keyVaultKey === undefined) {
-    keyVaultKey = await ((spkConfig.introspection || {}).azure || {}).key;
+    keyVaultKey = await spkConfig.introspection?.azure?.key;
   }
 
   return keyVaultKey;
@@ -101,14 +102,20 @@ export const Config = (): IConfigYaml => {
     try {
       loadConfiguration();
     } catch (err) {
-      logger.warn(err);
+      logger.verbose(err);
+      if (!hasWarnedAboutUninitializedConfig) {
+        logger.warn(
+          `Error loading SPK configuration file; run \`spk init\` to initialize your global configuration or ensure you have passed all required parameters to the called function.`
+        );
+        hasWarnedAboutUninitializedConfig = true;
+      }
     }
   }
 
   const introspectionAzure = {
-    ...(spkConfig.introspection || {}).azure,
+    ...spkConfig.introspection?.azure,
     get key() {
-      const { account_name } = (spkConfig.introspection || {}).azure || {};
+      const account_name = spkConfig.introspection?.azure?.account_name;
       return getKeyVaultSecret(spkConfig.key_vault_name, account_name);
     }
   };
@@ -128,6 +135,8 @@ export const Config = (): IConfigYaml => {
  * Does some validations against the file; if errors occur, an Exception is
  * thrown:
  * - Validates the helm configurations for all service entries
+ *
+ * @param fileDirectory the project directory containing the bedrock.yaml file
  */
 export const Bedrock = (fileDirectory = process.cwd()): IBedrockFile => {
   const bedrockYamlPath = path.join(fileDirectory, "bedrock.yaml");
@@ -168,12 +177,33 @@ export const Bedrock = (fileDirectory = process.cwd()): IBedrockFile => {
 };
 
 /**
+ * Async wrapper for the Bedrock() function
+ * Use this if preferring to use Promise based control flow over try/catch as
+ * Bedrock() can throw and Error
+ *
+ * @param fileDirectory the project directory containing the bedrock.yaml file
+ */
+export const BedrockAsync = async (
+  fileDirectory = process.cwd()
+): Promise<IBedrockFile> => Bedrock(fileDirectory);
+
+/**
  * Returns the current maintainers.yaml file for the project
  */
 export const Maintainers = (
   fileDirectory: string = process.cwd()
 ): IMaintainersFile =>
   readYaml<IMaintainersFile>(path.join(fileDirectory, "maintainers.yaml"));
+
+/**
+ * Async wrapper for Maintainers() function
+ * Use this if preferring to use Promise based control flow over try/catch as
+ * Maintainers() can throw and Error
+ *
+ * @param fileDirectory the project directory containing the maintainers.yaml file
+ */
+export const MaintainersAsync = (fileDirectory: string = process.cwd()) =>
+  Maintainers(fileDirectory);
 
 /**
  * Helper to write out a bedrock.yaml or maintainers.yaml file to the project root
@@ -227,7 +257,7 @@ export const loadConfiguration = (filepath: string = defaultConfigFile()) => {
     const data = readYaml<IConfigYaml>(filepath);
     spkConfig = loadConfigurationFromLocalEnv(data || {});
   } catch (err) {
-    logger.error(`An error occurred while loading configuration\n ${err}`);
+    logger.verbose(`An error occurred while loading configuration\n ${err}`);
     throw err;
   }
 };

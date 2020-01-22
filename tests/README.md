@@ -19,6 +19,11 @@ tests.
 - This file orchestrates infrastructure scenarios and is designed to fail on
   first error.
 
+`introspection-validations.sh`
+
+- This file orchestrates the service introspection scenarios and is designed to
+  fail on first error.
+
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
@@ -75,18 +80,17 @@ tests.
 | Command                  | Coverage |
 | ------------------------ | -------- |
 | spk deployment get       | 🚫       |
-| spk deployment onboard   | 🚫       |
+| spk deployment onboard   | ✅       |
 | spk deployment validate  | 🚫       |
 | spk deployment dashboard | 🚫       |
 | spk deployment create    | 🚫       |
 
 ## Infrastructure Management
 
-| Command                    | Coverage |
-| -------------------------- | -------- |
-| spk infra scaffold         | ✅       |
-| spk infra validate onboard | 🚫       |
-| spk infra generate         | ✅       |
+| Command            | Coverage |
+| ------------------ | -------- |
+| spk infra scaffold | ✅       |
+| spk infra generate | ✅       |
 
 # Setup Instructions
 
@@ -98,10 +102,13 @@ If you wish to run these tests locally, skip ahead to
 1. Azure DevOps Organization and Project
 2. Create variable group named `spk-vg`. Inside the variable group have the
    following key/values:
+
    - AZDO_PROJECT (e.g. `bedrock`)
    - AZDO_ORG (e.g. `epicstuff`)
-   - AZDO_PAT (e.g. Personal Access Token with _read/write/manage_ access to
+   - AZDO_PAT (e.g. Personal Access Token with **read/write/manage** access to
      AZDO_PROJECT) <-- 🔒
+   - AZ_RESOURCE_GROUP - The name of an Azure resource group (for
+     `introspection-validations.sh`)
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
    - SP_TENANT (e.g Service Principal Tenant Id)
@@ -115,6 +122,9 @@ If you wish to run these tests locally, skip ahead to
      https://raw.githubusercontent.com/MY_ORG/spk/master/tests/functions.sh)
    - TEST_SCRIPT (e.g.
      https://raw.githubusercontent.com/MY_ORG/spk/master/tests/validations.sh)
+   - TEST_SCRIPT2 (e.g.
+     https://raw.githubusercontent.com/MY_ORG/spk/master/tests/infra-validations.sh)
+
 3. [Azure CLI with Azure DevOps Extension](https://docs.microsoft.com/en-us/azure/devops/cli/?view=azure-devops)
    - Provided in pipeline yaml
 4. SPK Binary
@@ -150,7 +160,9 @@ pipeline. Instead run these steps:
    export SP_PASS=<b>REPLACE_ME</b>
    export SP_APP_ID=<b>REPLACE_ME</b>
    export SP_TENANT=<b>REPLACE_ME</b>
+   export AZ_SUBSCRIPTION_ID=<b>REPLACE_ME</b>
    </pre>
 4. Navigate to this directory in shell
 5. RUN --> `$ sh validations.sh`
 6. RUN --> `$ sh infra-validations.sh`
+7. RUN --> `$ sh introspection-validations.sh`

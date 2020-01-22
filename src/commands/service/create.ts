@@ -1,7 +1,7 @@
 import commander from "commander";
 import path from "path";
 import shelljs from "shelljs";
-import { Bedrock } from "../../config";
+import { BedrockAsync } from "../../config";
 import {
   addNewServiceToBedrockFile,
   addNewServiceToMaintainersFile,
@@ -11,7 +11,7 @@ import {
 } from "../../lib/fileutils";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import { logger } from "../../logger";
-import { IBedrockFile, IHelmConfig, IUser } from "../../types";
+import { IHelmConfig, IUser } from "../../types";
 
 /**
  * Adds the create command to the service command object
@@ -56,6 +56,11 @@ export const createCommandDecorator = (command: commander.Command): void => {
       ""
     )
     .option(
+      "-n, --display-name <display-name>",
+      "Display name of the service.",
+      ""
+    )
+    .option(
       "-m, --maintainer-name <maintainer-name>",
       "The name of the primary maintainer for this service.",
       "maintainer name"
@@ -72,10 +77,21 @@ export const createCommandDecorator = (command: commander.Command): void => {
     )
     .option(
       "--variable-group-name <variable-group-name>",
-      "The Azure DevOps Variable Group."
+      "The Azure DevOps Variable Group.",
+      undefined
+    )
+    .option(
+      "--middlewares <comma-delimitated-list-of-middleware-names>",
+      "Traefik2 middlewares you wish to to be injected into your Traefik2 IngressRoutes",
+      ""
     )
     .action(async (serviceName, opts) => {
+      const bedrock = await BedrockAsync().catch(err => {
+        logger.warn(err);
+        return undefined;
+      });
       const {
+        displayName,
         helmChartChart,
         helmChartRepository,
         helmConfigBranch,
@@ -84,27 +100,14 @@ export const createCommandDecorator = (command: commander.Command): void => {
         packagesDir,
         maintainerName,
         maintainerEmail,
+        middlewares,
         gitPush
       } = opts;
+      const variableGroupName =
+        opts.variableGroupName ?? (bedrock?.variableGroups ?? [])[0] ?? ""; // fall back to bedrock.yaml when <variable-group-name> argument is not specified; default to empty string
 
       const projectPath = process.cwd();
       try {
-        // fall back to bedrock.yaml when <variable-group-name> argument is not specified
-        let bedrockFile: IBedrockFile | undefined;
-        try {
-          bedrockFile = Bedrock();
-        } catch (err) {
-          logger.info(err);
-        }
-
-        const {
-          variableGroupName = bedrockFile &&
-            bedrockFile.variableGroups &&
-            bedrockFile.variableGroups![0]
-        } = opts;
-
-        logger.info(`variable name: ${variableGroupName}`);
-
         if (
           !isValidConfig(
             helmChartChart,
@@ -116,14 +119,17 @@ export const createCommandDecorator = (command: commander.Command): void => {
             packagesDir,
             maintainerName,
             maintainerEmail,
+            middlewares,
             gitPush,
-            variableGroupName
+            variableGroupName,
+            displayName
           )
         ) {
-          process.exit(1);
+          throw Error(`Invalid configuration provided`);
         }
 
         await createService(projectPath, serviceName, packagesDir, gitPush, {
+          displayName,
           helmChartChart,
           helmChartRepository,
           helmConfigBranch,
@@ -131,16 +137,18 @@ export const createCommandDecorator = (command: commander.Command): void => {
           helmConfigPath,
           maintainerEmail,
           maintainerName,
+          middlewares: (middlewares as string)
+            .split(",")
+            .map(str => str.trim()),
           variableGroups:
-            variableGroupName === undefined || variableGroupName === null
-              ? []
-              : [variableGroupName]
+            variableGroupName.length > 0 ? [variableGroupName] : []
         });
       } catch (err) {
         logger.error(
           `Error occurred adding service ${serviceName} to project ${projectPath}`
         );
         logger.error(err);
+        process.exit(1);
       }
     });
 };
@@ -156,6 +164,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
  * @param packagesDir Packages directory
  * @param maintainerName Name of maintainer
  * @param maintainerEmail Email of maintainer
+ * @param middlewares comma-delimitated list of Traefik2 middlewares
  * @param gitPush Push to git
  * @param variableGroupName Variable group name
  */
@@ -169,8 +178,10 @@ export const isValidConfig = (
   packagesDir: any,
   maintainerName: any,
   maintainerEmail: any,
+  middlewares: any,
   gitPush: any,
-  variableGroupName: any
+  variableGroupName: any,
+  displayName: any
 ): boolean => {
   const missingConfig = [];
 
@@ -205,6 +216,11 @@ export const isValidConfig = (
       `serviceName must be of type 'string', ${typeof serviceName} given.`
     );
   }
+  if (typeof displayName !== "string") {
+    missingConfig.push(
+      `displayName must be of type 'string', ${typeof displayName} given.`
+    );
+  }
   if (typeof packagesDir !== "string") {
     missingConfig.push(
       `packagesDir must be of type 'string', ${typeof packagesDir} given.`
@@ -220,16 +236,17 @@ export const isValidConfig = (
       `maintainerEmail must be of type 'string', ${typeof maintainerEmail} given.`
     );
   }
+  if (typeof middlewares !== "string") {
+    missingConfig.push(
+      `middlewares must be of type of 'string', ${typeof middlewares} given.`
+    );
+  }
   if (typeof gitPush !== "boolean") {
     missingConfig.push(
       `gitPush must be of type 'boolean', ${typeof gitPush} given.`
     );
   }
-  if (
-    variableGroupName === null ||
-    variableGroupName === undefined ||
-    typeof variableGroupName !== "string"
-  ) {
+  if (typeof variableGroupName !== "string") {
     missingConfig.push(
       `variableGroupName must be of type 'string', ${typeof variableGroupName} given.`
     );
@@ -256,41 +273,36 @@ export const createService = async (
   packagesDir: string,
   gitPush: boolean,
   opts?: {
-    helmChartChart: string;
-    helmChartRepository: string;
-    helmConfigBranch: string;
-    helmConfigGit: string;
-    helmConfigPath: string;
-    maintainerEmail: string;
-    maintainerName: string;
+    displayName?: string;
+    helmChartChart?: string;
+    helmChartRepository?: string;
+    helmConfigBranch?: string;
+    helmConfigGit?: string;
+    helmConfigPath?: string;
+    maintainerEmail?: string;
+    maintainerName?: string;
     variableGroups?: string[];
+    middlewares?: string[];
   }
 ) => {
   const {
-    helmChartChart,
-    helmChartRepository,
-    helmConfigBranch,
-    helmConfigPath,
-    helmConfigGit,
-    maintainerName,
-    maintainerEmail,
-    variableGroups
-  } = opts || {
-    helmChartChart: "",
-    helmChartRepository: "",
-    helmConfigBranch: "",
-    helmConfigGit: "",
-    helmConfigPath: "",
-    maintainerEmail: "",
-    maintainerName: "",
-    variableGroups: []
-  };
+    displayName = "",
+    helmChartChart = "",
+    helmChartRepository = "",
+    helmConfigBranch = "",
+    helmConfigPath = "",
+    helmConfigGit = "",
+    maintainerName = "",
+    maintainerEmail = "",
+    middlewares = [],
+    variableGroups = []
+  } = opts ?? {};
 
   logger.info(
     `Adding Service: ${serviceName}, to Project: ${rootProjectPath} under directory: ${packagesDir}`
   );
   logger.info(
-    `MaintainerName: ${maintainerName}, MaintainerEmail: ${maintainerEmail}`
+    `DisplayName: ${displayName}, MaintainerName: ${maintainerName}, MaintainerEmail: ${maintainerEmail}`
   );
 
   const newServiceDir = path.join(rootProjectPath, packagesDir, serviceName);
@@ -348,7 +360,9 @@ export const createService = async (
   addNewServiceToBedrockFile(
     path.join(rootProjectPath, "bedrock.yaml"),
     newServiceRelativeDir,
-    helmConfig
+    displayName,
+    helmConfig,
+    middlewares
   );
 
   // If requested, create new git branch, commit, and push
