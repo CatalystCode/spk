@@ -11,7 +11,6 @@ TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$SPK_LOCATION" ] || { echo "Provide SPK_LOCATION"; exit 1;}
 [ ! -z "$ACCESS_TOKEN_SECRET" ] || { echo "Provide ACCESS_TOKEN_SECRET"; exit 1;}
 [ ! -z "$AZDO_PROJECT" ] || { echo "Provide AZDO_PROJECT"; exit 1;}
-[ ! -z "$AZ_SUBSCRIPTION_ID" ] || { echo "Provide AZ_SUBSCRIPTION_ID"; exit 1;}
 [ ! -z "$AZ_RESOURCE_GROUP" ] || { echo "Provide AZ_RESOURCE_GROUP"; exit 1;}
 [ ! -z "$AZDO_ORG" ] || { echo "Provide AZDO_ORG"; exit 1;}
 [ ! -z "$ACR_NAME" ] || { echo "Provide ACR_NAME"; exit 1;}
@@ -25,7 +24,6 @@ echo "SPK_LOCATION: $SPK_LOCATION"
 echo "AZDO_PROJECT: $AZDO_PROJECT"
 echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
-echo "AZ_SUBSCRIPTION_ID: $AZ_SUBSCRIPTION_ID"
 echo "AZ_RESOURCE_GROUP: $AZ_RESOURCE_GROUP"
 echo "ACR_NAME: $ACR_NAME"
 
@@ -42,9 +40,9 @@ echo "SPK Version: $(spk --version)"
 echo "Running from $(pwd)"
 
 # spk deployment onboard validation test
-storage_account_exists $sa_name $AZ_RESOURCE_GROUP $AZ_SUBSCRIPTION_ID "delete"
+storage_account_exists $sa_name $AZ_RESOURCE_GROUP "delete"
 spk deployment onboard -s $sa_name -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $AZ_SUBSCRIPTION_ID --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
-storage_account_exists $sa_name $AZ_RESOURCE_GROUP $AZ_SUBSCRIPTION_ID "fail"
-storage_account_table_exists $sat_name $sa_name $AZ_SUBSCRIPTION_ID "fail"
+storage_account_exists $sa_name $AZ_RESOURCE_GROUP "fail"
+storage_account_table_exists $sat_name $sa_name "fail"
 
 echo "Successfully reached the end of the introspection validations script."
