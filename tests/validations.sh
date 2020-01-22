@@ -36,9 +36,6 @@ services_dir=services
 mono_repo_dir=fabrikam2019
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
 
-# introspection
-sa_name=fabrikamsatst
-
 shopt -s expand_aliases
 alias spk=$SPK_LOCATION
 echo "SPK Version: $(spk --version)"
