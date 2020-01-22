@@ -50,13 +50,13 @@ export const validateRequiredArguments = (
   accessOpts: IAzureDevOpsOpts
 ): string[] => {
   return validateForRequiredValues(decorator, {
-    "hld-repo-url": hldRepoUrl,
-    "org-name": accessOpts.orgName,
-    "personal-access-token": accessOpts.personalAccessToken,
+    hldRepoUrl,
+    orgName: accessOpts.orgName,
+    personalAccessToken: accessOpts.personalAccessToken,
     project: accessOpts.project,
-    "registry-name": registryName,
-    "service-principal-id": servicePrincipalId,
-    "service-principal-password": servicePrincipalPassword,
+    registryName,
+    servicePrincipalId,
+    servicePrincipalPassword,
     tenant
   });
 };

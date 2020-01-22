@@ -12,20 +12,18 @@ export interface ICommandOption {
 }
 
 /**
- * Map of key (stirng) to its command option
- */
-export interface ICommandOptionObject {
-  [key: string]: ICommandOption;
-}
-
-/**
  * Command Descriptor
  */
 export interface ICommandBuildElements {
   command: string;
   alias: string;
   description: string;
-  options: ICommandOptionObject;
+  options: ICommandOption[];
+}
+
+interface ICommandVariableName2Opt {
+  opt: ICommandOption;
+  variableName: string;
 }
 
 /**
@@ -44,11 +42,10 @@ export const build = (
     .alias(decorator.alias)
     .description(decorator.description);
 
-  const options = decorator.options;
-  Object.getOwnPropertyNames(options).forEach(name => {
-    const opt = options[name];
+  decorator.options.forEach(opt => {
     cmd.option(opt.arg, opt.description);
   });
+
   return cmd;
 };
 
@@ -64,16 +61,35 @@ export const validateForRequiredValues = (
   decorator: ICommandBuildElements,
   values: { [key: string]: string | undefined }
 ): string[] => {
-  // gather the required variable names from the decorator options object
-  const requireds = Object.getOwnPropertyNames(decorator.options).filter(
-    name => decorator.options[name].required
-  );
+  // gather the required options
+  const requireds = decorator.options.filter(opt => opt.required);
+
+  // opt name to variable name mapping
+  // example --org-name is orgName
+  const mapVariableName2Opt: ICommandVariableName2Opt[] = requireds
+    .filter(opt => !!opt.arg.match(/\s?--([-\w]+)\s?/))
+    .map(opt => {
+      const match = opt.arg.match(/\s?--([-\w]+)\s?/);
+
+      // match! cannot be null because it is prefilter
+      const variableName = match![1]
+        .replace(/\.?(-[a-z])/g, (_, y) => {
+          return y.toUpperCase();
+        })
+        .replace(/-/g, "");
+      return {
+        opt,
+        variableName
+      };
+    });
 
   // figure out which variables have missing values
-  const missingValues = requireds.filter(key => !hasValue(values[key]));
+  const missingItems = mapVariableName2Opt.filter(
+    item => !hasValue(values[item.variableName!])
+  );
 
   // gather the option flags (args) for the missing one
-  const errors = missingValues.map(key => decorator.options[key].arg);
+  const errors = missingItems.map(item => item.opt.arg);
 
   if (errors.length !== 0) {
     logger.error(`the following arguments are required: ${errors.join("\n ")}`);

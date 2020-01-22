@@ -16,40 +16,32 @@ describe("Tests Command Builder's build function", () => {
       alias: "cbt",
       command: "command-build-test",
       description: "description of command",
-      options: {
-        optionA: {
-          arg: "-a, --optionA <optionA>",
+      options: [
+        {
+          arg: "-a, --option-a <optionA>",
           description: "description for optionA",
           required: false
         },
-        optionB: {
-          arg: "-b, --optionB <optionB>",
+        {
+          arg: "-b, --option-b <optionB>",
           description: "description for optionB",
           required: false
         },
-        optionC: {
-          arg: "-c, --optionC <optionC>",
+        {
+          arg: "-c, --option-c <optionC>",
           description: "description for optionC",
           required: false
         }
-      }
+      ]
     };
 
-    const options: ICommandOption[] = Object.getOwnPropertyNames(
-      descriptor.options
-    ).map((name: string) => {
-      return {
-        description: descriptor.options[name].description,
-        flags: descriptor.options[name].arg
-      };
-    });
     const cmd = build(new commander.Command(), descriptor);
 
     expect(cmd.description()).toBe("description of command");
     expect(cmd.alias()).toBe("cbt");
     cmd.options.forEach((opt: ICommandOption, i: number) => {
-      expect(opt.flags).toBe(options[i].flags);
-      expect(opt.description).toBe(options[i].description);
+      expect(opt.flags).toBe(descriptor.options[i].arg);
+      expect(opt.description).toBe(descriptor.options[i].description);
     });
   });
 });
@@ -60,33 +52,25 @@ describe("Tests Command Builder's validation function", () => {
       alias: "cbt",
       command: "command-build-test",
       description: "description of command",
-      options: {
-        optionA: {
-          arg: "-a, --optionA <optionA>",
+      options: [
+        {
+          arg: "-a, --option-a <optionA>",
           description: "description for optionA",
           required: true
         },
-        optionB: {
-          arg: "-b, --optionB <optionB>",
+        {
+          arg: "-b, --option-b <optionB>",
           description: "description for optionB",
           required: false
         },
-        optionC: {
-          arg: "-c --optionC <optionC>",
+        {
+          arg: "-c --option-c <optionC>",
           description: "description for optionC",
           required: true
         }
-      }
+      ]
     };
 
-    const options: ICommandOption[] = Object.getOwnPropertyNames(
-      descriptor.options
-    ).map((name: string) => {
-      return {
-        description: descriptor.options[name].description,
-        flags: descriptor.options[name].arg
-      };
-    });
     const errors = validateForRequiredValues(descriptor, {
       optionA: "has value"
     });
@@ -95,6 +79,6 @@ describe("Tests Command Builder's validation function", () => {
     // Option-B is ok because it is not flag as required
     // Option-C is not ok because value is missing
     expect(errors.length).toBe(1);
-    expect(errors[0]).toBe("-c --optionC <optionC>");
+    expect(errors[0]).toBe("-c --option-c <optionC>");
   });
 });
