@@ -242,22 +242,17 @@ export const setVariableGroupInBedrockFile = async (
   // Get bedrock.yaml
   bedrockFile = Bedrock(rootProjectPath);
 
-  if (typeof bedrockFile === "undefined") {
-    throw new Error(`bedrock.yaml file does not exist`);
-  }
-
   logger.verbose(
     `Bedrock file content in ${rootProjectPath}: \n ${JSON.stringify(
       bedrockFile
     )}`
   );
 
-  bedrockFile.variableGroups = bedrockFile.variableGroups
-    ? bedrockFile.variableGroups
-    : [];
-
   // add new variabe group
-  bedrockFile.variableGroups!.push(variableGroupName);
+  bedrockFile.variableGroups = [
+    ...(bedrockFile.variableGroups ?? []),
+    variableGroupName
+  ];
 
   // Write out
   write(bedrockFile, absProjectRoot);
