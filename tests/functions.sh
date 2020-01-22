@@ -229,6 +229,7 @@ function storage_account_cors_enabled () {
             done
             if [ "$cors_enabled_result" != "true" ]; then
                 echo "The storage account '$sa_name' does not have cors enabled"
+                exit 1
             fi
         fi
     fi
@@ -254,21 +255,21 @@ function storage_account_table_exists () {
 
 function storage_account_table_exists2 () {
     t=$1
-    sat_name=$2
+    sa_name=$2
     action=$3
-    s=$(az account list -o json | jq '.[] | select(.isDefault==true) | .id')
-    sat_result=$(az storage table exists -n $t --account-name $sat_name --subscription $s)
+    sat_result=$(az storage table exists -n $t --account-name $sa_name)
     sat_exists=$(echo $sat_result | jq '.exists | . == true')
 
     if [ "$sat_exists" = "true" ]; then
         echo "The table '$t' exists "
      else
-        echo "The table $sat_name does not exist"
+        echo "The table $sa_name does not exist"
         if [ "$action" == "fail" ]; then
             exit 1
         fi
         if [ "$action" == "create" ]; then
-            echo "Create the table $sat_name"
+            echo "Create table $t"
+            az storage table create -n $t --account-name $sa_name
         fi
     fi
 }

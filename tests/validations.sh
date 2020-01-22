@@ -54,6 +54,19 @@ fi
 
 cd $TEST_WORKSPACE
 
+# Introspection Storage Account Setup
+sa_name=fabrikamsatst
+sat_name=fabrikamdeployments
+sa_partition_key="integration-test"
+
+storage_account_exists2 $sa_name $AZ_RESOURCE_GROUP "create"
+storage_account_exists2 $sa_name $AZ_RESOURCE_GROUP "fail"
+storage_account_cors_enabled $sa_name "enable"
+storage_account_cors_enabled $sa_name "wait"
+storage_account_table_exists2 $sat_name $sa_name "create"
+storage_account_table_exists2 $sat_name $sa_name "fail"
+sa_access_key=$(az storage account keys list -n $sa_name -g $AZ_RESOURCE_GROUP | jq '.[0].value')
+
 # Manifest Repo Setup ------------------
 mkdir $manifests_dir
 cd $manifests_dir
@@ -156,6 +169,12 @@ spk project create-variable-group $vg_name -r $ACR_NAME -d $hld_repo_url -u $SP_
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
+
+# Add introspection variables to variable group
+#ACCOUNT_KEY $sa_access_key
+#ACCOUNT_NAME env variable $sa_name
+#PARTITION_KEY env variable $sa_partition_key
+#TABLE name env variable $sat_name
 
 spk service create $FrontEnd -d $services_dir >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
