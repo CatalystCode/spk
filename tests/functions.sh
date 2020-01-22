@@ -220,7 +220,7 @@ function storage_account_cors_enabled () {
             while [ $start -lt $total_wait_seconds ]; do
                 cors_enabled_result=$(az storage cors list --services t --account-name $sa_name | jq '.[] | select((.Service=="table") and (.AllowedMethods=="GET") and (.AllowedOrigins=="http://localhost:4040")) != null')
                 if [ "$cors_enabled_result" = "true" ]; then
-                    echo "The storage account '$sa_name' has cors: $cors_enabled_result"
+                    echo "The storage account '$sa_name' has cors enabled"
                     break
                 fi
                 echo "Wait $wait_seconds seconds..."
@@ -285,6 +285,39 @@ function pipeline_exists () {
         echo "pipeline_id to delete is $pipeline_id"
         # Delete the repo
         az pipelines delete --id "$pipeline_id" --yes --org $1 --p $2
+    fi
+}
+
+function variable_group_variable_create () {
+    id=$1
+    org=$2
+    p=$3
+    n=$4
+    v=$5
+    s=$6
+    
+    echo "Create variable '$v' in variable group"
+    if [ $s == "secret" ]; then
+        result=$(az pipelines variable-group variable create --id $id --org $org -p $p --name $n --value $v --secret)
+    else
+        result=$(az pipelines variable-group variable create --id $id --org $org -p $p --name $n --value $v)
+    fi
+}
+
+function variable_group_variable_exists () {
+    id=$1
+    org=$2
+    p=$3
+    v=$4
+    action=$5
+    query="'.$v != null'"
+    exists=$(az pipelines variable-group variable list --id $id --org $org -p $p | jq $query)
+
+    if [ "$exists" = "false" ]; then
+        echo "Variable '$v' does not exist in variable group"
+        if [ "$action" = "fail" ]; then
+            exit 1
+        fi
     fi
 }
 

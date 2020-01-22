@@ -171,10 +171,16 @@ spk project create-variable-group $vg_name -r $ACR_NAME -d $hld_repo_url -u $SP_
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
 
 # Add introspection variables to variable group
-#ACCOUNT_KEY $sa_access_key
-#ACCOUNT_NAME env variable $sa_name
-#PARTITION_KEY env variable $sa_partition_key
-#TABLE name env variable $sat_name
+variable_group_id=$(az pipelines variable-group list --org $AZDO_ORG_URL -p $AZDO_PROJECT | jq '.[] | select(.name=="fabrikam-vg") | .id')
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_KEY" $sa_access_key "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_NAME" $sa_name
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "PARTITION_KEY" $sa_partition_key
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "TABLE_NAME" $sat_name
+
+variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_KEY" "fail"
+variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_NAME" "fail"
+variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "PARTITION_KEY" "fail"
+variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "TABLE_NAME" "fail"
 
 spk service create $FrontEnd -d $services_dir >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
