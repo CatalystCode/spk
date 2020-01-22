@@ -9,6 +9,7 @@ export interface ICommandOption {
   arg: string;
   description: string;
   required: boolean;
+  defaultValue?: string | boolean;
 }
 
 /**
@@ -43,7 +44,11 @@ export const build = (
     .description(decorator.description);
 
   decorator.options.forEach(opt => {
-    cmd.option(opt.arg, opt.description);
+    if (opt.defaultValue !== undefined) {
+      cmd.option(opt.arg, opt.description, opt.defaultValue);
+    } else {
+      cmd.option(opt.arg, opt.description);
+    }
   });
 
   return cmd;

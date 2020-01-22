@@ -8,6 +8,7 @@ import {
 interface ICommandOption {
   flags: string;
   description: string;
+  defaultValue: string | boolean;
 }
 
 describe("Tests Command Builder's build function", () => {
@@ -31,6 +32,18 @@ describe("Tests Command Builder's build function", () => {
           arg: "-c, --option-c <optionC>",
           description: "description for optionC",
           required: false
+        },
+        {
+          arg: "-d, --option-d <optionD>",
+          defaultValue: false,
+          description: "description for optionD",
+          required: false
+        },
+        {
+          arg: "-e, --option-d <optionE>",
+          defaultValue: "test",
+          description: "description for optionE",
+          required: false
         }
       ]
     };
@@ -39,9 +52,15 @@ describe("Tests Command Builder's build function", () => {
 
     expect(cmd.description()).toBe("description of command");
     expect(cmd.alias()).toBe("cbt");
+
     cmd.options.forEach((opt: ICommandOption, i: number) => {
-      expect(opt.flags).toBe(descriptor.options[i].arg);
-      expect(opt.description).toBe(descriptor.options[i].description);
+      const declared = descriptor.options[i];
+      expect(opt.flags).toBe(declared.arg);
+      expect(opt.description).toBe(declared.description);
+
+      if (declared.defaultValue !== undefined) {
+        expect(opt.defaultValue).toBe(declared.defaultValue);
+      }
     });
   });
 });
