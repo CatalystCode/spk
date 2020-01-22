@@ -1,6 +1,6 @@
 print_array () {
     #usage: print_array "${my_array[@]}"
-    arr=( "$@" )
+    arr=("$@")
     for i in "${arr[@]}";
     do
         :
@@ -150,6 +150,22 @@ function variable_group_exists () {
     fi
 }
 
+function variable_group_variable_create () {
+    id=$1
+    org=$2
+    p=$3
+    n=$4
+    v=$5
+    s=$6
+    
+    echo "Create variable '$n' in variable group"
+    if [ "$s" = "secret" ]; then
+        result=$(az pipelines variable-group variable create --id $id --org $org -p $p --name $n --value $v --secret)
+    else
+        result=$(az pipelines variable-group variable create --id $id --org $org -p $p --name $n --value $v)
+    fi
+}
+
 function storage_account_exists () {
     sa_name=$1
     rg=$2
@@ -171,6 +187,27 @@ function storage_account_exists () {
         if [ "$action" == "create" ]; then
             echo "Create storage account '$sa_name'"
             az storage account create -n $sa_name -g $rg
+        fi
+    fi
+}
+
+function storage_account_table_exists () {
+    t=$1
+    sa_name=$2
+    action=$3
+    sat_result=$(az storage table exists -n $t --account-name $sa_name)
+    sat_exists=$(echo $sat_result | jq '.exists | . == true')
+
+    if [ "$sat_exists" = "true" ]; then
+        echo "The table '$t' exists "
+     else
+        echo "The table $sa_name does not exist"
+        if [ "$action" == "fail" ]; then
+            exit 1
+        fi
+        if [ "$action" == "create" ]; then
+            echo "Create table $t"
+            az storage table create -n $t --account-name $sa_name
         fi
     fi
 }
@@ -213,27 +250,6 @@ function storage_account_cors_enabled () {
     fi
 }
 
-function storage_account_table_exists () {
-    t=$1
-    sa_name=$2
-    action=$3
-    sat_result=$(az storage table exists -n $t --account-name $sa_name)
-    sat_exists=$(echo $sat_result | jq '.exists | . == true')
-
-    if [ "$sat_exists" = "true" ]; then
-        echo "The table '$t' exists "
-     else
-        echo "The table $sa_name does not exist"
-        if [ "$action" == "fail" ]; then
-            exit 1
-        fi
-        if [ "$action" == "create" ]; then
-            echo "Create table $t"
-            az storage table create -n $t --account-name $sa_name
-        fi
-    fi
-}
-
 function pipeline_exists () {
     echo "Checking if pipeline: ${3} already exists."
     pipeline_results=$(az pipelines list --org $1 --p $2)
@@ -245,39 +261,6 @@ function pipeline_exists () {
         echo "pipeline_id to delete is $pipeline_id"
         # Delete the repo
         az pipelines delete --id "$pipeline_id" --yes --org $1 --p $2
-    fi
-}
-
-function variable_group_variable_create () {
-    id=$1
-    org=$2
-    p=$3
-    n=$4
-    v=$5
-    s=$6
-    
-    echo "Create variable '$v' in variable group"
-    if [ $s == "secret" ]; then
-        result=$(az pipelines variable-group variable create --id $id --org $org -p $p --name $n --value $v --secret)
-    else
-        result=$(az pipelines variable-group variable create --id $id --org $org -p $p --name $n --value $v)
-    fi
-}
-
-function variable_group_variable_exists () {
-    id=$1
-    org=$2
-    p=$3
-    v=$4
-    action=$5
-    query="'.$v != null'"
-    exists=$(az pipelines variable-group variable list --id $id --org $org -p $p | jq $query)
-
-    if [ "$exists" = "false" ]; then
-        echo "Variable '$v' does not exist in variable group"
-        if [ "$action" = "fail" ]; then
-            exit 1
-        fi
     fi
 }
 

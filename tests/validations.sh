@@ -177,11 +177,6 @@ variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "A
 variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "PARTITION_KEY" $sa_partition_key
 variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "TABLE_NAME" $sat_name
 
-variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_KEY" "fail"
-variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_NAME" "fail"
-variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "PARTITION_KEY" "fail"
-variable_group_variable_exists $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "TABLE_NAME" "fail"
-
 spk service create $FrontEnd -d $services_dir >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
 file_we_expect=(".gitignore" "azure-pipelines.yaml" "Dockerfile" )
