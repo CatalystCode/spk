@@ -7,7 +7,7 @@ export interface IValidationValue {
 }
 
 /**
- * Returns true of val is undefined, not null and not an empty string.
+ * Returns true of val is not undefined, not null and not an empty string.
  *
  * @param val Value to inspect
  */
