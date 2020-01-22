@@ -59,12 +59,12 @@ sa_name=fabrikamsatst
 sat_name=fabrikamdeployments
 sa_partition_key="integration-test"
 
-storage_account_exists2 $sa_name $AZ_RESOURCE_GROUP "create"
-storage_account_exists2 $sa_name $AZ_RESOURCE_GROUP "fail"
+storage_account_exists $sa_name $AZ_RESOURCE_GROUP "create"
+storage_account_exists $sa_name $AZ_RESOURCE_GROUP "fail"
 storage_account_cors_enabled $sa_name "enable"
 storage_account_cors_enabled $sa_name "wait"
-storage_account_table_exists2 $sat_name $sa_name "create"
-storage_account_table_exists2 $sat_name $sa_name "fail"
+storage_account_table_exists $sat_name $sa_name "create"
+storage_account_table_exists $sat_name $sa_name "fail"
 sa_access_key=$(az storage account keys list -n $sa_name -g $AZ_RESOURCE_GROUP | jq '.[0].value')
 
 # Manifest Repo Setup ------------------
