@@ -9,6 +9,8 @@ import { IConfigYaml } from "../../types";
 import { validateRemoteSource } from "./generate";
 import * as infraCommon from "./infra_common";
 
+const DEFINITION_YAML = "definition.yaml";
+
 interface ICommandOptions {
   [key: string]: string;
 }
@@ -75,7 +77,7 @@ export const execute = async (
         path.join(sourcePath, opts.template, "variables.tf")
       );
       await scaffold(opts.name, opts.source, opts.version, opts.template);
-      removeTemplateFiles(opts.name);
+      await removeTemplateFiles(opts.name);
       exitFn(0);
     } catch (err) {
       logger.error("Error occurred while generating scaffold");
@@ -130,7 +132,7 @@ export const validateVariablesTf = async (
       return false;
     }
     logger.info(
-      `Terraform variables.tf file found. Attempting to generate definition.yaml file.`
+      `Terraform variables.tf file found. Attempting to generate ${DEFINITION_YAML} file.`
     );
   } catch (_) {
     logger.error(`Unable to validate Terraform variables.tf.`);
@@ -226,18 +228,18 @@ export const copyTfTemplate = async (
  *
  * @param envPath path so the directory of Terraform templates
  */
-export const removeTemplateFiles = (envPath: string) => {
+export const removeTemplateFiles = async (envPath: string) => {
   // Remove template files after parsing
-  fs.readdir(envPath, (err, files) => {
-    if (err) {
-      throw err;
-    }
-    for (const file of files) {
-      if (file !== "definition.yaml") {
-        fs.unlinkSync(path.join(envPath, file));
-      }
-    }
-  });
+  try {
+    const files = await fs.readdirSync(envPath);
+    files
+      .filter(f => f !== DEFINITION_YAML)
+      .forEach(f => {
+        fs.unlinkSync(path.join(envPath, f));
+      });
+  } catch (e) {
+    logger.error(`cannot read ${envPath}`);
+  }
 };
 
 /**
@@ -390,15 +392,12 @@ export const scaffold = async (
         );
         const definitionYaml = yaml.safeDump(baseDef);
         if (baseDef) {
-          fs.mkdir(name, (e: any) => {
-            const confPath: string = path.format({
-              base: "definition.yaml",
-              dir: name,
-              root: "/ignored"
-            });
-            fs.writeFileSync(confPath, definitionYaml, "utf8");
-            return true;
+          const confPath: string = path.format({
+            base: DEFINITION_YAML,
+            dir: name,
+            root: "/ignored"
           });
+          fs.writeFileSync(confPath, definitionYaml, "utf8");
         } else {
           logger.error(`Unable to generate cluster definition.`);
         }
