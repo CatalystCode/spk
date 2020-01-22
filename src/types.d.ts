@@ -140,7 +140,9 @@ export interface IVariableGroupData {
   name: string;
   description: string;
   type: string;
-  variables: IVariableGroupDataVariable[];
+  variables: {
+    [key: string]: AzureKeyVaultVariableValue;
+  };
   key_vault_provider?: {
     name: string;
     service_endpoint: IServiceEndpointData;

@@ -16,14 +16,13 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { IVariableGroupData } from "../../types";
+import { IVariableGroupData, IVariableGroupDataVariable } from "../../types";
 import {
   addVariableGroup,
   addVariableGroupWithKeyVaultMap,
   authorizeAccessToAllPipelines,
   buildVariablesMap,
   doAddVariableGroup,
-  IVariablesMap,
   TaskApi
 } from "./variableGroup";
 
@@ -406,96 +405,85 @@ describe("authorizeAccessToAllPipelines", () => {
 
 describe("buildVariablesMap", () => {
   test("should create variable map with two variables", async () => {
-    const var1: IVariablesMap = {
+    const variables: IVariableGroupDataVariable = {
       var1: {
         isSecret: false,
         value: "val1"
-      }
-    };
-    const var2: IVariablesMap = {
+      },
       var2: {
         isSecret: true,
         value: "val2"
       }
     };
 
-    const variables: IVariablesMap[] = [];
-    variables.push(var1);
-    variables.push(var2);
-
-    let map: IVariablesMap | undefined;
-    const expectedMap: any = `{"0":{"var1":{"isSecret":false,"value":"val1"}},"1":{"var2":{"isSecret":true,"value":"val2"}}}`;
+    let map: IVariableGroupDataVariable | undefined;
+    //     const expectedMap = `{{"var1":{"isSecret":false,"value":"val1"}},"1":{"var2":{"isSecret":true,"value":"val2"}}}`;
+    const expectedMap =
+      '{"var1":{"isSecret":false,"value":"val1"},"var2":{"isSecret":true,"value":"val2"}}';
     map = await buildVariablesMap(variables);
     expect(JSON.stringify(map)).toEqual(expectedMap);
     logger.info(`map: ${JSON.stringify(map)}`);
   });
 
   test("should create variable map with one variable", async () => {
-    const var1: IVariablesMap = {
+    const variables: IVariableGroupDataVariable = {
       var1: {
         isSecret: false,
         value: "val1"
       }
     };
 
-    const variables: IVariablesMap[] = [];
-    variables.push(var1);
-
-    let map: IVariablesMap | undefined;
-    const expectedMap: any = `{"0":{"var1":{"isSecret":false,"value":"val1"}}}`;
+    let map: IVariableGroupDataVariable | undefined;
+    // const expectedMap: any = `{"0":{"var1":{"isSecret":false,"value":"val1"}}}`;
+    const expectedMap = '{"var1":{"isSecret":false,"value":"val1"}}';
     map = await buildVariablesMap(variables);
     expect(JSON.stringify(map)).toEqual(expectedMap);
   });
 
   test("should create empty variable map with no variables", async () => {
-    const variables: IVariablesMap[] = [];
-    let map: IVariablesMap | undefined;
-    const expectedMap: any = `{}`;
+    const variables: IVariableGroupDataVariable = {};
+    let map: IVariableGroupDataVariable | undefined;
+    const expectedMap = `{}`;
     map = await buildVariablesMap(variables);
     expect(JSON.stringify(map)).toEqual(expectedMap);
   });
 
   test("should create variable map with two secrets", async () => {
-    const var1: IVariablesMap = {
+    const variables: IVariableGroupDataVariable = {
       secret1: {
         enabled: false
-      }
-    };
-    const var2: IVariablesMap = {
+      },
       secret2: {
         enabled: true
       }
     };
 
-    const variables: IVariablesMap[] = [];
-    variables.push(var1);
-    variables.push(var2);
-
-    let secretsMap: IVariablesMap | undefined;
-    const expectedMap: any = `{"0":{"secret1":{"enabled":false}},"1":{"secret2":{"enabled":true}}}`;
+    let secretsMap: IVariableGroupDataVariable | undefined;
+    // const expectedMap = `{{"secret1":{"enabled":false}},"1":{"secret2":{"enabled":true}}}`;
+    const expectedMap =
+      '{"secret1":{"enabled":false},"secret2":{"enabled":true}}';
     secretsMap = await buildVariablesMap(variables);
     expect(JSON.stringify(secretsMap)).toEqual(expectedMap);
   });
 
   test("should create variable map with one secret", async () => {
-    const var1: IVariablesMap = {
+    const variables: IVariableGroupDataVariable = {
       secret1: {
         enabled: true
       }
     };
 
-    const variables: IVariablesMap[] = [];
-    variables.push(var1);
-    let secretsMap: IVariablesMap | undefined;
-    const expectedMap: any = `{"0":{"secret1":{"enabled":true}}}`;
+    let secretsMap: IVariableGroupDataVariable | undefined;
+    // const expectedMap: any = `{{"secret1":{"enabled":true}}}`;
+    const expectedMap = '{"secret1":{"enabled":true}}';
     secretsMap = await buildVariablesMap(variables);
     expect(JSON.stringify(secretsMap)).toEqual(expectedMap);
   });
 
   test("should create empty variable map with no secrets", async () => {
-    const variables: IVariablesMap[] = [];
-    let secretsMap: IVariablesMap | undefined;
-    const expectedMap: any = `{}`;
+    const variables: IVariableGroupDataVariable = {};
+    let secretsMap: IVariableGroupDataVariable | undefined;
+    const expectedMap = `{}`;
     secretsMap = await buildVariablesMap(variables);
     expect(JSON.stringify(secretsMap)).toEqual(expectedMap);
   });

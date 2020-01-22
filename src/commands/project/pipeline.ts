@@ -1,8 +1,5 @@
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
-import {
-  BuildDefinition,
-  BuildDefinitionVariable
-} from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { BuildDefinition } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
@@ -18,7 +15,7 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
-import { isBedrockFileExists } from "./index";
+import { isBedrockFileExists } from "././create-variable-group";
 
 export const deployLifecyclePipelineCommandDecorator = (
   command: commander.Command
@@ -232,11 +229,6 @@ export const installLifecyclePipeline = async (
     pipelineName,
     repositoryName,
     repositoryUrl,
-    variables: requiredPipelineVariables(
-      personalAccessToken,
-      buildScriptUrl,
-      hldRepoUrl
-    ),
     yamlFileBranch: "master",
     yamlFilePath: "hld-lifecycle.yaml"
   });
@@ -274,35 +266,4 @@ export const installLifecyclePipeline = async (
     logger.error(err);
     return exitFn(1);
   }
-};
-
-/**
- * Builds and returns variables required for the lifecycle pipeline.
- * @param accessToken Access token with access to the HLD repository.
- * @param buildScriptUrl Build Script URL
- * @param hldRepoUrl to the HLD repository.
- * @returns Object containing the necessary run-time variables for the lifecycle pipeline.
- */
-export const requiredPipelineVariables = (
-  accessToken: string,
-  buildScriptUrl: string,
-  hldRepoUrl: string
-): { [key: string]: BuildDefinitionVariable } => {
-  return {
-    BUILD_SCRIPT_URL: {
-      allowOverride: true,
-      isSecret: false,
-      value: buildScriptUrl
-    },
-    HLD_REPO: {
-      allowOverride: true,
-      isSecret: false,
-      value: hldRepoUrl
-    },
-    PAT: {
-      allowOverride: true,
-      isSecret: true,
-      value: accessToken
-    }
-  };
 };
