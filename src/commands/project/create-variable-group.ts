@@ -83,10 +83,10 @@ export const execute = async (
         servicePrincipalId,
         servicePrincipalPassword,
         tenant,
-        hldRepoUrl = azure_devops && azure_devops.hld_repository,
-        orgName = azure_devops && azure_devops.org,
-        personalAccessToken = azure_devops && azure_devops.access_token,
-        project = azure_devops && azure_devops.project
+        hldRepoUrl = azure_devops?.hld_repository,
+        orgName = azure_devops?.org,
+        personalAccessToken = azure_devops?.access_token,
+        project = azure_devops?.project
       } = opts;
 
       const accessOpts: IAzureDevOpsOpts = {
