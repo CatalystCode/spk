@@ -16,6 +16,7 @@ import {
 // State
 ////////////////////////////////////////////////////////////////////////////////
 let spkConfig: IConfigYaml = {}; // DANGEROUS! this var is globally retrievable and mutable via Config()
+let hasWarnedAboutUninitializedConfig = false; // has emitted an initialization warning if global config does not exist
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +89,7 @@ const getKeyVaultSecret = async (
   }
 
   if (keyVaultKey === undefined) {
-    keyVaultKey = await ((spkConfig.introspection || {}).azure || {}).key;
+    keyVaultKey = await spkConfig.introspection?.azure?.key;
   }
 
   return keyVaultKey;
@@ -106,14 +107,20 @@ export const Config = (): IConfigYaml => {
     try {
       loadConfiguration();
     } catch (err) {
-      logger.warn(err);
+      logger.verbose(err);
+      if (!hasWarnedAboutUninitializedConfig) {
+        logger.warn(
+          `Error loading SPK configuration file; run \`spk init\` to initialize your global configuration or ensure you have passed all required parameters to the called function.`
+        );
+        hasWarnedAboutUninitializedConfig = true;
+      }
     }
   }
 
   const introspectionAzure = {
-    ...(spkConfig.introspection || {}).azure,
+    ...spkConfig.introspection?.azure,
     get key() {
-      const { account_name } = (spkConfig.introspection || {}).azure || {};
+      const account_name = spkConfig.introspection?.azure?.account_name;
       return getKeyVaultSecret(spkConfig.key_vault_name, account_name);
     }
   };
@@ -263,7 +270,7 @@ export const loadConfiguration = (filepath: string = defaultConfigFile()) => {
     const data = readYaml<IConfigYaml>(filepath);
     spkConfig = loadConfigurationFromLocalEnv(data || {});
   } catch (err) {
-    logger.error(`An error occurred while loading configuration\n ${err}`);
+    logger.verbose(`An error occurred while loading configuration\n ${err}`);
     throw err;
   }
 };

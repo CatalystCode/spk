@@ -1,4 +1,3 @@
-// imports
 import fs from "fs";
 import yaml from "js-yaml";
 import mockFs from "mock-fs";
@@ -12,13 +11,11 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import {
-  createTestBedrockYaml,
-  createTestHldLifecyclePipelineYaml
-} from "../../test/mockFactory";
-import { IAzurePipelinesYaml, IBedrockFile } from "../../types";
+import { createTestBedrockYaml } from "../../test/mockFactory";
+import { IBedrockFile } from "../../types";
 import {
   create,
+  execute,
   isBedrockFileExists,
   setVariableGroupInBedrockFile,
   updateLifeCyclePipeline,
@@ -41,7 +38,7 @@ const registryName = uuid();
 const variableGroupName = uuid();
 const hldRepoUrl = uuid();
 const servicePrincipalId = uuid();
-const servicePrincipalPassword = uuid();
+const servicePrincipalPassword: string = uuid();
 const tenant = uuid();
 
 const orgName = uuid();
@@ -58,8 +55,7 @@ describe("validateRequiredArguments", () => {
   test("Should fail when all required arguments specified with empty values", async () => {
     const opts: IAzureDevOpsOpts = {};
 
-    const errors: string[] = await validateRequiredArguments(
-      "",
+    const errors: string[] = validateRequiredArguments(
       "",
       "",
       "",
@@ -68,13 +64,12 @@ describe("validateRequiredArguments", () => {
       opts
     );
     logger.info(`length: ${errors.length}`);
-    expect(errors.length).toBe(9);
+    expect(errors.length).toBe(8);
   });
 
   test("Should fail when all required arguments are not specified", async () => {
     const opts: IAzureDevOpsOpts = {};
-    const errors: string[] = await validateRequiredArguments(
-      undefined,
+    const errors: string[] = validateRequiredArguments(
       undefined,
       undefined,
       undefined,
@@ -83,26 +78,11 @@ describe("validateRequiredArguments", () => {
       opts
     );
     logger.info(`length: ${errors.length}`);
-    expect(errors.length).toBe(9);
-  });
-
-  test("Should fail when variableGroupName  argument is not specified", async () => {
-    const errors: string[] = await validateRequiredArguments(
-      undefined,
-      registryName,
-      hldRepoUrl,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-      accessopts
-    );
-    logger.info(`length: ${errors.length}`);
-    expect(errors.length).toBe(1);
+    expect(errors.length).toBe(8);
   });
 
   test("Should fail when registryName argument is not specified", async () => {
-    const errors: string[] = await validateRequiredArguments(
-      variableGroupName,
+    const errors: string[] = validateRequiredArguments(
       undefined,
       hldRepoUrl,
       servicePrincipalId,
@@ -115,8 +95,7 @@ describe("validateRequiredArguments", () => {
   });
 
   test("Should fail when hldRepoUrl argument is not specified", async () => {
-    const errors: string[] = await validateRequiredArguments(
-      variableGroupName,
+    const errors: string[] = validateRequiredArguments(
       registryName,
       undefined,
       servicePrincipalId,
@@ -129,8 +108,7 @@ describe("validateRequiredArguments", () => {
   });
 
   test("Should fail when servicePrincipalId argument is not specified", async () => {
-    const errors: string[] = await validateRequiredArguments(
-      variableGroupName,
+    const errors: string[] = validateRequiredArguments(
       registryName,
       hldRepoUrl,
       undefined,
@@ -143,8 +121,7 @@ describe("validateRequiredArguments", () => {
   });
 
   test("Should fail when servicePrincipalPassword argument is not specified", async () => {
-    const errors: string[] = await validateRequiredArguments(
-      variableGroupName,
+    const errors: string[] = validateRequiredArguments(
       registryName,
       hldRepoUrl,
       servicePrincipalId,
@@ -157,8 +134,7 @@ describe("validateRequiredArguments", () => {
   });
 
   test("Should fail when tenant argument is not specified", async () => {
-    const errors: string[] = await validateRequiredArguments(
-      variableGroupName,
+    const errors: string[] = validateRequiredArguments(
       registryName,
       hldRepoUrl,
       servicePrincipalId,
@@ -168,6 +144,45 @@ describe("validateRequiredArguments", () => {
     );
     logger.info(`length: ${errors.length}`);
     expect(errors.length).toBe(1);
+  });
+});
+
+describe("test execute function", () => {
+  it("missing variable name", async () => {
+    const exitFn = jest.fn();
+    await execute(
+      "",
+      {
+        hldRepoUrl,
+        orgName,
+        personalAccessToken,
+        project,
+        registryName,
+        servicePrincipalId,
+        servicePrincipalPassword,
+        tenant
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
+  });
+  it("missing registry name", async () => {
+    const exitFn = jest.fn();
+    await execute(
+      variableGroupName,
+      {
+        hldRepoUrl,
+        orgName,
+        personalAccessToken,
+        project,
+        registryName: undefined,
+        servicePrincipalId,
+        servicePrincipalPassword,
+        tenant
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
   });
 });
 
