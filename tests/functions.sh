@@ -208,6 +208,25 @@ function storage_account_table_exists () {
         if [ "$action" == "create" ]; then
             echo "Create table $t"
             az storage table create -n $t --account-name $sa_name
+            total_wait_seconds=20
+            start=0
+            wait_seconds=5
+            while [ $start -lt $total_wait_seconds ]; do
+                sat_result=$(az storage table exists -n $t --account-name $sa_name)
+                sat_exists=$(echo $sat_result | jq '.exists | . == true')
+                if [ "$sat_exists" = "true"  ]; then
+                    echo "The table '$t' was created"
+                    break
+                fi
+                echo "Wait $wait_seconds seconds..."
+                sleep $wait_seconds
+                az storage table create -n $t --account-name $sa_name
+                start=$((start + wait_seconds))
+            done
+            if [ "$sat_exists" != "true" ]; then
+                echo "The table '$t' could not be created"
+                exit 1
+            fi
         fi
     fi
 }
