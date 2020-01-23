@@ -45,6 +45,7 @@ steps:
     ARM_TENANT_ID: $(ARM_TENANT_ID)
     ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
   displayName: 'SPK'
+  timeoutInMinutes: 10
 
 - script: |
     wget https://releases.hashicorp.com/terraform/$(tf_version)/terraform_$(tf_version)_linux_amd64.zip -q
@@ -52,6 +53,7 @@ steps:
     sudo mv terraform /usr/local/bin
     terraform -version
   displayName: 'Install Terraform'
+  timeoutInMinutes: 5
 
 - script: |
     . build.sh --source-only
@@ -59,6 +61,7 @@ steps:
     cd $PROJECT_DIRECTORY-generated/$CLUSTER
     terraform init -backend-config=./backend.tfvars
   displayName: 'Terraform init'
+  timeoutInMinutes: 10
 
 - script: |
     . build.sh --source-only
@@ -71,6 +74,7 @@ steps:
     ARM_TENANT_ID: $(ARM_TENANT_ID)
     ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
   displayName: 'Terraform plan'
+  timeoutInMinutes: 10
 
 - script: |
     # Retrieve most recent commit hash from HLD repo
@@ -139,3 +143,4 @@ steps:
   env:
     ACCESS_TOKEN_SECRET: $(ACCESS_TOKEN_SECRET)
   displayName: 'Commit and Push to Generated Repository'
+  timeoutInMinutes: 15
