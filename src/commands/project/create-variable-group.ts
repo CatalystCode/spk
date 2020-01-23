@@ -71,7 +71,7 @@ export const validateRequiredArguments = (
 export const execute = async (
   variableGroupName: string,
   opts: ICommandOptions,
-  exitFn: (status: number) => void
+  exitFn: (status: number) => Promise<void>
 ) => {
   if (!hasValue(variableGroupName)) {
     exitFn(1);
@@ -108,7 +108,7 @@ export const execute = async (
       );
 
       if (errors.length !== 0) {
-        exitFn(1);
+        await exitFn(1);
       } else {
         const variableGroup = await create(
           variableGroupName,
