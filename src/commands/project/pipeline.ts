@@ -166,7 +166,7 @@ export const isValidConfig = (
   }
   if (typeof buildScriptUrl !== "string") {
     missingConfig.push(
-      `--build-script must be of type 'string', ${typeof buildScriptUrl} given.`
+      `--build-script-url must be of type 'string', ${typeof buildScriptUrl} given.`
     );
   }
 
