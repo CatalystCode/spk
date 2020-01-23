@@ -54,12 +54,6 @@ steps:
   displayName: 'Install Terraform'
 
 - script: |
-    sudo add-apt-repository ppa:cpick/hub
-    sudo apt-get update
-    sudo apt-get install hub
-  displayName: 'Install Hub'
-
-- script: |
     . build.sh --source-only
     init
     cd $PROJECT_DIRECTORY-generated/$CLUSTER
@@ -123,17 +117,25 @@ steps:
     git push "https://$ACCESS_TOKEN_SECRET@$repo_url" $PR_BRANCH_NAME
 
     # Create PR
-    # If using GitHub repos...
+    # If using GitHub repos:
     echo "CREATE PULL REQUEST"
-    export GITHUB_TOKEN=$ACCESS_TOKEN_SECRET
-    hub pull-request -m "Adding Generated Components for $PROJECT_DIRECTORY/$CLUSTER"
-
-    # If using AzDo repos (comment above, and uncomment below)
+    if [[ $GENERATED_REPO == *"github"* ]]; then
+      echo "Installing Hub"
+      sudo add-apt-repository ppa:cpick/hub
+      sudo apt-get update
+      sudo apt-get install hub
+      export GITHUB_TOKEN=$ACCESS_TOKEN_SECRET
+      hub pull-request -m "Adding Generated Components for $PROJECT_DIRECTORY/$CLUSTER"
+    elif [[ $GENERATED_REPO == *"azure"* ]]; then
+    # If using AzDo repos:
     # You will need to specify variables $AZDO_ORG_NAME and $AZDO_PROJECT_NAME
-    #export AZURE_DEVOPS_EXT_PAT=$ACCESS_TOKEN_SECRET
-    #az devops configure --defaults organization=$AZDO_ORG_NAME project=$AZDO_PROJECT_NAME
-    #echo "Making pull request for $PR_BRANCH_NAME against master"
-    #az repos pr create --description "Automated PR for $PR_BRANCH_NAME against master"
+      export AZURE_DEVOPS_EXT_PAT=$ACCESS_TOKEN_SECRET
+      az devops configure --defaults organization=$AZDO_ORG_NAME project=$AZDO_PROJECT_NAME
+      echo "Making pull request for $PR_BRANCH_NAME against master"
+      az repos pr create --description "Automated PR for $PR_BRANCH_NAME against master"
+    else
+      echo "Unable to create pull request."
+    fi
   env:
     ACCESS_TOKEN_SECRET: $(ACCESS_TOKEN_SECRET)
   displayName: 'Commit and Push to Generated Repository'
