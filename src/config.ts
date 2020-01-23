@@ -5,12 +5,18 @@ import * as os from "os";
 import path from "path";
 import { getSecret } from "./lib/azure/keyvault";
 import { logger } from "./logger";
-import { IBedrockFile, IConfigYaml, IMaintainersFile } from "./types";
+import {
+  IAzurePipelinesYaml,
+  IBedrockFile,
+  IConfigYaml,
+  IMaintainersFile
+} from "./types";
 
 ////////////////////////////////////////////////////////////////////////////////
 // State
 ////////////////////////////////////////////////////////////////////////////////
 let spkConfig: IConfigYaml = {}; // DANGEROUS! this var is globally retrievable and mutable via Config()
+let hasWarnedAboutUninitializedConfig = false; // has emitted an initialization warning if global config does not exist
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +89,7 @@ const getKeyVaultSecret = async (
   }
 
   if (keyVaultKey === undefined) {
-    keyVaultKey = await ((spkConfig.introspection || {}).azure || {}).key;
+    keyVaultKey = await spkConfig.introspection?.azure?.key;
   }
 
   return keyVaultKey;
@@ -101,14 +107,20 @@ export const Config = (): IConfigYaml => {
     try {
       loadConfiguration();
     } catch (err) {
-      logger.warn(err);
+      logger.verbose(err);
+      if (!hasWarnedAboutUninitializedConfig) {
+        logger.warn(
+          `Error loading SPK configuration file; run \`spk init\` to initialize your global configuration or ensure you have passed all required parameters to the called function.`
+        );
+        hasWarnedAboutUninitializedConfig = true;
+      }
     }
   }
 
   const introspectionAzure = {
-    ...(spkConfig.introspection || {}).azure,
+    ...spkConfig.introspection?.azure,
     get key() {
-      const { account_name } = (spkConfig.introspection || {}).azure || {};
+      const account_name = spkConfig.introspection?.azure?.account_name;
       return getKeyVaultSecret(spkConfig.key_vault_name, account_name);
     }
   };
@@ -204,19 +216,27 @@ export const MaintainersAsync = (fileDirectory: string = process.cwd()) =>
  * @param file config file object to serialize and write out
  */
 export const write = (
-  file: IBedrockFile | IMaintainersFile,
-  targetDirectory = process.cwd()
+  file: IBedrockFile | IMaintainersFile | IAzurePipelinesYaml,
+  targetDirectory = process.cwd(),
+  fileName?: string
 ) => {
   const asYaml = yaml.safeDump(file, { lineWidth: Number.MAX_SAFE_INTEGER });
   if ("rings" in file) {
     // Is bedrock.yaml
     return fs.writeFileSync(path.join(targetDirectory, "bedrock.yaml"), asYaml);
-  } else {
+  } else if ("services" in file) {
     // Is maintainers file
     return fs.writeFileSync(
       path.join(targetDirectory, "maintainers.yaml"),
       asYaml
     );
+  } else {
+    // Is azure pipelines yaml file
+    if (typeof fileName === "undefined") {
+      throw new Error(`Pipeline yaml file name is undefined`);
+    }
+
+    return fs.writeFileSync(path.join(targetDirectory, fileName), asYaml);
   }
 };
 
@@ -250,7 +270,7 @@ export const loadConfiguration = (filepath: string = defaultConfigFile()) => {
     const data = readYaml<IConfigYaml>(filepath);
     spkConfig = loadConfigurationFromLocalEnv(data || {});
   } catch (err) {
-    logger.error(`An error occurred while loading configuration\n ${err}`);
+    logger.verbose(`An error occurred while loading configuration\n ${err}`);
     throw err;
   }
 };

@@ -19,6 +19,11 @@ tests.
 - This file orchestrates infrastructure scenarios and is designed to fail on
   first error.
 
+`introspection-validations.sh`
+
+- This file orchestrates the service introspection scenarios and is designed to
+  fail on first error.
+
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
@@ -75,7 +80,7 @@ tests.
 | Command                  | Coverage |
 | ------------------------ | -------- |
 | spk deployment get       | 🚫       |
-| spk deployment onboard   | 🚫       |
+| spk deployment onboard   | ✅       |
 | spk deployment validate  | 🚫       |
 | spk deployment dashboard | 🚫       |
 | spk deployment create    | 🚫       |
@@ -102,6 +107,8 @@ If you wish to run these tests locally, skip ahead to
    - AZDO_ORG (e.g. `epicstuff`)
    - AZDO_PAT (e.g. Personal Access Token with **read/write/manage** access to
      AZDO_PROJECT) <-- 🔒
+   - AZ_RESOURCE_GROUP - The name of an Azure resource group (for
+     `introspection-validations.sh`)
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
    - SP_TENANT (e.g Service Principal Tenant Id)
@@ -141,7 +148,10 @@ When testing locally you don't need to do the above set up since there is no
 pipeline. Instead run these steps:
 
 1. Login into AZ CLI
-2. Install Azure DevOps Extension
+2. Install Azure DevOps Extension (make sure you have version >= 0.17.0 installed) 
+   ```
+   az extension add --name azure-devops
+   ```
 3. Set the following environment variables
    <pre>
    export SPK_LOCATION=<b>REPLACE_ME</b>
@@ -153,7 +163,9 @@ pipeline. Instead run these steps:
    export SP_PASS=<b>REPLACE_ME</b>
    export SP_APP_ID=<b>REPLACE_ME</b>
    export SP_TENANT=<b>REPLACE_ME</b>
+   export AZ_SUBSCRIPTION_ID=<b>REPLACE_ME</b>
    </pre>
 4. Navigate to this directory in shell
 5. RUN --> `$ sh validations.sh`
 6. RUN --> `$ sh infra-validations.sh`
+7. RUN --> `$ sh introspection-validations.sh`
