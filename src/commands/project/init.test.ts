@@ -1,3 +1,4 @@
+import uuid from "uuid/v4";
 import { Bedrock, Maintainers, write } from "../../config";
 import { createTempDir, getMissingFilenames } from "../../lib/ioUtil";
 import { IBedrockFile, IMaintainersFile } from "../../types";
@@ -30,7 +31,7 @@ describe("Initializing a blank/new bedrock repository", () => {
 
   test("defaultRings gets injected successfully", async () => {
     const randomTmpDir = createTempDir();
-    const ringName = "testbranch";
+    const ringName = uuid();
     await initialize(randomTmpDir, { defaultRing: ringName });
     const bedrock = Bedrock(randomTmpDir);
     expect(Object.keys(bedrock.rings).includes(ringName)).toBe(true);
