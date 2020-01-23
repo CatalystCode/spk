@@ -48,25 +48,34 @@ interface ITraefikIngressRoute {
  *
  * @param serviceName name of the service to create the IngressRoute for
  * @param ringName name of the ring to which the service belongs
- * @param opts options to specify the manifest namespace and IngressRoute entryPoints
+ * @param opts options to specify the manifest namespace, IngressRoute entryPoints, pathPrefix, backend service, and version
  */
 export const TraefikIngressRoute = (
   serviceName: string,
   ringName: string,
   servicePort: number,
   opts?: {
+    backend?: string;
+    entryPoints?: TraefikEntryPoints;
     middlewares?: string[];
     namespace?: string;
-    entryPoints?: TraefikEntryPoints;
+    pathPrefix?: string;
+    version?: string;
   }
 ): ITraefikIngressRoute => {
-  const { entryPoints, middlewares = [], namespace } = opts ?? {};
+  const { backend, entryPoints, middlewares = [], namespace, pathPrefix, version } = opts ?? {};
   const name = !!ringName ? `${serviceName}-${ringName}` : serviceName;
-  const routeMatchPathPrefix = `PathPrefix(\`/${serviceName}\`)`;
+
+  const versionPath = version ? `/${version}` : "";
+  const path = pathPrefix ? pathPrefix : serviceName;
+
+  const routeMatchPathPrefix = `PathPrefix(\`${versionPath}/${path}\`)`;
   const routeMatchHeaders = ringName && `Headers(\`Ring\`, \`${ringName}\`)`; // no 'X-' prefix for header: https://tools.ietf.org/html/rfc6648
   const routeMatch = [routeMatchPathPrefix, routeMatchHeaders]
     .filter(matchRule => !!matchRule)
     .join(" && ");
+
+  const backendService = backend ? backend : name;
 
   return {
     apiVersion: "traefik.containo.us/v1alpha1",
@@ -86,7 +95,7 @@ export const TraefikIngressRoute = (
           })),
           services: [
             {
-              name,
+              name: backendService,
               port: servicePort
             }
           ]
