@@ -24,7 +24,7 @@ echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 echo "ACR_NAME: $ACR_NAME"
 echo "ACCESS_TOKEN_SECRET: $ACCESS_TOKEN_SECRET" ## DEBUG
-echo "ARM_SUBSCRIPTION_ID: 7060bca0-7a3c-44bd-b54c-4bb1e9facfac"## Debug
+echo "ARM_SUBSCRIPTION_ID:"## Debug
 
 
 terraform_template_dir=discovery-tf-template
@@ -163,7 +163,7 @@ git push origin "$infra_hld_version"
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
 # Create variable group
-az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url" "PROJECT_DIRECTORY=$infra_hld_dir" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=7060bca0-7a3c-44bd-b54c-4bb1e9facfac"
+az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url" "PROJECT_DIRECTORY=$infra_hld_dir" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=Redacted"
 
 #spk project create-variable-group $vg_name -r $ACR_NAME -d $repo_url -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS --org-name $AZDO_ORG --project $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET  >> $TEST_WORKSPACE/log.txt
 
