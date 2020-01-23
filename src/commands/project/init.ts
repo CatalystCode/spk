@@ -27,7 +27,7 @@ export const execute = async (
   const projectPath = process.cwd();
 
   try {
-    const _ = Bedrock(); // TOFIX: Is this to check of Bedrock config exist?
+    const _ = Bedrock(); // TOFIX: Is this to check if Bedrock config exist?
   } catch (err) {
     logger.info(err);
   }
