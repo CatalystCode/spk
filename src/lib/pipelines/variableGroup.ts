@@ -253,15 +253,23 @@ export const authorizeAccessToAllPipelines = async (
 };
 
 /**
+ * Key/value interface for variables
+ *
+ */
+export interface IVariablesMap {
+  [key: string]: AzureKeyVaultVariableValue;
+}
+
+/**
  * Creates `IVariablesMap` object from variables key/value pairs
  *
  * @param variableGroup The Variable group object
  * @returns `IVariablesMap[]` with Varibale Group variables
  */
 export const buildVariablesMap = async (
-  variables: IVariableGroupDataVariable
-): Promise<IVariableGroupDataVariable> => {
-  const variablesMap: IVariableGroupDataVariable = {};
+  variables: IVariablesMap[]
+): Promise<IVariablesMap> => {
+  const variablesMap: IVariablesMap = {};
   logger.debug(`variables: ${JSON.stringify(variables)}`);
 
   for (const [key, value] of Object.entries(variables)) {
