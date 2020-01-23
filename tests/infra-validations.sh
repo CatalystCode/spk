@@ -116,3 +116,6 @@ validate_directory "$generated_directory" "${file_we_expect[@]}"
 # Confirm contents of the spk.tfvars file are correct
 validate_file "$generated_directory/spk.tfvars" 'rg_name = "<insert value>"'
 validate_file "$generated_directory/backend.tfvars" 'storage_account_name = "<storage account name>"'
+
+
+echo "Successfully reached the end of the infrastructure validations script."
