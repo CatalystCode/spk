@@ -1,6 +1,8 @@
 import commander from "commander";
+import { logger } from "../logger";
 import {
   build,
+  exit as exitCmd,
   ICommandBuildElements,
   validateForRequiredValues
 } from "./commandBuilder";
@@ -99,5 +101,14 @@ describe("Tests Command Builder's validation function", () => {
     // Option-C is not ok because value is missing
     expect(errors.length).toBe(1);
     expect(errors[0]).toBe("-c --option-c <optionC>");
+  });
+});
+
+describe("Tests Command Builder's exit function", () => {
+  it("calling exit function", () => {
+    jest.spyOn(logger, "info");
+    exitCmd(logger).then(() => {
+      expect(logger.info).toBeCalledTimes(1);
+    });
   });
 });

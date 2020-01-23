@@ -5,6 +5,7 @@ import { echo } from "shelljs";
 import { Bedrock, Config, write } from "../../config";
 import {
   build as buildCmd,
+  exit as exitCmd,
   validateForRequiredValues
 } from "../../lib/commandBuilder";
 import { IAzureDevOpsOpts } from "../../lib/git";
@@ -129,12 +130,12 @@ export const execute = async (
         logger.info(
           "Successfully created a variable group in Azure DevOps project!"
         );
-        exitFn(0);
+        await exitFn(0);
       }
     } catch (err) {
       logger.error(`Error occurred while creating variable group`);
       logger.error(err);
-      exitFn(1);
+      await exitFn(1);
     }
   }
 };
@@ -147,7 +148,10 @@ export const execute = async (
 export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(
     async (variableGroupName: string, opts: ICommandOptions) => {
-      await execute(variableGroupName, opts, process.exit);
+      await execute(variableGroupName, opts, async (status: number) => {
+        await exitCmd(logger);
+        process.exit(status);
+      });
     }
   );
 };

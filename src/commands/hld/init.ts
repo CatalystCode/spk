@@ -1,6 +1,6 @@
 import commander from "commander";
 
-import { build as buildCmd } from "../../lib/commandBuilder";
+import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   generateDefaultHldComponentYaml,
   generateGitIgnoreFile,
@@ -19,20 +19,20 @@ interface ICommandOptions {
 export const execute = async (
   projectPath: string,
   gitPush: boolean,
-  exitFn: (status: number) => void
+  exitFn: (status: number) => Promise<void>
 ) => {
   try {
     if (!hasValue(projectPath)) {
       throw new Error("project path is not provided");
     }
     await initialize(projectPath, gitPush);
-    exitFn(0);
+    await exitFn(0);
   } catch (err) {
     logger.error(
       `Error occurred while initializing hld repository ${projectPath}`
     );
     logger.error(err);
-    exitFn(1);
+    await exitFn(1);
   }
 };
 
@@ -41,7 +41,10 @@ export const commandDecorator = (command: commander.Command): void => {
     const projectPath = process.cwd();
     // gitPush will is always true or false. It shall not be
     // undefined because default value is set in the commander decorator
-    await execute(projectPath, opts.gitPush, process.exit);
+    await execute(projectPath, opts.gitPush, async (status: number) => {
+      await exitCmd(logger);
+      process.exit(status);
+    });
   });
 };
 

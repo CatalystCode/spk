@@ -1,4 +1,5 @@
 import commander from "commander";
+import { Logger } from "winston";
 import { logger } from "../logger";
 import { hasValue } from "./validator";
 
@@ -100,4 +101,18 @@ export const validateForRequiredValues = (
     logger.error(`the following arguments are required: ${errors.join("\n ")}`);
   }
   return errors;
+};
+
+/**
+ * Flushs the log, ready to exit the command.
+ * In future there may be other housekeeper tasks.
+ *
+ * @param log Logger instance
+ */
+export const exit = (log: Logger): Promise<void> => {
+  return new Promise(resolve => {
+    log.info("", null, () => {
+      resolve();
+    });
+  });
 };
