@@ -383,7 +383,7 @@ describe("authorizeAccessToAllPipelines", () => {
     try {
       authorized = await authorizeAccessToAllPipelines(variableGroup);
     } catch (err) {
-      logger.info(err);
+      logger.error(err);
     }
     expect(authorized).toBeUndefined();
   });
