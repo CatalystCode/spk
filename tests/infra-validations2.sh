@@ -15,6 +15,7 @@ TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$SP_APP_ID" ] || { echo "Provide SP_APP_ID"; exit 1;}
 [ ! -z "$SP_PASS" ] || { echo "Provide SP_PASS"; exit 1;}
 [ ! -z "$SP_TENANT" ] || { echo "Provide SP_TENANT"; exit 1;}
+[ ! -z "$SP_SUBSCRIPTION_ID" ] || { echo "Provide SP_SUBSCRITION_ID"; exit 1;}
 AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_ORG"}"
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
@@ -24,15 +25,15 @@ echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 echo "ACR_NAME: $ACR_NAME"
 echo "ACCESS_TOKEN_SECRET: $ACCESS_TOKEN_SECRET" ## DEBUG
-echo "ARM_SUBSCRIPTION_ID: 7060bca0-7a3c-44bd-b54c-4bb1e9facfac"## Debug
+echo "ARM_SUBSCRIPTION_ID: $SP_SUBSCRIPTION_ID"## Debug
 
 
 terraform_template_dir=discovery-tf-template
 tf_template_version=v0.0.1
 infra_hld_version=v0.0.1
 infra_hld_dir=discovery-infra-hld
+infra_hld_project=discovery-service
 infra_region=west/
-services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
 vg_name='spk-infra-hld-vg'
 generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
 
@@ -105,22 +106,23 @@ pwd
 echo "../$terraform_template_dir"
 echo "$tf_template_version"
 echo "Source: $source" ##DEBUG
+mkdir $infra_hld_dir
+cd $infra_hld_dir
 
-spk infra scaffold -n $infra_hld_dir --source "$source" --version "$tf_template_version" --template "template" >> $TEST_WORKSPACE/log.txt
+spk infra scaffold -n $infra_hld_project --source "$source" --version "$tf_template_version" --template "template" >> $TEST_WORKSPACE/log.txt
 
 # Validate the definition in the Infra-HLD repo ------------------
 file_we_expect=("definition.yaml")
-validate_directory "$TEST_WORKSPACE/$infra_hld_dir" "${file_we_expect[@]}"
+validate_directory "$TEST_WORKSPACE/$infra_hld_dir/$infra_hld_project" "${file_we_expect[@]}"
 
 # Validate the contents of the definition.yaml
-validate_file "$TEST_WORKSPACE/$infra_hld_dir/definition.yaml" $validation_test_yaml >> $TEST_WORKSPACE/log.txt
+validate_file "$TEST_WORKSPACE/$infra_hld_dir/$infra_hld_project/definition.yaml" $validation_test_yaml >> $TEST_WORKSPACE/log.txt
 
 # Setup region deployment example within the Infra HLD Repo ------------------
-spk infra scaffold -n $infra_hld_dir/$infra_region --source "$source" --version "$tf_template_version" --template "template" >> $TEST_WORKSPACE/log.txt
+spk infra scaffold -n $infra_hld_project/$infra_region --source "$source" --version "$tf_template_version" --template "template" >> $TEST_WORKSPACE/log.txt
 
 
 # Create remote repo for Infra HLD ------------------
-cd $infra_hld_dir
 
 # Add pipeline yml fo generation verification
 echo "Copying generate pipeline validation yml to Infra HLD repo"
@@ -151,7 +153,7 @@ git tag "$infra_hld_version"
 
 # git remote rm origin
 infra_source=https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url 
-echo "Source: $source" ##DEBUG
+echo "Source: $infra_source" ##DEBUG
 git remote add origin "$infra_source"
 echo "git push"
 git push -u origin --all
@@ -163,9 +165,7 @@ git push origin "$infra_hld_version"
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
 # Create variable group
-az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url" "PROJECT_DIRECTORY=$infra_hld_dir" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=7060bca0-7a3c-44bd-b54c-4bb1e9facfac"
-
-#spk project create-variable-group $vg_name -r $ACR_NAME -d $repo_url -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS --org-name $AZDO_ORG --project $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET  >> $TEST_WORKSPACE/log.txt
+az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://infra_account:$ACCESS_TOKEN_SECRET@$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID"
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"

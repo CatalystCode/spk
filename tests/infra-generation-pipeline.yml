@@ -5,14 +5,35 @@ trigger:
 
 pool:
   vmImage: 'ubuntu-latest'
+  timeoutInMinutes: 10
 
 variables:
-  group: spk-infra-hld-vg
+- group: spk-infra-hld-vg
 
 steps:
 - checkout: self
   persistCredentials: true
   clean: true
+
+# WILL REMOVE LATER. USED UNTIL NEW SPK RELEASE
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: 'specific'
+    project: 668627d8-dda3-4bc2-8fb6-b2059eda7b7d
+    definition: 12
+    buildVersionToDownload: 'latestFromBranch'
+    branchName: 'refs/heads/master'
+    itemPattern: "spk*"
+    artifactName: 'spk_linux_node_12'
+    targetPath: '$(System.DefaultWorkingDirectory)'
+- bash: |
+    shopt -s expand_aliases
+    echo "Current Dir is $(pwd)"
+    chmod +x spk-linux
+    alias spk="$(pwd)/spk-linux"
+    spk --version
+  displayName: "Verify SPK downloaded and executable"
+  failOnStderr: true
 
 - bash: |
     curl $BEDROCK_BUILD_SCRIPT > build.sh
@@ -82,6 +103,9 @@ steps:
 - script: |
     . build.sh --source-only
     init
+    ls
+    echo "PD : $PROJECT_DIRECTORY"
+    echo "CLUSTER : $CLUSTER"
     cd $PROJECT_DIRECTORY-generated/$CLUSTER
     terraform plan -var-file=./spk.tfvars
   env:
