@@ -11,8 +11,11 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { createTestBedrockYaml } from "../../test/mockFactory";
-import { IBedrockFile } from "../../types";
+import {
+  createTestBedrockYaml,
+  createTestHldLifecyclePipelineYaml
+} from "../../test/mockFactory";
+import { IAzurePipelinesYaml, IBedrockFile } from "../../types";
 import {
   create,
   execute,
@@ -374,6 +377,76 @@ describe("updateLifeCyclePipeline", () => {
       noFileError = err;
     }
     expect(noFileError).toBeDefined();
+  });
+
+  test("Should pass adding variable groups when bedrock file exists with empty variableGroups", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+    const writeSpy = jest.spyOn(fs, "writeFileSync");
+
+    const defaultBedrockFileObject = createTestBedrockYaml(
+      false
+    ) as IBedrockFile;
+
+    write(defaultBedrockFileObject, randomTmpDir);
+
+    const hldFilePath = path.join(randomTmpDir, "hld-lifecycle.yaml");
+
+    const hldLifeCycleFile: IAzurePipelinesYaml = createTestHldLifecyclePipelineYaml(
+      false
+    ) as IAzurePipelinesYaml;
+
+    const asYaml = yaml.safeDump(hldLifeCycleFile, {
+      lineWidth: Number.MAX_SAFE_INTEGER
+    });
+
+    fs.writeFileSync(hldFilePath, asYaml);
+
+    await updateLifeCyclePipeline(randomTmpDir);
+
+    const hldLifeCycleYaml = readYaml<IAzurePipelinesYaml>(hldFilePath);
+    logger.info(`filejson: ${JSON.stringify(hldLifeCycleYaml)}`);
+    expect(hldLifeCycleYaml.variables!.length).toBeLessThanOrEqual(0);
+  });
+
+  test("Should pass adding variable groups when bedrock file exists with one variableGroup", async () => {
+    // Create random directory to initialize
+    const randomTmpDir = path.join(os.tmpdir(), uuid());
+    fs.mkdirSync(randomTmpDir);
+    logger.info(`random dir: ${randomTmpDir})`);
+
+    const defaultBedrockFileObject = createTestBedrockYaml(
+      false
+    ) as IBedrockFile;
+
+    // add new variabe group
+    defaultBedrockFileObject.variableGroups = [
+      ...(defaultBedrockFileObject.variableGroups ?? []),
+      variableGroupName
+    ];
+
+    write(defaultBedrockFileObject, randomTmpDir);
+
+    const hldFilePath = path.join(randomTmpDir, "hld-lifecycle.yaml");
+
+    const hldLifeCycleFile: IAzurePipelinesYaml = createTestHldLifecyclePipelineYaml(
+      false
+    ) as IAzurePipelinesYaml;
+
+    const asYaml = yaml.safeDump(hldLifeCycleFile, {
+      lineWidth: Number.MAX_SAFE_INTEGER
+    });
+
+    fs.writeFileSync(hldFilePath, asYaml);
+
+    await updateLifeCyclePipeline(randomTmpDir);
+
+    const hldLifeCycleYaml = readYaml<IAzurePipelinesYaml>(hldFilePath);
+    logger.info(`filejson: ${JSON.stringify(hldLifeCycleYaml)}`);
+    expect(hldLifeCycleYaml.variables![0]).toEqual({
+      group: variableGroupName
+    });
   });
 });
 
