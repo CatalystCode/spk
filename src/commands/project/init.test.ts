@@ -19,7 +19,7 @@ describe("Initializing a blank/new bedrock repository", () => {
 
     // bedrock.yaml, maintainers.yaml should be in a the root for a 'standard' project
     const missing = getMissingFilenames(randomTmpDir, CREATED_FILES);
-    expect(missing.length).toBe(0);
+    expect(missing.length).toBe(0); // no files are missing hence length 0
 
     // ensure service specific files do not get created
     const unexpected = getMissingFilenames(randomTmpDir, [
