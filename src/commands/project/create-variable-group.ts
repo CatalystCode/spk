@@ -242,6 +242,10 @@ export const setVariableGroupInBedrockFile = async (
   // Get bedrock.yaml
   bedrockFile = Bedrock(rootProjectPath);
 
+  if (typeof bedrockFile === "undefined") {
+    throw new Error(`Bedrock file does not exist.`);
+  }
+
   logger.verbose(
     `Bedrock file content in ${rootProjectPath}: \n ${JSON.stringify(
       bedrockFile

@@ -253,14 +253,6 @@ export const authorizeAccessToAllPipelines = async (
 };
 
 /**
- * Key/value interface for variables
- *
- */
-export interface IVariablesMap {
-  [key: string]: AzureKeyVaultVariableValue;
-}
-
-/**
  * Creates `IVariablesMap` object from variables key/value pairs
  *
  * @param variableGroup The Variable group object

@@ -274,6 +274,7 @@ describe("setVariableGroupInBedrockFile", () => {
     try {
       await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
     } catch (err) {
+      logger.info(`${err}`);
       noFileError = err;
     }
     expect(noFileError).toBeDefined();
