@@ -380,11 +380,10 @@ describe("authorizeAccessToAllPipelines", () => {
     };
 
     let authorized: boolean | undefined;
-    let error: Error | undefined;
     try {
       authorized = await authorizeAccessToAllPipelines(variableGroup);
     } catch (err) {
-      error = err;
+      logger.info(err);
     }
     expect(authorized).toBeUndefined();
   });
@@ -416,10 +415,8 @@ describe("buildVariablesMap", () => {
       }
     };
 
-    const expectedMap =
-      '{"var1":{"isSecret":false,"value":"val1"},"var2":{"isSecret":true,"value":"val2"}}';
     const map = await buildVariablesMap(variables);
-    expect(JSON.stringify(map)).toEqual(expectedMap);
+    expect(map).toEqual(variables);
     logger.info(`map: ${JSON.stringify(map)}`);
   });
 
@@ -431,16 +428,14 @@ describe("buildVariablesMap", () => {
       }
     };
 
-    const expectedMap: any = `{"var1":{"isSecret":false,"value":"val1"}}`;
     const map = await buildVariablesMap(variables);
-    expect(JSON.stringify(map)).toEqual(expectedMap);
+    expect(map).toEqual(variables);
   });
 
   test("should create empty variable map with no variables", async () => {
     const variables: IVariableGroupDataVariable = {};
-    const expectedMap = `{}`;
     const map = await buildVariablesMap(variables);
-    expect(JSON.stringify(map)).toEqual(expectedMap);
+    expect(Object.keys(map).length).toBe(0);
   });
 
   test("should create variable map with two secrets", async () => {
@@ -453,10 +448,8 @@ describe("buildVariablesMap", () => {
       }
     };
 
-    const expectedMap =
-      '{"secret1":{"enabled":false},"secret2":{"enabled":true}}';
     const secretsMap = await buildVariablesMap(variables);
-    expect(JSON.stringify(secretsMap)).toEqual(expectedMap);
+    expect(secretsMap).toEqual(variables);
   });
 
   test("should create variable map with one secret", async () => {
@@ -466,15 +459,13 @@ describe("buildVariablesMap", () => {
       }
     };
 
-    const expectedMap = '{"secret1":{"enabled":true}}';
     const secretsMap = await buildVariablesMap(variables);
-    expect(JSON.stringify(secretsMap)).toEqual(expectedMap);
+    expect(secretsMap).toEqual(variables);
   });
 
   test("should create empty variable map with no secrets", async () => {
     const variables: IVariableGroupDataVariable = {};
-    const expectedMap = `{}`;
     const secretsMap = await buildVariablesMap(variables);
-    expect(JSON.stringify(secretsMap)).toEqual(expectedMap);
+    expect(Object.keys(secretsMap).length).toBe(0);
   });
 });
