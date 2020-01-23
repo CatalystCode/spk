@@ -42,7 +42,7 @@ export const installBuildPipelineCommandDecorator = (
     .option("-u, --repo-url <repo-url>", "Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
     .option(
-      "-b, --build-script <build-script-url>",
+      "-b, --build-script-url <build-script-url>",
       `Build Script URL. By default it is '${BUILD_SCRIPT_URL}'.`
     )
     .option(
@@ -106,7 +106,7 @@ export const installBuildPipelineCommandDecorator = (
         }
         if (typeof buildScriptUrl !== "string") {
           throw new Error(
-            `--build-script must be of type 'string', ${typeof buildScriptUrl} given.`
+            `--build-script-url must be of type 'string', ${typeof buildScriptUrl} given.`
           );
         }
       } catch (err) {

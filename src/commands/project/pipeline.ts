@@ -40,7 +40,7 @@ export const deployLifecyclePipelineCommandDecorator = (
     .option("-e, --hld-url <hld-url>", "HLD Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
     .option(
-      "-b, --build-script <build-script-url>",
+      "-b, --build-script-url <build-script-url>",
       `Build Script URL. By default it is '${BUILD_SCRIPT_URL}'.`
     )
     .action(async opts => {
