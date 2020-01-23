@@ -64,54 +64,17 @@ export const installBuildPipelineCommandDecorator = (
         buildScriptUrl = BUILD_SCRIPT_URL
       } = opts;
 
-      logger.debug(`orgName: ${orgName}`);
-      logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
-      logger.debug(`devopsProject: ${devopsProject}`);
-      logger.debug(`pipelineName: ${pipelineName}`);
-      logger.debug(`packagesDir: ${packagesDir}`);
-      logger.debug(`repoName: ${repoName}`);
-      logger.debug(`repoUrl: ${repoUrl}`);
-      logger.debug(`buildScriptUrl: ${buildScriptUrl}`);
-
-      try {
-        if (typeof pipelineName !== "string") {
-          throw new Error(
-            `--pipeline-name must be of type 'string', ${typeof pipelineName} given.`
-          );
-        }
-        if (typeof personalAccessToken !== "string") {
-          throw new Error(
-            `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
-          );
-        }
-        if (typeof orgName !== "string") {
-          throw new Error(
-            `--org-url must be of type 'string', ${typeof orgName} given.`
-          );
-        }
-        if (typeof repoName !== "string") {
-          throw new Error(
-            `--repo-name must be of type 'string', ${typeof repoName} given.`
-          );
-        }
-        if (typeof repoUrl !== "string") {
-          throw new Error(
-            `--repo-url must be of type 'string', ${typeof repoUrl} given.`
-          );
-        }
-        if (typeof devopsProject !== "string") {
-          throw new Error(
-            `--devops-project must be of type 'string', ${typeof devopsProject} given.`
-          );
-        }
-        if (typeof buildScriptUrl !== "string") {
-          throw new Error(
-            `--build-script-url must be of type 'string', ${typeof buildScriptUrl} given.`
-          );
-        }
-      } catch (err) {
-        logger.error(`Error occurred validating inputs for ${serviceName}`);
-        logger.error(err);
+      if (
+        !isValidConfig(
+          orgName,
+          devopsProject,
+          pipelineName,
+          repoName,
+          repoUrl,
+          buildScriptUrl,
+          personalAccessToken
+        )
+      ) {
         process.exit(1);
       }
 
