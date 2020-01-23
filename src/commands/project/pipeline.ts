@@ -260,9 +260,7 @@ export const installLifecyclePipeline = async (
 
 /**
  * Builds and returns variables required for the lifecycle pipeline.
- * @param accessToken Access token with access to the HLD repository.
  * @param buildScriptUrl Build Script URL
- * @param hldRepoUrl to the HLD repository.
  * @returns Object containing the necessary run-time variables for the lifecycle pipeline.
  */
 
