@@ -26,7 +26,11 @@ steps:
     curl -sL https://aka.ms/InstallAzureCLIDeb | bash
     az extension add --name azure-devops
     az --version
-  displayName: 'Install az-cli and az devops extension'
+    wget https://releases.hashicorp.com/terraform/$(tf_version)/terraform_$(tf_version)_linux_amd64.zip -q
+    unzip -q terraform_$(tf_version)_linux_amd64.zip
+    sudo mv terraform /usr/local/bin
+    terraform -version
+  displayName: 'Install az-cli, az devops extension, and Terraform'
 
 - script: |
     . build.sh --source-only
@@ -45,15 +49,6 @@ steps:
     ARM_TENANT_ID: $(ARM_TENANT_ID)
     ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
   displayName: 'SPK'
-  timeoutInMinutes: 10
-
-- script: |
-    wget https://releases.hashicorp.com/terraform/$(tf_version)/terraform_$(tf_version)_linux_amd64.zip -q
-    unzip -q terraform_$(tf_version)_linux_amd64.zip
-    sudo mv terraform /usr/local/bin
-    terraform -version
-  displayName: 'Install Terraform'
-  timeoutInMinutes: 5
 
 - script: |
     . build.sh --source-only
@@ -61,7 +56,6 @@ steps:
     cd $PROJECT_DIRECTORY-generated/$CLUSTER
     terraform init -backend-config=./backend.tfvars
   displayName: 'Terraform init'
-  timeoutInMinutes: 10
 
 - script: |
     . build.sh --source-only
@@ -74,9 +68,11 @@ steps:
     ARM_TENANT_ID: $(ARM_TENANT_ID)
     ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
   displayName: 'Terraform plan'
-  timeoutInMinutes: 10
 
 - script: |
+    # Exit on error
+    set -e
+
     # Retrieve most recent commit hash from HLD repo
     commit_hash=$(git rev-parse HEAD)
     echo "Commit Hash: $commit_hash"
@@ -139,8 +135,8 @@ steps:
       az repos pr create --description "Automated PR for $PR_BRANCH_NAME against master"
     else
       echo "Unable to create pull request."
+      exit 1
     fi
   env:
     ACCESS_TOKEN_SECRET: $(ACCESS_TOKEN_SECRET)
   displayName: 'Commit and Push to Generated Repository'
-  timeoutInMinutes: 15
