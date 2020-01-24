@@ -49,13 +49,17 @@ export interface IBedrockFile {
     };
   };
   services: {
-    [relativeDirectory: string]: {
-      displayName?: string;
-      middlewares?: string[];
-      helm: IHelmConfig;
-    };
+    [relativeDirectory: string]: IBedrockServiceConfig;
   };
   variableGroups?: string[];
+}
+
+export interface IBedrockServiceConfig {
+  displayName?: string;
+  middlewares?: string[];
+  helm: IHelmConfig;
+  disableRouteScaffold?: boolean;
+  k8sServicePort: number; // the service port for the k8s service Traefik2 IngressRoutes will point to
 }
 
 /**
@@ -140,7 +144,7 @@ export interface IVariableGroupData {
   name: string;
   description: string;
   type: string;
-  variables: IVariableGroupDataVariable[];
+  variables: IVariableGroupDataVariable;
   key_vault_provider?: {
     name: string;
     service_endpoint: IServiceEndpointData;

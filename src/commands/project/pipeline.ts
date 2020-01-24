@@ -18,6 +18,7 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
+import { isBedrockFileExists } from "././create-variable-group";
 
 export const deployLifecyclePipelineCommandDecorator = (
   command: commander.Command
@@ -39,13 +40,22 @@ export const deployLifecyclePipelineCommandDecorator = (
     .option("-o, --org-name <org-name>", "Organization Name for Azure DevOps")
     .option("-r, --repo-name <repo-name>", "Repository Name in Azure DevOps")
     .option("-u, --repo-url <repo-url>", "Repository URL")
-    .option("-e, --hld-url <hld-url>", "HLD Repository URL")
     .option("-d, --devops-project <devops-project>", "Azure DevOps Project")
     .option(
-      "-b, --build-script <build-script-url>",
+      "-b, --build-script-url <build-script-url>",
       `Build Script URL. By default it is '${BUILD_SCRIPT_URL}'.`
     )
     .action(async opts => {
+      const projectPath = process.cwd();
+      logger.verbose(`project path: ${projectPath}`);
+
+      if ((await isBedrockFileExists(projectPath)) === false) {
+        logger.error(
+          "Please run `spk project init` command before running this command to initialize the project."
+        );
+        return;
+      }
+
       const gitOriginUrl = await getOriginUrl();
       const { azure_devops } = Config();
 
@@ -56,7 +66,6 @@ export const deployLifecyclePipelineCommandDecorator = (
         pipelineName = getRepositoryName(gitOriginUrl) + "-lifecycle",
         repoName = getRepositoryName(gitOriginUrl),
         repoUrl = getRepositoryUrl(gitOriginUrl),
-        hldUrl = azure_devops && azure_devops.hld_repository,
         buildScriptUrl = BUILD_SCRIPT_URL
       } = opts;
 
@@ -65,9 +74,8 @@ export const deployLifecyclePipelineCommandDecorator = (
           orgName,
           devopsProject,
           pipelineName,
+          repoName,
           repoUrl,
-          hldUrl,
-          hldUrl,
           buildScriptUrl,
           personalAccessToken
         )
@@ -82,7 +90,6 @@ export const deployLifecyclePipelineCommandDecorator = (
           pipelineName,
           repoName,
           repoUrl,
-          hldUrl,
           devopsProject,
           buildScriptUrl,
           process.exit
@@ -105,7 +112,6 @@ export const deployLifecyclePipelineCommandDecorator = (
  * @param pipelineName Name of this build pipeline in AzDo
  * @param repoName Name of repo
  * @param repoUrl Repo URL
- * @param hldUrl  URL of the HLD
  * @param buildScriptUrl Build Script URL
  * @param personalAccessToken Personal Access token with access to the HLD repository and materialized manifest repository.
  */
@@ -115,7 +121,6 @@ export const isValidConfig = (
   pipelineName: any,
   repoName: any,
   repoUrl: any,
-  hldUrl: any,
   buildScriptUrl: any,
   personalAccessToken: any
 ): boolean => {
@@ -126,7 +131,6 @@ export const isValidConfig = (
   logger.debug(`pipelineName: ${pipelineName}`);
   logger.debug(`repoName: ${repoName}`);
   logger.debug(`repoUrl: ${repoUrl}`);
-  logger.debug(`hldUrl: ${hldUrl}`);
   logger.debug(`devopsProject: ${devopsProject}`);
   logger.debug(`buildScriptUrl: ${buildScriptUrl}`);
 
@@ -155,11 +159,6 @@ export const isValidConfig = (
       `--repo-url must be of type 'string', ${typeof repoUrl} given.`
     );
   }
-  if (typeof hldUrl !== "string") {
-    missingConfig.push(
-      `--hld-url must be of type 'string', ${typeof hldUrl} given.`
-    );
-  }
   if (typeof devopsProject !== "string") {
     missingConfig.push(
       `--devops-project must be of type 'string', ${typeof devopsProject} given.`
@@ -167,7 +166,7 @@ export const isValidConfig = (
   }
   if (typeof buildScriptUrl !== "string") {
     missingConfig.push(
-      `--build-script must be of type 'string', ${typeof buildScriptUrl} given.`
+      `--build-script-url must be of type 'string', ${typeof buildScriptUrl} given.`
     );
   }
 
@@ -187,7 +186,6 @@ export const isValidConfig = (
  * @param pipelineName
  * @param repositoryName
  * @param repositoryUrl
- * @param hldRepoUrl
  * @param project
  * @param buildScriptUrl Build Script URL
  * @param exitFn
@@ -198,7 +196,6 @@ export const installLifecyclePipeline = async (
   pipelineName: string,
   repositoryName: string,
   repositoryUrl: string,
-  hldRepoUrl: string,
   project: string,
   buildScriptUrl: string,
   exitFn: (status: number) => void
@@ -221,11 +218,7 @@ export const installLifecyclePipeline = async (
     pipelineName,
     repositoryName,
     repositoryUrl,
-    variables: requiredPipelineVariables(
-      personalAccessToken,
-      buildScriptUrl,
-      hldRepoUrl
-    ),
+    variables: requiredPipelineVariables(buildScriptUrl),
     yamlFileBranch: "master",
     yamlFilePath: "hld-lifecycle.yaml"
   });
@@ -267,31 +260,18 @@ export const installLifecyclePipeline = async (
 
 /**
  * Builds and returns variables required for the lifecycle pipeline.
- * @param accessToken Access token with access to the HLD repository.
  * @param buildScriptUrl Build Script URL
- * @param hldRepoUrl to the HLD repository.
  * @returns Object containing the necessary run-time variables for the lifecycle pipeline.
  */
+
 export const requiredPipelineVariables = (
-  accessToken: string,
-  buildScriptUrl: string,
-  hldRepoUrl: string
+  buildScriptUrl: string
 ): { [key: string]: BuildDefinitionVariable } => {
   return {
     BUILD_SCRIPT_URL: {
       allowOverride: true,
       isSecret: false,
       value: buildScriptUrl
-    },
-    HLD_REPO: {
-      allowOverride: true,
-      isSecret: false,
-      value: hldRepoUrl
-    },
-    PAT: {
-      allowOverride: true,
-      isSecret: true,
-      value: accessToken
     }
   };
 };

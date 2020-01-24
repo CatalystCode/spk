@@ -8,12 +8,7 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 
-import { logger } from "@azure/identity";
-import {
-  installLifecyclePipeline,
-  isValidConfig,
-  requiredPipelineVariables
-} from "./pipeline";
+import { installLifecyclePipeline, isValidConfig } from "./pipeline";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -29,8 +24,7 @@ describe("validate pipeline config", () => {
     "testDevopsProject",
     "testPipeline",
     "repoName",
-    "https:/repoulr",
-    "https://hldurl",
+    "https://repourl",
     "https://buildscript",
     "af8e99c1234ef93e8c4365b1dc9bd8d9ba987d3"
   ];
@@ -51,30 +45,6 @@ describe("validate pipeline config", () => {
   });
 });
 
-describe("required pipeline variables", () => {
-  it("should use have the proper pipeline vars vars", () => {
-    const variables = requiredPipelineVariables(
-      "somePAT",
-      "buildScriptUrl",
-      "hldRepoUrl"
-    );
-
-    expect(Object.keys(variables).length).toBe(3);
-
-    expect(variables.PAT.value).toBe("somePAT");
-    expect(variables.PAT.isSecret).toBe(true);
-    expect(variables.PAT.allowOverride).toBe(true);
-
-    expect(variables.BUILD_SCRIPT_URL.value).toBe("buildScriptUrl");
-    expect(variables.BUILD_SCRIPT_URL.isSecret).toBe(false);
-    expect(variables.BUILD_SCRIPT_URL.allowOverride).toBe(true);
-
-    expect(variables.HLD_REPO.value).toBe("hldRepoUrl");
-    expect(variables.HLD_REPO.isSecret).toBe(false);
-    expect(variables.HLD_REPO.allowOverride).toBe(true);
-  });
-});
-
 describe("create hld to manifest pipeline test", () => {
   it("should create a pipeline", async () => {
     (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
@@ -86,7 +56,6 @@ describe("create hld to manifest pipeline test", () => {
       "pipelineName",
       "repoName",
       "repoUrl",
-      "hldRepoUrl",
       "azDoProject",
       "buildScriptUrl",
       exitFn
@@ -105,7 +74,6 @@ describe("create hld to manifest pipeline test", () => {
       "pipelineName",
       "repoName",
       "repoUrl",
-      "hldRepoUrl",
       "azDoProject",
       "buildScriptUrl",
       exitFn
@@ -127,7 +95,6 @@ describe("create hld to manifest pipeline test", () => {
       "pipelineName",
       "repoName",
       "repoUrl",
-      "hldRepoUrl",
       "azDoProject",
       "buildScriptUrl",
       exitFn
@@ -148,7 +115,6 @@ describe("create hld to manifest pipeline test", () => {
       "pipelineName",
       "repoName",
       "repoUrl",
-      "hldRepoUrl",
       "azDoProject",
       "buildScriptUrl",
       exitFn
@@ -174,7 +140,6 @@ describe("create hld to manifest pipeline test", () => {
         "pipelineName",
         "repoName",
         "repoUrl",
-        "hldRepoUrl",
         "azDoProject",
         "buildScriptUrl",
         exitFn
