@@ -193,7 +193,8 @@ const generateBedrockFile = async (
       };
 
       file.services["./" + relPathToPackageFromRoot] = {
-        helm
+        helm,
+        k8sServicePort: 80
       };
       return file;
     },

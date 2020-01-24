@@ -51,7 +51,8 @@ describe("initializing an existing file does not modify it", () => {
               path: "./",
               sha: "bar"
             }
-          }
+          },
+          k8sServicePort: 1337
         }
       }
     };
