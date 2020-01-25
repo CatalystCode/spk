@@ -5,8 +5,9 @@
 ### Added
 
 - Ability to disable ingress route creation
-- Add the ability to specify ports for traefik ingress routes
-- Generation oftraefik strip-prefix middleware
+- Ability to specify ports for traefik ingress routes
+- Generation of traefik strip-prefix middleware
+- Ability to specify per-service middleware injection for Traefik2 IngressRoutes
 - Extend bedrock.yaml services to incorporate display name
 
 ### Changed
