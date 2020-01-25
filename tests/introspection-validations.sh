@@ -44,6 +44,7 @@ echo "Running from $(pwd)"
 storage_account_exists $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
 storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
 spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $AZ_SUBSCRIPTION_ID --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
 storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
 
 echo "Successfully reached the end of the introspection validations script."
