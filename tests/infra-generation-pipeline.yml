@@ -5,10 +5,9 @@ trigger:
 
 pool:
   vmImage: 'ubuntu-latest'
-  timeoutInMinutes: 10
 
 variables:
-- group: spk-infra-hld-vg
+-  group: 'spk-infra-hld-vg'
 
 steps:
 - checkout: self
@@ -47,20 +46,11 @@ steps:
     curl -sL https://aka.ms/InstallAzureCLIDeb | bash
     az extension add --name azure-devops
     az --version
-  displayName: 'Install az-cli and az devops extension'
-
-- script: |
-    echo "GENERATING $PROJECT_DIRECTORY"
-    echo "ARM_CLIENT_ID: $ARM_CLIENT_ID"
-    echo "ARM_CLIENT_SECRET: $ARM_CLIENT_SECRET"
-    echo "ARM_TENANT_ID: $(ARM_TENANT_ID)"
-    echo "ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)"
-  env:
-    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-    ARM_TENANT_ID: $(ARM_TENANT_ID)
-    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-  displayName: 'Debug Sanity'
+    wget https://releases.hashicorp.com/terraform/$(tf_version)/terraform_$(tf_version)_linux_amd64.zip -q
+    unzip -q terraform_$(tf_version)_linux_amd64.zip
+    sudo mv terraform /usr/local/bin
+    terraform -version
+  displayName: 'Install az-cli, az devops extension, and Terraform'
 
 - script: |
     . build.sh --source-only
@@ -81,19 +71,6 @@ steps:
   displayName: 'SPK'
 
 - script: |
-    wget https://releases.hashicorp.com/terraform/$(tf_version)/terraform_$(tf_version)_linux_amd64.zip -q
-    unzip -q terraform_$(tf_version)_linux_amd64.zip
-    sudo mv terraform /usr/local/bin
-    terraform -version
-  displayName: 'Install Terraform'
-
-- script: |
-    sudo add-apt-repository ppa:cpick/hub
-    sudo apt-get update
-    sudo apt-get install hub
-  displayName: 'Install Hub'
-
-- script: |
     . build.sh --source-only
     init
     cd $PROJECT_DIRECTORY-generated/$CLUSTER
@@ -103,9 +80,6 @@ steps:
 - script: |
     . build.sh --source-only
     init
-    ls
-    echo "PD : $PROJECT_DIRECTORY"
-    echo "CLUSTER : $CLUSTER"
     cd $PROJECT_DIRECTORY-generated/$CLUSTER
     terraform plan -var-file=./spk.tfvars
   env:
@@ -116,6 +90,9 @@ steps:
   displayName: 'Terraform plan'
 
 - script: |
+    # Exit on error
+    set -e
+
     # Retrieve most recent commit hash from HLD repo
     commit_hash=$(git rev-parse HEAD)
     echo "Commit Hash: $commit_hash"
@@ -156,21 +133,34 @@ steps:
     repo_url="${repo_url#http://}"
     repo_url="${repo_url#https://}"
     echo "$repo_url"
-    echo "GIT PUSH: https://<ACCESS_TOKEN_SECRET>@$repo_url"
-    git push "https://$ACCESS_TOKEN_SECRET@$repo_url" $PR_BRANCH_NAME
+    echo $ACCESS_TOKEN_SECRET
+    echo $repo_url
+    echo "GIT PUSH: https://$repo_url"
+    git push "https://$repo_url" $PR_BRANCH_NAME
 
     # Create PR
-    # If using GitHub repos...
+    # If using GitHub repos:
     echo "CREATE PULL REQUEST"
-    export GITHUB_TOKEN=$ACCESS_TOKEN_SECRET
-    hub pull-request -m "Adding Generated Components for $PROJECT_DIRECTORY/$CLUSTER"
-
-    # If using AzDo repos (comment above, and uncomment below)
+    if [[ $GENERATED_REPO == *"github"* ]]; then
+      echo "GitHub repo detected"
+      echo "Installing Hub"
+      sudo add-apt-repository ppa:cpick/hub
+      sudo apt-get update
+      sudo apt-get install hub
+      export GITHUB_TOKEN=$ACCESS_TOKEN_SECRET
+      hub pull-request -m "Adding Generated Components for $PROJECT_DIRECTORY/$CLUSTER"
+    elif [[ $GENERATED_REPO == *"azure"* ]] || [[ $GENERATED_REPO == *"visualstudio"* ]]; then
+    # If using AzDo repos:
     # You will need to specify variables $AZDO_ORG_NAME and $AZDO_PROJECT_NAME
-    #export AZURE_DEVOPS_EXT_PAT=$ACCESS_TOKEN_SECRET
-    #az devops configure --defaults organization=$AZDO_ORG_NAME project=$AZDO_PROJECT_NAME
-    #echo "Making pull request for $PR_BRANCH_NAME against master"
-    #az repos pr create --description "Automated PR for $PR_BRANCH_NAME against master"
+      echo "Azure repo detected"
+      export AZURE_DEVOPS_EXT_PAT=$ACCESS_TOKEN_SECRET
+      az devops configure --defaults organization=$AZDO_ORG_NAME project=$AZDO_PROJECT_NAME
+      echo "Making pull request for $PR_BRANCH_NAME against master"
+      az repos pr create --description "Automated PR for $PR_BRANCH_NAME against master"
+    else
+      echo "Unable to create pull request."
+      exit 1
+    fi
   env:
     ACCESS_TOKEN_SECRET: $(ACCESS_TOKEN_SECRET)
   displayName: 'Commit and Push to Generated Repository'
