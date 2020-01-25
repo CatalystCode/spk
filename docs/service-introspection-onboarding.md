@@ -193,7 +193,6 @@ your multi-stage `azure-pipelines.yml`:
 ```yaml
 latest_commit=$(git rev-parse --short HEAD) 
 tag_name=$(Build.BuildId)
-VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') 
 echo "Downloading SPK" 
 curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh 
 chmod +x build.sh 
