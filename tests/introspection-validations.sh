@@ -31,7 +31,6 @@ echo "AZ_STORAGE_ACCOUNT: $AZ_STORAGE_ACCOUNT"
 
 vg_name=fabrikam-vg
 sat_name=fabrikamtestdeployments
-sat_onboard_name=deploymentsonboard
 sa_location=westus
 kv_name=fabrikamkv
 kv_location=westus
@@ -65,14 +64,16 @@ fi
 
 cd $TEST_WORKSPACE
 
-# To-do: uncomment onboard validation test
+# spk deployment onboard validation test
+sat_onboard_name=deployments
+subscription_id=$(az account list | jq '.[] | select(.isDefault == true) | .id' -r)
 storage_account_exists $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
-storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
-spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
-storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
-storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
+storage_account_table_exists $sat_onboard_name $AZ_STORAGE_ACCOUNT "delete"
+spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_onboard_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $subscription_id --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
+storage_account_table_exists $sat_onboard_name $AZ_STORAGE_ACCOUNT "fail"
+storage_account_table_exists $sat_onboard_name $AZ_STORAGE_ACCOUNT "delete"
 
-echo "Finished testing spk deployment onboard."
+echo "Successfully validated spk deployment onboard."
 
 # setup repo with pipelines
 # Manifest Repo Setup ------------------
@@ -124,11 +125,6 @@ repo_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_dir
 
 # Create the remote repo for the local repo
 created_repo_result=$(az repos create --name "$hld_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT)
-s $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
-storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
-spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $AZ_SUBSCRIPTION_ID --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
-storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
-storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
 
 # Extract out remote repo URL from the above result
 remote_repo_url=$(echo $created_repo_result | jq '.remoteUrl' | tr -d '"' )
@@ -182,6 +178,14 @@ spk project create-variable-group $vg_name -r $ACR_NAME -d $hld_repo_url -u $SP_
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
+
+# Introspection Storage Account Setup
+storage_account_exists $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
+storage_account_cors_enabled $AZ_STORAGE_ACCOUNT "enable"
+storage_account_cors_enabled $AZ_STORAGE_ACCOUNT "wait"
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "create"
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
+sa_access_key=$(az storage account keys list -n $AZ_STORAGE_ACCOUNT -g $AZ_RESOURCE_GROUP | jq '.[0].value')
 
 # Add introspection variables to variable group
 variable_group_id=$(az pipelines variable-group list --org $AZDO_ORG_URL -p $AZDO_PROJECT | jq '.[] | select(.name=="fabrikam-intro-vg") | .id')
