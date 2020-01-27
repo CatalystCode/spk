@@ -33,3 +33,24 @@ export const removeDir = (dir: string) => {
   });
   fs.rmdirSync(dir);
 };
+
+/**
+ * Returns a list of missing file names.
+ * This is to check if files exist in a directory.
+ *
+ * @param dir Directory where files resides
+ * @param fileNames Name of files that are supposed to exist in the dir.
+ * @return a list of missing file names.
+ */
+export const getMissingFilenames = (
+  dir: string,
+  fileNames: string[]
+): string[] => {
+  return fileNames
+    .map(
+      f => path.join(dir, f) // form full path
+    )
+    .filter(
+      f => !fs.existsSync(f) // keep those files that do not exist
+    );
+};
