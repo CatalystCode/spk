@@ -123,7 +123,7 @@ describe("test dirIteration", () => {
       custerName: "parent"
     };
     const leafObject = {
-      custerName: "left"
+      custerName: "leaf"
     };
     const result = dirIteration(parentObject, leafObject);
     expect(result).toEqual(leafObject);

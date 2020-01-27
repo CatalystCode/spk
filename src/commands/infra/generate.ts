@@ -289,11 +289,11 @@ export const generateConfig = async (
       /* First, search for definition.yaml in current working directory.
          If there exists a definition.yaml, then read file. */
       const parentData = readYaml<IInfraConfigYaml>(
-        path.join(parentPath, "definition.yaml")
+        path.join(parentPath, DEF_YAML)
       );
       const parentInfraConfig = loadConfigurationFromLocalEnv(parentData || {});
       const leafData = readYaml<IInfraConfigYaml>(
-        path.join(projectPath, "definition.yaml")
+        path.join(projectPath, DEF_YAML)
       );
       const leafInfraConfig = loadConfigurationFromLocalEnv(leafData || {});
 
@@ -307,9 +307,7 @@ export const generateConfig = async (
       if (projectPath === parentPath) {
         createGenerated(parentDirectory);
         if (parentInfraConfig.variables) {
-          const spkTfvarsObject = await generateTfvars(
-            parentInfraConfig.variables
-          );
+          const spkTfvarsObject = generateTfvars(parentInfraConfig.variables);
           checkTfvars(parentDirectory, "spk.tfvars");
           writeTfvarsFile(spkTfvarsObject, parentDirectory, "spk.tfvars");
           await copyTfTemplate(templatePath, parentDirectory, true);
@@ -317,9 +315,7 @@ export const generateConfig = async (
           logger.warning(`Variables are not defined in the definition.yaml`);
         }
         if (parentInfraConfig.backend) {
-          const backendTfvarsObject = await generateTfvars(
-            parentInfraConfig.backend
-          );
+          const backendTfvarsObject = generateTfvars(parentInfraConfig.backend);
           checkTfvars(parentDirectory, "backend.tfvars");
           writeTfvarsFile(
             backendTfvarsObject,
@@ -344,7 +340,7 @@ export const generateConfig = async (
             leafInfraConfig.variables
           );
           // Generate Terraform files in generated directory
-          const combinedSpkTfvarsObject = await generateTfvars(finalDefinition);
+          const combinedSpkTfvarsObject = generateTfvars(finalDefinition);
           // Write variables to  `spk.tfvars` file
           checkTfvars(childDirectory, "spk.tfvars");
           writeTfvarsFile(
@@ -359,9 +355,7 @@ export const generateConfig = async (
               parentInfraConfig.backend,
               leafInfraConfig.backend
             );
-            const backendTfvarsObject = await generateTfvars(
-              finalBackendDefinition
-            );
+            const backendTfvarsObject = generateTfvars(finalBackendDefinition);
             checkTfvars(childDirectory, "backend.tfvars");
             writeTfvarsFile(
               backendTfvarsObject,
@@ -374,9 +368,7 @@ export const generateConfig = async (
         if (leafInfraConfig.variables) {
           /* If there is not a variables block in the parent definition.yaml,
            then assume the variables are taken from leaf definitions */
-          const spkTfvarsObject = await generateTfvars(
-            leafInfraConfig.variables
-          );
+          const spkTfvarsObject = generateTfvars(leafInfraConfig.variables);
           // Write variables to  `spk.tfvars` file
           checkTfvars(childDirectory, "spk.tfvars");
           writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
@@ -387,9 +379,7 @@ export const generateConfig = async (
         // If there is no backend block specified in the parent definition.yaml,
         // then create a backend based on the leaf definition.yaml
         if (leafInfraConfig.backend) {
-          const backendTfvarsObject = await generateTfvars(
-            leafInfraConfig.backend
-          );
+          const backendTfvarsObject = generateTfvars(leafInfraConfig.backend);
           checkTfvars(childDirectory, "backend.tfvars");
           writeTfvarsFile(
             backendTfvarsObject,
@@ -405,25 +395,21 @@ export const generateConfig = async (
       await copyTfTemplate(templatePath, childDirectory, true);
     } else if (definitionConfig === DefinitionYAMLExistence.PARENT_ONLY) {
       const parentData = readYaml<IInfraConfigYaml>(
-        path.join(parentPath, "definition.yaml")
+        path.join(parentPath, DEF_YAML)
       );
       const parentInfraConfig = loadConfigurationFromLocalEnv(parentData || {});
       if (projectPath === parentPath) {
         createGenerated(parentDirectory);
         if (parentInfraConfig.variables) {
-          const spkTfvarsObject = await generateTfvars(
-            parentInfraConfig.variables
-          );
+          const spkTfvarsObject = generateTfvars(parentInfraConfig.variables);
           checkTfvars(parentDirectory, "spk.tfvars");
           writeTfvarsFile(spkTfvarsObject, parentDirectory, "spk.tfvars");
           await copyTfTemplate(templatePath, parentDirectory, true);
         } else {
-          logger.warning(`Variables are not defined in the definition.yaml`);
+          logger.warning(`Variables are not defined in the ${DEF_YAML}`);
         }
         if (parentInfraConfig.backend) {
-          const backendTfvarsObject = await generateTfvars(
-            parentInfraConfig.backend
-          );
+          const backendTfvarsObject = generateTfvars(parentInfraConfig.backend);
           checkTfvars(parentDirectory, "backend.tfvars");
           writeTfvarsFile(
             backendTfvarsObject,
@@ -467,11 +453,11 @@ export const singleDefinitionGeneration = async (
   try {
     createGenerated(parentDirectory);
     createGenerated(childDirectory);
-    const spkTfvarsObject = await generateTfvars(infraConfig.variables);
+    const spkTfvarsObject = generateTfvars(infraConfig.variables);
     checkTfvars(childDirectory, "spk.tfvars");
     writeTfvarsFile(spkTfvarsObject, childDirectory, "spk.tfvars");
     if (infraConfig.backend) {
-      const backendTfvarsObject = await generateTfvars(infraConfig.backend);
+      const backendTfvarsObject = generateTfvars(infraConfig.backend);
       checkTfvars(childDirectory, "backend.tfvars");
       writeTfvarsFile(backendTfvarsObject, childDirectory, "backend.tfvars");
     }
