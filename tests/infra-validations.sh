@@ -126,8 +126,6 @@ sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1stora
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
 echo "Copying generate pipeline validation yml to Infra HLD repo" 
-pwd #debug
-ls # debug
 cp $generate_pipeline_path .
 git init
 
@@ -227,4 +225,5 @@ git checkout $pr_id
 file_we_expect=("variables.tf" "main.tf" "backend.tfvars" "spk.tfvars")
 validate_directory "$TEST_WORKSPACE/$infra_generated_dir/$infra_hld_project-generated/$infra_region" "${file_we_expect[@]}" >> $TEST_WORKSPACE/log.txt
 echo "PR for generated repo validated."
+
 echo "Successfully reached the end of the infrastructure validations script."
