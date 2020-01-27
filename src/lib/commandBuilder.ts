@@ -111,8 +111,6 @@ export const validateForRequiredValues = (
  */
 export const exit = (log: Logger): Promise<void> => {
   return new Promise(resolve => {
-    log.info("", null, () => {
-      resolve();
-    });
+    log.end(() => resolve);
   });
 };
