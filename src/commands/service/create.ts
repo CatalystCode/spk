@@ -3,7 +3,10 @@ import path from "path";
 import shelljs from "shelljs";
 import { BedrockAsync } from "../../config";
 import {
-  addNewServiceToBedrockFile,
+  addNewService as addNewServiceToBedrockFile,
+  YAML_NAME as BedrockFileName
+} from "../../lib/bedrockYaml";
+import {
   addNewServiceToMaintainersFile,
   generateDockerfile,
   generateGitIgnoreFile,
@@ -384,7 +387,7 @@ export const createService = async (
   }
 
   addNewServiceToBedrockFile(
-    path.join(rootProjectPath, "bedrock.yaml"),
+    rootProjectPath,
     newServiceRelativeDir,
     displayName,
     helmConfig,
@@ -397,7 +400,7 @@ export const createService = async (
     await checkoutCommitPushCreatePRLink(
       serviceName,
       newServiceDir,
-      path.join(rootProjectPath, "bedrock.yaml"),
+      path.join(rootProjectPath, BedrockFileName),
       path.join(rootProjectPath, "maintainers.yaml")
     );
   }

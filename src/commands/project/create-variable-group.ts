@@ -1,6 +1,5 @@
 import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import commander from "commander";
-import fs from "fs";
 import path from "path";
 import { echo } from "shelljs";
 import { Bedrock, Config, readYaml, write } from "../../config";
@@ -32,37 +31,6 @@ interface ICommandOptions {
   personalAccessToken: string | undefined;
   project: string | undefined;
 }
-
-/**
- * Returns an array of error message for missing variable values. Returns empty
- * array if all values are present.
- *
- * @param registryName The Azure container registry name
- * @param hldRepoUrl High Level Definition URL
- * @param servicePrincipalId The Azure service principla id with ACR pull and build permissions for az login
- * @param servicePrincipalPassword The service principla password for az login
- * @param tenantId The Azure AD tenant id for az login
- * @param accessOpts Azure DevOp options
- */
-export const validateRequiredArguments = (
-  registryName: string | undefined,
-  hldRepoUrl: string | undefined,
-  servicePrincipalId: string | undefined,
-  servicePrincipalPassword: string | undefined,
-  tenant: string | undefined,
-  accessOpts: IAzureDevOpsOpts
-): string[] => {
-  return validateForRequiredValues(decorator, {
-    hldRepoUrl,
-    orgName: accessOpts.orgName,
-    personalAccessToken: accessOpts.personalAccessToken,
-    project: accessOpts.project,
-    registryName,
-    servicePrincipalId,
-    servicePrincipalPassword,
-    tenant
-  });
-};
 
 /**
  * Executes the command.
@@ -100,14 +68,16 @@ export const execute = async (
 
       logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
 
-      const errors = validateRequiredArguments(
-        registryName,
+      const errors = validateForRequiredValues(decorator, {
         hldRepoUrl,
+        orgName,
+        personalAccessToken,
+        project,
+        registryName,
         servicePrincipalId,
         servicePrincipalPassword,
-        tenant,
-        accessOpts
-      );
+        tenant
+      });
 
       if (errors.length !== 0) {
         await exitFn(1);
@@ -278,13 +248,12 @@ export const updateLifeCyclePipeline = async (rootProjectPath: string) => {
 
   const fileName: string = "hld-lifecycle.yaml";
   const absProjectRoot = path.resolve(rootProjectPath);
-  let bedrockFile: IBedrockFile;
-  let pipelineFile: IAzurePipelinesYaml | undefined;
 
   // Get bedrock.yaml
-  bedrockFile = Bedrock(rootProjectPath);
-
-  pipelineFile = readYaml(path.join(absProjectRoot, fileName));
+  const bedrockFile = Bedrock(rootProjectPath);
+  const pipelineFile = readYaml(
+    path.join(absProjectRoot, fileName)
+  ) as IAzurePipelinesYaml;
 
   if (typeof pipelineFile === "undefined") {
     throw new Error("${fileName} file does not exist in ${absProjectRoot}.");
@@ -308,23 +277,4 @@ export const updateLifeCyclePipeline = async (rootProjectPath: string) => {
 
   // Write out
   write(pipelineFile, absProjectRoot, fileName);
-};
-
-/**
- * Checks if the default bedrock.yaml exists
- *
- * @param rootProjectPath Path to generate/update the the bedrock.yaml file in
- */
-export const isBedrockFileExists = async (rootProjectPath: string) => {
-  if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
-    throw new Error("Project root path is not valid");
-  }
-
-  const absProjectPath = path.resolve(rootProjectPath);
-
-  // Check if a bedrock.yaml already exists
-  const bedrockFilePath = path.join(absProjectPath, "bedrock.yaml");
-  const exists = fs.existsSync(bedrockFilePath);
-  logger.verbose(`bedrockFilePath path: ${bedrockFilePath}, exists: ${exists}`);
-  return exists;
 };
