@@ -99,6 +99,42 @@ describe("fetch execute function", () => {
   });
 });
 
+describe("test generateTfvars function", () => {
+  it("undefined as data", () => {
+    expect(generateTfvars(undefined)).toEqual([]);
+  });
+  it("one value as data", () => {
+    expect(
+      generateTfvars({
+        hello: "world"
+      })
+    ).toEqual(['hello = "world"']);
+  });
+  it("one value with quote as data", () => {
+    expect(
+      generateTfvars({
+        hello: '"world'
+      })
+    ).toEqual(['hello = "\\"world"']);
+  });
+  it("one key with quote as data", () => {
+    expect(
+      generateTfvars({
+        'h"ello': "world"
+      })
+    ).toEqual(['h"ello = "world"']);
+  });
+  it("multiple values as data", () => {
+    expect(
+      generateTfvars({
+        key1: "value1",
+        key2: "value2",
+        key3: "value3"
+      })
+    ).toEqual(['key1 = "value1"', 'key2 = "value2"', 'key3 = "value3"']);
+  });
+});
+
 describe("test dirIteration", () => {
   it("parentObject and leafObject are undefined", () => {
     const result = dirIteration(undefined, undefined);
@@ -414,7 +450,7 @@ describe("Validate replacement of variables between parent and leaf definitions"
       parentInfraConfig.variables,
       leafInfraConfig.variables
     );
-    const combinedSpkTfvarsObject = await generateTfvars(finalDefinition);
+    const combinedSpkTfvarsObject = generateTfvars(finalDefinition);
     expect(combinedSpkTfvarsObject).toStrictEqual(finalArray);
   });
 });
@@ -426,7 +462,7 @@ describe("Validate spk.tfvars file", () => {
       path.join(mockProjectPath, `definition.yaml`)
     );
     const infraConfig = loadConfigurationFromLocalEnv(data);
-    const spkTfvarsObject = await generateTfvars(infraConfig.variables);
+    const spkTfvarsObject = generateTfvars(infraConfig.variables);
     expect(spkTfvarsObject).toContain('gitops_poll_interval = "5m"');
   });
 });
@@ -438,7 +474,7 @@ describe("Validate backend.tfvars file", () => {
       path.join(mockProjectPath, `definition.yaml`)
     );
     const infraConfig = loadConfigurationFromLocalEnv(data);
-    const backendTfvarsObject = await generateTfvars(infraConfig.backend);
+    const backendTfvarsObject = generateTfvars(infraConfig.backend);
     expect(backendTfvarsObject).toContain(
       'storage_account_name = "storage-account-name"'
     );
