@@ -50,6 +50,7 @@ Options:
   --git-push                                                  SPK CLI will try to commit and push these changes to a new origin/branch named after the service. (default: false)
   --variable-group-name <variable-group-name>                 The Azure DevOps Variable Group.
   --middlewares <comma-delimitated-list-of-middleware-names>  Traefik2 middlewares you wish to to be injected into your Traefik2 IngressRoutes (default: "")
+  --k8s-service-port <port>                                   Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes (default: "80")
   -h, --help                                                  output usage information
 ```
 
@@ -77,7 +78,7 @@ Options:
   -r, --repo-name <repo-name>                          Repository Name in Azure DevOps
   -u, --repo-url <repo-url>                            Repository URL
   -d, --devops-project <devops-project>                Azure DevOps Project
-  -b, --build-script <build-script-url>                Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.
+  -b, --build-script-url <build-script-url>            Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.
   -l, --packages-dir <packages-dir>                    The mono-repository directory containing this service definition. ie. '--packages-dir packages' if my-service is located under ./packages/my-service. Omitting this option implies this is a not a mono-repository.
   -h, --help                                           output usage information
 ```

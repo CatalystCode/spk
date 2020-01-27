@@ -148,7 +148,9 @@ by service introspection.
 - Add the task before the crucial steps in your pipeline. This will capture
   details about failures if the important steps fail.
 
-- To specify the `spk` version you want to download, set the `VERSION` environment variable. With this, `get_spk_version` will download that version. If `VERSION` is not set, it will download the latest version.
+- To specify the `spk` version you want to download, set the `VERSION`
+  environment variable. With this, `get_spk_version` will download that version.
+  If `VERSION` is not set, it will download the latest version.
 
 #### 3. CD release pipeline (ACR to HLD) configuration
 
@@ -166,14 +168,14 @@ Paste the following task towards the end of your release step in the release
 pipeline in the Azure DevOps portal:
 
 ```yaml
-latest_commit=$(git rev-parse --short HEAD) VERSION_TO_DOWNLOAD=$(curl -s
-"https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-echo "Downloading SPK"
-curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh
-chmod +x build.sh
-. ./build.sh --source-only
+latest_commit=$(git rev-parse --short HEAD) 
+VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/') 
+echo "Downloading SPK" 
+curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh 
+chmod +x build.sh 
+. ./build.sh --source-only 
 get_spk_version
-download_spk
+download_spk 
 ./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag $(Build.BuildId)
 ```
 
@@ -189,15 +191,14 @@ Paste the following yaml task towards the end of your image tag release stage in
 your multi-stage `azure-pipelines.yml`:
 
 ```yaml
-latest_commit=$(git rev-parse --short HEAD) tag_name=$(Build.BuildId)
-VERSION_TO_DOWNLOAD=$(curl -s
-"https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-echo "Downloading SPK"
-curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh
-chmod +x build.sh
-. ./build.sh --source-only
+latest_commit=$(git rev-parse --short HEAD) 
+tag_name=$(Build.BuildId)
+echo "Downloading SPK" 
+curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh 
+chmod +x build.sh 
+. ./build.sh --source-only 
 get_spk_version
-download_spk
+download_spk 
 ./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name
 ```
 

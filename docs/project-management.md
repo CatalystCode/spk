@@ -1,6 +1,8 @@
 # Project Management
 
-Create and manage components for a Bedrock project.
+Create and manage components for a Bedrock project. All project management
+commands will need to run in the order as listed below in the
+[commands](#Commands) section due to dependencies.
 
 Usage:
 
@@ -11,12 +13,17 @@ spk project [command] [options]
 Commands:
 
 - [Project Management](#project-management)
+
   - [Prerequisites](#prerequisites)
   - [Commands](#commands)
+
     - [init](#init)
     - [create-variable-group](#create-variable-group)
       - [Command Prerequisites](#command-prerequisites)
     - [install-lifecycle-pipeline](#install-lifecycle-pipeline)
+
+    **Please note all project management commands must run in the order as
+    listed above.**
 
 Global options:
 
@@ -109,8 +116,7 @@ Options:
   -o, --org-name <org-name>                            Organization Name for Azure DevOps
   -r, --repo-name <repo-name>                          Repository Name in Azure DevOps
   -u, --repo-url <repo-url>                            Repository URL
-  -e, --hld-url <hld-url>                              HLD Repository URL
   -d, --devops-project <devops-project>                Azure DevOps Project
-  -b, --build-script <build-script-url>                Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.
+  -b, --build-script-url <build-script-url>            Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.
   -h, --help                                           output usage information
 ```
