@@ -191,7 +191,7 @@ git push origin "$infra_generated_version"
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
 # Create variable group
-az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$ACCESS_TOKEN_SECRET@$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID"
+az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID"
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
