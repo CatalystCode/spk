@@ -31,7 +31,7 @@ tf_template_version=v0.0.1
 infra_hld_version=v0.0.1
 infra_generated_version=v0.0.1
 infra_hld_dir=fabrikam-infra-hld
-infra_hld_project=fabrikam-service
+infra_hld_project=fabrikam-base-env
 infra_region=west/
 infra_generated_dir=fabrikam-generated-deploy
 vg_name="spk-infra-hld-vg"
@@ -121,7 +121,7 @@ spk infra scaffold -n $infra_hld_project/$infra_region --source "$source" --vers
 # Modify the Resource Group Name & storage account name *Revisit optimal way to simulate*
 sed -ri 's/^(\s*)(rg_name\s*:\s*<insert value>\s*$)/\1rg_name: test-rg/' $infra_hld_project/$infra_region/definition.yaml
 sed -ri 's/^(\s*)(rg_location\s*:\s*<insert value>\s*$)/\1rg_location: west us2/' $infra_hld_project/$infra_region/definition.yaml
-sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1storage_account_namee: test-storage/' $infra_hld_project/$infra_region/definition.yaml
+sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1storage_account_name: test-storage/' $infra_hld_project/$infra_region/definition.yaml
 
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
