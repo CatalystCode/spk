@@ -42,7 +42,7 @@ export const commandDecorator = (command: commander.Command): void => {
     // gitPush will is always true or false. It shall not be
     // undefined because default value is set in the commander decorator
     await execute(projectPath, opts.gitPush, async (status: number) => {
-      await exitCmd(logger, process.exit, 1);
+      await exitCmd(logger, process.exit, status);
     });
   });
 };

@@ -154,7 +154,7 @@ export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(
     async (variableGroupName: string, opts: ICommandOptions) => {
       await execute(variableGroupName, opts, async (status: number) => {
-        await exitCmd(logger, process.exit, 1);
+        await exitCmd(logger, process.exit, status);
       });
     }
   );
