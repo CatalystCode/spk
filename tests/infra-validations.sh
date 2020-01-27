@@ -35,7 +35,7 @@ infra_hld_project=discovery-service
 infra_region=west/
 infra_generated_dir=discovery-generated-deploy
 vg_name="spk-infra-hld-vg"
-generate_pipeline_path="$(pwd)/../azure-pipelines/templates/infra-generation-pipeline.yml"
+generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
 
 validation_test_yaml="rg_name: <insert value>"
 
@@ -125,9 +125,9 @@ sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1stora
 
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
-echo "Copying generate pipeline validation yml to Infra HLD repo"
-pwd
-ls
+echo "Copying generate pipeline validation yml to Infra HLD repo" 
+pwd #debug
+ls # debug
 cp $generate_pipeline_path .
 git init
 

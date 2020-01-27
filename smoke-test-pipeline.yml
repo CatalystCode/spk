@@ -126,6 +126,13 @@ stages:
             exit 1
         fi
         chmod +x ./infra-validations.sh
+        echo "INFRA_YML: $INFRA_YML"
+        curl $INFRA_YML > infra-generation-pipeline.yml 2>/dev/null
+        if [ $? -ne 0 ]; then
+            echo "Error finding INFRA_YML: $INFRA_YML"
+            exit 1
+        fi
+        chmod +x ./infra-validations.sh
       displayName: "Download integration test scripts"
       env:
         FUNC_SCRIPT: $(FUNC_SCRIPT)
