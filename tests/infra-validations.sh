@@ -26,14 +26,14 @@ echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 echo "ACR_NAME: $ACR_NAME"
 
 
-terraform_template_dir=discovery-tf-template
+terraform_template_dir=fabrikam-tf-template
 tf_template_version=v0.0.1
 infra_hld_version=v0.0.1
 infra_generated_version=v0.0.1
-infra_hld_dir=discovery-infra-hld
-infra_hld_project=discovery-service
+infra_hld_dir=fabrikam-infra-hld
+infra_hld_project=fabrikam-service
 infra_region=west/
-infra_generated_dir=discovery-generated-deploy
+infra_generated_dir=fabrikam-generated-deploy
 vg_name="spk-infra-hld-vg"
 generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
 
