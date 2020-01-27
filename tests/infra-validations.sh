@@ -35,7 +35,7 @@ infra_hld_project=discovery-service
 infra_region=west/
 infra_generated_dir=discovery-generated-deploy
 vg_name="spk-infra-hld-vg"
-generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
+generate_pipeline_path="$(pwd)/../azure-pipelines/templates/infra-generation-pipeline.yml"
 
 validation_test_yaml="rg_name: <insert value>"
 
@@ -213,4 +213,16 @@ pipeline_created=$(az pipelines show --name $hld_generate_pipeline --org $AZDO_O
 echo "Polling for pipeline success"
 verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_generate_pipeline 360 15
 
+# Verify Generate Validation Pipeline PR files------------------
+git fetch --all
+pr_list=$(az repos pr list --project $AZDO_PROJECT --repository $infra_generated_dir)
+pr_ref=$(echo $pr_list |jq '.[].sourceRefName' | tr -d '"')
+pr_id=$(echo $pr_ref | sed 's:.*/::')
+echo "Checking out PR: $pr_id"
+git checkout $pr_id
+
+# Validate Directory of Generated Repo PR
+file_we_expect=("variables.tf" "main.tf" "backend.tfvars" "spk.tfvars")
+validate_directory "$TEST_WORKSPACE/$infra_generated_dir/$infra_hld_project-generated/$infra_region" "${file_we_expect[@]}" >> $TEST_WORKSPACE/log.txt
+echo "PR for generated repo validated."
 echo "Successfully reached the end of the infrastructure validations script."
