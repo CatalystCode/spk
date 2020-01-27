@@ -241,6 +241,4 @@ pipeline_created=$(az pipelines show --name $lifecycle_pipeline_name --org $AZDO
 # Verify lifecycle pipeline run was successful
 verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15
 
-echo "Successfully reached the end of the validations scripts."
-
-# TODO hook up helm chart, approve HLD pull request, verify manifest gen pipeline
+echo "Successfully reached the end of the introspection validations script."
