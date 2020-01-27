@@ -7,32 +7,12 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
--  group: 'spk-infra-hld-vg'
+- group: 'spk-infra-hld-vg'
 
 steps:
 - checkout: self
   persistCredentials: true
   clean: true
-
-# WILL REMOVE LATER. USED UNTIL NEW SPK RELEASE
-- task: DownloadPipelineArtifact@2
-  inputs:
-    buildType: 'specific'
-    project: 668627d8-dda3-4bc2-8fb6-b2059eda7b7d
-    definition: 12
-    buildVersionToDownload: 'latestFromBranch'
-    branchName: 'refs/heads/master'
-    itemPattern: "spk*"
-    artifactName: 'spk_linux_node_12'
-    targetPath: '$(System.DefaultWorkingDirectory)'
-- bash: |
-    shopt -s expand_aliases
-    echo "Current Dir is $(pwd)"
-    chmod +x spk-linux
-    alias spk="$(pwd)/spk-linux"
-    spk --version
-  displayName: "Verify SPK downloaded and executable"
-  failOnStderr: true
 
 - bash: |
     curl $BEDROCK_BUILD_SCRIPT > build.sh
@@ -60,6 +40,7 @@ steps:
     download_spk
     echo 'SPK Version: '
     spk --version
+    set -e
     echo "GENERATING $PROJECT_DIRECTORY"
     cd $PROJECT_DIRECTORY
     spk infra generate -p $CLUSTER
@@ -133,10 +114,8 @@ steps:
     repo_url="${repo_url#http://}"
     repo_url="${repo_url#https://}"
     echo "$repo_url"
-    echo $ACCESS_TOKEN_SECRET
-    echo $repo_url
-    echo "GIT PUSH: https://$repo_url"
-    git push "https://$repo_url" $PR_BRANCH_NAME
+    echo "GIT PUSH: https://<ACCESS_TOKEN_SECRET>@$repo_url"
+    git push "https://$ACCESS_TOKEN_SECRET@$repo_url" $PR_BRANCH_NAME
 
     # Create PR
     # If using GitHub repos:
