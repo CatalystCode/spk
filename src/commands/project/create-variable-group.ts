@@ -153,10 +153,10 @@ export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(
     async (variableGroupName: string, opts: ICommandOptions) => {
       await execute(variableGroupName, opts, async (status: number) => {
-        logger.on("close", () => {
-          process.exit(status);
-        });
         logger.end();
+        setTimeout(() => {
+          process.exit(status);
+        }, 1000);
       });
     }
   );
