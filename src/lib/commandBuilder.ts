@@ -102,15 +102,3 @@ export const validateForRequiredValues = (
   }
   return errors;
 };
-
-/**
- * Flushs the log, ready to exit the command.
- * In future there may be other housekeeper tasks.
- *
- * @param log Logger instance
- */
-export const exit = (log: Logger): Promise<void> => {
-  return new Promise(resolve => {
-    log.end(() => resolve);
-  });
-};

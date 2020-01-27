@@ -1,5 +1,4 @@
 import commander from "commander";
-import { logger } from "../logger";
 import {
   build,
   ICommandBuildElements,
