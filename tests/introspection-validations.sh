@@ -29,8 +29,9 @@ echo "AZ_RESOURCE_GROUP: $AZ_RESOURCE_GROUP"
 echo "ACR_NAME: $ACR_NAME"
 echo "AZ_STORAGE_ACCOUNT: $AZ_STORAGE_ACCOUNT"
 
-sa_name=fabrikamsatst
-sat_name=fabrikamdeployments
+vg_name=fabrikam-vg
+sat_name=fabrikamtestdeployments
+sat_onboard_name=deploymentsonboard
 sa_location=westus
 kv_name=fabrikamkv
 kv_location=westus
@@ -65,15 +66,13 @@ fi
 cd $TEST_WORKSPACE
 
 # To-do: uncomment onboard validation test
-# spk deployment onboard validation test
-# storage_account_exists $sa_name $AZ_RESOURCE_GROUP "delete"
-# spk deployment onboard -s $sa_name -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $AZ_SUBSCRIPTION_ID --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
-# storage_account_exists $sa_name $AZ_RESOURCE_GROUP "fail"
-# storage_account_table_exists $sat_name $sa_name "fail"
+storage_account_exists $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
+spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
 
 echo "Finished testing spk deployment onboard."
-
-# setup introspection resources
 
 # setup repo with pipelines
 # Manifest Repo Setup ------------------
@@ -125,6 +124,11 @@ repo_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_dir
 
 # Create the remote repo for the local repo
 created_repo_result=$(az repos create --name "$hld_dir" --org $AZDO_ORG_URL --p $AZDO_PROJECT)
+s $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
+spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $AZ_SUBSCRIPTION_ID --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
+storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "delete"
 
 # Extract out remote repo URL from the above result
 remote_repo_url=$(echo $created_repo_result | jq '.remoteUrl' | tr -d '"' )
