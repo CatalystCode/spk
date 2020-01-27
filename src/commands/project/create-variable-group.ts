@@ -6,6 +6,7 @@ import { echo } from "shelljs";
 import { Bedrock, Config, readYaml, write } from "../../config";
 import {
   build as buildCmd,
+  exit as exitCmd,
   validateForRequiredValues
 } from "../../lib/commandBuilder";
 import { IAzureDevOpsOpts } from "../../lib/git";
@@ -153,10 +154,7 @@ export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(
     async (variableGroupName: string, opts: ICommandOptions) => {
       await execute(variableGroupName, opts, async (status: number) => {
-        logger.end();
-        setTimeout(() => {
-          process.exit(status);
-        }, 1000);
+        await exitCmd(logger, process.exit, 1);
       });
     }
   );

@@ -1,6 +1,6 @@
 import commander from "commander";
 
-import { build as buildCmd } from "../../lib/commandBuilder";
+import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   generateDefaultHldComponentYaml,
   generateGitIgnoreFile,
@@ -42,10 +42,7 @@ export const commandDecorator = (command: commander.Command): void => {
     // gitPush will is always true or false. It shall not be
     // undefined because default value is set in the commander decorator
     await execute(projectPath, opts.gitPush, async (status: number) => {
-      logger.end();
-      setTimeout(() => {
-        process.exit(status);
-      }, 1000);
+      await exitCmd(logger, process.exit, 1);
     });
   });
 };
