@@ -40,6 +40,7 @@ steps:
     download_spk
     echo 'SPK Version: '
     spk --version
+    set -e
     echo "GENERATING $PROJECT_DIRECTORY"
     cd $PROJECT_DIRECTORY
     spk infra generate -p $CLUSTER
@@ -126,7 +127,7 @@ steps:
       sudo apt-get install hub
       export GITHUB_TOKEN=$ACCESS_TOKEN_SECRET
       hub pull-request -m "Adding Generated Components for $PROJECT_DIRECTORY/$CLUSTER"
-    elif [[ $GENERATED_REPO == *"azure"* ]]; then
+    elif [[ $GENERATED_REPO == *"azure"* ]] || [[ $GENERATED_REPO == *"visualstudio"* ]]; then
     # If using AzDo repos:
     # You will need to specify variables $AZDO_ORG_NAME and $AZDO_PROJECT_NAME
       export AZURE_DEVOPS_EXT_PAT=$ACCESS_TOKEN_SECRET
