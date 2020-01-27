@@ -1,10 +1,5 @@
-import fs from "fs";
-import yaml from "js-yaml";
-import path from "path";
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
-import { createTempDir } from "../../lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-import { IBedrockFile } from "../../types";
 
 jest.mock("../../lib/pipelines/pipelines");
 
