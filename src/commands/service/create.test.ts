@@ -39,7 +39,10 @@ describe("validate pipeline config", () => {
     "my,middleware,string",
     true,
     "testDisplayName",
-    80
+    80,
+    "pathPrefix",
+    "version",
+    "backend"
   ];
 
   it("config is valid", () => {
