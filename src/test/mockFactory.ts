@@ -244,11 +244,12 @@ export const createTestHldAzurePipelinesYaml = (
           `. ./build.sh --source-only`,
           `get_spk_version`,
           `download_spk`,
-          `./spk/spk deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`
+          `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`
         ]),
-        displayName: "Update manifest pipeline details in Spektate db",
+        displayName:
+          "If configured, update manifest pipeline details in Spektate db",
         condition:
-          "and(ne(variables['ACCOUNT_NAME'], ''), ne(variables['ACCOUNT_KEY'], ''),ne(variables['TABLE_NAME'], ''),ne(variables['PARTITION_KEY'], ''))"
+          "and(ne(variables['SPEKTATE_STORAGE_ACCOUNT_NAME'], ''), ne(variables['SPEKTATE_STORAGE_ACCOUNT_KEY'], ''),ne(variables['SPEKTATE_STORAGE_TABLE_NAME'], ''),ne(variables['SPEKTATE_STORAGE_PARTITION_KEY'], ''))"
       }
     ]
   };
