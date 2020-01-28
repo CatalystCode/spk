@@ -294,3 +294,31 @@ export const saveConfiguration = async (
     );
   }
 };
+
+/**
+ * Checks if the default bedrock.yaml exists
+ *
+ * @param rootProjectPath Path to generate/update the the bedrock.yaml file in
+ */
+export const isBedrockFileValid = async (
+  rootProjectPath: string
+): Promise<[boolean, number | undefined]> => {
+  if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
+    throw new Error("Project root path is not valid");
+  }
+
+  const absProjectPath = path.resolve(rootProjectPath);
+
+  let bedrockFile: IBedrockFile | undefined;
+
+  try {
+    bedrockFile = await BedrockAsync(absProjectPath);
+  } catch (error) {
+    logger.error(error);
+    return [false, undefined];
+  }
+
+  logger.debug(`variableGroups length: ${bedrockFile?.variableGroups?.length}`);
+  logger.verbose(`bedrockFile: \n ${bedrockFile}`);
+  return [true, bedrockFile?.variableGroups?.length];
+};

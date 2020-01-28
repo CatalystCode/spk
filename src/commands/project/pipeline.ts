@@ -4,7 +4,7 @@ import {
   BuildDefinitionVariable
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
-import { Config } from "../../config";
+import { Config, isBedrockFileValid } from "../../config";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import {
   getOriginUrl,
@@ -18,7 +18,6 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
-import { isBedrockFileExists } from "././create-variable-group";
 
 export const deployLifecyclePipelineCommandDecorator = (
   command: commander.Command
@@ -49,9 +48,16 @@ export const deployLifecyclePipelineCommandDecorator = (
       const projectPath = process.cwd();
       logger.verbose(`project path: ${projectPath}`);
 
-      if ((await isBedrockFileExists(projectPath)) === false) {
+      const [exists, length] = await isBedrockFileValid(projectPath);
+      if (exists === false) {
         logger.error(
-          "Please run `spk project init` command before running this command to initialize the project."
+          "Please run `spk project init` and `spk project cvg` commands before running this command to initialize the project."
+        );
+        return;
+      } else if (length === undefined || length === 0) {
+        // this assumes no variable groups exists in lifecycle pipeline when bedrock files does not have any variable groups
+        logger.error(
+          "Please run `spk project cvg` command before running this command to create a variable group."
         );
         return;
       }
