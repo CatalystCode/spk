@@ -92,6 +92,21 @@ export const createCommandDecorator = (command: commander.Command): void => {
       "Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes",
       "80"
     )
+    .option(
+      "--path-prefix <path-prefix>",
+      "The path prefix for ingress route; will be used to configure Traefik2 IngressRoutes. If omitted, then the service name will used.",
+      ""
+    )
+    .option(
+      "--version <version>",
+      "Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename",
+      ""
+    )
+    .option(
+      "--backend <backend>",
+      "Kubernetes service name; will be used to configure Traefik2 IngressRoutes",
+      ""
+    )
     .action(async (serviceName, opts) => {
       const projectPath = process.cwd();
       logger.verbose(`project path: ${projectPath}`);
@@ -118,7 +133,10 @@ export const createCommandDecorator = (command: commander.Command): void => {
         maintainerEmail,
         maintainerName,
         middlewares,
-        packagesDir
+        packagesDir,
+        pathPrefix,
+        version,
+        backend
       } = opts;
       const k8sPort = Number(opts.k8sServicePort);
       const variableGroups = bedrock?.variableGroups;
@@ -138,7 +156,10 @@ export const createCommandDecorator = (command: commander.Command): void => {
             middlewares,
             gitPush,
             displayName,
-            k8sPort
+            k8sPort,
+            pathPrefix,
+            version,
+            backend
           )
         ) {
           throw Error(`Invalid configuration provided`);
@@ -162,7 +183,10 @@ export const createCommandDecorator = (command: commander.Command): void => {
             middlewares: (middlewares as string)
               .split(",")
               .map(str => str.trim()),
-            variableGroups
+            variableGroups,
+            pathPrefix,
+            version,
+            backend
           }
         );
       } catch (err) {
@@ -177,17 +201,23 @@ export const createCommandDecorator = (command: commander.Command): void => {
 
 /**
  * Validates the pipeline configuration
- * @param helmChartChart Helm chart chart
- * @param helmChartRepository  Helm chart repository
- * @param helmConfigBranch Helm chart branch
- * @param helmConfigGit Helm git
- * @param helmConfigPath Helm config path
- * @param serviceName Service name
- * @param packagesDir Packages directory
- * @param maintainerName Name of maintainer
- * @param maintainerEmail Email of maintainer
- * @param middlewares comma-delimitated list of Traefik2 middlewares
- * @param gitPush Push to git
+ *
+ * @param helmChartChart
+ * @param helmChartRepository
+ * @param helmConfigBranch
+ * @param helmConfigGit
+ * @param helmConfigPath
+ * @param serviceName
+ * @param packagesDir
+ * @param maintainerName
+ * @param maintainerEmail
+ * @param middlewares
+ * @param gitPush
+ * @param displayName
+ * @param k8sPort
+ * @param pathPrefix
+ * @param version
+ * @param backend
  */
 export const isValidConfig = (
   helmChartChart: any,
@@ -202,7 +232,10 @@ export const isValidConfig = (
   middlewares: any,
   gitPush: any,
   displayName: any,
-  k8sPort: any
+  k8sPort: any,
+  pathPrefix?: any,
+  version?: any,
+  backend?: any
 ): boolean => {
   const missingConfig = [];
 
@@ -277,6 +310,21 @@ export const isValidConfig = (
       `k8s-port must be a positive integer, parsed ${k8sPort} from input.`
     );
   }
+  if (typeof pathPrefix !== "string") {
+    missingConfig.push(
+      `pathPrefix must be of type 'string', ${typeof pathPrefix} given.`
+    );
+  }
+  if (typeof version !== "string") {
+    missingConfig.push(
+      `version must be of type 'string', ${typeof version} given.`
+    );
+  }
+  if (typeof backend !== "string") {
+    missingConfig.push(
+      `backend must be of type 'string', ${typeof backend} given.`
+    );
+  }
 
   if (missingConfig.length > 0) {
     logger.error("Error in configuration: " + missingConfig.join(" "));
@@ -291,6 +339,9 @@ export const isValidConfig = (
  *
  * @param rootProjectPath
  * @param serviceName
+ * @param packagesDir
+ * @param gitPush
+ * @param k8sServicePort
  * @param opts
  */
 export const createService = async (
@@ -310,6 +361,9 @@ export const createService = async (
     maintainerName?: string;
     variableGroups?: string[];
     middlewares?: string[];
+    pathPrefix?: string;
+    version?: string;
+    backend?: string;
   }
 ) => {
   const {
@@ -322,7 +376,10 @@ export const createService = async (
     maintainerName = "",
     maintainerEmail = "",
     middlewares = [],
-    variableGroups = []
+    variableGroups = [],
+    pathPrefix = "",
+    version = "",
+    backend = ""
   } = opts ?? {};
 
   logger.info(
@@ -390,7 +447,10 @@ export const createService = async (
     displayName,
     helmConfig,
     middlewares,
-    k8sServicePort
+    k8sServicePort,
+    pathPrefix,
+    version,
+    backend
   );
 
   // If requested, create new git branch, commit, and push
