@@ -231,6 +231,24 @@ export const createTestHldAzurePipelinesYaml = (
           REPO: "$(MANIFEST_REPO)",
           BRANCH_NAME: "$(Build.SourceBranchName)"
         }
+      },
+      {
+        script: generateYamlScript([
+          `cd "$HOME"/\${MANIFEST_REPO##*/}`,
+          `commitId=$(Build.SourceVersion)`,
+          `commitId=$(echo "\${commitId:0:7}")`,
+          `latest_commit=$(git rev-parse --short HEAD)`,
+          `echo "Downloading SPK"`,
+          `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
+          `chmod +x build.sh`,
+          `. ./build.sh --source-only`,
+          `get_spk_version`,
+          `download_spk`,
+          `./spk/spk deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`
+        ]),
+        displayName: "Update manifest pipeline details in Spektate db",
+        condition:
+          "and(ne(variables['ACCOUNT_NAME'], ''), ne(variables['ACCOUNT_KEY'], ''),ne(variables['TABLE_NAME'], ''),ne(variables['PARTITION_KEY'], ''))"
       }
     ]
   };
