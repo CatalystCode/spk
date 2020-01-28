@@ -278,7 +278,7 @@ describe("Validate sources in definition.yaml files", () => {
       sourceData
     );
   });
-  test("without parent's definition.xml", async () => {
+  test("without parent's definition.yaml", async () => {
     const mockParentPath = "src/commands/infra/mocks/discovery-service";
     const mockProjectPath = "src/commands/infra/mocks/discovery-service/east";
     const expectedSourceEast = {
@@ -331,7 +331,7 @@ describe("Validate sources in definition.yaml files", () => {
       sourceData
     );
   });
-  test("without parent's and project's definition.xml", async () => {
+  test("without parent's and project's definition.yaml", async () => {
     const mockParentPath = "src/commands/infra/mocks";
     try {
       validateDefinition(mockParentPath, mockParentPath);
