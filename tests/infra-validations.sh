@@ -85,7 +85,7 @@ echo "The remote_repo_url is $remote_repo_url"
 
 # Remove the user from the URL
 repo_url=$(getHostandPath "$remote_repo_url")
-git commit -m "inital commit"
+git commit -m "inital commit for TF Template Repo"
 git tag "$tf_template_version"
 
 # git remote rm origin
@@ -144,7 +144,7 @@ echo "The remote_repo_url is $remote_repo_url"
 
 # Remove the user from the URL
 repo_url=$(getHostandPath "$remote_repo_url")
-git commit -m "inital commit"
+git commit -m "inital commit for HLD Infra Repo"
 git tag "$infra_hld_version"
 
 # git remote rm origin
@@ -176,7 +176,7 @@ touch README.md
 git add -A
 # Remove the user from the URL
 repo_url=$(getHostandPath "$remote_repo_url")
-git commit -m "inital commit"
+git commit -m "inital commit for Generated Infra Repo"
 git tag "$infra_generated_version"
 
 # git remote rm origin
@@ -195,7 +195,6 @@ az pipelines variable-group create --name $vg_name --authorize true --variables 
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
-
 
 # First we should check if the hld Generate Pipeline exist. If there is a pipeline with the same name we should delete it
 hld_generate_pipeline=$infra_hld_dir-generate-pipeline
