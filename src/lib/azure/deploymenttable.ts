@@ -58,7 +58,8 @@ export const updateACRToHLDPipeline = (
   pipelineId: string,
   imageTag: string,
   hldCommitId: string,
-  env: string
+  env: string,
+  pr?: string
 ): Promise<any> => {
   return new Promise(resolve => {
     findMatchingDeployments(tableInfo, "imageTag", imageTag).then(entries => {
@@ -73,6 +74,9 @@ export const updateACRToHLDPipeline = (
           entry.p2 = pipelineId.toLowerCase();
           entry.hldCommitId = hldCommitId.toLowerCase();
           entry.env = env.toLowerCase();
+          if (pr) {
+            entry.pr = pr.toLowerCase();
+          }
           updateEntryInTable(tableInfo, entry)
             .then(() => {
               logger.info(
@@ -93,6 +97,9 @@ export const updateACRToHLDPipeline = (
         entryToInsert.RowKey = getRowKey();
         entryToInsert.p3 = undefined;
         entryToInsert.manifestCommitId = undefined;
+        if (pr) {
+          entryToInsert.pr = pr.toLowerCase();
+        }
         insertToTable(tableInfo, entryToInsert)
           .then(() => {
             logger.info(
@@ -113,6 +120,9 @@ export const updateACRToHLDPipeline = (
       newEntry.env = env.toLowerCase();
       newEntry.hldCommitId = hldCommitId.toLowerCase();
       newEntry.imageTag = imageTag.toLowerCase();
+      if (pr) {
+        newEntry.pr = pr.toLowerCase();
+      }
       insertToTable(tableInfo, newEntry)
         .then(() => {
           logger.info(
@@ -135,82 +145,133 @@ export const updateACRToHLDPipeline = (
  * @param pipelineId identifier of the HLD to manifest pipeline
  * @param manifestCommitId manifest commit identifier
  */
-export const updateHLDToManifestPipeline = (
+export const updateHLDToManifestPipeline = async (
   tableInfo: IDeploymentTable,
   hldCommitId: string,
   pipelineId: string,
-  manifestCommitId?: string
+  manifestCommitId?: string,
+  pr?: string
+): Promise<any> => {
+  // findMatchingDeployments(tableInfo, "hldCommitId", hldCommitId).then(
+  //   entries => {
+  //     if (entries.length === 0 && pr) {
+  //       findMatchingDeployments(tableInfo, "pr", pr).then(entriesArray => {
+  //         return updateHLDtoManifestHelper(entriesArray, tableInfo, hldCommitId, pipelineId, manifestCommitId, pr);
+  //       });
+  //     } else {
+  //       return updateHLDtoManifestHelper(entries, tableInfo, hldCommitId, pipelineId, manifestCommitId, pr);
+  //     }
+  //   }
+  // );
+  const entries = await findMatchingDeployments(
+    tableInfo,
+    "hldCommitId",
+    hldCommitId
+  );
+  logger.info(`entries: ${entries}`);
+  logger.info(`pr=${pr}`);
+  if ((!entries || entries.length === 0) && pr) {
+    const entriesArray = await findMatchingDeployments(tableInfo, "pr", pr);
+    return updateHLDtoManifestHelper(
+      entriesArray,
+      tableInfo,
+      hldCommitId,
+      pipelineId,
+      manifestCommitId,
+      pr
+    );
+  } else {
+    return updateHLDtoManifestHelper(
+      entries,
+      tableInfo,
+      hldCommitId,
+      pipelineId,
+      manifestCommitId,
+      pr
+    );
+  }
+};
+
+export const updateHLDtoManifestHelper = (
+  entries: any,
+  tableInfo: IDeploymentTable,
+  hldCommitId: string,
+  pipelineId: string,
+  manifestCommitId?: string,
+  pr?: string
 ): Promise<any> => {
   return new Promise(resolve => {
-    findMatchingDeployments(tableInfo, "hldCommitId", hldCommitId).then(
-      entries => {
-        let entryToInsert: any;
-        for (const entry of entries) {
-          entryToInsert = entry;
-          if (
-            (entry.p3 ? entry.p3._ === pipelineId : true) &&
-            (entry.manifestCommitId
-              ? entry.manifestCommitId._ === manifestCommitId
-              : true)
-          ) {
-            entry.p3 = pipelineId.toLowerCase();
-            if (manifestCommitId) {
-              entry.manifestCommitId = manifestCommitId.toLowerCase();
-            }
-            updateEntryInTable(tableInfo, entry)
-              .then(() => {
-                logger.info(
-                  "Updated third pipeline details for its corresponding pipeline"
-                );
-                resolve(entry);
-              })
-              .catch(err => {
-                logger.error(err);
-              });
-            return;
-          }
-        }
-        if (entryToInsert) {
-          entryToInsert.p3 = pipelineId.toLowerCase();
-          if (manifestCommitId) {
-            entryToInsert.manifestCommitId = manifestCommitId.toLowerCase();
-          }
-          entryToInsert.hldCommitId = hldCommitId.toLowerCase();
-          entryToInsert.RowKey = getRowKey();
-          insertToTable(tableInfo, entryToInsert)
-            .then(() => {
-              logger.info(
-                `Added new p3 entry for hldCommitId ${hldCommitId} by finding a similar entry`
-              );
-              resolve(entryToInsert);
-            })
-            .catch(err => {
-              logger.error(err);
-            });
-          return;
-        }
-
-        const newEntry: any = {};
-        newEntry.PartitionKey = tableInfo.partitionKey;
-        newEntry.RowKey = getRowKey();
-        newEntry.p3 = pipelineId.toLowerCase();
-        newEntry.hldCommitId = hldCommitId.toLowerCase();
+    let entryToInsert: any;
+    for (const entry of entries) {
+      entryToInsert = entry;
+      if (
+        (entry.p3 ? entry.p3._ === pipelineId : true) &&
+        (entry.manifestCommitId
+          ? entry.manifestCommitId._ === manifestCommitId
+          : true)
+      ) {
+        entry.p3 = pipelineId.toLowerCase();
         if (manifestCommitId) {
-          newEntry.manifestCommitId = manifestCommitId.toLowerCase();
+          entry.manifestCommitId = manifestCommitId.toLowerCase();
         }
-        insertToTable(tableInfo, newEntry)
+        updateEntryInTable(tableInfo, entry)
           .then(() => {
             logger.info(
-              `Added new p3 entry for hldCommitId ${hldCommitId} - no matching entry was found.`
+              "Updated third pipeline details for its corresponding pipeline"
             );
-            resolve(newEntry);
+            resolve(entry);
           })
           .catch(err => {
             logger.error(err);
           });
         return;
       }
-    );
+    }
+    if (entryToInsert) {
+      entryToInsert.p3 = pipelineId.toLowerCase();
+      if (manifestCommitId) {
+        entryToInsert.manifestCommitId = manifestCommitId.toLowerCase();
+      }
+      if (pr) {
+        entryToInsert.pr = pr.toLowerCase();
+      }
+      entryToInsert.hldCommitId = hldCommitId.toLowerCase();
+      entryToInsert.RowKey = getRowKey();
+      insertToTable(tableInfo, entryToInsert)
+        .then(() => {
+          logger.info(
+            `Added new p3 entry for hldCommitId ${hldCommitId} by finding a similar entry`
+          );
+          resolve(entryToInsert);
+        })
+        .catch(err => {
+          logger.error(err);
+        });
+      return;
+    }
+
+    const newEntry: any = {};
+    newEntry.PartitionKey = tableInfo.partitionKey;
+    newEntry.RowKey = getRowKey();
+    newEntry.p3 = pipelineId.toLowerCase();
+    newEntry.hldCommitId = hldCommitId.toLowerCase();
+    if (manifestCommitId) {
+      newEntry.manifestCommitId = manifestCommitId.toLowerCase();
+    }
+    if (pr) {
+      newEntry.pr = pr.toLowerCase();
+    }
+    insertToTable(tableInfo, newEntry)
+      .then(() => {
+        logger.info(
+          `Added new p3 entry for hldCommitId ${hldCommitId} - no matching entry was found.`
+        );
+        resolve(newEntry);
+      })
+      .catch(err => {
+        logger.error(err);
+      });
+    return;
   });
 };
 
