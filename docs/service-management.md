@@ -50,6 +50,9 @@ Options:
   --git-push                                                  SPK CLI will try to commit and push these changes to a new origin/branch named after the service. (default: false)
   --middlewares <comma-delimitated-list-of-middleware-names>  Traefik2 middlewares you wish to to be injected into your Traefik2 IngressRoutes (default: "")
   --k8s-service-port <port>                                   Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes (default: "80")
+  --path-prefix <path-prefix>                                 The path prefix for ingress route; will be used to configure Traefik2 IngressRoutes. If omitted, then the service name will used. (default: "")
+  --version <version>                                         Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename (default: "")
+  --backend <backend>                                         Kubernetes service name; will be used to configure Traefik2 IngressRoutes (default: "")
   -h, --help                                                  output usage information
 ```
 
