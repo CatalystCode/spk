@@ -178,8 +178,7 @@ pipeline in the Azure DevOps portal:
 latest_commit=$(git rev-parse --short HEAD) 
 curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh 
 chmod +x build.sh 
-. ./build.sh 
---source-only 
+. ./build.sh --source-only 
 get_spk_version
 download_spk 
 ./spk/spk deployment create  -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY)  --p2 $(Release.ReleaseId) --hld-commit-id $latest_commit --env $(Release.EnvironmentName) --image-tag $(Build.BuildId)
