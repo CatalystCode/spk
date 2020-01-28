@@ -120,8 +120,6 @@ steps:
     repo_url="${repo_url#https://}"
     echo "$repo_url"
     echo "GIT PUSH: https://<ACCESS_TOKEN_SECRET>@$repo_url"
-    echo $repo_url
-    echo $ACCESS_TOKEN_SECRET
     echo $PR_BRANCH_NAME
     git push "https://$ACCESS_TOKEN_SECRET@$repo_url" $PR_BRANCH_NAME
 
