@@ -60,13 +60,6 @@ export const constructSource = (config: IConfigYaml) => {
   return source;
 };
 
-/**
- * Executing the command.
- *
- * @param config Configuration
- * @param opts Command Line options that are passed in
- * @param exitFn Exit function
- */
 export const execute = async (
   config: IConfigYaml,
   opts: ICommandOptions,
