@@ -198,26 +198,6 @@ describe("test execute function", () => {
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
-  it("positive test", async () => {
-    const projectName = uuid();
-    const exitFn = jest.fn();
-    try {
-      await execute(
-        {},
-        {
-          name: projectName,
-          source: "https://github.com/microsoft/bedrock",
-          template: "cluster/environments/azure-simple",
-          version: "v1.0.0"
-        },
-        exitFn
-      );
-      expect(exitFn).toBeCalledTimes(1);
-      expect(exitFn.mock.calls).toEqual([[0]]);
-    } finally {
-      // removeDir(projectName);
-    }
-  });
 });
 
 describe("Validate parsing of sample variables.tf file", () => {
