@@ -8,6 +8,7 @@ import { logger } from "./logger";
 import {
   IAzurePipelinesYaml,
   IBedrockFile,
+  IBedrockFileInfo,
   IConfigYaml,
   IMaintainersFile
 } from "./types";
@@ -296,13 +297,13 @@ export const saveConfiguration = async (
 };
 
 /**
- * Checks if the default bedrock.yaml exists
+ * Returns bedrock file information
  *
- * @param rootProjectPath Path to generate/update the the bedrock.yaml file in
+ * @param rootProjectPath Path to read the bedrock.yaml file
  */
-export const isBedrockFileValid = async (
+export const bedrockFileInfo = async (
   rootProjectPath: string
-): Promise<[boolean, number | undefined]> => {
+): Promise<IBedrockFileInfo> => {
   if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
     throw new Error("Project root path is not valid");
   }
@@ -313,12 +314,19 @@ export const isBedrockFileValid = async (
 
   try {
     bedrockFile = await BedrockAsync(absProjectPath);
+    logger.debug(
+      `variableGroups length: ${bedrockFile?.variableGroups?.length}`
+    );
+    logger.verbose(`bedrockFile: \n ${bedrockFile}`);
+    return {
+      exist: true,
+      hasVariableGroups: (bedrockFile?.variableGroups ?? []).length > 0
+    };
   } catch (error) {
     logger.error(error);
-    return [false, undefined];
+    return {
+      exist: false,
+      hasVariableGroups: false
+    };
   }
-
-  logger.debug(`variableGroups length: ${bedrockFile?.variableGroups?.length}`);
-  logger.verbose(`bedrockFile: \n ${bedrockFile}`);
-  return [true, bedrockFile?.variableGroups?.length];
 };

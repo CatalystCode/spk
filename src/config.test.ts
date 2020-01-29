@@ -4,9 +4,9 @@ import os from "os";
 import path from "path";
 import shell from "shelljs";
 import uuid from "uuid/v4";
-import { Bedrock, isBedrockFileValid, write } from "./config";
+import { Bedrock, bedrockFileInfo, write } from "./config";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "./logger";
-import { IBedrockFile } from "./types";
+import { IBedrockFile, IBedrockFileInfo } from "./types";
 
 const variableGroupName = uuid();
 
@@ -104,7 +104,7 @@ describe("isBedrockFileValid", () => {
 
     try {
       logger.info("calling create");
-      await isBedrockFileValid("");
+      await bedrockFileInfo("");
     } catch (err) {
       invalidDirError = err;
     }
@@ -116,11 +116,11 @@ describe("isBedrockFileValid", () => {
     const randomTmpDir = path.join(os.tmpdir(), uuid());
     fs.mkdirSync(randomTmpDir);
 
-    const [exists, length] = await isBedrockFileValid(randomTmpDir);
+    const fileInfo: IBedrockFileInfo = await bedrockFileInfo(randomTmpDir);
 
-    logger.info(`bedrock.yaml file exists: ${exists}`);
+    logger.info(`bedrock.yaml file exists: ${fileInfo.exist}`);
 
-    expect(exists).toBe(false);
+    expect(fileInfo.exist).toBe(false);
   });
 
   test("Should pass when bedrock file exists with variable groups length 0", async () => {
@@ -142,11 +142,13 @@ describe("isBedrockFileValid", () => {
     });
     fs.writeFileSync(path.join(randomTmpDir, "bedrock.yaml"), asYaml);
 
-    const [exists, length] = await isBedrockFileValid(randomTmpDir);
-    logger.info(`bedrock.yaml file exists: ${exists} in ${randomTmpDir}`);
+    const fileInfo: IBedrockFileInfo = await bedrockFileInfo(randomTmpDir);
+    logger.verbose(
+      `bedrock.yaml file exists: ${fileInfo.exist} in ${randomTmpDir}`
+    );
 
-    expect(exists).toBe(true);
-    expect(length).toBe(0);
+    expect(fileInfo.exist).toBe(true);
+    expect(fileInfo.hasVariableGroups).toBe(false);
   });
 
   test("Should pass when bedrock file exists with one variable group", async () => {
@@ -168,10 +170,12 @@ describe("isBedrockFileValid", () => {
     });
     fs.writeFileSync(path.join(randomTmpDir, "bedrock.yaml"), asYaml);
 
-    const [exists, length] = await isBedrockFileValid(randomTmpDir);
-    logger.info(`bedrock.yaml file exists: ${exists} in ${randomTmpDir}`);
+    const fileInfo: IBedrockFileInfo = await bedrockFileInfo(randomTmpDir);
+    logger.info(
+      `bedrock.yaml file exists: ${fileInfo.exist} in ${randomTmpDir}`
+    );
 
-    expect(exists).toBe(true);
-    expect(length).toBe(1);
+    expect(fileInfo.exist).toBe(true);
+    expect(fileInfo.hasVariableGroups).toBe(true);
   });
 });

@@ -4,7 +4,11 @@ import {
   BuildDefinitionVariable
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
-import { Config, isBedrockFileValid } from "../../config";
+import { bedrockFileInfo, Config } from "../../config";
+import {
+  projectCvgDependencyErrorMessage,
+  projectInitCvgDependencyErrorMessage
+} from "../../constants";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import {
   getOriginUrl,
@@ -18,6 +22,7 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
+import { IBedrockFileInfo } from "../../types";
 
 export const deployLifecyclePipelineCommandDecorator = (
   command: commander.Command
@@ -48,17 +53,13 @@ export const deployLifecyclePipelineCommandDecorator = (
       const projectPath = process.cwd();
       logger.verbose(`project path: ${projectPath}`);
 
-      const [exists, length] = await isBedrockFileValid(projectPath);
-      if (exists === false) {
-        logger.error(
-          "Please run `spk project init` and `spk project cvg` commands before running this command to initialize the project."
-        );
+      const fileInfo: IBedrockFileInfo = await bedrockFileInfo(projectPath);
+      if (fileInfo.exist === false) {
+        logger.error(projectInitCvgDependencyErrorMessage);
         return;
-      } else if (length === undefined || length === 0) {
+      } else if (fileInfo.hasVariableGroups === false) {
         // this assumes no variable groups exists in lifecycle pipeline when bedrock files does not have any variable groups
-        logger.error(
-          "Please run `spk project cvg` command before running this command to create a variable group."
-        );
+        logger.error(projectCvgDependencyErrorMessage);
         return;
       }
 

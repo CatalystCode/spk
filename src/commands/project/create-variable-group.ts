@@ -4,11 +4,12 @@ import path from "path";
 import { echo } from "shelljs";
 import {
   Bedrock,
+  bedrockFileInfo,
   Config,
-  isBedrockFileValid,
   readYaml,
   write
 } from "../../config";
+import { projectInitDependencyErrorMessage } from "../../constants";
 import {
   build as buildCmd,
   exit as exitCmd,
@@ -88,11 +89,9 @@ export const execute = async (
     const projectPath = process.cwd();
     logger.verbose(`project path: ${projectPath}`);
 
-    const [exists, length] = await isBedrockFileValid(projectPath);
-    if (exists === false) {
-      logger.error(
-        "Please run `spk project init` command before running this command to initialize the project."
-      );
+    const bedrockFileIno = await bedrockFileInfo(projectPath);
+    if (bedrockFileIno.exist === false) {
+      logger.error(projectInitDependencyErrorMessage);
       return exitFn(1);
     }
 

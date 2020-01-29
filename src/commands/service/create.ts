@@ -1,7 +1,11 @@
 import commander from "commander";
 import path from "path";
 import shelljs from "shelljs";
-import { Bedrock, isBedrockFileValid } from "../../config";
+import { Bedrock, bedrockFileInfo } from "../../config";
+import {
+  projectCvgDependencyErrorMessage,
+  projectInitCvgDependencyErrorMessage
+} from "../../constants";
 import {
   addNewServiceToBedrockFile,
   addNewServiceToMaintainersFile,
@@ -11,7 +15,7 @@ import {
 } from "../../lib/fileutils";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import { logger } from "../../logger";
-import { IHelmConfig, IUser } from "../../types";
+import { IBedrockFileInfo, IHelmConfig, IUser } from "../../types";
 
 /**
  * Adds the create command to the service command object
@@ -89,16 +93,12 @@ export const createCommandDecorator = (command: commander.Command): void => {
       const projectPath = process.cwd();
       logger.verbose(`project path: ${projectPath}`);
 
-      const [exists, length] = await isBedrockFileValid(projectPath);
-      if (exists === false) {
-        logger.error(
-          "Please run `spk project init` and `spk project cvg` commands before running this command to initialize the project."
-        );
+      const fileInfo: IBedrockFileInfo = await bedrockFileInfo(projectPath);
+      if (fileInfo.exist === false) {
+        logger.error(projectInitCvgDependencyErrorMessage);
         return undefined;
-      } else if (length === undefined || length === 0) {
-        logger.error(
-          "Please run `spk project cvg` command before running this command to create a variable group."
-        );
+      } else if (fileInfo.hasVariableGroups === false) {
+        logger.error(projectCvgDependencyErrorMessage);
         return undefined;
       }
 
