@@ -140,10 +140,12 @@ export const updateACRToHLDPipeline = (
 
 /**
  * Updates the HLD to manifest pipeline in storage by finding its corresponding SRC to ACR and ACR to HLD pipelines
+ * Depending on whether PR is specified or not, it performs a lookup on commit Id and PR to link it to the previous release.
  * @param tableInfo table info interface containing information about the deployment storage table
  * @param hldCommitId commit identifier into the HLD repo, used as a filter to find corresponding deployments
  * @param pipelineId identifier of the HLD to manifest pipeline
  * @param manifestCommitId manifest commit identifier
+ * @param pr pull request identifier
  */
 export const updateHLDToManifestPipeline = async (
   tableInfo: IDeploymentTable,
@@ -167,18 +169,26 @@ export const updateHLDToManifestPipeline = async (
       manifestCommitId,
       pr
     );
-  } else {
-    return updateHLDtoManifestHelper(
-      entries,
-      tableInfo,
-      hldCommitId,
-      pipelineId,
-      manifestCommitId,
-      pr
-    );
   }
+  return updateHLDtoManifestHelper(
+    entries,
+    tableInfo,
+    hldCommitId,
+    pipelineId,
+    manifestCommitId,
+    pr
+  );
 };
 
+/**
+ * Updates HLD to Manifest pipeline in storage by going through entries that could be a possible match in the storage.
+ * @param entries list of entries that this build could be linked to
+ * @param tableInfo table info interface containing information about the deployment storage table
+ * @param hldCommitId commit identifier into the HLD repo, used as a filter to find corresponding deployments
+ * @param pipelineId identifier of the HLD to manifest pipeline
+ * @param manifestCommitId manifest commit identifier
+ * @param pr pull request identifier
+ */
 export const updateHLDtoManifestHelper = (
   entries: any,
   tableInfo: IDeploymentTable,
