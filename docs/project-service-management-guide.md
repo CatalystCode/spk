@@ -1,48 +1,21 @@
-# Managing a bedrock project with spk
+# Service Management in Bedrock
 
-This is a work in progress guide on managing a project with
-[bedrock](https://github.com/microsoft/bedrock/) workflows via the
+This document describes the workflow for deploying a set of services
+[Bedrock](https://github.com/microsoft/bedrock/) workflows via the
 [spk](https://github.com/catalystcode/spk) CLI tool.
 
-## Table of Contents
+## High Level Overview
 
-- [Managing a bedrock project with spk](#managing-a-bedrock-project-with-spk)
-  - [Table of Contents](#table-of-contents)
-  - [Using SPK with Bedrock](#using-spk-with-bedrock)
-  - [Requirements](#requirements)
-  - [Components](#components)
-    - [Cloud Resource Diagram](#cloud-resource-diagram)
-    - [SPK](#spk)
-      - [Setup SPK](#setup-spk)
-      - [Generating Personal Access Token](#generating-personal-access-token)
-      - [Create spk config file](#create-spk-config-file)
-      - [Initializing spk](#initializing-spk)
-    - [Repositories](#repositories)
-      - [Materialized Manifests Repository](#materialized-manifests-repository)
-        - [Initializing the Materialized Manifests Repository](#initializing-the-materialized-manifests-repository)
-      - [High Level Definition Repository](#high-level-definition-repository)
-        - [Initializing the High Level Definition Repository](#initializing-the-high-level-definition-repository)
-      - [Application Repositories](#application-repositories)
-        - [Initializing an Application Repository](#initializing-an-application-repository)
-        - [Adding a Service to a Application Repository](#adding-a-service-to-a-application-repository)
-        - [Creating a Service Revision](#creating-a-service-revision)
-    - [Varible Groups](#varible-groups)
-    - [Pipelines](#pipelines)
+1. Confirm you have met the [Requirements](#requirements) for using this
+   automation.
+2. [Install and configure SPK](#installing-and-configuring-spk)
+3. Create and configure the required
+   [high level definition and manifest repositories](#repositories)
+4. [Initialize the Bedrock Application Repository](#initializing-an-application-repository)
+5. [Add a service to the Bedrock Application Repository](#adding-a-service-to-a-application-repository)
+6. Optional: [Create a Service Revision](#creating-a-service-revision)
 
-## Using SPK with Bedrock
-
-1. First, make sure [Requirements](#requirements) are met
-2. Create the required repositories (High Level Definition Repository,
-   Materialized Manifests Repository) if they do not exist in the Azure Devops
-   Project. Follow the guide
-   [here](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
-3. [Setup spk](#setup-spk)
-4. Optional:
-   [Initialize the Materialized Manifest Repository](#initializing-the-materialized-manifests-repository)
-5. [Initialize the High Level Definition Repository](#initializing-the-high-level-definition-repository)
-6. [Initialize the Bedrock Application Repository](#initializing-an-application-repository)
-7. [Add a service to the Bedrock Application Repository](#adding-a-service-to-a-application-repository)
-8. Optional: [Create a Service Revision](#creating-a-service-revision)
+![spk resources](/docs/images/spk-resource-diagram.png "Bedrock SPK Resources")
 
 **Notes:**
 
@@ -56,42 +29,30 @@ This is a work in progress guide on managing a project with
 
 ## Requirements
 
-This guide assumes a few things:
+This guide assumes a few things as requirements to use this automation:
 
 1. The application code and supporting repositories are hosted on
    [Azure Devops](https://azure.microsoft.com/en-us/services/devops/).
-   - If starting from scratch, then first create a new Azure Devops Organization
-     following the guide
-     [here](https://docs.microsoft.com/en-us/azure/devops/user-guide/sign-up-invite-teammates?view=azure-devops),
-     then create a project following the guide
-     [here](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page).
-2. Inside the Azure Devops project, there exists repositories for:
-   1. Materialized Manifests
-   2. High Level Definitions Create the required repositories if they do not
-      exist in the Azure Devops Project. Follow the guide
-      [here](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
-3. The application is packaged and run through a Docker image hosted on
+   - If starting from scratch, then first create a
+     [new Azure Devops Organization](https://docs.microsoft.com/en-us/azure/devops/user-guide/sign-up-invite-teammates?view=azure-devops),
+     then
+     [create a project](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page).
+2. The application will be packaged and run using container images hosted on
    [Azure Container Registry](https://azure.microsoft.com/en-us/services/container-registry/)
-4. The user running `spk` has full access to the above resources.
-5. The user is running the latest `spk`
+3. The user running `spk` has full access to the above resources.
+4. The user is running the latest `spk`
    [release](https://github.com/catalystcode/spk/releases).
-6. The user has
+5. The user has
    [Azure CLI installed](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest).
 
-## Components
-
-### Cloud Resource Diagram
-
-![spk resources](/docs/images/spk-resource-diagram.png "Bedrock SPK Resources")
-
-### SPK
+## Installing and Configuring SPK
 
 `spk` is the Command Line Interface that provides automation around defining and
 operating Kubernetes clusters with Bedrock principles.
 
-#### Setup SPK
+### Setup SPK
 
-Make sure to download the latest version of `spk` from the
+Download the latest version of `spk` from the
 [releases](https://github.com/catalystcode/spk/releases) page and add it to your
 PATH.
 
@@ -101,7 +62,7 @@ To setup a local configuration:
 2. [Create a spk config file](#create-spk-config-file)
 3. [Initialize spk](#initializing-spk)
 
-#### Generating Personal Access Token
+### Generate Personal Access Token
 
 Generate a new Personal Access Token (PAT) to grant `spk` permissions in the
 Azure Devops Project. Please grant PAT the following permissions:
@@ -113,7 +74,7 @@ Azure Devops Project. Please grant PAT the following permissions:
 For help, follow the
 [guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page).
 
-#### Create spk config file
+### Create SPK config file
 
 Create a copy of `spk-config.yaml` from the starter
 [template](./../spk-config.yaml) with the appropriate values for the
@@ -122,7 +83,7 @@ Create a copy of `spk-config.yaml` from the starter
 **Note:** This `spk-config.yaml` should not be commited anywhere, as it contains
 sensitive credentials.
 
-#### Initializing spk
+### Initialize SPK
 
 Run `spk init -f <spk-config.yaml>` where `<spk-config.yaml>` the path to the
 configuation file.
@@ -133,36 +94,25 @@ wish to utilize `spk` with another project or target, then you must rerun
 `spk init` with another configuration first OR, you may overwrite each commands
 via flags.
 
-### Repositories
+## Repositories
 
-#### Materialized Manifests Repository
+Our next step is to create or onboard the repositories that support the
+deployment of our services:
 
-This repository holds all the materialized kubernetes manifests that should be
-deployed to a cluster. If a cluster has been deployed via bedrock's terraform
-templates, then flux should be configured to point to this repository and will
-deploy all manifests in this repository to the cluster in a set interval.
+1. The high level definition repository
+2. The materialized manifest repository
+3. The application source code repository
 
-##### Initializing the Materialized Manifests Repository
+The
 
-- [Create a repository in the given AzDO project.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
-- [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
-- Add a simple README to the repository
-  ```
-  touch README.md
-  echo "This is the Flux Manifest Repository." >> README.md
-  git add -A
-  git commit -m "Initializing Materialized Manifests repository with a README."
-  git push -u origin --all
-  ```
+### High Level Definition Repository
 
-#### High Level Definition Repository
+This repository holds the Bedrock High Level Deployment Definition (HLD) and
+associated configurations.
 
-This repository holds all the bedrock "High Level Definition" (HLD) yaml files
-and associated configurations. These HLDs and configs are consumed via
-[fabrikate](https://github.com/microsoft/fabrikate) to produce kubernetes
-manifests. This is typically done via an Azure DevOps pipeline, and the
-manifests output by fabrikate are placed into the Materialized Manifests
-repository.
+This HLD is processed via [fabrikate](https://github.com/microsoft/fabrikate) in
+Azure Devops on each change to generate Kubernetes YAML manifests that are
+applied to the Kubernetes cluster by Flux.
 
 ##### Initializing the High Level Definition Repository
 
@@ -186,23 +136,45 @@ repository.
 **NOTE** `spk hld` command documentation can be found
 [here](/docs/hld-management.md).
 
-#### Application Repositories
+#### Materialized Manifests Repository
 
-These repositories hold the application code and its associated Dockerfiles.
+This repository holds all the materialized kubernetes manifests that should be
+deployed to a cluster. If a cluster has been deployed via Bedrock's Terraform
+templates, then flux should be configured to point to this repository and will
+deploy all manifests in this repository to the cluster periodically.
+
+##### Initializing the Materialized Manifests Repository
+
+- [Create a repository in the given AzDO project.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
+- [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
+- Add a simple README to the repository
+  ```
+  touch README.md
+  echo "This is the Flux Manifest Repository." >> README.md
+  git add -A
+  git commit -m "Initializing Materialized Manifests repository with a README."
+  git push -u origin --all
+  ```
+
+### Application Repositories
+
+These repositories hold the application code, its associated Dockerfile(s), and
+helm deployment charts.
+
 Additionally, these repositories can hold one (single application) or more
-(monorepository) applications depending on usecase and configuration. Typically,
-each repository shold be configured with a "hld-lifecycle" Azure DevOps pipeline
-that will add all managed applications inside the repository to the High Level
-Definition Repository. Additionally, each application inside the repository
-should also have an associated Azure DevOps multi-stage pipeline that both
-builds and deploys the latest Docker image to Azure Container Registry and
+(monorepository) applications depending on your development methodology.
+Typically, each repository shold be configured with a "hld-lifecycle" Azure
+DevOps pipeline that will add all managed applications inside the repository to
+the High Level Definition Repository. Additionally, each application inside the
+repository should also have an associated Azure DevOps multi-stage pipeline that
+both builds and deploys the latest Docker image to Azure Container Registry and
 updates the associated configuation in the HLD repository with the latest image
 tag.
 
 -TBD Section on packages directory and manging monorepositories vs single
 application repositories
 
-##### Initializing an Application Repository
+#### Initializing an Application Repository
 
 - [Create a repository in the given AzDO project.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
 - [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
@@ -235,7 +207,7 @@ application repositories
 **NOTE** `spk project` command documentation can be found
 [here](/docs/project-management.md).
 
-##### Adding a Service to a Application Repository
+#### Adding a Service to a Application Repository
 
 - [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
 - Create the service via `spk`, there are optional parameters that _should_ be
@@ -257,7 +229,7 @@ application repositories
 **NOTE** `spk service` command documentation can be found
 [here](/docs/service-management.md).
 
-##### Creating a Service Revision
+#### Creating a Service Revision
 
 - Create and checkout a new git branch
   ```
