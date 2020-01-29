@@ -98,7 +98,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
       ""
     )
     .option(
-      "--version <version>",
+      "--path-prefix-version <path-prefix-version>",
       "Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename",
       ""
     )
@@ -135,7 +135,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
         middlewares,
         packagesDir,
         pathPrefix,
-        version,
+        pathPrefixVersion,
         backend
       } = opts;
       const k8sPort = Number(opts.k8sServicePort);
@@ -158,7 +158,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
             displayName,
             k8sPort,
             pathPrefix,
-            version,
+            pathPrefixVersion,
             backend
           )
         ) {
@@ -185,8 +185,8 @@ export const createCommandDecorator = (command: commander.Command): void => {
               .split(",")
               .map(str => str.trim()),
             pathPrefix,
-            variableGroups,
-            version
+            pathPrefixVersion,
+            variableGroups
           }
         );
       } catch (err) {
@@ -216,7 +216,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
  * @param displayName
  * @param k8sPort
  * @param pathPrefix
- * @param version
+ * @param pathPrefixVersion
  * @param backend
  */
 export const isValidConfig = (
@@ -234,7 +234,7 @@ export const isValidConfig = (
   displayName: any,
   k8sPort: any,
   pathPrefix?: any,
-  version?: any,
+  pathPrefixVersion?: any,
   backend?: any
 ): boolean => {
   const missingConfig = [];
@@ -315,9 +315,9 @@ export const isValidConfig = (
       `pathPrefix must be of type 'string', ${typeof pathPrefix} given.`
     );
   }
-  if (typeof version !== "string") {
+  if (typeof pathPrefixVersion !== "string") {
     missingConfig.push(
-      `version must be of type 'string', ${typeof version} given.`
+      `path-prefix-version must be of type 'string', ${typeof pathPrefixVersion} given.`
     );
   }
   if (typeof backend !== "string") {
@@ -362,8 +362,8 @@ export const createService = async (
     maintainerName?: string;
     middlewares?: string[];
     pathPrefix?: string;
+    pathPrefixVersion?: string;
     variableGroups?: string[];
-    version?: string;
   }
 ) => {
   const {
@@ -378,7 +378,7 @@ export const createService = async (
     middlewares = [],
     variableGroups = [],
     pathPrefix = "",
-    version = "",
+    pathPrefixVersion = "",
     backend = ""
   } = opts ?? {};
 
@@ -449,7 +449,7 @@ export const createService = async (
     middlewares,
     k8sServicePort,
     pathPrefix,
-    version,
+    pathPrefixVersion,
     backend
   );
 

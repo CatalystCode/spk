@@ -284,7 +284,7 @@ const createIngressRouteForRing = (
         ...(serviceConfig.middlewares ?? [])
       ],
       pathPrefix: serviceConfig.pathPrefix,
-      version: serviceConfig.version
+      pathPrefixVersion: serviceConfig.pathPrefixVersion
     }
   );
 

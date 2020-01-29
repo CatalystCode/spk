@@ -51,15 +51,36 @@ Options:
   --middlewares <comma-delimitated-list-of-middleware-names>  Traefik2 middlewares you wish to to be injected into your Traefik2 IngressRoutes (default: "")
   --k8s-service-port <port>                                   Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes (default: "80")
   --path-prefix <path-prefix>                                 The path prefix for ingress route; will be used to configure Traefik2 IngressRoutes. If omitted, then the service name will used. (default: "")
-  --version <version>                                         Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename (default: "")
+  --path-prefix-version <path-prefix-version>                 Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename (default: "")
   --backend <backend>                                         Kubernetes service name; will be used to configure Traefik2 IngressRoutes (default: "")
   -h, --help                                                  output usage information
 ```
 
-**NOTE:**
+**NOTES:**
 
-`--helm-chart-*` and `--helm-config-*` settings are exclusive. **You may only
-use one.**
+- `--helm-chart-*` and `--helm-config-*` settings are exclusive. **You may only
+  use one.**
+- `--middlewares`, `--k8s-service-port`, `--path-prefix`,
+  `--path-prefix-version`, and `--backend` are all used to configure the
+  generated Traefik2 IngressRoutes. ie.
+  `spk service create my-example-documents-service --middlewares middlewareA --k8s-service-port 3001 --path-prefix documents --path-prefix-version v2 --backend docs-service`
+  will result in an IngressRoute that looks like:
+  ```
+  apiVersion: traefik.containo.us/v1alpha1
+  kind: IngressRoute
+  metadata:
+    name: my-example-documents-service-master
+  spec:
+    routes:
+      - kind: Rule
+        match: 'PathPrefix(`/v2/documents`) && Headers(`Ring`, `master`)'
+        middlewares:
+          - name: my-example-documents-service-master
+          - name: middlewareA
+        services:
+          - name: docs-service
+            port: 3001
+  ```
 
 ### install-build-pipeline
 

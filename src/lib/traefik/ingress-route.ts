@@ -60,13 +60,20 @@ export const TraefikIngressRoute = (
     middlewares?: string[];
     namespace?: string;
     pathPrefix?: string;
-    version?: string;
+    pathPrefixVersion?: string;
   }
 ): ITraefikIngressRoute => {
-  const { backend, entryPoints, middlewares = [], namespace, pathPrefix, version } = opts ?? {};
+  const {
+    backend,
+    entryPoints,
+    middlewares = [],
+    namespace,
+    pathPrefix,
+    pathPrefixVersion
+  } = opts ?? {};
   const name = !!ringName ? `${serviceName}-${ringName}` : serviceName;
 
-  const versionPath = version ? `/${version}` : "";
+  const versionPath = pathPrefixVersion ? `/${pathPrefixVersion}` : "";
   const path = pathPrefix ? pathPrefix : serviceName;
 
   const routeMatchPathPrefix = `PathPrefix(\`${versionPath}/${path}\`)`;
