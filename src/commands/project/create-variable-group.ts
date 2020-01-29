@@ -89,8 +89,8 @@ export const execute = async (
     const projectPath = process.cwd();
     logger.verbose(`project path: ${projectPath}`);
 
-    const bedrockFileIno = await bedrockFileInfo(projectPath);
-    if (bedrockFileIno.exist === false) {
+    const fileInfo = await bedrockFileInfo(projectPath);
+    if (fileInfo.exist === false) {
       logger.error(projectInitDependencyErrorMessage);
       return exitFn(1);
     }
