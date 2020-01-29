@@ -169,11 +169,12 @@ describe("addChartToRing", () => {
           git,
           path
         }
-      }
+      },
+      k8sServicePort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
-    const addHelmChartCommand = `fab add chart --source ${git} --path ${path} --branch ${branch}`;
+    const addHelmChartCommand = `fab add chart --source ${git} --path ${path} --branch ${branch} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
@@ -198,11 +199,12 @@ describe("addChartToRing", () => {
           path,
           sha
         }
-      }
+      },
+      k8sServicePort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
-    const addHelmChartCommand = `fab add chart --source ${git} --path ${path} --version ${sha}`;
+    const addHelmChartCommand = `fab add chart --source ${git} --path ${path} --version ${sha} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
@@ -225,11 +227,12 @@ describe("addChartToRing", () => {
           chart,
           repository
         }
-      }
+      },
+      k8sServicePort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
-    const addHelmChartCommand = `fab add chart --source ${repository} --path ${chart}`;
+    const addHelmChartCommand = `fab add chart --source ${repository} --path ${chart} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
@@ -277,7 +280,8 @@ describe("reconcile tests", () => {
               path,
               sha
             }
-          }
+          },
+          k8sServicePort: 1337
         }
       }
     };
@@ -323,7 +327,8 @@ describe("reconcile tests", () => {
               path,
               sha
             }
-          }
+          },
+          k8sServicePort: 1337
         }
       }
     };
@@ -350,5 +355,79 @@ describe("reconcile tests", () => {
     expect(dependencies.createStaticComponent).not.toHaveBeenCalled();
     expect(dependencies.createMiddlewareForRing).not.toHaveBeenCalled();
     expect(dependencies.createIngressRouteForRing).not.toHaveBeenCalled();
+  });
+
+  it("does not create service components if the service path is `.`, and a display name does not exist", async () => {
+    bedrockYaml.services = {
+      ".": {
+        disableRouteScaffold: false,
+        helm: {
+          chart: {
+            git,
+            path,
+            sha
+          }
+        },
+        k8sServicePort: 80
+      }
+    };
+
+    await reconcileHld(dependencies, bedrockYaml, "service", "./path/to/hld");
+
+    expect(dependencies.createServiceComponent).not.toHaveBeenCalled();
+  });
+
+  it("does create service components if the service path is `.` and a display name does exist", async () => {
+    const displayName = "fabrikam";
+
+    bedrockYaml.services = {
+      ".": {
+        disableRouteScaffold: false,
+        displayName,
+        helm: {
+          chart: {
+            git,
+            path,
+            sha
+          }
+        },
+        k8sServicePort: 80
+      }
+    };
+
+    await reconcileHld(dependencies, bedrockYaml, "service", "./path/to/hld");
+    expect(dependencies.createServiceComponent).toHaveBeenCalled();
+
+    // Second argument of first invocation of createServiceComponent is the service name
+    expect(
+      (dependencies.createServiceComponent as jest.Mock).mock.calls[0][2]
+    ).toBe(displayName);
+  });
+
+  it("uses display name over the service path for creating service components", async () => {
+    const displayName = "fabrikam";
+
+    bedrockYaml.services = {
+      "/my/service/path": {
+        disableRouteScaffold: false,
+        displayName,
+        helm: {
+          chart: {
+            git,
+            path,
+            sha
+          }
+        },
+        k8sServicePort: 80
+      }
+    };
+
+    await reconcileHld(dependencies, bedrockYaml, "service", "./path/to/hld");
+    expect(dependencies.createServiceComponent).toHaveBeenCalled();
+
+    // Second argument of first invocation of createServiceComponent is the service name
+    expect(
+      (dependencies.createServiceComponent as jest.Mock).mock.calls[0][2]
+    ).toBe(displayName);
   });
 });
