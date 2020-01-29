@@ -37,7 +37,7 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl --fail $FUNC_SCRIPT > function.sh 2>/dev/null
+        curl --fail $FUNC_SCRIPT > functions.sh 2>/dev/null
         if [ $? -ne 0 ]; then
             echo "Error finding FUNC_SCRIPT: $FUNC_SCRIPT"
             exit 1
