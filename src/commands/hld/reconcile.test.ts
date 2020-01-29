@@ -1,5 +1,5 @@
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-
+import { IBedrockFile, IBedrockServiceConfig } from "../../types";
 import {
   addChartToRing,
   checkForFabrikate,
@@ -12,8 +12,6 @@ import {
   testAndGetAbsPath,
   validateInputs
 } from "./reconcile";
-
-import { IBedrockFile, IBedrockServiceConfig } from "../../types";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -252,13 +250,13 @@ describe("reconcile tests", () => {
 
   beforeEach(() => {
     dependencies = {
-      addChartToRing: jest.fn(),
-      createIngressRouteForRing: jest.fn(),
-      createMiddlewareForRing: jest.fn(),
-      createRepositoryComponent: jest.fn(),
-      createRingComponent: jest.fn(),
-      createServiceComponent: jest.fn(),
-      createStaticComponent: jest.fn(),
+      addChartToRing: jest.fn().mockReturnValue(Promise.resolve({})),
+      createIngressRouteForRing: jest.fn().mockReturnValue(Promise.resolve({})),
+      createMiddlewareForRing: jest.fn().mockReturnValue(Promise.resolve({})),
+      createRepositoryComponent: jest.fn().mockReturnValue(Promise.resolve({})),
+      createRingComponent: jest.fn().mockReturnValue(Promise.resolve({})),
+      createServiceComponent: jest.fn().mockReturnValue(Promise.resolve({})),
+      createStaticComponent: jest.fn().mockReturnValue(Promise.resolve({})),
       exec: jest.fn(),
       test: jest.fn().mockReturnValue(false),
       writeFile: jest.fn()

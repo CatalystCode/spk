@@ -5,7 +5,6 @@ import yaml from "js-yaml";
 import path from "path";
 import process from "process";
 import shelljs, { TestOptions } from "shelljs";
-import { promisify } from "util";
 import { Bedrock } from "../../config";
 import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
 import {
@@ -13,46 +12,91 @@ import {
   TraefikMiddleware
 } from "../../lib/traefik/middleware";
 import { logger } from "../../logger";
-
-const exec = promisify(child_process.exec);
-
 import { IBedrockFile, IBedrockServiceConfig } from "../../types";
 
+interface IResult<T> {
+  error?: Error;
+  value: T;
+}
+
+/**
+ * IExecResult represents the possible return value of a Promise based wrapper
+ * for child_process.exec(). `error` would specify an optional ExecException
+ * which can be passed via a resolve() value instead of throwing an untyped
+ * reject()
+ */
+type IExecResult = IResult<{ stdout: string; stderr: string }> & {
+  error?: child_process.ExecException;
+};
+
+/**
+ * Type definition for a Promise based child_process.exec() wrapper.
+ */
+type ExecCommand = (
+  commandToRun: string,
+  pipeIO?: boolean
+) => Promise<IExecResult>;
+
+/**
+ * Promise wrapper for child_process.exec(). This returned Promise will never
+ * reject -- instead if an Error occurs, it will be returned via the resolved
+ * value.
+ *
+ * @param cmd The command to shell out and exec
+ * @param pipeIO if true, will pipe all stdio the executing parent process
+ */
+const exec: ExecCommand = (cmd, pipeIO) => {
+  return new Promise(resolve => {
+    const child = child_process.exec(cmd, (error, stdout, stderr) => {
+      return resolve({
+        error: error ?? undefined,
+        value: { stdout, stderr }
+      });
+    });
+    if (pipeIO) {
+      child.stdin?.pipe(process.stdin);
+      child.stdout?.pipe(process.stdout);
+      child.stderr?.pipe(process.stderr);
+    }
+    return child;
+  });
+};
+
 export interface IReconcileDependencies {
-  exec: (commandToRun: string) => Promise<void>;
+  exec: ExecCommand;
 
   writeFile: (path: string, contents: string) => void;
 
   test: (option: shelljs.TestOptions, path: string) => boolean;
 
   createRepositoryComponent: (
-    execCmd: (commandToRun: string) => Promise<void>,
+    execCmd: ExecCommand,
     absHldPath: string,
     repositoryName: string
-  ) => Promise<void>;
+  ) => Promise<IExecResult>;
 
   createServiceComponent: (
-    execCmd: (commandToRun: string) => Promise<void>,
+    execCmd: ExecCommand,
     absRepositoryInHldPath: string,
     pathBase: string
-  ) => Promise<void>;
+  ) => Promise<IExecResult>;
 
   createRingComponent: (
-    execCmd: (commandToRun: string) => Promise<void>,
+    execCmd: ExecCommand,
     svcPathInHld: string,
     ring: string
-  ) => Promise<void>;
+  ) => Promise<IExecResult>;
 
   addChartToRing: (
-    execCmd: (commandToRun: string) => Promise<void>,
+    execCmd: ExecCommand,
     ringPathInHld: string,
     serviceConfig: IBedrockServiceConfig
-  ) => Promise<void>;
+  ) => Promise<IExecResult>;
 
   createStaticComponent: (
-    execCmd: (commandToRun: string) => Promise<void>,
+    execCmd: ExecCommand,
     ringPathInHld: string
-  ) => Promise<void>;
+  ) => Promise<IExecResult>;
 
   createIngressRouteForRing: (
     ringPathInHld: string,
@@ -60,13 +104,13 @@ export interface IReconcileDependencies {
     serviceConfig: IBedrockServiceConfig,
     middlewares: ITraefikMiddleware,
     ring: string
-  ) => void;
+  ) => Promise<IResult<undefined>>;
 
   createMiddlewareForRing: (
     ringPathInHld: string,
     serviceName: string,
     ring: string
-  ) => ITraefikMiddleware;
+  ) => Promise<IResult<ITraefikMiddleware>>;
 }
 
 export const reconcileHldDecorator = (command: commander.Command): void => {
@@ -114,12 +158,15 @@ export const reconcileHldDecorator = (command: commander.Command): void => {
           writeFile: writeFileSync
         };
 
-        await reconcileHld(
+        const { error } = await reconcileHld(
           reconcileDependencies,
           bedrockConfig,
           repositoryName,
           absHldPath
         );
+        if (error) {
+          throw error;
+        }
       } catch (err) {
         logger.error(`An error occurred while reconciling HLD`);
         logger.error(err);
@@ -133,17 +180,20 @@ export const reconcileHld = async (
   bedrockYaml: IBedrockFile,
   repositoryName: string,
   absHldPath: string
-) => {
+): Promise<{ error?: Error }> => {
   const managedServices = bedrockYaml.services;
   const managedRings = bedrockYaml.rings;
 
   // Create Repository Component if it doesn't exist.
   // In a pipeline, the repository component is the name of the application repository.
-  await dependencies.createRepositoryComponent(
+  const { error: repoErr } = await dependencies.createRepositoryComponent(
     dependencies.exec,
     absHldPath,
     repositoryName
   );
+  if (repoErr) {
+    return { error: repoErr };
+  }
 
   // Repository in HLD ie /path/to/hld/repositoryName/
   const absRepositoryInHldPath = path.join(absHldPath, repositoryName);
@@ -156,54 +206,68 @@ export const reconcileHld = async (
     logger.info(`Reconciling service: ${pathBase}`);
 
     // Utilizes fab add, which is idempotent.
-    await dependencies.createServiceComponent(
+    const { error: serviceErr } = await dependencies.createServiceComponent(
       dependencies.exec,
       absRepositoryInHldPath,
       pathBase
     );
-
-    // No rings
-    if (!managedRings) {
-      continue;
+    if (serviceErr) {
+      return { error: serviceErr };
     }
 
     // Create ring components.
     const svcPathInHld = path.join(absRepositoryInHldPath, pathBase);
 
+    // If the ring component already exists, we do not attempt to create it.
+    const ringsToCreate = Object.keys(managedRings)
+      .map(ring => {
+        return {
+          ring,
+          ringPathInHld: path.join(svcPathInHld, ring)
+        };
+      })
+      .filter(({ ring, ringPathInHld }) => {
+        const alreadyExists =
+          dependencies.test("-e", ringPathInHld) && // path exists
+          dependencies.test("-d", ringPathInHld); // path is a directory
+        if (alreadyExists) {
+          logger.info(
+            `Ring component: ${ring} already exists, skipping ring generation.`
+          );
+        }
+        return !alreadyExists;
+      });
+
     // Will only loop over _existing_ rings in bedrock.yaml - does not cover the deletion case, ie: i remove a ring from bedrock.yaml
-    for (const ring of Object.keys(managedRings)) {
-      const ringPathInHld = path.join(svcPathInHld, ring);
-
-      // If the ring component already exists, we do not attempt to create it.
-      if (
-        dependencies.test("-e", ringPathInHld) && // path exists
-        dependencies.test("-d", ringPathInHld) // path is a directory
-      ) {
-        logger.info(
-          `Ring component: ${ring} already exists, skipping ring generation.`
-        );
-        continue;
-      }
-
+    for (const { ring, ringPathInHld } of ringsToCreate) {
       // Otherwise, create the ring in the service.
-      await dependencies.createRingComponent(
+      const { error: ringErr } = await dependencies.createRingComponent(
         dependencies.exec,
         svcPathInHld,
         ring
       );
+      if (ringErr) {
+        return { error: ringErr };
+      }
 
       // Add the helm chart to the ring.
-      await dependencies.addChartToRing(
+      const { error: chartErr } = await dependencies.addChartToRing(
         dependencies.exec,
         ringPathInHld,
         serviceConfig
       );
+      if (chartErr) {
+        return { error: chartErr };
+      }
 
       // Create config directory, create static manifest directory.
-      await dependencies.createStaticComponent(
+      const { error: staticErr } = await dependencies.createStaticComponent(
         dependencies.exec,
         ringPathInHld
       );
+      if (staticErr) {
+        return { error: staticErr };
+      }
 
       // Service explicitly requests no ingress-routes to be generated.
       if (serviceConfig.disableRouteScaffold) {
@@ -214,11 +278,17 @@ export const reconcileHld = async (
       }
 
       // Create middleware.
-      const middlewares = dependencies.createMiddlewareForRing(
+      const {
+        error: middlewareErr,
+        value: middlewares
+      } = await dependencies.createMiddlewareForRing(
         ringPathInHld,
         serviceName,
         ring
       );
+      if (middlewareErr) {
+        return { error: middlewareErr };
+      }
 
       // Create Ingress Route.
       dependencies.createIngressRouteForRing(
@@ -230,6 +300,8 @@ export const reconcileHld = async (
       );
     }
   }
+
+  return {};
 };
 
 /**
@@ -237,28 +309,25 @@ export const reconcileHld = async (
  * that will be run, and the results of that command.
  *
  * @param commandToRun String version of the command that must be run
- * @throws An Error containing the logs captured from stderr
  */
-export const execAndLog = async (commandToRun: string) => {
+export const execAndLog = async (
+  commandToRun: string
+): Promise<IExecResult> => {
   logger.info(`Running: ${commandToRun}`);
-  const commandResult = await exec(commandToRun);
-  logger.info(commandResult.stdout);
-
-  if (commandResult.stderr) {
-    logger.error(commandResult.stderr);
-    throw Error(
-      `An error occurred when invoking command: ${commandResult.stderr}`
-    );
+  const cmdResult = await exec(commandToRun);
+  if (cmdResult.error) {
+    logger.error(`error executing command \`${commandToRun}\``);
   }
+  return cmdResult;
 };
 
-const createIngressRouteForRing = (
+const createIngressRouteForRing = async (
   ringPathInHld: string,
   serviceName: string,
   serviceConfig: IBedrockServiceConfig,
   middlewares: ITraefikMiddleware,
   ring: string
-) => {
+): Promise<IResult<undefined>> => {
   const staticComponentPathInRing = path.join(ringPathInHld, "static");
   const ingressRoutePathInStaticComponent = path.join(
     staticComponentPathInRing,
@@ -285,13 +354,14 @@ const createIngressRouteForRing = (
   );
 
   writeFileSync(ingressRoutePathInStaticComponent, routeYaml);
+  return { value: undefined };
 };
 
-const createMiddlewareForRing = (
+const createMiddlewareForRing = async (
   ringPathInHld: string,
   serviceName: string,
   ring: string
-): ITraefikMiddleware => {
+): Promise<IResult<ITraefikMiddleware>> => {
   // Create Middlewares
   const staticComponentPathInRing = path.join(ringPathInHld, "static");
   const middlewaresPathInStaticComponent = path.join(
@@ -308,47 +378,51 @@ const createMiddlewareForRing = (
   logger.info(
     `Writing Middlewares YAML to ${middlewaresPathInStaticComponent}`
   );
-  writeFileSync(middlewaresPathInStaticComponent, middlewareYaml);
+  try {
+    writeFileSync(middlewaresPathInStaticComponent, middlewareYaml);
+  } catch (error) {
+    return { error, value: middlewares };
+  }
 
-  return middlewares;
+  return { value: middlewares };
 };
 
 export const createRepositoryComponent = async (
-  execCmd: (commandToRun: string) => Promise<void>,
+  execCmd: (commandToRun: string) => Promise<IExecResult>,
   absHldPath: string,
   repositoryName: string
-) => {
-  await execCmd(
+): Promise<IExecResult> => {
+  return execCmd(
     `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`
   );
 };
 
 export const createServiceComponent = async (
-  execCmd: (commandToRun: string) => Promise<void>,
+  execCmd: (commandToRun: string) => Promise<IExecResult>,
   absRepositoryInHldPath: string,
   pathBase: string
-) => {
+): Promise<IExecResult> => {
   // Fab add is idempotent.
   // mkdir -p does not fail if ${pathBase} does not exist.
-  await execCmd(
+  return execCmd(
     `cd ${absRepositoryInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --path ./${pathBase} --method local --type component && touch ./config/common.yaml`
   );
 };
 
 export const createRingComponent = async (
-  execCmd: (commandToRun: string) => Promise<void>,
+  execCmd: (commandToRun: string) => Promise<IExecResult>,
   svcPathInHld: string,
   ring: string
-) => {
+): Promise<IExecResult> => {
   const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --path ./${ring} --method local --type component && touch ./config/common.yaml`;
-  await execCmd(createRingInSvcCommand);
+  return execCmd(createRingInSvcCommand);
 };
 
 export const addChartToRing = async (
-  execCmd: (commandToRun: string) => Promise<void>,
+  execCmd: (commandToRun: string) => Promise<IExecResult>,
   ringPathInHld: string,
   serviceConfig: IBedrockServiceConfig
-) => {
+): Promise<IExecResult> => {
   let addHelmChartCommand = "";
   const { chart } = serviceConfig.helm;
   if ("git" in chart) {
@@ -359,15 +433,15 @@ export const addChartToRing = async (
     addHelmChartCommand = `fab add chart --source ${chart.repository} --path ${chart.chart}`;
   }
 
-  await execCmd(`cd ${ringPathInHld} && ${addHelmChartCommand}`);
+  return execCmd(`cd ${ringPathInHld} && ${addHelmChartCommand}`);
 };
 
 export const createStaticComponent = async (
-  execCmd: (commandToRun: string) => {},
+  execCmd: (commandToRun: string) => Promise<IExecResult>,
   ringPathInHld: string
-) => {
+): Promise<IExecResult> => {
   const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
-  await execCmd(createConfigAndStaticComponentCommand);
+  return execCmd(createConfigAndStaticComponentCommand);
 };
 
 export const validateInputs = (
@@ -376,19 +450,17 @@ export const validateInputs = (
   bedrockApplicationRepoPath: any
 ) => {
   if (typeof repositoryName !== "string") {
-    throw new Error(
+    throw Error(
       `repository-name must be of type 'string', ${typeof repositoryName} given`
     );
   }
 
   if (typeof hldPath !== "string") {
-    throw new Error(
-      `hld-path must be of type 'string', ${typeof hldPath} given`
-    );
+    throw Error(`hld-path must be of type 'string', ${typeof hldPath} given`);
   }
 
   if (typeof bedrockApplicationRepoPath !== "string") {
-    throw new Error(
+    throw Error(
       `bedrock-application-repo-path must be of type 'string', ${typeof bedrockApplicationRepoPath} given`
     );
   }
@@ -402,7 +474,7 @@ export const testAndGetAbsPath = (
 ): string => {
   const absPath = path.resolve(possiblyRelativePath);
   if (!test("-e", absPath) && !test("-d", absPath)) {
-    throw new Error(`Could not validate ${pathType} path.`);
+    throw Error(`Could not validate ${pathType} path.`);
   }
   log(`Found ${pathType} at ${absPath}`);
   return absPath;
@@ -411,7 +483,7 @@ export const testAndGetAbsPath = (
 export const checkForFabrikate = (which: (path: string) => string) => {
   const fabrikateInstalled = which("fab");
   if (fabrikateInstalled === "") {
-    throw new Error(
+    throw Error(
       `Fabrikate not installed. Please fetch and install the latest version: https://github.com/microsoft/fabrikate/releases`
     );
   }
