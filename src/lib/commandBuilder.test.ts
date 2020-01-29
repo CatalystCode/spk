@@ -105,10 +105,11 @@ describe("Tests Command Builder's validation function", () => {
 });
 
 describe("Tests Command Builder's exit function", () => {
-  it("calling exit function", () => {
-    jest.spyOn(logger, "info");
-    exitCmd(logger).then(() => {
-      expect(logger.info).toBeCalledTimes(1);
+  it("calling exit function", async () => {
+    const exitFn = jest.fn();
+    exitCmd(logger, exitFn, 1).then(() => {
+      expect(exitFn).toBeCalledTimes(1);
+      expect(exitFn.mock.calls).toEqual([[1]]);
     });
   });
 });

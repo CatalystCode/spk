@@ -200,12 +200,33 @@ function storage_account_table_exists () {
 
     if [ "$sat_exists" = "true" ]; then
         echo "The table '$t' exists "
+        if [ "$action" == "delete" ]; then
+            echo "Delete table '$t'"
+            az storage table delete -n $t --account-name $sa_name
+            total_wait_seconds=20
+            wait_delete_seconds=50
+            start=0
+            wait_seconds=5
+            while [ $start -lt $total_wait_seconds ]; do
+                sat_result=$(az storage table exists -n $t --account-name $sa_name)
+                sat_exists=$(echo $sat_result | jq '.exists | . == true')
+                if [ "$sat_exists" = "false"  ]; then
+                    echo "The table '$t' was marked deleted"
+                    echo "Wait $wait_delete_seconds seconds for delete..."
+                    sleep $wait_delete_seconds
+                    break
+                fi
+                echo "Wait $wait_seconds seconds..."
+                sleep $wait_seconds
+                start=$((start + wait_seconds))
+            done
+        fi
      else
-        echo "The table $sa_name does not exist"
-        if [ "$action" == "fail" ]; then
+        echo "Check if $t exists"
+        if [ "$action" = "fail" ]; then
             exit 1
         fi
-        if [ "$action" == "create" ]; then
+        if [ "$action" = "create" ]; then
             echo "Create table $t"
             az storage table create -n $t --account-name $sa_name
             total_wait_seconds=20
