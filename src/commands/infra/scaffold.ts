@@ -100,7 +100,7 @@ export const execute = async (
  *
  * @param command Commander command object to decorate
  */
-export const scaffoldCommandDecorator = (command: commander.Command): void => {
+export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
     const config = Config();
     await execute(config, opts, async (status: number) => {
