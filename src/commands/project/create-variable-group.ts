@@ -81,22 +81,21 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   if (!hasValue(variableGroupName)) {
-    exitFn(1);
-    return;
-  }
-
-  const projectPath = process.cwd();
-  logger.verbose(`project path: ${projectPath}`);
-
-  const [exists, length] = await isBedrockFileValid(projectPath);
-  if (exists === false) {
-    logger.error(
-      "Please run `spk project init` command before running this command to initialize the project."
-    );
-    return;
+    return exitFn(1);
   }
 
   try {
+    const projectPath = process.cwd();
+    logger.verbose(`project path: ${projectPath}`);
+
+    const [exists, length] = await isBedrockFileValid(projectPath);
+    if (exists === false) {
+      logger.error(
+        "Please run `spk project init` command before running this command to initialize the project."
+      );
+      return exitFn(1);
+    }
+
     const { azure_devops } = Config();
 
     const {
@@ -128,32 +127,32 @@ export const execute = async (
     );
 
     if (errors.length !== 0) {
-      await exitFn(1);
-    } else {
-      const variableGroup = await create(
-        variableGroupName,
-        registryName,
-        hldRepoUrl,
-        servicePrincipalId,
-        servicePrincipalPassword,
-        tenant,
-        accessOpts
-      );
-
-      // set the variable group name
-      await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
-
-      // update hld-lifecycle.yaml with variable groups in bedrock.yaml
-      await updateLifeCyclePipeline(projectPath);
-
-      // print newly created variable group
-      echo(JSON.stringify(variableGroup, null, 2));
-
-      logger.info(
-        "Successfully created a variable group in Azure DevOps project!"
-      );
-      await exitFn(0);
+      return await exitFn(1);
     }
+
+    const variableGroup = await create(
+      variableGroupName,
+      registryName,
+      hldRepoUrl,
+      servicePrincipalId,
+      servicePrincipalPassword,
+      tenant,
+      accessOpts
+    );
+
+    // set the variable group name
+    await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
+
+    // update hld-lifecycle.yaml with variable groups in bedrock.yaml
+    await updateLifeCyclePipeline(projectPath);
+
+    // print newly created variable group
+    echo(JSON.stringify(variableGroup, null, 2));
+
+    logger.info(
+      "Successfully created a variable group in Azure DevOps project!"
+    );
+    await exitFn(0);
   } catch (err) {
     logger.error(`Error occurred while creating variable group`);
     logger.error(err);
