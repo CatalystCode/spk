@@ -23,15 +23,16 @@ export const createTempDir = (parent?: string): string => {
  * @param dir Directory name
  */
 export const removeDir = (dir: string) => {
-  fs.readdirSync(dir).forEach(item => {
-    const curPath = path.join(dir, item);
+  const folder = path.resolve(dir);
+  fs.readdirSync(folder).forEach(item => {
+    const curPath = path.join(folder, item);
     if (fs.statSync(curPath).isDirectory()) {
       removeDir(curPath);
     } else {
       fs.unlinkSync(curPath);
     }
   });
-  fs.rmdirSync(dir);
+  fs.rmdirSync(folder);
 };
 
 /**
