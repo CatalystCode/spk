@@ -35,6 +35,16 @@ export const removeDir = (dir: string) => {
 };
 
 /**
+ * Returns true if directory is empty.
+ *
+ * @param dir Directory to be inspected.
+ * @return true if directory is empty.
+ */
+export const isDirEmpty = (dir: string): boolean => {
+  return fs.readdirSync(dir).length === 0;
+};
+
+/**
  * Returns a list of missing file names.
  * This is to check if files exist in a directory.
  *
@@ -52,5 +62,6 @@ export const getMissingFilenames = (
     )
     .filter(
       f => !fs.existsSync(f) // keep those files that do not exist
-    );
+    )
+    .map(f => path.basename(f));
 };
