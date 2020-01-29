@@ -33,8 +33,6 @@ const mockYaml = {
   }
 };
 
-const projectName = uuid();
-
 beforeAll(() => {
   enableVerboseLogging();
 });
@@ -172,9 +170,6 @@ describe("test constructSource function", () => {
 });
 
 describe("test execute function", () => {
-  afterAll(() => {
-    removeDir(projectName);
-  });
   const EMPTY_VALS: ICommandOptions = {
     name: "",
     source: "",
@@ -204,19 +199,24 @@ describe("test execute function", () => {
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
   it("positive test", async () => {
+    const projectName = uuid();
     const exitFn = jest.fn();
-    await execute(
-      {},
-      {
-        name: projectName,
-        source: "https://github.com/microsoft/bedrock",
-        template: "cluster/environments/azure-simple",
-        version: "v1.0.0"
-      },
-      exitFn
-    );
-    expect(exitFn).toBeCalledTimes(1);
-    expect(exitFn.mock.calls).toEqual([[0]]);
+    try {
+      await execute(
+        {},
+        {
+          name: projectName,
+          source: "https://github.com/microsoft/bedrock",
+          template: "cluster/environments/azure-simple",
+          version: "v1.0.0"
+        },
+        exitFn
+      );
+      expect(exitFn).toBeCalledTimes(1);
+      expect(exitFn.mock.calls).toEqual([[0]]);
+    } finally {
+      removeDir(projectName);
+    }
   });
 });
 
