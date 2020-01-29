@@ -152,24 +152,11 @@ export const updateHLDToManifestPipeline = async (
   manifestCommitId?: string,
   pr?: string
 ): Promise<any> => {
-  // findMatchingDeployments(tableInfo, "hldCommitId", hldCommitId).then(
-  //   entries => {
-  //     if (entries.length === 0 && pr) {
-  //       findMatchingDeployments(tableInfo, "pr", pr).then(entriesArray => {
-  //         return updateHLDtoManifestHelper(entriesArray, tableInfo, hldCommitId, pipelineId, manifestCommitId, pr);
-  //       });
-  //     } else {
-  //       return updateHLDtoManifestHelper(entries, tableInfo, hldCommitId, pipelineId, manifestCommitId, pr);
-  //     }
-  //   }
-  // );
   const entries = await findMatchingDeployments(
     tableInfo,
     "hldCommitId",
     hldCommitId
   );
-  logger.info(`entries: ${entries}`);
-  logger.info(`pr=${pr}`);
   if ((!entries || entries.length === 0) && pr) {
     const entriesArray = await findMatchingDeployments(tableInfo, "pr", pr);
     return updateHLDtoManifestHelper(
