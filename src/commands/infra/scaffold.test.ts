@@ -215,7 +215,7 @@ describe("test execute function", () => {
       expect(exitFn).toBeCalledTimes(1);
       expect(exitFn.mock.calls).toEqual([[0]]);
     } finally {
-      removeDir(projectName);
+      // removeDir(projectName);
     }
   });
 });
