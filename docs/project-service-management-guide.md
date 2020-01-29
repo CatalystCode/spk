@@ -6,8 +6,7 @@ This document describes the workflow for deploying a set of services
 
 ## High Level Overview
 
-1. Confirm you have met the [Requirements](#requirements) for using this
-   automation.
+1. Confirm you have met the [Requirements](#requirements) for SPK's automation.
 2. [Install and configure SPK](#installing-and-configuring-spk)
 3. Create and configure the required
    [high level definition and manifest repositories](#repositories)
@@ -15,17 +14,21 @@ This document describes the workflow for deploying a set of services
 5. [Add a service to the Bedrock Application Repository](#adding-a-service-to-a-application-repository)
 6. Optional: [Create a Service Revision](#creating-a-service-revision)
 
-![spk resources](/docs/images/spk-resource-diagram.png "Bedrock SPK Resources")
-
 **Notes:**
 
-- Steps 2-5 typically only need to be done once. Multiple clusters may be
+- Steps 1-4 typically only need to be done once. Multiple clusters may be
   configured to sync from the single Materialized Manifest Repositories, and
   multiple Project repositories can be pointed to the single High Level
   Definition Repository.
-- Step 6 can be repeated anytime you may need to create another Bedrock project.
-- Step 7 can be run as many times as required to add a service to a Bedrock
-  project.
+- Step 5 can be repeated each time you need to onboard a service to your Bedrock
+  automated infrastructure.
+- Step 6 can be run as many times as required to add a service revision to a
+  Bedrock project.
+
+An overview of how these different pieces fit together from an automation
+perspective:
+
+![spk resources](/docs/images/spk-resource-diagram.png "Bedrock SPK Resources")
 
 ## Requirements
 
