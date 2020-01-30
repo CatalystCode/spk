@@ -170,7 +170,7 @@ describe("addChartToRing", () => {
           path
         }
       },
-      k8sServicePort: 1337
+      k8sBackendPort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
@@ -200,7 +200,7 @@ describe("addChartToRing", () => {
           sha
         }
       },
-      k8sServicePort: 1337
+      k8sBackendPort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
@@ -228,7 +228,7 @@ describe("addChartToRing", () => {
           repository
         }
       },
-      k8sServicePort: 1337
+      k8sBackendPort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
@@ -281,7 +281,7 @@ describe("reconcile tests", () => {
               sha
             }
           },
-          k8sServicePort: 1337
+          k8sBackendPort: 1337
         }
       }
     };
@@ -328,7 +328,7 @@ describe("reconcile tests", () => {
               sha
             }
           },
-          k8sServicePort: 1337
+          k8sBackendPort: 1337
         }
       }
     };
@@ -368,7 +368,7 @@ describe("reconcile tests", () => {
             sha
           }
         },
-        k8sServicePort: 80
+        k8sBackendPort: 80
       }
     };
 
@@ -391,7 +391,7 @@ describe("reconcile tests", () => {
             sha
           }
         },
-        k8sServicePort: 80
+        k8sBackendPort: 80
       }
     };
 
@@ -418,7 +418,7 @@ describe("reconcile tests", () => {
             sha
           }
         },
-        k8sServicePort: 80
+        k8sBackendPort: 80
       }
     };
 
