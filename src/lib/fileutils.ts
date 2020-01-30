@@ -265,7 +265,9 @@ export const starterAzurePipelines = async (opts: {
                     `az extension add --name azure-devops`,
                     ``,
                     `echo 'az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
-                    `az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
+                    `response=$(az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber).")`,
+                    `pr_id=$(echo $response | jq -r '.pullRequestId')`,
+                    ``,
                     ``,
                     `# Update introspection storage with this information, if applicable`,
                     `if [ -z "$(SPEKTATE_STORAGE_ACCOUNT_NAME)" -o -z "$(SPEKTATE_STORAGE_ACCOUNT_KEY)" -o -z "$(SPEKTATE_STORAGE_TABLE_NAME)" -o -z "$(SPEKTATE_STORAGE_PARTITION_KEY)" ]; then`,
@@ -279,7 +281,7 @@ export const starterAzurePipelines = async (opts: {
                     `. ./build.sh --source-only`,
                     `get_spk_version`,
                     `download_spk`,
-                    `./spk/spk deployment create  -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name`,
+                    `./spk/spk deployment create  -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id`,
                     `fi`
                   ]),
                   displayName:
@@ -484,7 +486,13 @@ const manifestGenerationPipelineYaml = () => {
           `. ./build.sh --source-only`,
           `get_spk_version`,
           `download_spk`,
-          `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`
+          `message="$(Build.SourceVersionMessage)"`,
+          `if [[ $message == *"Merged PR"* ]]; then`,
+          `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\+//')`,
+          `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr pr_id`,
+          `else`,
+          `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
+          `fi`
         ]),
         displayName:
           "If configured, update manifest pipeline details in Spektate db",
