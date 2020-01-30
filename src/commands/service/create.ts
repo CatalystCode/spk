@@ -48,7 +48,15 @@ export const fetchValues = (opts: ICommandOptions) => {
   if (!isPortNumber(opts.k8sServicePort)) {
     throw new Error("value for --k8s-service-port is not a value port number");
   }
-  const bedrock = Bedrock();
+
+  let variableGroups: string[] = [];
+
+  try {
+    const bedrock = Bedrock();
+    variableGroups = bedrock.variableGroups || [];
+  } catch (_) {
+    // NO-OP
+  }
 
   let middlewaresArray: string[] = [];
   if (opts.middlewares && opts.middlewares.trim()) {
@@ -70,7 +78,7 @@ export const fetchValues = (opts: ICommandOptions) => {
     middlewares: opts.middlewares,
     middlewaresArray,
     packagesDir: opts.packagesDir,
-    variableGroups: bedrock.variableGroups || []
+    variableGroups
   };
 
   // values need not be validated (that's do not need

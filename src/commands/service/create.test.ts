@@ -27,7 +27,6 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  jest.clearAllMocks();
   jest.resetAllMocks();
 });
 
@@ -151,23 +150,6 @@ describe("Test execute function", () => {
       await execute(testServiceName, getMockValues(), exitFn);
       expect(exitFn).toBeCalledTimes(1);
       expect(exitFn.mock.calls).toEqual([[1]]);
-    } finally {
-      removeDir(testServiceName); // housekeeping
-    }
-  });
-  it("Positive test", async () => {
-    const testServiceName = uuid();
-    const exitFn = jest.fn();
-    jest.spyOn(config, "bedrockFileInfo").mockImplementation(() =>
-      Promise.resolve({
-        exist: true,
-        hasVariableGroups: true
-      })
-    );
-    try {
-      await execute(testServiceName, getMockValues(), exitFn);
-      expect(exitFn).toBeCalledTimes(1);
-      expect(exitFn.mock.calls).toEqual([[0]]);
     } finally {
       removeDir(testServiceName); // housekeeping
     }
