@@ -61,8 +61,8 @@ export interface IBedrockServiceConfig {
   disableRouteScaffold?: boolean;
   k8sServicePort: number; // the service port for the k8s service Traefik2 IngressRoutes will point to
   pathPrefix?: string; // pathprefix for ingress route, ie. document-service
-  pathPrefixVersion?: string; // api version, will prefix path prefix if provided. ie. 'v1' will result in the endpoint: /v1/document-service
-  backend?: string; // k8s service backend name for ingress routing
+  pathPrefixMajorVersion?: string; // api version, will prefix path prefix if provided. ie. 'v1' will result in the endpoint: /v1/document-service
+  k8sBackend?: string; // k8s service backend name for ingress routing
 }
 
 /**

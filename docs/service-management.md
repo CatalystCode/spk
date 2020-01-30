@@ -50,9 +50,9 @@ Options:
   --git-push                                                  SPK CLI will try to commit and push these changes to a new origin/branch named after the service. (default: false)
   --middlewares <comma-delimitated-list-of-middleware-names>  Traefik2 middlewares you wish to to be injected into your Traefik2 IngressRoutes (default: "")
   --k8s-service-port <port>                                   Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes (default: "80")
+  --k8s-backend <backend>                                     Kubernetes service name; will be used to configure Traefik2 IngressRoutes (default: "")
   --path-prefix <path-prefix>                                 The path prefix for ingress route; will be used to configure Traefik2 IngressRoutes. If omitted, then the service name will used. (default: "")
-  --path-prefix-version <path-prefix-version>                 Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename (default: "")
-  --backend <backend>                                         Kubernetes service name; will be used to configure Traefik2 IngressRoutes (default: "")
+  --path-prefix-major-version <path-prefix-major-version>     Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename (default: "")
   -h, --help                                                  output usage information
 ```
 
@@ -63,7 +63,7 @@ Options:
 - `--middlewares`, `--k8s-service-port`, `--path-prefix`,
   `--path-prefix-version`, and `--backend` are all used to configure the
   generated Traefik2 IngressRoutes. ie.
-  `spk service create my-example-documents-service --middlewares middlewareA --k8s-service-port 3001 --path-prefix documents --path-prefix-version v2 --backend docs-service`
+  `spk service create my-example-documents-service --middlewares middlewareA --k8s-service-port 3001 --k8s-backend docs-service --path-prefix documents --path-prefix-major-version v2`
   will result in an IngressRoute that looks like:
   ```
   apiVersion: traefik.containo.us/v1alpha1
