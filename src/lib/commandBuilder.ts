@@ -108,10 +108,18 @@ export const validateForRequiredValues = (
  * In future there may be other housekeeper tasks.
  *
  * @param log Logger instance
+ * @param exitFn exit function
+ * @param statusCode Exit status code
  */
-export const exit = (log: Logger): Promise<void> => {
+
+export const exit = (
+  log: Logger,
+  exitFn: (status: number) => void,
+  statusCode: number
+): Promise<void> => {
   return new Promise(resolve => {
-    log.info("", null, () => {
+    log.info(`--end log: ${statusCode} --`, () => {
+      exitFn(statusCode);
       resolve();
     });
   });
