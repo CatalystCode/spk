@@ -103,7 +103,7 @@ stages:
         itemPattern: "spk*"
         artifactName: 'spk_linux_node_12'
         targetPath: '$(System.DefaultWorkingDirectory)'
-    - bash: |in 
+    - bash: | 
         shopt -s expand_aliases
         echo "Current Dir is $(pwd)"
         chmod +x spk-linux
