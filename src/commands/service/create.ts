@@ -1,15 +1,16 @@
 import commander from "commander";
 import path from "path";
 import shelljs from "shelljs";
-import { Bedrock, bedrockFileInfo } from "../../config";
+import { Bedrock } from "../../config";
+import {
+  addNewService as addNewServiceToBedrockFile,
+  fileInfo as bedrockFileInfo,
+  YAML_NAME as BedrockFileName
+} from "../../lib/bedrockYaml";
 import {
   projectCvgDependencyErrorMessage,
   projectInitCvgDependencyErrorMessage
-} from "../../constants";
-import {
-  addNewService as addNewServiceToBedrockFile,
-  YAML_NAME as BedrockFileName
-} from "../../lib/bedrockYaml";
+} from "../../lib/constants";
 import {
   addNewServiceToMaintainersFile,
   generateDockerfile,

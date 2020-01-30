@@ -2,19 +2,14 @@ import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterface
 import commander from "commander";
 import path from "path";
 import { echo } from "shelljs";
-import {
-  Bedrock,
-  bedrockFileInfo,
-  Config,
-  readYaml,
-  write
-} from "../../config";
-import { projectInitDependencyErrorMessage } from "../../constants";
+import { Bedrock, Config, readYaml, write } from "../../config";
+import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
   exit as exitCmd,
   validateForRequiredValues
 } from "../../lib/commandBuilder";
+import { projectInitDependencyErrorMessage } from "../../lib/constants";
 import { IAzureDevOpsOpts } from "../../lib/git";
 import { addVariableGroup } from "../../lib/pipelines/variableGroup";
 import { hasValue } from "../../lib/validator";

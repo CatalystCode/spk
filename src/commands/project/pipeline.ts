@@ -4,17 +4,17 @@ import {
   BuildDefinitionVariable
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
-import { bedrockFileInfo, Config } from "../../config";
-import {
-  projectCvgDependencyErrorMessage,
-  projectInitCvgDependencyErrorMessage
-} from "../../constants";
-import { isExists as isBedrockFileExists } from "../../lib/bedrockYaml";
+import { Config } from "../../config";
+import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
   exit as exitCmd,
   validateForRequiredValues
 } from "../../lib/commandBuilder";
+import {
+  projectCvgDependencyErrorMessage,
+  projectInitCvgDependencyErrorMessage
+} from "../../lib/constants";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import {
   getOriginUrl,
@@ -42,11 +42,11 @@ export interface ICommandOptions {
 }
 
 export const validate = async (projectPath: string) => {
-  const exist = isBedrockFileExists(projectPath);
-  if (exist === false) {
-    throw new Error(
-      "Please run `spk project init` command before running this command to initialize the project."
-    );
+  const fileInfo: IBedrockFileInfo = await bedrockFileInfo(projectPath);
+  if (fileInfo.exist === false) {
+    throw new Error(projectInitCvgDependencyErrorMessage);
+  } else if (fileInfo.hasVariableGroups === false) {
+    throw new Error(projectCvgDependencyErrorMessage);
   }
 };
 
@@ -109,18 +109,6 @@ export const execute = async (
 ) => {
   if (!projectPath) {
     logger.error("Project Path is missing");
-    await exitFn(1);
-    return;
-  }
-
-  const fileInfo: IBedrockFileInfo = await bedrockFileInfo(projectPath);
-  if (fileInfo.exist === false) {
-    logger.error(projectInitCvgDependencyErrorMessage);
-    await exitFn(1);
-    return;
-  }
-  if (fileInfo.hasVariableGroups === false) {
-    logger.error(projectCvgDependencyErrorMessage);
     await exitFn(1);
     return;
   }

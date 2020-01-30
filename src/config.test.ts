@@ -4,7 +4,8 @@ import os from "os";
 import path from "path";
 import shell from "shelljs";
 import uuid from "uuid/v4";
-import { Bedrock, bedrockFileInfo, write } from "./config";
+import { Bedrock, write } from "./config";
+import { fileInfo as bedrockFileInfo } from "./lib/bedrockYaml";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "./logger";
 import { IBedrockFile, IBedrockFileInfo } from "./types";
 

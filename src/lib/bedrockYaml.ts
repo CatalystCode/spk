@@ -2,8 +2,10 @@ import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
 
+import { BedrockAsync } from "../config";
 import { createTempDir } from "../lib/ioUtil";
-import { IBedrockFile, IHelmConfig } from "../types";
+import { logger } from "../logger";
+import { IBedrockFile, IBedrockFileInfo, IHelmConfig } from "../types";
 
 export const YAML_NAME = "bedrock.yaml";
 
@@ -94,4 +96,39 @@ export const addNewService = (
     lineWidth: Number.MAX_SAFE_INTEGER
   });
   fs.writeFileSync(path.join(absPath, YAML_NAME), asYaml);
+};
+
+/**
+ * Returns bedrock file information
+ *
+ * @param rootProjectPath Path to read the bedrock.yaml file
+ */
+export const fileInfo = async (
+  rootProjectPath: string = process.cwd()
+): Promise<IBedrockFileInfo> => {
+  if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
+    throw new Error("Project root path is not valid");
+  }
+
+  const absProjectPath = path.resolve(rootProjectPath);
+
+  let bedrockFile: IBedrockFile | undefined;
+
+  try {
+    bedrockFile = read(absProjectPath);
+    logger.debug(
+      `variableGroups length: ${bedrockFile?.variableGroups?.length}`
+    );
+    logger.verbose(`bedrockFile: \n ${JSON.stringify(bedrockFile)}`);
+    return {
+      exist: true,
+      hasVariableGroups: (bedrockFile?.variableGroups ?? []).length > 0
+    };
+  } catch (error) {
+    logger.error(error);
+    return {
+      exist: false,
+      hasVariableGroups: false
+    };
+  }
 };
