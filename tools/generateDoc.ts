@@ -73,7 +73,7 @@ Object.keys(mapCommands).forEach(k => {
   buffer.push(`spk ${k}${alias}${values} [options]`);
   buffer.push("\nOptions:");
 
-  cmd.options.forEach(opt => {
+  (cmd.options || []).forEach(opt => {
     buffer.push(`  ${opt.arg}`);
     buffer.push(`    ${opt.description}`);
     buffer.push("\n");
