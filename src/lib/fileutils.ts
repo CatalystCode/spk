@@ -142,12 +142,12 @@ export const starterAzurePipelines = async (opts: {
                     `. ./build.sh --source-only`,
                     `get_spk_version`,
                     `download_spk`,
-                    `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
+                    `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
                   ]),
                   displayName:
                     "If configured, update Spektate storage with build pipeline",
                   condition:
-                    "and(ne(variables['SPEKTATE_STORAGE_ACCOUNT_NAME'], ''), ne(variables['SPEKTATE_STORAGE_ACCOUNT_KEY'], ''),ne(variables['SPEKTATE_STORAGE_TABLE_NAME'], ''),ne(variables['SPEKTATE_STORAGE_PARTITION_KEY'], ''))"
+                    "and(ne(variables['INTROSPECTION_ACCOUNT_NAME'], ''), ne(variables['INTROSPECTION_ACCOUNT_KEY'], ''),ne(variables['INTROSPECTION_TABLE_NAME'], ''),ne(variables['INTROSPECTION_PARTITION_KEY'], ''))"
                 };
               }),
               ...cleanedPaths.map(projectPath => {
@@ -270,7 +270,7 @@ export const starterAzurePipelines = async (opts: {
                     ``,
                     ``,
                     `# Update introspection storage with this information, if applicable`,
-                    `if [ -z "$(SPEKTATE_STORAGE_ACCOUNT_NAME)" -o -z "$(SPEKTATE_STORAGE_ACCOUNT_KEY)" -o -z "$(SPEKTATE_STORAGE_TABLE_NAME)" -o -z "$(SPEKTATE_STORAGE_PARTITION_KEY)" ]; then`,
+                    `if [ -z "$(INTROSPECTION_ACCOUNT_NAME)" -o -z "$(INTROSPECTION_ACCOUNT_KEY)" -o -z "$(INTROSPECTION_TABLE_NAME)" -o -z "$(INTROSPECTION_PARTITION_KEY)" ]; then`,
                     `echo "Introspection variables are not defined. Skipping..."`,
                     `else`,
                     `latest_commit=$(git rev-parse --short HEAD)`,
@@ -281,7 +281,7 @@ export const starterAzurePipelines = async (opts: {
                     `. ./build.sh --source-only`,
                     `get_spk_version`,
                     `download_spk`,
-                    `./spk/spk deployment create  -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id`,
+                    `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id`,
                     `fi`
                   ]),
                   displayName:
@@ -489,15 +489,15 @@ const manifestGenerationPipelineYaml = () => {
           `message="$(Build.SourceVersionMessage)"`,
           `if [[ $message == *"Merged PR"* ]]; then`,
           `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\+//')`,
-          `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr pr_id`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr pr_id`,
           `else`,
-          `./spk/spk deployment create -n $(SPEKTATE_STORAGE_ACCOUNT_NAME) -k $(SPEKTATE_STORAGE_ACCOUNT_KEY) -t $(SPEKTATE_STORAGE_TABLE_NAME) -p $(SPEKTATE_STORAGE_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
           `fi`
         ]),
         displayName:
           "If configured, update manifest pipeline details in Spektate db",
         condition:
-          "and(ne(variables['SPEKTATE_STORAGE_ACCOUNT_NAME'], ''), ne(variables['SPEKTATE_STORAGE_ACCOUNT_KEY'], ''),ne(variables['SPEKTATE_STORAGE_TABLE_NAME'], ''),ne(variables['SPEKTATE_STORAGE_PARTITION_KEY'], ''))"
+          "and(ne(variables['INTROSPECTION_ACCOUNT_NAME'], ''), ne(variables['INTROSPECTION_ACCOUNT_KEY'], ''),ne(variables['INTROSPECTION_TABLE_NAME'], ''),ne(variables['INTROSPECTION_PARTITION_KEY'], ''))"
       }
     ]
   };
