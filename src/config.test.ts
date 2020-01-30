@@ -33,7 +33,10 @@ describe("Bedrock", () => {
               repository: "some-repo"
             }
           },
-          k8sServicePort: 1337
+          k8sBackend: "backendservice",
+          k8sBackendPort: 1337,
+          pathPrefix: "servicepath",
+          pathPrefixMajorVersion: "v1"
         },
         "foo/b": {
           helm: {
@@ -43,7 +46,10 @@ describe("Bedrock", () => {
               sha: "cef8361c62e7a91887625336eb13a8f90dbcf8df"
             }
           },
-          k8sServicePort: 1337
+          k8sBackend: "backendservice",
+          k8sBackendPort: 1337,
+          pathPrefix: "servicepath",
+          pathPrefixMajorVersion: "v1"
         }
       }
     };
