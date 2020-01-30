@@ -8,7 +8,7 @@ schedules:
   always: true
 
 variables:
-- group: 'spk-vg-testing'
+- group: 'spk-vg'
 
 stages:
 - stage: integration_tests
