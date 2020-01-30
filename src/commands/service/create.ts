@@ -112,7 +112,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
       const projectPath = process.cwd();
       logger.verbose(`project path: ${projectPath}`);
 
-      const fileInfo: IBedrockFileInfo = await bedrockFileInfo(projectPath);
+      const fileInfo: IBedrockFileInfo = bedrockFileInfo(projectPath);
       if (fileInfo.exist === false) {
         logger.error(projectInitCvgDependencyErrorMessage);
         return undefined;

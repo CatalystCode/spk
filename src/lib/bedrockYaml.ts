@@ -1,8 +1,6 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
-
-import { BedrockAsync } from "../config";
 import { createTempDir } from "../lib/ioUtil";
 import { logger } from "../logger";
 import { IBedrockFile, IBedrockFileInfo, IHelmConfig } from "../types";
@@ -112,19 +110,17 @@ export const addNewService = (
  *
  * @param rootProjectPath Path to read the bedrock.yaml file
  */
-export const fileInfo = async (
+export const fileInfo = (
   rootProjectPath: string = process.cwd()
-): Promise<IBedrockFileInfo> => {
+): IBedrockFileInfo => {
   if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
     throw new Error("Project root path is not valid");
   }
 
   const absProjectPath = path.resolve(rootProjectPath);
 
-  let bedrockFile: IBedrockFile | undefined;
-
   try {
-    bedrockFile = read(absProjectPath);
+    const bedrockFile = read(absProjectPath);
     logger.debug(
       `variableGroups length: ${bedrockFile?.variableGroups?.length}`
     );

@@ -42,7 +42,7 @@ export interface ICommandOptions {
 }
 
 export const validate = async (projectPath: string) => {
-  const file: IBedrockFileInfo = await bedrockFileInfo(projectPath);
+  const file: IBedrockFileInfo = bedrockFileInfo(projectPath);
   if (file.exist === false) {
     throw new Error(projectInitCvgDependencyErrorMessage);
   } else if (file.hasVariableGroups === false) {
