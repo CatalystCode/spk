@@ -84,13 +84,13 @@ describe("Adding a service to a repo directory", () => {
     );
 
     // addService call
-    const k8sServicePort = 1337;
+    const k8sBackendPort = 1337;
     await createService(
       randomTmpDir,
       serviceName,
       packageDir,
       false,
-      k8sServicePort
+      k8sBackendPort
     );
 
     // Check temp test directory exists
@@ -113,7 +113,7 @@ describe("Adding a service to a repo directory", () => {
     const bedrock = Bedrock(randomTmpDir);
     const newService = bedrock.services["./" + serviceName];
     expect(newService).toBeDefined();
-    expect(newService.k8sBackendPort).toBe(k8sServicePort);
+    expect(newService.k8sBackendPort).toBe(k8sBackendPort);
   });
 
   test("New directory is created under '/packages' directory with required service files.", async () => {

@@ -341,7 +341,7 @@ export const isValidConfig = (
  * @param serviceName
  * @param packagesDir
  * @param gitPush
- * @param k8sServicePort
+ * @param k8sBackendPort
  * @param opts
  */
 export const createService = async (
@@ -349,7 +349,7 @@ export const createService = async (
   serviceName: string,
   packagesDir: string,
   gitPush: boolean,
-  k8sServicePort: number,
+  k8sBackendPort: number,
   opts?: {
     displayName?: string;
     helmChartChart?: string;
@@ -447,7 +447,7 @@ export const createService = async (
     displayName,
     helmConfig,
     middlewares,
-    k8sServicePort,
+    k8sBackendPort,
     k8sBackend,
     pathPrefix,
     pathPrefixMajorVersion
