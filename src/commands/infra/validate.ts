@@ -4,7 +4,10 @@ import emoji from "node-emoji";
 import shelljs from "shelljs";
 import { promisify } from "util";
 import { Config } from "../../config";
+import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
+import { IConfigYaml } from "../../types";
+import decorator from "./generate.decorator.json";
 
 const binaries: string[] = ["terraform", "git", "az", "helm"];
 const envVar: string[] = [
@@ -14,44 +17,46 @@ const envVar: string[] = [
   "ARM_TENANT_ID"
 ];
 
-/**
- * Adds the validate command to the commander command object
- *
- * @param command Commander command object to decorate
- */
-export const validateCommandDecorator = (command: commander.Command): void => {
-  command
-    .command("validate")
-    .alias("v")
-    .description(
-      "Validate will verify that all infrastructure deployment prerequisites have been correctly installed."
-    )
-    .action(async opts => {
-      try {
-        if (await validatePrereqs(binaries, false)) {
+export const getConfig = (): IConfigYaml => {
+  const config = Config();
+  config.infra = config.infra || {};
+  config.infra.checks = config.infra.checks || {};
+  return config;
+};
+
+export const execute = async (exitFn: (status: number) => Promise<void>) => {
+  try {
+    if (validatePrereqs(binaries, false)) {
+      logger.info(
+        emoji.emojify(
+          "Installation of Prerequisites verified: :white_check_mark:"
+        )
+      );
+      if (await validateAzure(false)) {
+        logger.info(
+          emoji.emojify("Azure account verified: :white_check_mark:")
+        );
+        if (validateEnvVariables(envVar, false)) {
           logger.info(
-            emoji.emojify(
-              "Installation of Prerequisites verified: :white_check_mark:"
-            )
+            emoji.emojify("Environment variables verified: :white_check_mark:")
           );
-          if (await validateAzure(false)) {
-            logger.info(
-              emoji.emojify("Azure account verified: :white_check_mark:")
-            );
-            if (await validateEnvVariables(envVar, false)) {
-              logger.info(
-                emoji.emojify(
-                  "Environment variables verified: :white_check_mark:"
-                )
-              );
-            }
-          }
         }
-      } catch (err) {
-        logger.error(`Error validating init prerequisites`);
-        logger.error(err);
       }
+    }
+    await exitFn(0);
+  } catch (err) {
+    logger.error(`Error validating init prerequisites`);
+    logger.error(err);
+    await exitFn(1);
+  }
+};
+
+export const validateCommandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async () => {
+    execute(async (status: number) => {
+      await exitCmd(logger, process.exit, status);
     });
+  });
 };
 
 /**
@@ -59,21 +64,16 @@ export const validateCommandDecorator = (command: commander.Command): void => {
  *
  * @param executables Array of exectuables to check for in PATH
  */
-export const validatePrereqs = async (
+export const validatePrereqs = (
   executables: string[],
   globalInit: boolean
-): Promise<boolean> => {
-  const config = Config();
-  if (!config.infra) {
-    config.infra = {};
-  }
-  if (!config.infra.checks) {
-    config.infra.checks = {};
-  }
+): boolean => {
+  const config = getConfig();
+
   // Validate executables in PATH
   for (const i of executables) {
     if (!shelljs.which(i)) {
-      config.infra.checks[i] = false;
+      config.infra!.checks![i] = false;
       if (globalInit === true) {
         logger.warn(i + " not installed.");
       } else {
@@ -83,7 +83,7 @@ export const validatePrereqs = async (
         return false;
       }
     } else {
-      config.infra.checks[i] = true;
+      config.infra!.checks![i] = true;
     }
   }
   return true;
@@ -93,14 +93,8 @@ export const validatePrereqs = async (
  * Validates that user is logged into Azure CLI
  */
 export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
-  const config = Config();
-  // Validate authentication with Azure
-  if (!config.infra) {
-    config.infra = {};
-  }
-  if (!config.infra.checks) {
-    config.infra.checks = {};
-  }
+  const config = getConfig();
+
   try {
     await promisify(child_process.exec)("az account show -o none");
   } catch (err) {
@@ -111,10 +105,10 @@ export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
     } else {
       logger.error(emoji.emojify(":no_entry_sign: " + err));
     }
-    config.infra.checks.az_login_check = false;
+    config.infra!.checks!.az_login_check = false;
     return false;
   }
-  config.infra.checks.az_login_check = true;
+  config.infra!.checks!.az_login_check = true;
   return true;
 };
 
@@ -123,18 +117,12 @@ export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
  *
  * @param variables Array of environment vairables to check for
  */
-export const validateEnvVariables = async (
+export const validateEnvVariables = (
   variables: string[],
   globalInit: boolean
-): Promise<boolean> => {
-  const config = Config();
+): boolean => {
+  const config = getConfig();
 
-  if (!config.infra) {
-    config.infra = {};
-  }
-  if (!config.infra.checks) {
-    config.infra.checks = {};
-  }
   // Validate environment variables
   for (const i of variables) {
     if (!process.env[i]) {
@@ -147,7 +135,7 @@ export const validateEnvVariables = async (
           )
         );
       }
-      config.infra.checks.env_var_check = false;
+      config.infra!.checks!.env_var_check = false;
       return false;
     } else if (process.env[i] && process.env[i] === "") {
       if (globalInit === true) {
@@ -157,10 +145,10 @@ export const validateEnvVariables = async (
           emoji.emojify(":no_entry_sign: " + i + " cannot be null.")
         );
       }
-      config.infra.checks.env_var_check = false;
+      config.infra!.checks!.env_var_check = false;
       return false;
     }
   }
-  config.infra.checks.env_var_check = true;
+  config.infra!.checks!.env_var_check = true;
   return true;
 };
