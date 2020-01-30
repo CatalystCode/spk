@@ -173,10 +173,7 @@ repository.
   [cloud-native](https://github.com/microsoft/fabrikate-definitions/tree/master/definitions/fabrikate-cloud-native)
   stack as a initial sample component.
   ```
-  spk hld init
-  git add -A
-  git commit -m "Initializing HLD repository with the cloud-native stack."
-  git push -u origin --all
+  spk hld init --git-push
   ```
 - Deploy the Manifest Generation pipeline (optional flag parameters can be used
   if `spk` was not intialized)
