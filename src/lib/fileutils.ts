@@ -3,13 +3,7 @@ import yaml from "js-yaml";
 import path from "path";
 import { promisify } from "util";
 import { logger } from "../logger";
-import {
-  IAzurePipelinesYaml,
-  IBedrockFile,
-  IHelmConfig,
-  IMaintainersFile,
-  IUser
-} from "../types";
+import { IAzurePipelinesYaml, IMaintainersFile, IUser } from "../types";
 
 /**
  * Writes out a starter azure-pipelines.yaml
@@ -34,7 +28,7 @@ export const generateStarterAzurePipelinesYaml = async (
 
   const { variableGroups = [] } = opts || {};
 
-  logger.debug(`variableGroups length: ${variableGroups.length}`);
+  logger.debug(`variableGroups length: ${variableGroups?.length}`);
 
   // Check if azure-pipelines.yaml already exists; if it does, skip generation
   const azurePipelinesYamlPath = path.join(
@@ -98,7 +92,10 @@ export const starterAzurePipelines = async (opts: {
       branches: { include: branches },
       paths: { include: cleanedPaths }
     },
-    variables: [...variableGroups.map(group => ({ group })), ...variables],
+    variables: [
+      ...(variableGroups ?? []).map(group => ({ group })),
+      ...variables
+    ],
     stages: [
       {
         // Build stage
@@ -606,35 +603,6 @@ export const generateGitIgnoreFile = (
 
   logger.info(`Writing .gitignore file to ${gitIgnoreFilePath}`);
   fs.writeFileSync(gitIgnoreFilePath, content, "utf8");
-};
-
-/**
- * Update bedrock.yml with new service
- *
- * @param bedrockFilePath
- * @param newServicePath
- */
-export const addNewServiceToBedrockFile = (
-  bedrockFilePath: string,
-  newServicePath: string,
-  svcDisplayName: string,
-  helmConfig: IHelmConfig,
-  middlewares: string[],
-  k8sServicePort: number
-) => {
-  const bedrockFile = yaml.safeLoad(
-    fs.readFileSync(bedrockFilePath, "utf8")
-  ) as IBedrockFile;
-
-  bedrockFile.services["./" + newServicePath] = {
-    displayName: svcDisplayName,
-    helm: helmConfig,
-    k8sServicePort,
-    middlewares
-  };
-
-  logger.info("Updating bedrock.yaml");
-  fs.writeFileSync(bedrockFilePath, yaml.safeDump(bedrockFile), "utf8");
 };
 
 /**
