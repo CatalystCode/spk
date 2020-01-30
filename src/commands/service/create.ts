@@ -87,11 +87,8 @@ export const fetchValues = (opts: ICommandOptions) => {
     variableGroups
   };
 
-  // values need not be validated (that's do not need
-  // to do is type === "string" check because default values
-  // are provided in the commander and most of them
-  // are "" except for gitPush is false and k8sServicePort
-  // is "80"
+  // Values do not need to be validated
+  // as they are mostly provided by Commander.
   return values;
 };
 
