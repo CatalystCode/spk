@@ -72,7 +72,7 @@ This guide assumes a few things:
       [here](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
 3. The application is packaged and run through a Docker image hosted on
    [Azure Container Registry](https://azure.microsoft.com/en-us/services/container-registry/)
-4. The user is running `spk` has full access to the above resources.
+4. The user running `spk` has full access to the above resources.
 5. The user is running the latest `spk`
    [release](https://github.com/catalystcode/spk/releases).
 6. The user has
@@ -278,7 +278,7 @@ application repositories
 **NOTE** `spk service` command documentation can be found
 [here](/docs/service-management.md).
 
-### Varible Groups
+### Variable Groups
 
 TBD
 
