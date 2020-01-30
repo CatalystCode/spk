@@ -278,11 +278,11 @@ const createIngressRouteForRing = (
     ring,
     serviceConfig.k8sBackendPort,
     {
+      k8sBackend: serviceConfig.k8sBackend,
       middlewares: [
         middlewares.metadata.name,
         ...(serviceConfig.middlewares ?? [])
       ],
-      k8sBackend: serviceConfig.k8sBackend,
       pathPrefix: serviceConfig.pathPrefix,
       pathPrefixMajorVersion: serviceConfig.pathPrefixMajorVersion
     }
