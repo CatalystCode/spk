@@ -38,7 +38,6 @@ describe("validate pipeline config", () => {
     "test@maintainer.com",
     "my,middleware,string",
     true,
-    "testVariableGroup",
     "testDisplayName",
     80
   ];

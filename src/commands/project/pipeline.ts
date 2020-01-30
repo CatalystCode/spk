@@ -4,7 +4,11 @@ import {
   BuildDefinitionVariable
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
-import { Config } from "../../config";
+import { bedrockFileInfo, Config } from "../../config";
+import {
+  projectCvgDependencyErrorMessage,
+  projectInitCvgDependencyErrorMessage
+} from "../../constants";
 import { isExists as isBedrockFileExists } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
@@ -24,7 +28,7 @@ import {
   queueBuild
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
-import { IConfigYaml } from "../../types";
+import { IBedrockFileInfo, IConfigYaml } from "../../types";
 import decorator from "./pipeline.decorator.json";
 
 export interface ICommandOptions {
@@ -106,27 +110,40 @@ export const execute = async (
   if (!projectPath) {
     logger.error("Project Path is missing");
     await exitFn(1);
-  } else {
-    logger.verbose(`project path: ${projectPath}`);
+    return;
+  }
 
-    try {
-      await validate(projectPath);
-      const gitOriginUrl = await getOriginUrl();
-      const values = fetchValidateValues(opts, gitOriginUrl, Config());
+  const fileInfo: IBedrockFileInfo = await bedrockFileInfo(projectPath);
+  if (fileInfo.exist === false) {
+    logger.error(projectInitCvgDependencyErrorMessage);
+    await exitFn(1);
+    return;
+  }
+  if (fileInfo.hasVariableGroups === false) {
+    logger.error(projectCvgDependencyErrorMessage);
+    await exitFn(1);
+    return;
+  }
 
-      if (values === null) {
-        await exitFn(1);
-      } else {
-        await installLifecyclePipeline(values);
-        await exitFn(0);
-      }
-    } catch (err) {
-      logger.error(
-        `Error occurred installing pipeline for HLD to Manifest pipeline`
-      );
-      logger.error(err);
+  logger.verbose(`project path: ${projectPath}`);
+
+  try {
+    await validate(projectPath);
+    const gitOriginUrl = await getOriginUrl();
+    const values = fetchValidateValues(opts, gitOriginUrl, Config());
+
+    if (values === null) {
       await exitFn(1);
+    } else {
+      await installLifecyclePipeline(values);
+      await exitFn(0);
     }
+  } catch (err) {
+    logger.error(
+      `Error occurred installing pipeline for HLD to Manifest pipeline`
+    );
+    logger.error(err);
+    await exitFn(1);
   }
 };
 
@@ -143,13 +160,13 @@ const createPipeline = async (
   devopsClient: IBuildApi
 ): Promise<BuildDefinition> => {
   const definition = definitionForAzureRepoPipeline({
-    branchFilters: ["master"], // TOFIX: hardcoded?
+    branchFilters: ["master"], // I believe this is intentional. Our pipelines are triggered only by merges into the master branch.
     maximumConcurrentBuilds: 1,
     pipelineName: values.pipelineName!,
     repositoryName: values.repoName!,
     repositoryUrl: values.repoUrl!,
     variables: requiredPipelineVariables(values.buildScriptUrl!),
-    yamlFileBranch: "master", // TOFIX: hardcoded?
+    yamlFileBranch: "master", // I believe this is intentional. Our pipelines are triggered only by merges into the master branch.
     yamlFilePath: "hld-lifecycle.yaml" // TOFIX: hardcoded?
   });
 

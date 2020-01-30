@@ -1,6 +1,6 @@
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
+import { createTempDir } from "../../lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-
 jest.mock("../../lib/pipelines/pipelines");
 
 import {
@@ -93,8 +93,12 @@ describe("installLifecyclePipeline and execute tests", () => {
     const exitFn = jest.fn();
     (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
 
-    const tmpDir = createBedrockYaml();
-
+    const tmpDir = createTempDir();
+    createBedrockYaml(tmpDir, {
+      rings: {},
+      services: {},
+      variableGroups: ["test"]
+    });
     await execute(mockValues, tmpDir, exitFn);
 
     expect(exitFn).toBeCalledTimes(1);
