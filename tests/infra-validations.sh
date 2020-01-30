@@ -25,7 +25,6 @@ echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 echo "ACR_NAME: $ACR_NAME"
 
-
 terraform_template_dir=fabrikam-tf-template
 tf_template_version=v0.0.1
 infra_hld_version=v0.0.1
@@ -156,7 +155,6 @@ git push origin "$infra_hld_version"
 
 # Create an empty Infra Generated Repo for generated TF files PR ------------------
 cd $TEST_WORKSPACE
-pwd
 echo "../$infra_generated_dir"
 mkdir $infra_generated_dir
 cd $infra_generated_dir
