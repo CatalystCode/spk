@@ -113,7 +113,7 @@ describe("Adding a service to a repo directory", () => {
     const bedrock = Bedrock(randomTmpDir);
     const newService = bedrock.services["./" + serviceName];
     expect(newService).toBeDefined();
-    expect(newService.k8sServicePort).toBe(k8sServicePort);
+    expect(newService.k8sBackendPort).toBe(k8sServicePort);
   });
 
   test("New directory is created under '/packages' directory with required service files.", async () => {

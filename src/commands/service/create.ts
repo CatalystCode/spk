@@ -88,13 +88,13 @@ export const createCommandDecorator = (command: commander.Command): void => {
       ""
     )
     .option(
-      "--k8s-service-port <port>",
-      "Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes",
+      "--k8s-backend-port <port>",
+      "Kubernetes backend service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes",
       "80"
     )
     .option(
       "--k8s-backend <backend>",
-      "Kubernetes service name; will be used to configure Traefik2 IngressRoutes",
+      "Kubernetes backend service name; will be used to configure Traefik2 IngressRoutes",
       ""
     )
     .option(
@@ -138,7 +138,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
         pathPrefix,
         pathPrefixMajorVersion
       } = opts;
-      const k8sPort = Number(opts.k8sServicePort);
+      const k8sPort = Number(opts.k8sBackendPort);
       const variableGroups = bedrock?.variableGroups;
 
       try {

@@ -276,7 +276,7 @@ const createIngressRouteForRing = (
   const ingressRoute = TraefikIngressRoute(
     serviceName,
     ring,
-    serviceConfig.k8sServicePort,
+    serviceConfig.k8sBackendPort,
     {
       middlewares: [
         middlewares.metadata.name,
