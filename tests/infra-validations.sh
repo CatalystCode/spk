@@ -155,7 +155,6 @@ git push origin "$infra_hld_version"
 
 # Create an empty Infra Generated Repo for generated TF files PR ------------------
 cd $TEST_WORKSPACE
-pwd
 echo "../$infra_generated_dir"
 mkdir $infra_generated_dir
 cd $infra_generated_dir

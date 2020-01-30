@@ -8,7 +8,7 @@ schedules:
   always: true
 
 variables:
-- group: 'spk-vg-testing'
+- group: 'spk-vg'
 
 stages:
 - stage: integration_tests
@@ -103,7 +103,7 @@ stages:
         itemPattern: "spk*"
         artifactName: 'spk_linux_node_12'
         targetPath: '$(System.DefaultWorkingDirectory)'
-    - bash: |
+    - bash: |in 
         shopt -s expand_aliases
         echo "Current Dir is $(pwd)"
         chmod +x spk-linux
