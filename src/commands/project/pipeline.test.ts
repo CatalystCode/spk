@@ -52,10 +52,10 @@ const mockMissingValues: ICommandOptions = {
 const gitUrl = "https://github.com/CatalystCode/spk.git";
 
 describe("test valid function", () => {
-  it("negative test", () => {
+  it("negative test", async () => {
     try {
       const tmpDir = createBedrockYaml();
-      validate(tmpDir);
+      await validate(tmpDir);
       expect(true).toBe(false);
     } catch (e) {
       expect(e).not.toBeNull();
@@ -98,13 +98,11 @@ describe("installLifecyclePipeline and execute tests", () => {
     (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
 
     const tmpDir = createTempDir();
-    logger.info(`tmpDir11: ${tmpDir}`);
     createBedrockYaml(tmpDir, {
       rings: {},
       services: {},
       variableGroups: ["test"]
     });
-    logger.info(`tmpDir: ${tmpDir}`);
     await execute(mockValues, tmpDir, exitFn);
 
     expect(exitFn).toBeCalledTimes(1);
