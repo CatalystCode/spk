@@ -31,11 +31,14 @@ export interface ICommandOptions {
   helmConfigBranch: string;
   helmConfigGit: string;
   helmConfigPath: string;
+  k8sBackend: string;
   maintainerEmail: string;
   maintainerName: string;
   middlewares: string;
   packagesDir: string;
-  k8sServicePort: string;
+  pathPrefix: string;
+  pathPrefixMajorVersion: string;
+  k8sBackendPort: string;
 }
 
 export interface ICommandValues extends ICommandOptions {
@@ -45,7 +48,7 @@ export interface ICommandValues extends ICommandOptions {
 }
 
 export const fetchValues = (opts: ICommandOptions) => {
-  if (!isPortNumber(opts.k8sServicePort)) {
+  if (!isPortNumber(opts.k8sBackendPort)) {
     throw new Error("value for --k8s-service-port is not a value port number");
   }
 
@@ -71,13 +74,16 @@ export const fetchValues = (opts: ICommandOptions) => {
     helmConfigBranch: opts.helmConfigBranch,
     helmConfigGit: opts.helmConfigGit,
     helmConfigPath: opts.helmConfigPath,
-    k8sPort: parseInt(opts.k8sServicePort, 10),
-    k8sServicePort: opts.k8sServicePort,
+    k8sBackend: opts.k8sBackend,
+    k8sBackendPort: opts.k8sBackendPort,
+    k8sPort: parseInt(opts.k8sBackendPort, 10),
     maintainerEmail: opts.maintainerEmail,
     maintainerName: opts.maintainerName,
     middlewares: opts.middlewares,
     middlewaresArray,
     packagesDir: opts.packagesDir,
+    pathPrefix: opts.pathPrefix,
+    pathPrefixMajorVersion: opts.pathPrefixMajorVersion,
     variableGroups
   };
 
@@ -149,6 +155,9 @@ export const createCommandDecorator = (command: commander.Command): void => {
  *
  * @param rootProjectPath
  * @param serviceName
+ * @param packagesDir
+ * @param gitPush
+ * @param k8sBackendPort
  * @param opts
  */
 export const createService = async (
@@ -222,7 +231,10 @@ export const createService = async (
     values.displayName,
     helmConfig,
     values.middlewaresArray,
-    values.k8sPort
+    values.k8sPort,
+    values.k8sBackend,
+    values.pathPrefix,
+    values.pathPrefixMajorVersion
   );
 
   // If requested, create new git branch, commit, and push

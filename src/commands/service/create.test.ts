@@ -38,13 +38,16 @@ const mockValues: ICommandValues = {
   helmConfigBranch: "",
   helmConfigGit: "",
   helmConfigPath: "",
+  k8sBackend: "",
+  k8sBackendPort: "80",
   k8sPort: 80,
-  k8sServicePort: "80",
   maintainerEmail: "",
   maintainerName: "",
   middlewares: "",
   middlewaresArray: [],
   packagesDir: "",
+  pathPrefix: "",
+  pathPrefixMajorVersion: "",
   variableGroups: []
 };
 
@@ -78,7 +81,7 @@ const validateDirNFiles = (
 describe("Test fetchValues function", () => {
   it("Negative test: invalid port", () => {
     const values = getMockValues();
-    values.k8sServicePort = "abc";
+    values.k8sBackendPort = "abc";
     try {
       fetchValues(values);
       expect(true).toBe(false);
@@ -185,7 +188,7 @@ describe("Adding a service to a repo directory", () => {
     const bedrock = Bedrock(randomTmpDir);
     const newService = bedrock.services["./" + serviceName];
     expect(newService).toBeDefined();
-    expect(newService.k8sServicePort).toBe(values.k8sPort);
+    expect(newService.k8sBackendPort).toBe(values.k8sPort);
   });
 
   test("New directory is created under '/packages' directory with required service files.", async () => {

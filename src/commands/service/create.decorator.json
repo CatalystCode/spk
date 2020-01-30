@@ -59,9 +59,24 @@
       "defaultValue": ""
     },
     {
-      "arg": "--k8s-service-port <port>",
+      "arg": "--k8s-backend-port <port>",
       "description": "Kubernetes service port which this service is exposed with; will be used to configure Traefik2 IngressRoutes",
       "defaultValue": "80"
+    },
+    {
+      "arg": "--k8s-backend <backend>",
+      "description": "Kubernetes backend service name; will be used to configure Traefik2 IngressRoutes",
+      "defaultValue": ""
+    },
+    {
+      "arg": "--path-prefix <path-prefix>",
+      "description": "The path prefix for ingress route; will be used to configure Traefik2 IngressRoutes. If omitted, then the service name will used.",
+      "defaultValue": ""
+    },
+    {
+      "arg": "--path-prefix-major-version <path-prefix-major-version>",
+      "description": "Version to be used in the path prefix; will be used to configure Traefik2 IngressRoutes. ie. 'v1' will result in a path prefix of '/v1/servicename",
+      "defaultValue": ""
     }
   ]
 }
