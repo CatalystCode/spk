@@ -54,12 +54,8 @@ export const fetchValues = (opts: ICommandOptions) => {
 
   let variableGroups: string[] = [];
 
-  try {
-    const bedrock = Bedrock();
-    variableGroups = bedrock.variableGroups || [];
-  } catch (_) {
-    // NO-OP
-  }
+  const bedrock = Bedrock();
+  variableGroups = bedrock.variableGroups || [];
 
   let middlewaresArray: string[] = [];
   if (opts.middlewares && opts.middlewares.trim()) {

@@ -4,6 +4,7 @@ import { promisify } from "util";
 import uuid from "uuid/v4";
 import { Bedrock } from "../../config";
 import * as config from "../../config";
+import { DEFAULT_CONTENT as BedrockMockedContent } from "../../lib/bedrockYaml";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import { createTempDir, removeDir } from "../../lib/ioUtil";
 import {
@@ -27,7 +28,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  jest.resetAllMocks();
+  jest.clearAllMocks();
 });
 
 const mockValues: ICommandValues = {
@@ -90,6 +91,7 @@ describe("Test fetchValues function", () => {
     }
   });
   it("Postive test: with middlewares value", () => {
+    jest.spyOn(config, "Bedrock").mockReturnValueOnce(BedrockMockedContent);
     const mocked = getMockValues();
     mocked.middlewares = "mid1, mid2"; // space after comma is intentional, expecting trimming to happen
     const result = fetchValues(mocked);
@@ -97,6 +99,7 @@ describe("Test fetchValues function", () => {
   });
   it("Postive test", () => {
     const mocked = getMockValues();
+    jest.spyOn(config, "Bedrock").mockReturnValueOnce(BedrockMockedContent);
     const result = fetchValues(mocked);
     expect(result).toEqual(mocked);
   });
