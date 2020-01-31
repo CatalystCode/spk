@@ -1,6 +1,9 @@
 import uuid from "uuid/v4";
 import { Bedrock, Maintainers, write } from "../../config";
-import { SERVICE_PIPELINE_FILENAME } from "../../lib/constants";
+import {
+  PROJECT_PIPELINE_FILENAME,
+  SERVICE_PIPELINE_FILENAME
+} from "../../lib/constants";
 import { createTempDir, getMissingFilenames } from "../../lib/ioUtil";
 import { IBedrockFile, IMaintainersFile } from "../../types";
 import { execute, initialize } from "./init";
@@ -10,7 +13,7 @@ const CREATED_FILES = [
   ".gitignore",
   "bedrock.yaml",
   "maintainers.yaml",
-  "hld-lifecycle.yaml"
+  PROJECT_PIPELINE_FILENAME
 ];
 
 describe("Initializing a blank/new bedrock repository", () => {

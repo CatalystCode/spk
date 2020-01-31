@@ -15,7 +15,10 @@ import os from "os";
 import path from "path";
 import shelljs from "shelljs";
 import uuid from "uuid/v4";
-import { SERVICE_PIPELINE_FILENAME } from "../lib/constants";
+import {
+  PROJECT_PIPELINE_FILENAME,
+  SERVICE_PIPELINE_FILENAME
+} from "../lib/constants";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
 import {
   createTestHldAzurePipelinesYaml,
@@ -62,7 +65,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
 
   it("should not do anything if hld-lifecycle.yaml exists", async () => {
     const mockFsOptions = {
-      [`${targetDirectory}/hld-lifecycle.yaml`]: "existing pipeline"
+      [`${targetDirectory}/${PROJECT_PIPELINE_FILENAME}`]: "existing pipeline"
     };
     mockFs(mockFsOptions);
 
@@ -71,7 +74,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
   });
 
   it("should generate the hld-lifecycle.yaml if one does not exist", async () => {
-    const expectedFilePath = `${targetDirectory}/hld-lifecycle.yaml`;
+    const expectedFilePath = `${targetDirectory}/${PROJECT_PIPELINE_FILENAME}`;
 
     generateHldLifecyclePipelineYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
