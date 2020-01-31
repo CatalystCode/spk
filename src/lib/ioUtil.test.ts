@@ -1,6 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { createTempDir, getMissingFilenames, removeDir } from "./ioUtil";
+import uuid from "uuid/v4";
+import {
+  createTempDir,
+  getMissingFilenames,
+  isDirEmpty,
+  removeDir
+} from "./ioUtil";
 
 describe("test createTempDir function", () => {
   it("create and existence check", () => {
@@ -21,6 +27,9 @@ describe("test createTempDir function", () => {
 });
 
 describe("test removeDir", () => {
+  it("non exist directory", () => {
+    removeDir(uuid()); // no exception thrown
+  });
   it("empty directory", () => {
     const name = createTempDir();
     removeDir(name);
@@ -44,6 +53,18 @@ describe("test removeDir", () => {
 
     removeDir(parent);
     expect(fs.existsSync(parent)).toBe(false);
+  });
+});
+
+describe("test isDirEmpty function", () => {
+  it("positive test", () => {
+    const name = createTempDir();
+    expect(isDirEmpty(name)).toBe(true);
+  });
+  it("negative test", () => {
+    const name = createTempDir();
+    fs.writeFileSync(path.join(name, "test.txt"), "hello world");
+    expect(isDirEmpty(name)).toBe(false);
   });
 });
 
