@@ -2,9 +2,12 @@ import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
 import { promisify } from "util";
+import {
+  PROJECT_PIPELINE_FILENAME,
+  SERVICE_PIPELINE_FILENAME
+} from "../lib/constants";
 import { logger } from "../logger";
 import { IAzurePipelinesYaml, IMaintainersFile, IUser } from "../types";
-import { SERVICE_PIPELINE_FILENAME } from "../lib/constants";
 
 // Helper to concat list of script commands to a multi line string
 const generateYamlScript = (lines: string[]): string => lines.join("\n");
@@ -503,21 +506,26 @@ const manifestGenerationPipelineYaml = () => {
  */
 export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
   logger.info(
-    `Generating hld lifecycle pipeline hld-lifecycle.yaml in ${projectRoot}`
+    `Generating hld lifecycle pipeline ${PROJECT_PIPELINE_FILENAME} in ${projectRoot}`
   );
 
-  const azurePipelinesYamlPath = path.join(projectRoot, "hld-lifecycle.yaml");
+  const azurePipelinesYamlPath = path.join(
+    projectRoot,
+    PROJECT_PIPELINE_FILENAME
+  );
 
   if (fs.existsSync(azurePipelinesYamlPath)) {
     logger.warn(
-      `Existing hld-lifecycle.yaml found at ${azurePipelinesYamlPath}, skipping generation`
+      `Existing ${PROJECT_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation`
     );
 
     return;
   }
 
   const lifecycleYaml = hldLifecyclePipelineYaml();
-  logger.info(`Writing hld-lifecycle.yaml file to ${azurePipelinesYamlPath}`);
+  logger.info(
+    `Writing ${PROJECT_PIPELINE_FILENAME} file to ${azurePipelinesYamlPath}`
+  );
   fs.writeFileSync(azurePipelinesYamlPath, lifecycleYaml, "utf8");
 
   const requiredPipelineVariables = [
@@ -526,7 +534,7 @@ export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
   ].join(", ");
 
   logger.info(
-    `Generated hld-lifecycle.yaml. Commit and push this file to master before attempting to deploy via the command 'spk project install-lifecycle-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+    `Generated ${PROJECT_PIPELINE_FILENAME}. Commit and push this file to master before attempting to deploy via the command 'spk project install-lifecycle-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
   );
 };
 
