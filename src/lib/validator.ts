@@ -21,7 +21,10 @@ export const hasValue = (val: undefined | null | string): val is string => {
  *
  * @param val Value to inspect
  */
-export const isInteger = (val: undefined | null | string): val is string => {
+export const isIntegerString = (val: unknown): val is string => {
+  if (typeof val !== "string") {
+    return false;
+  }
   if (val === undefined || val === null || val === "") {
     return false;
   }
@@ -33,8 +36,8 @@ export const isInteger = (val: undefined | null | string): val is string => {
  *
  * @param val Value to inspect
  */
-export const isPortNumber = (val: undefined | null | string): val is string => {
-  if (!isInteger(val)) {
+export const isPortNumberString = (val: unknown): val is string => {
+  if (!isIntegerString(val)) {
     return false;
   }
   const port = parseInt(val, 10);

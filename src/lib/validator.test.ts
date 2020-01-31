@@ -1,7 +1,7 @@
 import {
   hasValue,
-  isInteger,
-  isPortNumber,
+  isIntegerString,
+  isPortNumberString,
   validateForNonEmptyValue
 } from "./validator";
 
@@ -15,30 +15,30 @@ describe("Tests on validator helper functions", () => {
     expect(hasValue(" b ")).toBe(true);
     expect(hasValue(" a ")).toBe(true);
   });
-  it("Test isInteger function", () => {
-    expect(isInteger("")).toBe(false);
-    expect(isInteger(undefined)).toBe(false);
-    expect(isInteger(null)).toBe(false);
+  it("Test isIntegerString function", () => {
+    expect(isIntegerString("")).toBe(false);
+    expect(isIntegerString(undefined)).toBe(false);
+    expect(isIntegerString(null)).toBe(false);
 
-    expect(isInteger("-10")).toBe(false);
-    expect(isInteger("+10")).toBe(false);
-    expect(isInteger("010")).toBe(false);
-    expect(isInteger("10.0")).toBe(false);
-    expect(isInteger("80")).toBe(true);
+    expect(isIntegerString("-10")).toBe(false);
+    expect(isIntegerString("+10")).toBe(false);
+    expect(isIntegerString("010")).toBe(false);
+    expect(isIntegerString("10.0")).toBe(false);
+    expect(isIntegerString("80")).toBe(true);
   });
-  it("Test isPortNumber function", () => {
-    expect(isPortNumber("")).toBe(false);
-    expect(isPortNumber(undefined)).toBe(false);
-    expect(isPortNumber(null)).toBe(false);
+  it("Test isPortNumberString function", () => {
+    expect(isPortNumberString("")).toBe(false);
+    expect(isPortNumberString(undefined)).toBe(false);
+    expect(isPortNumberString(null)).toBe(false);
 
-    expect(isPortNumber("-10")).toBe(false);
-    expect(isPortNumber("+10")).toBe(false);
-    expect(isPortNumber("010")).toBe(false);
-    expect(isPortNumber("10.0")).toBe(false);
-    expect(isPortNumber("80")).toBe(true);
-    expect(isPortNumber("8080")).toBe(true);
-    expect(isPortNumber("0")).toBe(false);
-    expect(isPortNumber("65536")).toBe(false);
+    expect(isPortNumberString("-10")).toBe(false);
+    expect(isPortNumberString("+10")).toBe(false);
+    expect(isPortNumberString("010")).toBe(false);
+    expect(isPortNumberString("10.0")).toBe(false);
+    expect(isPortNumberString("80")).toBe(true);
+    expect(isPortNumberString("8080")).toBe(true);
+    expect(isPortNumberString("0")).toBe(false);
+    expect(isPortNumberString("65536")).toBe(false);
   });
   it("Test validateForNonEmptyValue function", () => {
     // expect "error" to be returned

@@ -18,7 +18,7 @@ import {
   generateStarterAzurePipelinesYaml
 } from "../../lib/fileutils";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
-import { isPortNumber } from "../../lib/validator";
+import { isPortNumberString } from "../../lib/validator";
 import { logger } from "../../logger";
 import { IBedrockFileInfo, IHelmConfig, IUser } from "../../types";
 import decorator from "./create.decorator.json";
@@ -48,8 +48,8 @@ export interface ICommandValues extends ICommandOptions {
 }
 
 export const fetchValues = (opts: ICommandOptions) => {
-  if (!isPortNumber(opts.k8sBackendPort)) {
-    throw new Error("value for --k8s-service-port is not a value port number");
+  if (!isPortNumberString(opts.k8sBackendPort)) {
+    throw new Error("value for --k8s-service-port is not a valid port number");
   }
 
   let variableGroups: string[] = [];
