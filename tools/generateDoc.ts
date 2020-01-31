@@ -51,7 +51,7 @@ const mapCommands = listCommands(commands);
 
 const buffer: string[] = ["## SPK Commands"];
 Object.keys(mapCommands).forEach(k => {
-  buffer.push(`* [${k}](#${k.replace(/\s/g, "-")})`);
+  buffer.push(`* [spk ${k}](#spk-${k.replace(/\s/g, "-")})`);
 });
 
 buffer.push("\n---\n");
@@ -59,7 +59,7 @@ buffer.push("\n---\n");
 buffer.push("\n## Details\n");
 Object.keys(mapCommands).forEach(k => {
   const cmd = mapCommands[k];
-  buffer.push(`### ${k}`);
+  buffer.push(`### spk ${k}`);
   buffer.push("```");
 
   const valuesArray = cmd.command.split(/\s/);
@@ -71,6 +71,7 @@ Object.keys(mapCommands).forEach(k => {
   const alias = cmd.alias ? `|${cmd.alias}` : "";
 
   buffer.push(`spk ${k}${alias}${values} [options]`);
+  buffer.push(`  ${cmd.description}`);
   buffer.push("\nOptions:");
 
   (cmd.options || []).forEach(opt => {
