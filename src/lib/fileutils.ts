@@ -3,6 +3,7 @@ import yaml from "js-yaml";
 import path from "path";
 import { promisify } from "util";
 import {
+  HLD_PIPELINE_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME
 } from "../lib/constants";
@@ -334,19 +335,19 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
 
   const azurePipelinesYamlPath = path.join(
     absTargetPath,
-    "manifest-generation.yaml"
+    HLD_PIPELINE_FILENAME
   );
 
   if (fs.existsSync(azurePipelinesYamlPath)) {
     logger.warn(
-      `Existing manifest-generation.yaml found at ${azurePipelinesYamlPath}, skipping generation`
+      `Existing ${HLD_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation`
     );
 
     return;
   }
   const hldYaml = manifestGenerationPipelineYaml();
   logger.info(
-    `Writing manifest-generation.yaml file to ${azurePipelinesYamlPath}`
+    `Writing ${HLD_PIPELINE_FILENAME} file to ${azurePipelinesYamlPath}`
   );
 
   const requiredPipelineVariables = [
@@ -355,7 +356,7 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
   ].join(", ");
 
   logger.info(
-    `Generated manifest-generation.yaml. Commit and push this file to master before attempting to deploy via the command 'spk hld install-manifest-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+    `Generated ${HLD_PIPELINE_FILENAME}. Commit and push this file to master before attempting to deploy via the command 'spk hld install-manifest-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
   );
 
   fs.writeFileSync(azurePipelinesYamlPath, hldYaml, "utf8");
@@ -380,7 +381,7 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
 
   const componentYaml = defaultComponentYaml();
   logger.info(
-    `Writing manifest-generation.yaml file to ${fabrikateComponentPath}`
+    `Writing ${HLD_PIPELINE_FILENAME} file to ${fabrikateComponentPath}`
   );
 
   fs.writeFileSync(fabrikateComponentPath, componentYaml, "utf8");
