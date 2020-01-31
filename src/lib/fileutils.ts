@@ -4,6 +4,7 @@ import path from "path";
 import { promisify } from "util";
 import { logger } from "../logger";
 import { IAzurePipelinesYaml, IMaintainersFile, IUser } from "../types";
+import { SERVICE_PIPELINE_FILENAME } from "../lib/constants";
 
 // Helper to concat list of script commands to a multi line string
 const generateYamlScript = (lines: string[]): string => lines.join("\n");
@@ -23,7 +24,7 @@ export const generateServiceBuildAndUpdatePipelineYaml = async (
 ) => {
   const absProjectRoot = path.resolve(projectRoot);
   const absServicePath = path.resolve(servicePath);
-  const pipelineFilename = `build-update-hld-pipeline.yaml`;
+  const pipelineFilename = SERVICE_PIPELINE_FILENAME;
 
   logger.info(`Generating starter ${pipelineFilename} in ${absServicePath}`);
 
@@ -312,7 +313,7 @@ export const starterAzurePipelines = async (opts: {
     const spkServiceBuildPipelineCmd =
       "spk service install-build-pipeline " + packagesOption + serviceName;
     logger.info(
-      `Generated build-update-hld-pipeline.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+      `Generated ${SERVICE_PIPELINE_FILENAME} for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
     );
   }
 

@@ -7,7 +7,7 @@ import commander from "commander";
 import path from "path";
 import { Config } from "../../config";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
-import { BUILD_SCRIPT_URL } from "../../lib/constants";
+import { BUILD_SCRIPT_URL, SERVICE_PIPELINE_FILENAME } from "../../lib/constants";
 import {
   getOriginUrl,
   getRepositoryName,
@@ -79,23 +79,10 @@ export const commandDecorator = (command: commander.Command) => {
 /**
  * Install a pipeline for the service in an azure devops org.
  *
-<<<<<<< HEAD
  * @param serviceName Name of the service this pipeline belongs to;
  *        this is only used when `packagesDir` is defined as a means
  *        to locate the azure-pipelines.yaml file
  * @param values Values from commander
-=======
- * @param serviceName Name of the service this pipeline belongs to; this is only used when `packagesDir` is defined as a means to locate the build-update-hld-pipeline.yaml file
- * @param orgName
- * @param personalAccessToken
- * @param pipelineName
- * @param repositoryName
- * @param repositoryUrl
- * @param project
- * @param packagesDir The directory containing the services for a mono-repo. If undefined; implies that we are operating on a standard service repository
- * @param buildScriptUrl Build Script URL
- * @param exitFn
->>>>>>> Renaming service pipelines from azure-pipelines.yaml to build-update-hld-pipeline.yaml
  */
 export const installBuildUpdatePipeline = async (
   serviceName: string,
@@ -114,9 +101,9 @@ export const installBuildUpdatePipeline = async (
     // if a packages dir is supplied, its a mono-repo
     const yamlFilePath = values.packagesDir
       ? // if a packages dir is supplied, concat <packages-dir>/<service-name>
-        path.join(values.packagesDir, serviceName, "azure-pipelines.yaml")
+        path.join(values.packagesDir, serviceName, SERVICE_PIPELINE_FILENAME)
       : // if no packages dir, then just concat with the service directory.
-        path.join(serviceName, "azure-pipelines.yaml");
+        path.join(serviceName, SERVICE_PIPELINE_FILENAME);
 
     const definition = definitionForAzureRepoPipeline({
       branchFilters: ["master"],

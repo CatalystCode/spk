@@ -15,6 +15,7 @@ import os from "os";
 import path from "path";
 import shelljs from "shelljs";
 import uuid from "uuid/v4";
+import { SERVICE_PIPELINE_FILENAME } from "../lib/constants";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
 import {
   createTestHldAzurePipelinesYaml,
@@ -287,10 +288,7 @@ describe("starterAzurePipelines", () => {
     const serializedYaml = yaml.safeDump(starter, {
       lineWidth: Number.MAX_SAFE_INTEGER
     });
-    const pipelinesPath = path.join(
-      randomDirPath,
-      "build-update-hld-pipeline.yaml"
-    );
+    const pipelinesPath = path.join(randomDirPath, SERVICE_PIPELINE_FILENAME);
     fs.writeFileSync(pipelinesPath, serializedYaml);
     const deserializedYaml = yaml.safeLoad(
       fs.readFileSync(pipelinesPath, "utf8")
@@ -340,7 +338,7 @@ describe("starterAzurePipelines", () => {
       // pipeline triggers should include the relative path to the service
       const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
         fs.readFileSync(
-          path.join(servicePath, "build-update-hld-pipeline.yaml"),
+          path.join(servicePath, SERVICE_PIPELINE_FILENAME),
           "utf8"
         )
       );
@@ -376,7 +374,7 @@ describe("starterAzurePipelines", () => {
       // pipeline triggers should include the relative path to the service
       const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
         fs.readFileSync(
-          path.join(servicePath, "build-update-hld-pipeline.yaml"),
+          path.join(servicePath, SERVICE_PIPELINE_FILENAME),
           "utf8"
         )
       );
@@ -423,7 +421,7 @@ describe("starterAzurePipelines", () => {
       // pipeline triggers should include the relative path to the service
       const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
         fs.readFileSync(
-          path.join(servicePath, "build-update-hld-pipeline.yaml"),
+          path.join(servicePath, SERVICE_PIPELINE_FILENAME),
           "utf8"
         )
       );
