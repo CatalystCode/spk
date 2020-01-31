@@ -9,8 +9,8 @@ import {
 } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
-  projectCvgDependencyErrorMessage,
-  projectInitCvgDependencyErrorMessage
+  PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE,
+  PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE
 } from "../../lib/constants";
 import {
   addNewServiceToMaintainersFile,
@@ -92,9 +92,9 @@ export const fetchValues = (opts: ICommandOptions) => {
 export const checkDependencies = (projectPath: string) => {
   const fileInfo: IBedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
-    throw new Error(projectInitCvgDependencyErrorMessage);
+    throw new Error(PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE);
   } else if (fileInfo.hasVariableGroups === false) {
-    throw new Error(projectCvgDependencyErrorMessage);
+    throw new Error(PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE);
   }
 };
 

@@ -12,8 +12,8 @@ import {
   validateForRequiredValues
 } from "../../lib/commandBuilder";
 import {
-  projectCvgDependencyErrorMessage,
-  projectInitCvgDependencyErrorMessage
+  PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE,
+  PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE
 } from "../../lib/constants";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import {
@@ -41,12 +41,12 @@ export interface ICommandOptions {
   buildScriptUrl: string | undefined;
 }
 
-export const validate = async (projectPath: string) => {
+export const checkDependencies = (projectPath: string) => {
   const file: IBedrockFileInfo = bedrockFileInfo(projectPath);
   if (file.exist === false) {
-    throw new Error(projectInitCvgDependencyErrorMessage);
+    throw new Error(PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE);
   } else if (file.hasVariableGroups === false) {
-    throw new Error(projectCvgDependencyErrorMessage);
+    throw new Error(PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE);
   }
 };
 
@@ -116,7 +116,7 @@ export const execute = async (
   logger.verbose(`project path: ${projectPath}`);
 
   try {
-    await validate(projectPath);
+    checkDependencies(projectPath);
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
 
