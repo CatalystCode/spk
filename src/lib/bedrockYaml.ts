@@ -110,12 +110,8 @@ export const addNewService = (
  *
  * @param rootProjectPath Path to read the bedrock.yaml file
  */
-export const fileInfo = (
-  rootProjectPath: string = process.cwd()
-): IBedrockFileInfo => {
-  if (typeof rootProjectPath === "undefined" || rootProjectPath === "") {
-    throw new Error("Project root path is not valid");
-  }
+export const fileInfo = (rootProjectPath?: string): IBedrockFileInfo => {
+  rootProjectPath = rootProjectPath || process.cwd();
 
   const absProjectPath = path.resolve(rootProjectPath);
 
