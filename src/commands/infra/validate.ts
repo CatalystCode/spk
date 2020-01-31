@@ -7,7 +7,7 @@ import { Config } from "../../config";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
 import { IConfigYaml } from "../../types";
-import decorator from "./generate.decorator.json";
+import decorator from "./validate.decorator.json";
 
 const binaries: string[] = ["terraform", "git", "az", "helm"];
 const envVar: string[] = [
@@ -16,13 +16,6 @@ const envVar: string[] = [
   "ARM_CLIENT_SECRET",
   "ARM_TENANT_ID"
 ];
-
-export const getConfig = (): IConfigYaml => {
-  const config = Config();
-  config.infra = config.infra || {};
-  config.infra.checks = config.infra.checks || {};
-  return config;
-};
 
 export const execute = async (exitFn: (status: number) => Promise<void>) => {
   try {
@@ -51,7 +44,7 @@ export const execute = async (exitFn: (status: number) => Promise<void>) => {
   }
 };
 
-export const validateCommandDecorator = (command: commander.Command): void => {
+export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(async () => {
     execute(async (status: number) => {
       await exitCmd(logger, process.exit, status);
@@ -68,12 +61,14 @@ export const validatePrereqs = (
   executables: string[],
   globalInit: boolean
 ): boolean => {
-  const config = getConfig();
+  const config = Config();
+  config.infra = config.infra || {};
+  config.infra.checks = config.infra.checks || {};
 
   // Validate executables in PATH
   for (const i of executables) {
     if (!shelljs.which(i)) {
-      config.infra!.checks![i] = false;
+      config.infra.checks[i] = false;
       if (globalInit === true) {
         logger.warn(i + " not installed.");
       } else {
@@ -83,7 +78,7 @@ export const validatePrereqs = (
         return false;
       }
     } else {
-      config.infra!.checks![i] = true;
+      config.infra.checks[i] = true;
     }
   }
   return true;
@@ -93,7 +88,9 @@ export const validatePrereqs = (
  * Validates that user is logged into Azure CLI
  */
 export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
-  const config = getConfig();
+  const config = Config();
+  config.infra = config.infra || {};
+  config.infra.checks = config.infra.checks || {};
 
   try {
     await promisify(child_process.exec)("az account show -o none");
@@ -105,10 +102,10 @@ export const validateAzure = async (globalInit: boolean): Promise<boolean> => {
     } else {
       logger.error(emoji.emojify(":no_entry_sign: " + err));
     }
-    config.infra!.checks!.az_login_check = false;
+    config.infra.checks.az_login_check = false;
     return false;
   }
-  config.infra!.checks!.az_login_check = true;
+  config.infra.checks.az_login_check = true;
   return true;
 };
 
@@ -121,7 +118,9 @@ export const validateEnvVariables = (
   variables: string[],
   globalInit: boolean
 ): boolean => {
-  const config = getConfig();
+  const config = Config();
+  config.infra = config.infra || {};
+  config.infra.checks = config.infra.checks || {};
 
   // Validate environment variables
   for (const i of variables) {
@@ -135,7 +134,7 @@ export const validateEnvVariables = (
           )
         );
       }
-      config.infra!.checks!.env_var_check = false;
+      config.infra.checks.env_var_check = false;
       return false;
     } else if (process.env[i] && process.env[i] === "") {
       if (globalInit === true) {
@@ -145,10 +144,10 @@ export const validateEnvVariables = (
           emoji.emojify(":no_entry_sign: " + i + " cannot be null.")
         );
       }
-      config.infra!.checks!.env_var_check = false;
+      config.infra.checks.env_var_check = false;
       return false;
     }
   }
-  config.infra!.checks!.env_var_check = true;
+  config.infra.checks.env_var_check = true;
   return true;
 };

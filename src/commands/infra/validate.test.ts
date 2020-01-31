@@ -88,6 +88,7 @@ describe("Validating executable prerequisites in spk-config", () => {
     loadConfiguration(filename);
     const fakeBinaries: string[] = ["ydawgie"];
     validatePrereqs(fakeBinaries, true);
+
     expect(Config().infra!).toBeDefined();
     expect(Config().infra!.checks!).toBeDefined();
     expect(Config().infra!.checks!.ydawgie!).toBe(false);
