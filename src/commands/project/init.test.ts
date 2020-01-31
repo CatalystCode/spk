@@ -1,5 +1,6 @@
 import uuid from "uuid/v4";
 import { Bedrock, Maintainers, write } from "../../config";
+import { SERVICE_PIPELINE_FILENAME } from "../../lib/constants";
 import { createTempDir, getMissingFilenames } from "../../lib/ioUtil";
 import { IBedrockFile, IMaintainersFile } from "../../types";
 import { execute, initialize } from "./init";
@@ -24,7 +25,7 @@ describe("Initializing a blank/new bedrock repository", () => {
     // ensure service specific files do not get created
     const unexpected = getMissingFilenames(randomTmpDir, [
       "Dockerfile",
-      "build-update-hld-pipeline.yaml"
+      SERVICE_PIPELINE_FILENAME
     ]);
     expect(unexpected.length).toBe(2);
   });

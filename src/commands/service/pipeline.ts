@@ -6,7 +6,10 @@ import {
 import commander from "commander";
 import path from "path";
 import { Config } from "../../config";
-import { BUILD_SCRIPT_URL } from "../../lib/constants";
+import {
+  BUILD_SCRIPT_URL,
+  SERVICE_PIPELINE_FILENAME
+} from "../../lib/constants";
 import {
   getOriginUrl,
   getRepositoryName,
@@ -209,8 +212,8 @@ export const installBuildUpdatePipeline = async (
     variables: requiredPipelineVariables(buildScriptUrl),
     yamlFileBranch: "master",
     yamlFilePath: packagesDir // if a packages dir is supplied, its a mono-repo
-      ? path.join(packagesDir, serviceName, "build-update-hld-pipeline.yaml") // if a packages dir is supplied, concat <packages-dir>/<service-name>
-      : path.join(serviceName, "build-update-hld-pipeline.yaml") // if no packages dir, then just concat with the service directory.
+      ? path.join(packagesDir, serviceName, SERVICE_PIPELINE_FILENAME) // if a packages dir is supplied, concat <packages-dir>/<service-name>
+      : path.join(serviceName, SERVICE_PIPELINE_FILENAME) // if no packages dir, then just concat with the service directory.
   });
 
   try {

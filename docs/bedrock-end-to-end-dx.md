@@ -89,8 +89,8 @@ services:
 
 ```
 
-and adds a `build-update-hld-pipeline.yaml` file in `services/discovery-service`
-to build it.
+and adds a `build-update-hld.yaml` file in `services/discovery-service` to build
+it.
 
 `spk` also includes automation for creating the Azure Devops pipeline in Azure
 itself. To create that, Dag executes:
@@ -110,7 +110,7 @@ to his monorepo:
 ```bash
 $ git add bedrock.yaml
 $ git add maintainers.yaml
-$ git add services/discovery-service/build-update-hld-pipeline.yaml
+$ git add services/discovery-service/build-update-hld.yaml
 $ git commit -m 'Add discovery-service build pipeline'
 $ git push origin HEAD
 ```
