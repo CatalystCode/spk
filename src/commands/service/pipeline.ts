@@ -79,10 +79,23 @@ export const commandDecorator = (command: commander.Command) => {
 /**
  * Install a pipeline for the service in an azure devops org.
  *
+<<<<<<< HEAD
  * @param serviceName Name of the service this pipeline belongs to;
  *        this is only used when `packagesDir` is defined as a means
  *        to locate the azure-pipelines.yaml file
  * @param values Values from commander
+=======
+ * @param serviceName Name of the service this pipeline belongs to; this is only used when `packagesDir` is defined as a means to locate the build-update-hld-pipeline.yaml file
+ * @param orgName
+ * @param personalAccessToken
+ * @param pipelineName
+ * @param repositoryName
+ * @param repositoryUrl
+ * @param project
+ * @param packagesDir The directory containing the services for a mono-repo. If undefined; implies that we are operating on a standard service repository
+ * @param buildScriptUrl Build Script URL
+ * @param exitFn
+>>>>>>> Renaming service pipelines from azure-pipelines.yaml to build-update-hld-pipeline.yaml
  */
 export const installBuildUpdatePipeline = async (
   serviceName: string,
