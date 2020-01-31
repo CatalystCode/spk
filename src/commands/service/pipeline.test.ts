@@ -10,10 +10,13 @@ import {
 } from "../../lib/pipelines/pipelines";
 
 import {
+  execute,
+  fetchValues,
   ICommandOptions,
   installBuildUpdatePipeline,
   requiredPipelineVariables
 } from "./pipeline";
+import * as pipeline from "./pipeline";
 
 const MOCKED_VALUES: ICommandOptions = {
   buildScriptUrl: "buildScriptUrl",
@@ -34,6 +37,55 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+const getMockedValues = () => {
+  return JSON.parse(JSON.stringify(MOCKED_VALUES));
+};
+
+describe("test fetchValues function", () => {
+  it("with all values set", async () => {
+    const mockedVals = getMockedValues();
+    const values = await fetchValues("serviceName", mockedVals);
+    expect(values).toEqual(mockedVals);
+  });
+  it("missing packagesDir value", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.packagesDir = undefined;
+    const values = await fetchValues("serviceName", mockedVals);
+    expect(values).toEqual(mockedVals);
+  });
+  it("check that pipelineName is set when it is not provided ", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.pipelineName = "";
+    const serviceName = "AAAService";
+    const values = await fetchValues(serviceName, mockedVals);
+    expect(values.pipelineName).toBe(`${serviceName}-pipeline`);
+  });
+});
+
+describe("test execute function", () => {
+  it("positive test: with all values set", async () => {
+    const exitFn = jest.fn();
+    jest
+      .spyOn(pipeline, "installBuildUpdatePipeline")
+      .mockReturnValueOnce(Promise.resolve());
+
+    await execute("serviceName", getMockedValues(), exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[0]]);
+  });
+  it("negative test: definitionForAzureRepoPipeline without return id", async () => {
+    const exitFn = jest.fn();
+    (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({}); // without id
+    await execute("serviceName", getMockedValues(), exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[1]]);
+  });
+});
+
 describe("required pipeline variables", () => {
   it("should use have the proper pipeline vars vars", () => {
     const variables = requiredPipelineVariables("buildScriptUrl");
@@ -46,13 +98,13 @@ describe("required pipeline variables", () => {
   });
 });
 
-fdescribe("create pipeline tests", () => {
+describe("create pipeline tests", () => {
   it("should create a pipeline", async () => {
-    (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
+    (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({ id: 10 });
     await installBuildUpdatePipeline("serviceName", MOCKED_VALUES);
   });
   it("should fail if the build client cant be instantiated", async () => {
-    (getBuildApiClient as jest.Mock).mockReturnValue(Promise.reject());
+    (getBuildApiClient as jest.Mock).mockReturnValueOnce(Promise.reject());
 
     try {
       await installBuildUpdatePipeline("serviceName", MOCKED_VALUES);
@@ -62,8 +114,8 @@ fdescribe("create pipeline tests", () => {
     }
   });
   it("should fail if the pipeline definition cannot be created", async () => {
-    (getBuildApiClient as jest.Mock).mockReturnValue({});
-    (createPipelineForDefinition as jest.Mock).mockReturnValue(
+    (getBuildApiClient as jest.Mock).mockReturnValueOnce({});
+    (createPipelineForDefinition as jest.Mock).mockReturnValueOnce(
       Promise.reject()
     );
 
@@ -75,9 +127,9 @@ fdescribe("create pipeline tests", () => {
     }
   });
   it("should fail if a build cannot be queued on the pipeline", async () => {
-    (getBuildApiClient as jest.Mock).mockReturnValue({});
-    (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
-    (queueBuild as jest.Mock).mockReturnValue(Promise.reject());
+    (getBuildApiClient as jest.Mock).mockReturnValueOnce({});
+    (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({ id: 10 });
+    (queueBuild as jest.Mock).mockReturnValueOnce(Promise.reject());
 
     try {
       await installBuildUpdatePipeline("serviceName", MOCKED_VALUES);

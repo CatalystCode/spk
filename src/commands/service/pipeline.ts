@@ -59,7 +59,7 @@ export const execute = async (
   try {
     await fetchValues(serviceName, opts);
     await installBuildUpdatePipeline(serviceName, opts);
-    await exitFn(10);
+    await exitFn(0);
   } catch (err) {
     logger.error(err);
     await exitFn(1);
