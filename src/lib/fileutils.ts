@@ -5,63 +5,56 @@ import { promisify } from "util";
 import { logger } from "../logger";
 import { IAzurePipelinesYaml, IMaintainersFile, IUser } from "../types";
 
+// Helper to concat list of script commands to a multi line string
+const generateYamlScript = (lines: string[]): string => lines.join("\n");
+
 /**
- * Writes out a starter azure-pipelines.yaml
+ * Creates the service multistage build and update image tag pipeline.
  * One pipeline should exist for each service.
  *
- * @param projectRoot Path to the root of the project (where the bedrock.yaml file exists)
- * @param packagePath Path to the packages directory
+ * @param projectRoot Full path to the root of the project (where the bedrock.yaml file exists)
+ * @param servicePath Full path to service direcory
  * @param variableGroups Azure DevOps variable group names
  */
-export const generateStarterAzurePipelinesYaml = async (
+export const generateServiceBuildAndUpdatePipelineYaml = async (
   projectRoot: string,
-  packagePath: string,
+  servicePath: string,
   opts?: { variableGroups?: string[] }
 ) => {
   const absProjectRoot = path.resolve(projectRoot);
-  const absPackagePath = path.resolve(packagePath);
-  const azurePipelineFileName = `azure-pipelines.yaml`;
+  const absServicePath = path.resolve(servicePath);
+  const pipelineFilename = `build-update-hld-pipeline.yaml`;
 
-  logger.info(
-    `Generating starter ${azurePipelineFileName} in ${absPackagePath}`
-  );
+  logger.info(`Generating starter ${pipelineFilename} in ${absServicePath}`);
 
   const { variableGroups = [] } = opts || {};
 
   logger.debug(`variableGroups length: ${variableGroups?.length}`);
 
-  // Check if azure-pipelines.yaml already exists; if it does, skip generation
-  const azurePipelinesYamlPath = path.join(
-    absPackagePath,
-    azurePipelineFileName
-  );
-  logger.debug(
-    `Writing ${azurePipelineFileName} file to ${azurePipelinesYamlPath}`
-  );
-  if (fs.existsSync(azurePipelinesYamlPath)) {
+  // Check if build-update-hld-pipeline.yaml already exists; if it does, skip generation
+  const pipelineYamlFullPath = path.join(absServicePath, pipelineFilename);
+  logger.debug(`Writing ${pipelineFilename} file to ${pipelineYamlFullPath}`);
+  if (fs.existsSync(pipelineYamlFullPath)) {
     logger.warn(
-      `Existing ${azurePipelineFileName} found at ${azurePipelinesYamlPath}, skipping generation`
+      `Existing ${pipelineFilename} found at ${pipelineYamlFullPath}, skipping generation`
     );
   } else {
     const starterYaml = await starterAzurePipelines({
-      relProjectPaths: [path.relative(absProjectRoot, absPackagePath)],
+      relProjectPaths: [path.relative(absProjectRoot, absServicePath)],
       variableGroups
     });
     // Write
     await promisify(fs.writeFile)(
-      azurePipelinesYamlPath,
+      pipelineYamlFullPath,
       yaml.safeDump(starterYaml, { lineWidth: Number.MAX_SAFE_INTEGER }),
       "utf8"
     );
   }
 };
 
-// Helper to concat list of script commands to a multi line string
-const generateYamlScript = (lines: string[]): string => lines.join("\n");
-
 /**
- * Returns a starter azure-pipelines.yaml string
- * Starter azure-pipelines.yaml based on: https://github.com/andrebriggs/monorepo-example/blob/master/service-A/azure-pipelines.yml
+ * Returns a starter build-update-hld-pipeline.yaml string
+ * based on: https://github.com/andrebriggs/monorepo-example/blob/master/service-A/azure-pipelines.yml
  *
  * @param opts Template options to pass to the the starter yaml
  */
@@ -319,7 +312,7 @@ export const starterAzurePipelines = async (opts: {
     const spkServiceBuildPipelineCmd =
       "spk service install-build-pipeline " + packagesOption + serviceName;
     logger.info(
-      `Generated azure-pipelines.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+      `Generated build-update-hld-pipeline.yaml for service in path '${relPath}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
     );
   }
 

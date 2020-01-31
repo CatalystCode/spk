@@ -24,7 +24,7 @@ describe("Initializing a blank/new bedrock repository", () => {
     // ensure service specific files do not get created
     const unexpected = getMissingFilenames(randomTmpDir, [
       "Dockerfile",
-      "azure-pipelines.yaml"
+      "build-update-hld-pipeline.yaml"
     ]);
     expect(unexpected.length).toBe(2);
   });

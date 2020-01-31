@@ -165,7 +165,7 @@ export const isValidConfig = (
 /**
  * Install a pipeline for the service in an azure devops org.
  *
- * @param serviceName Name of the service this pipeline belongs to; this is only used when `packagesDir` is defined as a means to locate the azure-pipelines.yaml file
+ * @param serviceName Name of the service this pipeline belongs to; this is only used when `packagesDir` is defined as a means to locate the build-update-hld-pipeline.yaml file
  * @param orgName
  * @param personalAccessToken
  * @param pipelineName
@@ -209,8 +209,8 @@ export const installBuildUpdatePipeline = async (
     variables: requiredPipelineVariables(buildScriptUrl),
     yamlFileBranch: "master",
     yamlFilePath: packagesDir // if a packages dir is supplied, its a mono-repo
-      ? path.join(packagesDir, serviceName, "azure-pipelines.yaml") // if a packages dir is supplied, concat <packages-dir>/<service-name>
-      : path.join(serviceName, "azure-pipelines.yaml") // if no packages dir, then just concat with the service directory.
+      ? path.join(packagesDir, serviceName, "build-update-hld-pipeline.yaml") // if a packages dir is supplied, concat <packages-dir>/<service-name>
+      : path.join(serviceName, "build-update-hld-pipeline.yaml") // if no packages dir, then just concat with the service directory.
   });
 
   try {

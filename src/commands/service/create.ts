@@ -16,7 +16,7 @@ import {
   addNewServiceToMaintainersFile,
   generateDockerfile,
   generateGitIgnoreFile,
-  generateStarterAzurePipelinesYaml
+  generateServiceBuildAndUpdatePipelineYaml
 } from "../../lib/fileutils";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import { isPortNumberString } from "../../lib/validator";

@@ -29,7 +29,7 @@ import {
   generateGitIgnoreFile,
   generateHldAzurePipelinesYaml,
   generateHldLifecyclePipelineYaml,
-  generateStarterAzurePipelinesYaml,
+  generateServiceBuildAndUpdatePipelineYaml,
   starterAzurePipelines
 } from "./fileutils";
 
@@ -287,7 +287,10 @@ describe("starterAzurePipelines", () => {
     const serializedYaml = yaml.safeDump(starter, {
       lineWidth: Number.MAX_SAFE_INTEGER
     });
-    const pipelinesPath = path.join(randomDirPath, "azure-pipelines.yaml");
+    const pipelinesPath = path.join(
+      randomDirPath,
+      "build-update-hld-pipeline.yaml"
+    );
     fs.writeFileSync(pipelinesPath, serializedYaml);
     const deserializedYaml = yaml.safeLoad(
       fs.readFileSync(pipelinesPath, "utf8")
@@ -317,7 +320,7 @@ describe("starterAzurePipelines", () => {
     }
   });
 
-  test("that all services receive an azure-pipelines.yaml and the correct paths have been inserted", async () => {
+  test("that all services receive an build-update-hld-pipeline.yaml and the correct paths have been inserted", async () => {
     // Create service directories
     const servicePaths = ["a", "b", "c"].map(serviceDir => {
       const servicePath = path.join(randomDirPath, "packages", serviceDir);
@@ -326,14 +329,20 @@ describe("starterAzurePipelines", () => {
     });
 
     for (const servicePath of servicePaths) {
-      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath);
+      await generateServiceBuildAndUpdatePipelineYaml(
+        randomDirPath,
+        servicePath
+      );
 
       // file should exist
       expect(fs.existsSync(servicePath)).toBe(true);
 
       // pipeline triggers should include the relative path to the service
       const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
-        fs.readFileSync(path.join(servicePath, "azure-pipelines.yaml"), "utf8")
+        fs.readFileSync(
+          path.join(servicePath, "build-update-hld-pipeline.yaml"),
+          "utf8"
+        )
       );
       const hasCorrectIncludes = azureYaml.trigger!.paths!.include!.includes(
         "./" + path.relative(randomDirPath, servicePath)
@@ -342,7 +351,7 @@ describe("starterAzurePipelines", () => {
     }
   });
 
-  test("that all services receive an azure-pipelines.yaml with the correct paths and single variable group have been inserted", async () => {
+  test("that all services receive an build-update-hld-pipeline.yaml with the correct paths and single variable group have been inserted", async () => {
     // Create service directories
     const servicePaths = ["a", "b", "c"].map(serviceDir => {
       const servicePath = path.join(randomDirPath, "packages", serviceDir);
@@ -353,16 +362,23 @@ describe("starterAzurePipelines", () => {
     const variableGroups = [uuid()];
 
     for (const servicePath of servicePaths) {
-      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath, {
-        variableGroups
-      });
+      await generateServiceBuildAndUpdatePipelineYaml(
+        randomDirPath,
+        servicePath,
+        {
+          variableGroups
+        }
+      );
 
       // file should exist
       expect(fs.existsSync(servicePath)).toBe(true);
 
       // pipeline triggers should include the relative path to the service
       const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
-        fs.readFileSync(path.join(servicePath, "azure-pipelines.yaml"), "utf8")
+        fs.readFileSync(
+          path.join(servicePath, "build-update-hld-pipeline.yaml"),
+          "utf8"
+        )
       );
 
       const hasCorrectIncludes = azureYaml.trigger!.paths!.include!.includes(
@@ -380,7 +396,7 @@ describe("starterAzurePipelines", () => {
     }
   });
 
-  test("that all services receive an azure-pipelines.yaml with the correct paths and two variable group have been inserted", async () => {
+  test("that all services receive an build-update-hld-pipeline.yaml with the correct paths and two variable group have been inserted", async () => {
     // Create service directories
     const servicePaths = ["a", "b", "c"].map(serviceDir => {
       const servicePath = path.join(randomDirPath, "packages", serviceDir);
@@ -393,16 +409,23 @@ describe("starterAzurePipelines", () => {
     const variableGroups = [uuid(), uuid()];
 
     for (const servicePath of servicePaths) {
-      await generateStarterAzurePipelinesYaml(randomDirPath, servicePath, {
-        variableGroups
-      });
+      await generateServiceBuildAndUpdatePipelineYaml(
+        randomDirPath,
+        servicePath,
+        {
+          variableGroups
+        }
+      );
 
       // file should exist
       expect(fs.existsSync(servicePath)).toBe(true);
 
       // pipeline triggers should include the relative path to the service
       const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
-        fs.readFileSync(path.join(servicePath, "azure-pipelines.yaml"), "utf8")
+        fs.readFileSync(
+          path.join(servicePath, "build-update-hld-pipeline.yaml"),
+          "utf8"
+        )
       );
 
       const hasCorrectIncludes = azureYaml.trigger!.paths!.include!.includes(
