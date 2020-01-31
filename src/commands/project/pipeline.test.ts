@@ -14,11 +14,11 @@ import {
 } from "../../lib/pipelines/pipelines";
 
 import {
+  checkDependencies,
   execute,
   fetchValidateValues,
   ICommandOptions,
-  installLifecyclePipeline,
-  validate
+  installLifecyclePipeline
 } from "./pipeline";
 
 beforeAll(() => {
@@ -55,7 +55,7 @@ describe("test valid function", () => {
   it("negative test", async () => {
     try {
       const tmpDir = createBedrockYaml();
-      await validate(tmpDir);
+      await checkDependencies(tmpDir);
       expect(true).toBe(false);
     } catch (e) {
       expect(e).not.toBeNull();
