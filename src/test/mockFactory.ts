@@ -1,4 +1,5 @@
 import yaml from "js-yaml";
+import { VM_IMAGE } from "../lib/constants";
 import {
   IAzurePipelinesYaml,
   IBedrockFile,
@@ -96,7 +97,7 @@ export const createTestHldLifecyclePipelineYaml = (
     },
     variables: [],
     pool: {
-      vmImage: "ubuntu-latest"
+      vmImage: VM_IMAGE
     },
     steps: [
       {
@@ -187,7 +188,7 @@ export const createTestHldAzurePipelinesYaml = (
       }
     },
     pool: {
-      vmImage: "Ubuntu-16.04"
+      vmImage: VM_IMAGE
     },
     steps: [
       {

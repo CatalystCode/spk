@@ -15,3 +15,5 @@ export const PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE =
 export const PROJECT_PIPELINE_FILENAME = "hld-lifecycle.yaml";
 
 export const SERVICE_PIPELINE_FILENAME = "build-update-hld.yaml";
+
+export const VM_IMAGE = "ubuntu-latest";
