@@ -72,7 +72,7 @@ const validateDirNFiles = (
   expect(fs.existsSync(serviceDirPath)).toBe(true);
 
   // Verify new azure-pipelines created
-  const filepaths = ["azure-pipelines.yaml", "Dockerfile"].map(filename =>
+  const filepaths = [SERVICE_PIPELINE_FILENAME, "Dockerfile"].map(filename =>
     path.join(serviceDirPath, filename)
   );
 
