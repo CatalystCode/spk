@@ -173,9 +173,12 @@ export const createService = async (
   shelljs.mkdir("-p", newServiceDir);
 
   // Create azure pipelines yaml in directory
-  await generateStarterAzurePipelinesYaml(rootProjectPath, newServiceDir, {
-    variableGroups: values.variableGroups
-  });
+  await generateServiceBuildAndUpdatePipelineYaml(
+    rootProjectPath,
+    serviceName,
+    newServiceDir,
+    values.variableGroups
+  );
 
   // Create empty .gitignore file in directory
   generateGitIgnoreFile(newServiceDir, "");
