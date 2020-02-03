@@ -164,13 +164,15 @@ export const execute = async (
   }
 };
 
-export const commandDecorator = (command: commander.Command): void => {
+export const commandDecorator = (command: commander.Command) => {
   buildCmd(command, decorator).action(
     async (
       repositoryName: string,
       hldPath: string,
       bedrockApplicationRepoPath: string
     ) => {
+      // command will ensure that repositoryName,
+      // hldPath and bedrockApplicationRepoPath are string type.
       await execute(
         repositoryName,
         hldPath,
@@ -483,9 +485,9 @@ export const createStaticComponent = async (
 };
 
 export const validateInputs = (
-  repositoryName: any,
-  hldPath: any,
-  bedrockApplicationRepoPath: any
+  repositoryName: string,
+  hldPath: string,
+  bedrockApplicationRepoPath: string
 ) => {
   assertIsStringWithContent(repositoryName, "repository-name");
   assertIsStringWithContent(hldPath, "hld-path");
