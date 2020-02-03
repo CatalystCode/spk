@@ -49,42 +49,44 @@ const commands: ICommand[] = commandDirs
 
 const mapCommands = listCommands(commands);
 
-const buffer: string[] = ["## SPK Commands"];
-Object.keys(mapCommands).forEach(k => {
-  buffer.push(`* [spk ${k}](#spk-${k.replace(/\s/g, "-")})`);
-});
+console.log(JSON.stringify(mapCommands, null, 2));
 
-buffer.push("\n---\n");
+// const buffer: string[] = ["## SPK Commands"];
+// Object.keys(mapCommands).forEach(k => {
+//   buffer.push(`* [spk ${k}](#spk-${k.replace(/\s/g, "-")})`);
+// });
 
-buffer.push("\n## Details\n");
-Object.keys(mapCommands).forEach(k => {
-  const cmd = mapCommands[k];
-  buffer.push(`### spk ${k}`);
-  buffer.push("```");
+// buffer.push("\n---\n");
 
-  const valuesArray = cmd.command.split(/\s/);
-  let values = "";
-  if (valuesArray.length > 1) {
-    valuesArray.shift();
-    values = " " + valuesArray.join(" ");
-  }
-  const alias = cmd.alias ? `|${cmd.alias}` : "";
+// buffer.push("\n## Details\n");
+// Object.keys(mapCommands).forEach(k => {
+//   const cmd = mapCommands[k];
+//   buffer.push(`### spk ${k}`);
+//   buffer.push("```");
 
-  buffer.push(`spk ${k}${alias}${values} [options]`);
-  buffer.push(`  ${cmd.description}`);
-  buffer.push("\nOptions:");
+//   const valuesArray = cmd.command.split(/\s/);
+//   let values = "";
+//   if (valuesArray.length > 1) {
+//     valuesArray.shift();
+//     values = " " + valuesArray.join(" ");
+//   }
+//   const alias = cmd.alias ? `|${cmd.alias}` : "";
 
-  (cmd.options || []).forEach(opt => {
-    buffer.push(`  ${opt.arg}`);
-    buffer.push(`    ${opt.description}`);
-    buffer.push("\n");
-  });
+//   buffer.push(`spk ${k}${alias}${values} [options]`);
+//   buffer.push(`  ${cmd.description}`);
+//   buffer.push("\nOptions:");
 
-  buffer.push("  -h, --help");
-  buffer.push("    output usage information");
+//   (cmd.options || []).forEach(opt => {
+//     buffer.push(`  ${opt.arg}`);
+//     buffer.push(`    ${opt.description}`);
+//     buffer.push("\n");
+//   });
 
-  buffer.push("```");
-  buffer.push("\n\n[Go to Top](#SPK-Commands)");
-});
+//   buffer.push("  -h, --help");
+//   buffer.push("    output usage information");
 
-console.log(buffer.join("\n"));
+//   buffer.push("```");
+//   buffer.push("\n\n[Go to Top](#SPK-Commands)");
+// });
+
+// console.log(buffer.join("\n"));
