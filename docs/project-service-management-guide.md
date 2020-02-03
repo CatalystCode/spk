@@ -97,6 +97,13 @@ wish to utilize `spk` with another project or target, then you must rerun
 `spk init` with another configuration first OR, you may overwrite each commands
 via flags.
 
+### Create Environmental Variables
+
+The following workflow uses a number of environmental variables. Set the
+following such that you have them in the command line steps that will follow.
+
+ACR_NAME=myacr SP_APP_ID= SP_TENANT= SP_PASS=
+
 ## Repositories
 
 Our next step is to create or onboard the repositories that support the
@@ -189,7 +196,8 @@ application repositories
   git push -u origin --all
   ```
 - Create Variable Group via `spk` (optional flag parameters can be used if `spk`
-  was not intialized)
+  was not intialized). If you are using a one repo per service strategy, you
+  only need to do this once.
   ```
   VARIABLE_GROUP_NAME=<my-vg-name>
   spk project create-variable-group $VARIABLE_GROUP_NAME -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
@@ -203,9 +211,14 @@ application repositories
   Write access to the ACR.
 - Deploy the lifecycle pipeline (optional flag parameters can be used if `spk`
   was not intialized)
+
   ```
+
   spk project install-lifecycle-pipeline
   ```
+
+Note: If you have a repo per service you should run `install-lifecycle-pipeline`
+once per repo.
 
 **NOTE** `spk project` command documentation can be found
 [here](/docs/project-management.md).
