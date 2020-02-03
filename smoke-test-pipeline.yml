@@ -7,13 +7,12 @@ schedules:
   displayName: M-F 7:00PM (UTC - 8:00) Pacific daily build
   always: true
 
-variables:
-- group: 'spk-vg'
-
 stages:
 - stage: integration_tests
   jobs:
   - job: rings_integration_tests
+    variables:
+    - group: 'spk-vg'
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
@@ -37,10 +36,18 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl $FUNC_SCRIPT >| functions.sh
+        curl --fail $FUNC_SCRIPT > functions.sh 
+        if [ $? -ne 0 ]; then
+            echo "Error finding FUNC_SCRIPT: $FUNC_SCRIPT"
+            exit 1
+        fi
         chmod +x ./functions.sh
         echo "TEST_SCRIPT: $TEST_SCRIPT"
-        curl $TEST_SCRIPT >| validations.sh
+        curl --fail $TEST_SCRIPT > validations.sh 
+        if [ $? -ne 0 ]; then
+            echo "Error finding TEST_SCRIPT: $TEST_SCRIPT"
+            exit 1
+        fi
         chmod +x ./validations.sh
       displayName: "Download integration test scripts"
       env:
@@ -82,6 +89,8 @@ stages:
         artifact: test_logs
       condition: always()
   - job: infra_integration_tests
+    variables:
+    - group: 'spk-vg-testing'
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
@@ -95,7 +104,7 @@ stages:
         itemPattern: "spk*"
         artifactName: 'spk_linux_node_12'
         targetPath: '$(System.DefaultWorkingDirectory)'
-    - bash: |
+    - bash: | 
         shopt -s expand_aliases
         echo "Current Dir is $(pwd)"
         chmod +x spk-linux
@@ -105,10 +114,25 @@ stages:
       failOnStderr: true
     - bash: |
         echo "FUNC_SCRIPT: $FUNC_SCRIPT"
-        curl $FUNC_SCRIPT >| functions.sh
+        curl $FUNC_SCRIPT > functions.sh  
+        if [ $? -ne 0 ]; then
+            echo "Error finding FUNC_SCRIPT: $FUNC_SCRIPT"
+            exit 1
+        fi
         chmod +x ./functions.sh
         echo "TEST_SCRIPT2: $TEST_SCRIPT2"
-        curl $TEST_SCRIPT2 >| infra-validations.sh
+        curl $TEST_SCRIPT2 > infra-validations.sh 
+        if [ $? -ne 0 ]; then
+            echo "Error finding TEST_SCRIPT2: $TEST_SCRIPT2"
+            exit 1
+        fi
+        chmod +x ./infra-validations.sh
+        echo "INFRA_YML: $INFRA_YML"
+        curl $INFRA_YML > infra-generation-pipeline.yml 
+        if [ $? -ne 0 ]; then
+            echo "Error finding INFRA_YML: $INFRA_YML"
+            exit 1
+        fi
         chmod +x ./infra-validations.sh
       displayName: "Download integration test scripts"
       env:
