@@ -174,7 +174,7 @@ export const createService = async (
   generateServiceBuildAndUpdatePipelineYaml(
     rootProjectPath,
     values.ringNames,
-    values.displayName ?? serviceName, // displayName takes priority over serviceName (which could be '.')
+    values.displayName ? values.displayName : serviceName, // displayName takes priority over serviceName (which could be '.')
     newServiceDir,
     values.variableGroups
   );
