@@ -149,7 +149,7 @@ const createPipeline = async (
   devopsClient: IBuildApi
 ): Promise<BuildDefinition> => {
   const definition = definitionForAzureRepoPipeline({
-    branchFilters: ["master"], // Pipelines are triggered only by merges into the master branch.
+    branchFilters: ["master"], // hld reconcile pipeline is triggered only by merges into the master branch.
     maximumConcurrentBuilds: 1,
     pipelineName: values.pipelineName!,
     repositoryName: values.repoName!,

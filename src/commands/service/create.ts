@@ -170,11 +170,28 @@ export const createService = async (
 
   shelljs.mkdir("-p", newServiceDir);
 
+  const pipelineServiceName = values.displayName
+    ? values.displayName
+    : serviceName; // displayName takes priority over serviceName (which could be '.')
+  // Sanity check
+  if (
+    pipelineServiceName === "." ||
+    pipelineServiceName === "./" ||
+    pipelineServiceName === "./."
+  ) {
+    logger.error(
+      `Cannot create service pipeline due to serviceName being '.'. Please include a displayName if you are trying to create a service in your project root directory.`
+    );
+    throw new Error(
+      "Cannot create service pipeline due to serviceName being '.'. Please include a displayName if you are trying to create a service in your project root directory."
+    );
+  }
+
   // Create azure pipelines yaml in directory
   generateServiceBuildAndUpdatePipelineYaml(
     rootProjectPath,
     values.ringNames,
-    values.displayName ? values.displayName : serviceName, // displayName takes priority over serviceName (which could be '.')
+    pipelineServiceName,
     newServiceDir,
     values.variableGroups
   );

@@ -3,7 +3,7 @@ import yaml from "js-yaml";
 import path from "path";
 import { promisify } from "util";
 import {
-  HLD_PIPELINE_FILENAME,
+  RENDER_HLD_PIPELINE_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
   VM_IMAGE
@@ -83,7 +83,7 @@ export const serviceBuildAndUpdatePipeline = (
     : "./" + relServicePath;
 
   // tslint:disable: object-literal-sort-keys
-  const piplineYaml: IAzurePipelinesYaml = {
+  const pipelineYaml: IAzurePipelinesYaml = {
     trigger: {
       branches: { include: ringBranches },
       paths: { include: [relativeServicePathFormatted] } // Only building for a single service's path.
@@ -261,7 +261,7 @@ export const serviceBuildAndUpdatePipeline = (
     `Generated ${SERVICE_PIPELINE_FILENAME} for service in path '${relativeServicePathFormatted}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your project variable groups: ${requiredPipelineVariables}`
   );
 
-  return piplineYaml;
+  return pipelineYaml;
 };
 
 /**
@@ -275,19 +275,19 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
 
   const azurePipelinesYamlPath = path.join(
     absTargetPath,
-    HLD_PIPELINE_FILENAME
+    RENDER_HLD_PIPELINE_FILENAME
   );
 
   if (fs.existsSync(azurePipelinesYamlPath)) {
     logger.warn(
-      `Existing ${HLD_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation.`
+      `Existing ${RENDER_HLD_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation.`
     );
 
     return;
   }
   const hldYaml = manifestGenerationPipelineYaml();
   logger.info(
-    `Writing ${HLD_PIPELINE_FILENAME} file to ${azurePipelinesYamlPath}`
+    `Writing ${RENDER_HLD_PIPELINE_FILENAME} file to ${azurePipelinesYamlPath}`
   );
 
   const requiredPipelineVariables = [
@@ -296,7 +296,7 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
   ].join(", ");
 
   logger.info(
-    `Generated ${HLD_PIPELINE_FILENAME}. Commit and push this file to master before attempting to deploy via the command 'spk hld install-manifest-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
+    `Generated ${RENDER_HLD_PIPELINE_FILENAME}. Commit and push this file to master before attempting to deploy via the command 'spk hld install-manifest-pipeline'; before running the pipeline ensure the following environment variables are available to your pipeline: ${requiredPipelineVariables}`
   );
 
   fs.writeFileSync(azurePipelinesYamlPath, hldYaml, "utf8");
@@ -321,7 +321,7 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
 
   const componentYaml = defaultComponentYaml();
   logger.info(
-    `Writing ${HLD_PIPELINE_FILENAME} file to ${fabrikateComponentPath}`
+    `Writing ${RENDER_HLD_PIPELINE_FILENAME} file to ${fabrikateComponentPath}`
   );
 
   fs.writeFileSync(fabrikateComponentPath, componentYaml, "utf8");

@@ -165,6 +165,68 @@ describe("Adding a service to a repo directory", () => {
     randomTmpDir = createTempDir();
   });
 
+  test("New service is created in projet root directory. No display name given, so this should throw an error.", async () => {
+    await writeSampleMaintainersFileToDir(
+      path.join(randomTmpDir, "maintainers.yaml")
+    );
+    await writeSampleBedrockFileToDir(path.join(randomTmpDir, "bedrock.yaml"));
+
+    const values = getMockValues();
+    values.packagesDir = "";
+    values.k8sPort = 1337;
+    const serviceName = ".";
+
+    logger.info(
+      `creating randomTmpDir ${randomTmpDir} and service ${serviceName}`
+    );
+
+    let hasError = false;
+    try {
+      await createService(randomTmpDir, serviceName, values);
+    } catch (err) {
+      hasError = true;
+      expect(err.message).toBe(
+        "Cannot create service pipeline due to serviceName being '.'. Please include a displayName if you are trying to create a service in your project root directory."
+      );
+    }
+    expect(hasError).toBe(true);
+  });
+
+  test("New service is created in projet root directory. With display name given, so this work fine.", async () => {
+    await writeSampleMaintainersFileToDir(
+      path.join(randomTmpDir, "maintainers.yaml")
+    );
+    await writeSampleBedrockFileToDir(path.join(randomTmpDir, "bedrock.yaml"));
+
+    const values = getMockValues();
+    values.packagesDir = "";
+    values.k8sPort = 1337;
+    values.displayName = "my-service-name";
+    const serviceName = ".";
+
+    logger.info(
+      `creating randomTmpDir ${randomTmpDir} and service ${serviceName}`
+    );
+
+    let hasError = false;
+    try {
+      await createService(randomTmpDir, serviceName, values);
+    } catch (err) {
+      hasError = true;
+    }
+    expect(hasError).toBe(false);
+
+    await createService(randomTmpDir, serviceName, values);
+    validateDirNFiles(randomTmpDir, serviceName, values);
+
+    // TODO: Verify root project bedrock.yaml and maintainers.yaml has been changed too.
+    const bedrock = Bedrock(randomTmpDir);
+    const newService = bedrock.services["./"];
+    expect(newService).toBeDefined();
+    expect(newService.k8sBackendPort).toBe(values.k8sPort);
+    expect(newService.displayName).toBe(values.displayName);
+  });
+
   test("New directory is created under root directory with required service files.", async () => {
     await writeSampleMaintainersFileToDir(
       path.join(randomTmpDir, "maintainers.yaml")

@@ -2,7 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import uuid from "uuid/v4";
-import { HLD_PIPELINE_FILENAME } from "../../lib/constants";
+import { RENDER_HLD_PIPELINE_FILENAME } from "../../lib/constants";
 import { checkoutCommitPushCreatePRLink } from "../../lib/gitutils";
 import {
   disableVerboseLogging,
@@ -54,7 +54,7 @@ const testRepoInitialization = async (gitPush: boolean) => {
   expect(fs.existsSync(randomTmpDir)).toBe(true);
 
   // Verify new azure-pipelines created
-  [HLD_PIPELINE_FILENAME, "component.yaml"]
+  [RENDER_HLD_PIPELINE_FILENAME, "component.yaml"]
     .map(filename => path.join(randomTmpDir, filename))
     .forEach(filePath => {
       expect(fs.existsSync(filePath)).toBe(true);

@@ -16,8 +16,8 @@ import path from "path";
 import shelljs from "shelljs";
 import uuid from "uuid/v4";
 import {
-  HLD_PIPELINE_FILENAME,
   PROJECT_PIPELINE_FILENAME,
+  RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
   VM_IMAGE
 } from "../lib/constants";
@@ -162,7 +162,7 @@ describe("generateHldAzurePipelinesYaml", () => {
 
   it("should not do anything if file exist", async () => {
     const mockFsOptions = {
-      [`${targetDirectory}/${HLD_PIPELINE_FILENAME}`]: "existing pipeline"
+      [`${targetDirectory}/${RENDER_HLD_PIPELINE_FILENAME}`]: "existing pipeline"
     };
     mockFs(mockFsOptions);
 
@@ -172,7 +172,7 @@ describe("generateHldAzurePipelinesYaml", () => {
 
   it("should generate the file if one does not exist", async () => {
     const absTargetPath = path.resolve(targetDirectory);
-    const expectedFilePath = `${absTargetPath}/${HLD_PIPELINE_FILENAME}`;
+    const expectedFilePath = `${absTargetPath}/${RENDER_HLD_PIPELINE_FILENAME}`;
 
     generateHldAzurePipelinesYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
