@@ -34,7 +34,7 @@ infra_hld_project=fabrikam-base-env
 infra_region=west/
 infra_generated_dir=fabrikam-generated-deploy
 vg_name="spk-infra-hld-vg"
-generate_pipeline_path="$(pwd)/../../azure-pipelines/templates/infra-generation-pipeline.yml"
+generate_pipeline_path="../../../azure-pipelines/templates/infra-generation-pipeline.yml"
 
 validation_test_yaml="rg_name: <insert value>"
 
