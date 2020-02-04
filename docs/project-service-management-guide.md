@@ -240,7 +240,7 @@ application repositories
 - Deploy the service's multistage build pipeline via `spk` (optional flag
   parameters can be used if `spk` was not intialized)
   ```
-  spk service install-build-pipeline . -n log-service-build-pipeline -o tpark -r log-service -u https://tpark.visualstudio.com/spk-test/_git/log-service -d spk-test
+  spk service install-build-pipeline . -n $SERVICE_NAME-build-pipeline -o $ORG_NAME -r $SERVICE_NAME -u $SERVICE_REPO_URL -d $DEVOPS_PROJECT
   ```
 - Review and accept the pull request to add the service to the high level
   definition in Azure Devops.
@@ -265,7 +265,7 @@ application repositories
 - Create Service Revision via `spk` (optional flag parameters can be used if
   `spk` was not intialized)
   ```
-  spk service create-revision . -n log-service-build-pipeline -o tpark -r log-service -u https://tpark.visualstudio.com/spk-test/_git/log-service -d spk-test
+  spk service create-revision . -n $SERVICE_NAME-build-pipeline -o $ORG_NAME -r $SERVICE_NAME -u $SERVICE_REPO_URL -d $DEVOPS_PROJECT
   ```
 
 **NOTE** `spk service` command documentation can be found
