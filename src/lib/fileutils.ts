@@ -1,10 +1,9 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
-import { promisify } from "util";
 import {
-  RENDER_HLD_PIPELINE_FILENAME,
   PROJECT_PIPELINE_FILENAME,
+  RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
   VM_IMAGE
 } from "../lib/constants";
