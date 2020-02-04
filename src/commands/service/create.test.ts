@@ -51,6 +51,7 @@ const mockValues: ICommandValues = {
   packagesDir: "",
   pathPrefix: "",
   pathPrefixMajorVersion: "",
+  ringNames: [],
   variableGroups: []
 };
 
@@ -99,6 +100,18 @@ describe("Test fetchValues function", () => {
     const result = fetchValues(mocked);
     expect(result.middlewaresArray).toEqual(["mid1", "mid2"]);
   });
+  it("Postive test: with bedrock rings", () => {
+    const mockedBedrockFileConfig = { ...BedrockMockedContent };
+    mockedBedrockFileConfig.rings = {
+      master: {},
+      qa: {}
+    };
+    jest.spyOn(config, "Bedrock").mockReturnValueOnce(mockedBedrockFileConfig);
+    const mocked = getMockValues();
+    mocked.ringNames = ["master", "qa"];
+    const result = fetchValues(mocked);
+    expect(result.ringNames).toEqual(["master", "qa"]);
+  });
   it("Postive test", () => {
     const mocked = getMockValues();
     jest.spyOn(config, "Bedrock").mockReturnValueOnce(BedrockMockedContent);
@@ -106,7 +119,6 @@ describe("Test fetchValues function", () => {
     expect(result).toEqual(mocked);
   });
 });
-
 describe("Test execute function", () => {
   it("Negative test: without service name", async () => {
     const exitFn = jest.fn();

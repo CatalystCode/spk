@@ -19,12 +19,14 @@ const generateYamlScript = (lines: string[]): string => lines.join("\n");
  * One pipeline should exist for each service.
  *
  * @param projectRoot Full path to the root of the project (where the bedrock.yaml file exists)
+ * @param ringBranches Branches to trigger builds off of. Should be all the defined rings for this service.
  * @param serviceName
  * @param servicePath Full path to service direcory
  * @param variableGroups Azure DevOps variable group names
  */
 export const generateServiceBuildAndUpdatePipelineYaml = async (
   projectRoot: string,
+  ringBranches: string[],
   serviceName: string,
   servicePath: string,
   variableGroups: string[]
@@ -48,6 +50,7 @@ export const generateServiceBuildAndUpdatePipelineYaml = async (
     const starterYaml = await serviceBuildAndUpdatePipeline(
       serviceName,
       path.relative(absProjectRoot, absServicePath),
+      ringBranches,
       variableGroups
     );
     // Write
@@ -65,11 +68,13 @@ export const generateServiceBuildAndUpdatePipelineYaml = async (
  *
  * @param serviceName
  * @param relServicePath
+ * @param ringBranches
  * @param variableGroups
  */
 export const serviceBuildAndUpdatePipeline = async (
   serviceName: string,
   relServicePath: string,
+  ringBranches: string[],
   variableGroups?: string[]
 ): Promise<IAzurePipelinesYaml> => {
   const relativeServicePathFormatted = relServicePath.startsWith("./")
@@ -79,7 +84,7 @@ export const serviceBuildAndUpdatePipeline = async (
   // tslint:disable: object-literal-sort-keys
   const starter: IAzurePipelinesYaml = {
     trigger: {
-      branches: { include: ["master"] }, // Only building for master branch
+      branches: { include: ringBranches },
       paths: { include: [relativeServicePathFormatted] } // Only building for a single service's path.
     },
     variables: [...(variableGroups ?? []).map(group => ({ group }))],
