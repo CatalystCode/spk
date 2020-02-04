@@ -140,7 +140,12 @@ ls
 cd ..
 pwd
 ls
-cd azure-pipelines/templates
+cd ..
+pwd
+ls
+cd ..
+pwd 
+ls
 ## DEBUGGING
 cp $generate_pipeline_path .
 git init
