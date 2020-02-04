@@ -134,19 +134,6 @@ sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1stora
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
 echo "Copying generate pipeline validation yml to Infra HLD repo from $generate_pipeline_path" 
-## DEBUGGING
-pwd
-ls
-cd ..
-pwd
-ls
-cd ..
-pwd
-ls
-cd ..
-pwd 
-ls
-## DEBUGGING
 cp $generate_pipeline_path .
 git init
 
