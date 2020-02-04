@@ -283,10 +283,12 @@ describe("serviceBuildUpdatePipeline", () => {
   test("that the value of the file is the same after (de)serialization", async () => {
     const serviceName = "mycoolservice";
     const servicePath = "./mycoolservice";
+    const ringBranches = ["master", "qa", "test"];
     const variableGroups = ["foo", "bar"];
     const starter = await serviceBuildAndUpdatePipeline(
       serviceName,
       servicePath,
+      ringBranches,
       variableGroups
     );
     const serializedYaml = yaml.safeDump(starter, {
@@ -327,11 +329,13 @@ describe("serviceBuildUpdatePipeline", () => {
       }
     );
 
+    const ringBranches = ["master", "qa", "test"];
     const variableGroups = [uuid(), uuid()];
 
     for (const serviceReference of serviceReferences) {
       await generateServiceBuildAndUpdatePipelineYaml(
         randomDirPath,
+        ringBranches,
         serviceReference.serviceName,
         serviceReference.servicePath,
         variableGroups

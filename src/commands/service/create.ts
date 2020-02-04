@@ -45,6 +45,7 @@ export interface ICommandOptions {
 export interface ICommandValues extends ICommandOptions {
   k8sPort: number;
   middlewaresArray: string[];
+  ringNames: string[];
   variableGroups: string[];
 }
 
@@ -53,10 +54,9 @@ export const fetchValues = (opts: ICommandOptions) => {
     throw new Error("value for --k8s-service-port is not a valid port number");
   }
 
-  let variableGroups: string[] = [];
-
   const bedrock = Bedrock();
-  variableGroups = bedrock.variableGroups || [];
+  const variableGroups = bedrock.variableGroups ?? [];
+  const rings = Object.keys(bedrock.rings);
 
   let middlewaresArray: string[] = [];
   if (opts.middlewares && opts.middlewares.trim()) {
@@ -81,6 +81,7 @@ export const fetchValues = (opts: ICommandOptions) => {
     packagesDir: opts.packagesDir,
     pathPrefix: opts.pathPrefix,
     pathPrefixMajorVersion: opts.pathPrefixMajorVersion,
+    ringNames: rings,
     variableGroups
   };
 
@@ -146,10 +147,7 @@ export const createCommandDecorator = (command: commander.Command): void => {
  *
  * @param rootProjectPath
  * @param serviceName
- * @param packagesDir
- * @param gitPush
- * @param k8sBackendPort
- * @param opts
+ * @param values
  */
 export const createService = async (
   rootProjectPath: string,
@@ -175,6 +173,7 @@ export const createService = async (
   // Create azure pipelines yaml in directory
   await generateServiceBuildAndUpdatePipelineYaml(
     rootProjectPath,
+    values.ringNames,
     serviceName,
     newServiceDir,
     values.variableGroups
