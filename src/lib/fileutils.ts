@@ -24,7 +24,7 @@ const generateYamlScript = (lines: string[]): string => lines.join("\n");
  * @param servicePath Full path to service direcory
  * @param variableGroups Azure DevOps variable group names
  */
-export const generateServiceBuildAndUpdatePipelineYaml = async (
+export const generateServiceBuildAndUpdatePipelineYaml = (
   projectRoot: string,
   ringBranches: string[],
   serviceName: string,
@@ -35,35 +35,36 @@ export const generateServiceBuildAndUpdatePipelineYaml = async (
   const absServicePath = path.resolve(servicePath);
   const pipelineFilename = SERVICE_PIPELINE_FILENAME;
 
-  logger.info(`Generating starter ${pipelineFilename} in ${absServicePath}`);
+  logger.info(`Generating ${pipelineFilename} in ${absServicePath}`);
 
   logger.debug(`variableGroups length: ${variableGroups?.length}`);
 
   // Check if build-update-hld-pipeline.yaml already exists; if it does, skip generation
   const pipelineYamlFullPath = path.join(absServicePath, pipelineFilename);
   logger.debug(`Writing ${pipelineFilename} file to ${pipelineYamlFullPath}`);
+
   if (fs.existsSync(pipelineYamlFullPath)) {
     logger.warn(
-      `Existing ${pipelineFilename} found at ${pipelineYamlFullPath}, skipping generation`
+      `Existing ${pipelineFilename} found at ${pipelineYamlFullPath}, skipping generation.`
     );
-  } else {
-    const starterYaml = await serviceBuildAndUpdatePipeline(
-      serviceName,
-      path.relative(absProjectRoot, absServicePath),
-      ringBranches,
-      variableGroups
-    );
-    // Write
-    await promisify(fs.writeFile)(
-      pipelineYamlFullPath,
-      yaml.safeDump(starterYaml, { lineWidth: Number.MAX_SAFE_INTEGER }),
-      "utf8"
-    );
+    return;
   }
+
+  const buildYaml = serviceBuildAndUpdatePipeline(
+    serviceName,
+    path.relative(absProjectRoot, absServicePath),
+    ringBranches,
+    variableGroups
+  );
+  fs.writeFileSync(
+    pipelineYamlFullPath,
+    yaml.safeDump(buildYaml, { lineWidth: Number.MAX_SAFE_INTEGER }),
+    "utf8"
+  );
 };
 
 /**
- * Returns a starter build-update-hld-pipeline.yaml string
+ * Returns a build-update-hld-pipeline.yaml string
  * based on: https://github.com/andrebriggs/monorepo-example/blob/master/service-A/azure-pipelines.yml
  *
  * @param serviceName
@@ -71,18 +72,18 @@ export const generateServiceBuildAndUpdatePipelineYaml = async (
  * @param ringBranches
  * @param variableGroups
  */
-export const serviceBuildAndUpdatePipeline = async (
+export const serviceBuildAndUpdatePipeline = (
   serviceName: string,
   relServicePath: string,
   ringBranches: string[],
   variableGroups?: string[]
-): Promise<IAzurePipelinesYaml> => {
+): IAzurePipelinesYaml => {
   const relativeServicePathFormatted = relServicePath.startsWith("./")
     ? relServicePath
     : "./" + relServicePath;
 
   // tslint:disable: object-literal-sort-keys
-  const starter: IAzurePipelinesYaml = {
+  const piplineYaml: IAzurePipelinesYaml = {
     trigger: {
       branches: { include: ringBranches },
       paths: { include: [relativeServicePathFormatted] } // Only building for a single service's path.
@@ -260,7 +261,7 @@ export const serviceBuildAndUpdatePipeline = async (
     `Generated ${SERVICE_PIPELINE_FILENAME} for service in path '${relativeServicePathFormatted}'. Commit and push this file to master before attempting to deploy via the command '${spkServiceBuildPipelineCmd}'; before running the pipeline ensure the following environment variables are available to your project variable groups: ${requiredPipelineVariables}`
   );
 
-  return starter;
+  return piplineYaml;
 };
 
 /**
@@ -279,7 +280,7 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
 
   if (fs.existsSync(azurePipelinesYamlPath)) {
     logger.warn(
-      `Existing ${HLD_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation`
+      `Existing ${HLD_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation.`
     );
 
     return;
@@ -312,7 +313,7 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
 
   if (fs.existsSync(fabrikateComponentPath)) {
     logger.warn(
-      `Existing component.yaml found at ${fabrikateComponentPath}, skipping generation`
+      `Existing component.yaml found at ${fabrikateComponentPath}, skipping generation.`
     );
 
     return;
@@ -456,7 +457,7 @@ export const generateHldLifecyclePipelineYaml = async (projectRoot: string) => {
 
   if (fs.existsSync(azurePipelinesYamlPath)) {
     logger.warn(
-      `Existing ${PROJECT_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation`
+      `Existing ${PROJECT_PIPELINE_FILENAME} found at ${azurePipelinesYamlPath}, skipping generation.`
     );
 
     return;
@@ -610,7 +611,7 @@ export const generateGitIgnoreFile = (
 
   if (fs.existsSync(gitIgnoreFilePath)) {
     logger.warn(
-      `Existing .gitignore found at ${gitIgnoreFilePath}, skipping generation`
+      `Existing .gitignore found at ${gitIgnoreFilePath}, skipping generation.`
     );
 
     return;

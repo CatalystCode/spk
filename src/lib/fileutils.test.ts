@@ -25,7 +25,8 @@ import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
 import {
   createTestHldAzurePipelinesYaml,
   createTestHldLifecyclePipelineYaml,
-  createTestMaintainersYaml
+  createTestMaintainersYaml,
+  createTestServiceBuildAndUpdatePipelineYaml
 } from "../test/mockFactory";
 import { IAzurePipelinesYaml, IMaintainersFile } from "../types";
 import {
@@ -49,6 +50,65 @@ afterAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+describe("generateServiceBuildAndUpdatePipelineYaml", () => {
+  const targetDirectory = "app-repository";
+  const serviceDirectory = "my-service";
+  const writeSpy = jest.spyOn(fs, "writeFileSync");
+
+  beforeEach(() => {
+    mockFs({
+      "app-repository": {
+        "my-service": {}
+      }
+    });
+  });
+
+  afterEach(() => {
+    mockFs.restore();
+  });
+
+  it("should not do anything if build-update-hld.yaml exists", async () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`]: "existing pipeline"
+    };
+    mockFs(mockFsOptions);
+
+    generateServiceBuildAndUpdatePipelineYaml(
+      targetDirectory,
+      [],
+      "my-service",
+      path.join(targetDirectory, serviceDirectory),
+      []
+    );
+    expect(writeSpy).not.toBeCalled();
+  });
+
+  it("should generate the build-update-hld.yaml if one does not exist", async () => {
+    const absTargetPath = path.resolve(targetDirectory);
+    const expectedFilePath = `${absTargetPath}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`;
+
+    generateServiceBuildAndUpdatePipelineYaml(
+      targetDirectory,
+      [],
+      "my-service",
+      path.join(targetDirectory, serviceDirectory),
+      []
+    );
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      createTestServiceBuildAndUpdatePipelineYaml(
+        true,
+        "my-service",
+        "./my-service",
+        [],
+        []
+      ),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
 });
 
 describe("generateHldLifecyclePipelineYaml", () => {
@@ -285,13 +345,13 @@ describe("serviceBuildUpdatePipeline", () => {
     const servicePath = "./mycoolservice";
     const ringBranches = ["master", "qa", "test"];
     const variableGroups = ["foo", "bar"];
-    const starter = await serviceBuildAndUpdatePipeline(
+    const buildPipelineYaml = await serviceBuildAndUpdatePipeline(
       serviceName,
       servicePath,
       ringBranches,
       variableGroups
     );
-    const serializedYaml = yaml.safeDump(starter, {
+    const serializedYaml = yaml.safeDump(buildPipelineYaml, {
       lineWidth: Number.MAX_SAFE_INTEGER
     });
     const pipelinesPath = path.join(randomDirPath, SERVICE_PIPELINE_FILENAME);
@@ -301,16 +361,25 @@ describe("serviceBuildUpdatePipeline", () => {
     );
 
     // should be equal to the initial value
-    expect(deserializedYaml).toStrictEqual(starter);
+    expect(deserializedYaml).toStrictEqual(buildPipelineYaml);
 
     // variables should include all groups
     for (const group of variableGroups) {
-      expect(starter.variables!.includes({ group }));
+      expect(buildPipelineYaml.variables!.includes({ group }));
     }
+    expect(buildPipelineYaml.variables!.length).toBe(variableGroups.length);
+
+    // trigger branches should include all ring branches
+    for (const branch of ringBranches) {
+      expect(buildPipelineYaml.trigger!.branches!.include!.includes(branch));
+    }
+    expect(buildPipelineYaml.trigger!.branches!.include!.length).toBe(
+      ringBranches.length
+    );
 
     // verify components of stages
-    expect(starter.stages && starter.stages.length === 2);
-    for (const stage of starter.stages!) {
+    expect(buildPipelineYaml.stages && buildPipelineYaml.stages.length === 2);
+    for (const stage of buildPipelineYaml.stages!) {
       for (const job of stage.jobs) {
         // pool.vmImage should be 'gentoo'
         expect(job.pool!.vmImage).toBe(VM_IMAGE);
