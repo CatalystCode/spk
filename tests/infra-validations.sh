@@ -34,7 +34,8 @@ infra_hld_project=fabrikam-base-env
 infra_region=west/
 infra_generated_dir=fabrikam-generated-deploy
 vg_name="spk-infra-hld-vg"
-generate_pipeline_path="$TEST_WORKSPACE/../../azure-pipelines/templates/infra-generation-pipeline.yml"
+generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
+generate_pipeline_path_local="$(pwd)/../azure-pipelines/templates/infra-generation-pipeline.yml"
 
 validation_test_yaml="rg_name: <insert value>"
 
@@ -134,7 +135,8 @@ sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1stora
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
 echo "Copying generate pipeline validation yml to Infra HLD repo from $generate_pipeline_path" 
-cp $generate_pipeline_path .
+# Copy from current directory (pipeline) otherwise copy from azure-pipelines/templates (local)
+cp $generate_pipeline_path . || cp $generate_pipeline_path_local .
 git init
 
 # The HLD Template requires a git release for a version to be targeted for spk scaffold
