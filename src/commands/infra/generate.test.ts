@@ -1,5 +1,7 @@
+import fs from "fs";
 import path from "path";
 import { loadConfigurationFromLocalEnv, readYaml } from "../../config";
+import { safeGitUrlForLogging } from "../../lib/gitutils";
 import { removeDir } from "../../lib/ioUtil";
 import {
   disableVerboseLogging,
@@ -8,17 +10,28 @@ import {
 } from "../../logger";
 import { IInfraConfigYaml } from "../../types";
 import {
+  checkRemoteGitExist,
+  createGenerated,
   DefinitionYAMLExistence,
   dirIteration,
   execute,
   fetchValues,
   generateConfig,
   generateTfvars,
+  gitCheckout,
+  gitFetchPull,
   validateDefinition,
   validateRemoteSource,
   validateTemplateSources
 } from "./generate";
 import * as generate from "./generate";
+import * as infraCommon from "./infra_common";
+
+interface IGitTestData {
+  source: string;
+  sourcePath: string;
+  safeLoggingUrl: string;
+}
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -267,8 +280,8 @@ describe("Validate sources in definition.yaml files", () => {
     expect(sourceConfiguration).toEqual(DefinitionYAMLExistence.BOTH_EXIST);
     const sourceData = validateTemplateSources(
       sourceConfiguration,
-      path.join(mockParentPath, `definition.yaml`),
-      path.join(mockProjectPath, `definition.yaml`)
+      mockParentPath,
+      mockProjectPath
     );
     expect(sourceData).toEqual(expectedSourceWest);
     await generateConfig(
@@ -279,6 +292,17 @@ describe("Validate sources in definition.yaml files", () => {
     );
   });
   test("without parent's definition.yaml", async () => {
+    const mockParentPath = "src/commands/infra/mocks/missing-parent-defn";
+    const mockProjectPath = "src/commands/infra/mocks/missing-parent-defn/west";
+    try {
+      validateDefinition(mockParentPath, mockProjectPath);
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err).toBeDefined();
+    }
+  });
+
+  test("without project's definition.yaml", async () => {
     const mockParentPath = "src/commands/infra/mocks/discovery-service";
     const mockProjectPath = "src/commands/infra/mocks/discovery-service/east";
     const expectedSourceEast = {
@@ -293,8 +317,8 @@ describe("Validate sources in definition.yaml files", () => {
     expect(sourceConfiguration).toEqual(DefinitionYAMLExistence.PARENT_ONLY);
     const sourceData = validateTemplateSources(
       sourceConfiguration,
-      path.join(mockParentPath, `definition.yaml`),
-      path.join(mockProjectPath, `definition.yaml`)
+      mockParentPath,
+      mockProjectPath
     );
     expect(sourceData).toEqual(expectedSourceEast);
     await generateConfig(
@@ -320,8 +344,8 @@ describe("Validate sources in definition.yaml files", () => {
     expect(sourceConfiguration).toEqual(DefinitionYAMLExistence.BOTH_EXIST);
     const sourceData = validateTemplateSources(
       sourceConfiguration,
-      path.join(mockParentPath, `definition.yaml`),
-      path.join(mockProjectPath, `definition.yaml`)
+      mockParentPath,
+      mockProjectPath
     );
     expect(sourceData).toEqual(expectedSourceCentral);
     await generateConfig(
@@ -342,8 +366,124 @@ describe("Validate sources in definition.yaml files", () => {
   });
 });
 
+const getMockedDataForGitTests = async (
+  positive: boolean
+): Promise<IGitTestData> => {
+  const mockParentPath = "src/commands/infra/mocks/discovery-service";
+  const mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
+  const sourceConfiguration = validateDefinition(
+    mockParentPath,
+    mockProjectPath
+  );
+  const sourceConfig = validateTemplateSources(
+    sourceConfiguration,
+    mockParentPath,
+    mockProjectPath
+  );
+  let source = sourceConfig.source!;
+  if (!positive) {
+    source += "dummy";
+  }
+
+  // Converting source name to storable folder name
+  const sourceFolder = await infraCommon.repoCloneRegex(source);
+  const sourcePath = path.join(infraCommon.spkTemplatesPath, sourceFolder);
+  const safeLoggingUrl = safeGitUrlForLogging(source);
+
+  return {
+    safeLoggingUrl,
+    source,
+    sourcePath
+  };
+};
+
+const testCheckRemoteGitExist = async (positive: boolean) => {
+  const { safeLoggingUrl, source, sourcePath } = await getMockedDataForGitTests(
+    positive
+  );
+  if (!fs.existsSync(sourcePath)) {
+    createGenerated(sourcePath);
+  }
+  await checkRemoteGitExist(sourcePath, source, safeLoggingUrl);
+};
+
+describe("test checkRemoteGitExist function", () => {
+  it("postive Test", async () => {
+    await testCheckRemoteGitExist(true);
+    // no exception thrown
+  });
+  // cannot do negative test because it will take too long
+  // and timeout
+  xit("negative Test", async () => {
+    try {
+      await testCheckRemoteGitExist(false);
+      expect(true).toBe(false);
+    } catch (e) {
+      expect(e).toBeDefined();
+    }
+  });
+});
+
+const testGitFetchPull = async (positive: boolean) => {
+  const { safeLoggingUrl, sourcePath } = await getMockedDataForGitTests(
+    positive
+  );
+  if (!positive || fs.existsSync(path.join(sourcePath, ".git"))) {
+    await gitFetchPull(sourcePath, safeLoggingUrl);
+  }
+};
+
+describe("test gitFetchPull function", () => {
+  it("postive Test", async () => {
+    await testGitFetchPull(true);
+    // no exception thrown
+  });
+  it("negative Test", async () => {
+    try {
+      await testGitFetchPull(false);
+      expect(true).toBe(false);
+    } catch (e) {
+      expect(e).toBeDefined();
+    }
+  });
+});
+
+const testGitCheckout = async (positive: boolean) => {
+  const { sourcePath } = await getMockedDataForGitTests(positive);
+  if (!positive || fs.existsSync(path.join(sourcePath, ".git"))) {
+    await gitCheckout(sourcePath, "v0.0.1");
+  }
+};
+
+describe("test gitCheckout function", () => {
+  it("postive Test", async () => {
+    await testGitCheckout(true);
+    // no exception thrown
+  });
+  it("negative Test", async () => {
+    try {
+      await testGitCheckout(false);
+      expect(true).toBe(false);
+    } catch (e) {
+      expect(e).toBeDefined();
+    }
+  });
+});
+
 describe("Validate remote git source", () => {
   test("Validating that a git source is cloned to .spk/templates", async () => {
+    jest
+      .spyOn(generate, "checkRemoteGitExist")
+      .mockImplementationOnce(async () => {
+        return;
+      });
+    jest.spyOn(generate, "gitFetchPull").mockImplementationOnce(async () => {
+      return;
+    });
+    jest.spyOn(generate, "gitCheckout").mockImplementationOnce(async () => {
+      return;
+    });
+
     const mockParentPath = "src/commands/infra/mocks/discovery-service";
     const mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
     const sourceConfiguration = validateDefinition(
@@ -352,8 +492,8 @@ describe("Validate remote git source", () => {
     );
     const source = validateTemplateSources(
       sourceConfiguration,
-      path.join(mockParentPath, `definition.yaml`),
-      path.join(mockProjectPath, `definition.yaml`)
+      mockParentPath,
+      mockProjectPath
     );
     try {
       await validateRemoteSource(source);

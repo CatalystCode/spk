@@ -3,7 +3,18 @@ import path from "path";
 import shell from "shelljs";
 import uuid from "uuid/v4";
 import { Bedrock, write } from "./config";
-import { IBedrockFile } from "./types";
+import { disableVerboseLogging, enableVerboseLogging, logger } from "./logger";
+import { IBedrockFile, IBedrockFileInfo } from "./types";
+
+const variableGroupName = uuid();
+
+beforeAll(() => {
+  enableVerboseLogging();
+});
+
+afterAll(() => {
+  disableVerboseLogging();
+});
 
 describe("Bedrock", () => {
   test("valid helm configuration passes", async () => {
@@ -19,7 +30,10 @@ describe("Bedrock", () => {
               repository: "some-repo"
             }
           },
-          k8sServicePort: 1337
+          k8sBackend: "backendservice",
+          k8sBackendPort: 1337,
+          pathPrefix: "servicepath",
+          pathPrefixMajorVersion: "v1"
         },
         "foo/b": {
           helm: {
@@ -29,7 +43,10 @@ describe("Bedrock", () => {
               sha: "cef8361c62e7a91887625336eb13a8f90dbcf8df"
             }
           },
-          k8sServicePort: 1337
+          k8sBackend: "backendservice",
+          k8sBackendPort: 1337,
+          pathPrefix: "servicepath",
+          pathPrefixMajorVersion: "v1"
         }
       }
     };
