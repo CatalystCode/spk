@@ -2,19 +2,14 @@ import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterface
 import commander from "commander";
 import path from "path";
 import { echo } from "shelljs";
-import {
-  Bedrock,
-  bedrockFileInfo,
-  Config,
-  readYaml,
-  write
-} from "../../config";
-import { projectInitDependencyErrorMessage } from "../../constants";
+import { Bedrock, Config, readYaml, write } from "../../config";
+import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
   exit as exitCmd,
   validateForRequiredValues
 } from "../../lib/commandBuilder";
+import { PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE } from "../../lib/constants";
 import { IAzureDevOpsOpts } from "../../lib/git";
 import { addVariableGroup } from "../../lib/pipelines/variableGroup";
 import { hasValue } from "../../lib/validator";
@@ -22,6 +17,7 @@ import { logger } from "../../logger";
 import {
   IAzurePipelinesYaml,
   IBedrockFile,
+  IBedrockFileInfo,
   IVariableGroupData,
   IVariableGroupDataVariable
 } from "../../types";
@@ -39,35 +35,11 @@ interface ICommandOptions {
   project: string | undefined;
 }
 
-/**
- * Returns an array of error message for missing variable values. Returns empty
- * array if all values are present.
- *
- * @param registryName The Azure container registry name
- * @param hldRepoUrl High Level Definition URL
- * @param servicePrincipalId The Azure service principla id with ACR pull and build permissions for az login
- * @param servicePrincipalPassword The service principla password for az login
- * @param tenantId The Azure AD tenant id for az login
- * @param accessOpts Azure DevOp options
- */
-export const validateRequiredArguments = (
-  registryName: string | undefined,
-  hldRepoUrl: string | undefined,
-  servicePrincipalId: string | undefined,
-  servicePrincipalPassword: string | undefined,
-  tenant: string | undefined,
-  accessOpts: IAzureDevOpsOpts
-): string[] => {
-  return validateForRequiredValues(decorator, {
-    hldRepoUrl,
-    orgName: accessOpts.orgName,
-    personalAccessToken: accessOpts.personalAccessToken,
-    project: accessOpts.project,
-    registryName,
-    servicePrincipalId,
-    servicePrincipalPassword,
-    tenant
-  });
+export const checkDependencies = (projectPath: string) => {
+  const fileInfo: IBedrockFileInfo = bedrockFileInfo(projectPath);
+  if (fileInfo.exist === false) {
+    throw new Error(PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE);
+  }
 };
 
 /**
@@ -82,18 +54,15 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   if (!hasValue(variableGroupName)) {
-    return exitFn(1);
+    await exitFn(1);
+    return;
   }
 
   try {
     const projectPath = process.cwd();
     logger.verbose(`project path: ${projectPath}`);
 
-    const fileInfo = await bedrockFileInfo(projectPath);
-    if (fileInfo.exist === false) {
-      logger.error(projectInitDependencyErrorMessage);
-      return exitFn(1);
-    }
+    checkDependencies(projectPath);
 
     const { azure_devops } = Config();
 
@@ -116,17 +85,20 @@ export const execute = async (
 
     logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
 
-    const errors = validateRequiredArguments(
-      registryName,
+    const errors = validateForRequiredValues(decorator, {
       hldRepoUrl,
+      orgName,
+      personalAccessToken,
+      project,
+      registryName,
       servicePrincipalId,
       servicePrincipalPassword,
-      tenant,
-      accessOpts
-    );
+      tenant
+    });
 
     if (errors.length !== 0) {
-      return await exitFn(1);
+      await exitFn(1);
+      return;
     }
 
     const variableGroup = await create(
@@ -287,13 +259,12 @@ export const updateLifeCyclePipeline = async (rootProjectPath: string) => {
 
   const fileName: string = "hld-lifecycle.yaml";
   const absProjectRoot = path.resolve(rootProjectPath);
-  let bedrockFile: IBedrockFile;
-  let pipelineFile: IAzurePipelinesYaml | undefined;
 
   // Get bedrock.yaml
-  bedrockFile = Bedrock(rootProjectPath);
-
-  pipelineFile = readYaml(path.join(absProjectRoot, fileName));
+  const bedrockFile = Bedrock(rootProjectPath);
+  const pipelineFile = readYaml(
+    path.join(absProjectRoot, fileName)
+  ) as IAzurePipelinesYaml;
 
   if (typeof pipelineFile === "undefined") {
     throw new Error("${fileName} file does not exist in ${absProjectRoot}.");

@@ -52,7 +52,7 @@ describe("initializing an existing file does not modify it", () => {
               sha: "bar"
             }
           },
-          k8sServicePort: 1337
+          k8sBackendPort: 1337
         }
       }
     };
@@ -86,10 +86,12 @@ describe("Test execute function", () => {
   it("positive test", async () => {
     jest.spyOn(init, "initialize");
     const exitFn = jest.fn();
+    const randomDir = createTempDir();
     await execute(
       {
         defaultRing: "master"
       },
+      randomDir,
       exitFn
     );
     expect(exitFn).toBeCalledTimes(1);
@@ -102,10 +104,12 @@ describe("Test execute function", () => {
       throw new Error();
     });
     const exitFn = jest.fn();
+    const randomDir = createTempDir();
     await execute(
       {
         defaultRing: "master"
       },
+      randomDir,
       exitFn
     );
     expect(exitFn).toBeCalledTimes(1);
