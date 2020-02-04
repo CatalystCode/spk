@@ -1,5 +1,6 @@
 import commander from "commander";
 import fs from "fs";
+import fsextra from "fs-extra";
 import mkdirp from "mkdirp";
 import path from "path";
 import process from "process";
@@ -159,14 +160,12 @@ export const validateTemplateSources = (
     }
   });
   if (!source.source || !source.template || !source.version) {
-    // TODO: Please check if version is needed
     logger.info(
       `The ${DEF_YAML} file is invalid. \
 There is a missing field for it's sources. \
 Template: ${source.template} source: ${source.source} version: ${source.version}`
     );
   }
-
   const safeLoggingUrl = safeGitUrlForLogging(source.source!);
   logger.info(
     `Checking for locally stored template: ${source.template} from remote repository: ${safeLoggingUrl} at version: ${source.version}`
@@ -211,31 +210,55 @@ export const validateRemoteSource = async (
 The remote repo may not exist or you do not have the rights to access it`
     );
   }
-
   logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
   logger.info(
     `Checking if source repo: ${safeLoggingUrl} has been already cloned to: ${sourcePath}.`
   );
-
   try {
-    // Check if .git folder exists in ${sourcePath}, if not, then clone
-    // if already cloned, 'git pull'
-    if (fs.existsSync(path.join(sourcePath, ".git"))) {
-      // Make sure we have the latest version of all releases cached locally
-      await simpleGit(sourcePath).fetch("all");
-      await simpleGit(sourcePath).pull("origin", "master");
-      logger.info(`${safeLoggingUrl} already cloned. Performing 'git pull'...`);
-    } else {
-      await gitClone(source, sourcePath);
-    }
+    // Clone remote source
+    await infraCommon.repoClone(sourcePath, source);
     // Checkout tagged version
     logger.info(`Checking out template version: ${version}`);
-
     await simpleGit(sourcePath).checkout(version);
   } catch (err) {
-    logger.error(err);
-    // TOFIX: this error should be rethrown
-    // and if we do, infra-validations.sh will fail
+    if (err instanceof Error) {
+      // Retry logic on failed clones
+      logger.warn(`FAILURE DETECTED: Checking the error`);
+      try {
+        // Case 1: Remote source and cached repo have conflicting histories.
+        if (err.message.includes("refusing to merge unrelated histories")) {
+          logger.info(
+            `Detected a refusal to merge unrelated histories, attempting to reset the cached folder to the remote: ${sourcePath}`
+          );
+          // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
+          await fsextra.removeSync(sourcePath);
+          createGenerated(sourcePath);
+          await infraCommon.repoClone(sourcePath, source);
+          // Checkout tagged version
+          logger.info(`Checking out template version: ${version}`);
+          await simpleGit(sourcePath).checkout(version);
+          logger.info(`Successfully re-cloned repo`);
+        }
+        // Case 2: Remote source and cached repo have conflicting PATs
+        else if (err.message.includes("Authentication failed")) {
+          logger.info(
+            `Detected an authentication failure with existing cache, attempting to reset the cached folder to the remote: ${sourcePath}`
+          );
+          // SPK will reassign the PAT for the cached directory by deleting the cache and resetting with the provided remote
+          await fsextra.removeSync(sourcePath);
+          createGenerated(sourcePath);
+          await infraCommon.repoClone(sourcePath, source);
+          // Checkout tagged version
+          logger.info(`Checking out template version: ${version}`);
+          await simpleGit(sourcePath).checkout(version);
+          logger.info(`Successfully re-cloned repo`);
+        } else {
+          throw new Error(`Unable to determine error from retry cases ${err}`);
+        }
+      } catch (retryError) {
+        throw new Error(`Failure error thrown during retry ${retryError}`);
+      }
+    }
   }
 };
 

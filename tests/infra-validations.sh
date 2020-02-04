@@ -15,7 +15,7 @@ TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$SP_APP_ID" ] || { echo "Provide SP_APP_ID"; exit 1;}
 [ ! -z "$SP_PASS" ] || { echo "Provide SP_PASS"; exit 1;}
 [ ! -z "$SP_TENANT" ] || { echo "Provide SP_TENANT"; exit 1;}
-[ ! -z "$SP_SUBSCRIPTION_ID" ] || { echo "Provide SP_SUBSCRITION_ID"; exit 1;}
+[ ! -z "$SP_SUBSCRIPTION_ID" ] || { echo "Provide SP_SUBSCRIPTION_ID"; exit 1;}
 AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_ORG"}"
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
@@ -34,13 +34,22 @@ infra_hld_project=fabrikam-base-env
 infra_region=west/
 infra_generated_dir=fabrikam-generated-deploy
 vg_name="spk-infra-hld-vg"
-generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
+generate_pipeline_path="$(pwd)/../azure-pipelines/templates/infra-generation-pipeline.yml"
 
 validation_test_yaml="rg_name: <insert value>"
 
 shopt -s expand_aliases
 alias spk=$SPK_LOCATION
 echo "SPK Version: $(spk --version)"
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if ! [ -x "$(command -v gsed)" ]; then
+    echo 'Error: gnu-sed is not installed.' >&2
+    exit 1
+  fi
+  alias sed='gsed'
+  echo 'macOS detected'
+fi
 
 echo "Running from $(pwd)"
 if [ -d "$TEST_WORKSPACE"  ]; then rm -Rf $TEST_WORKSPACE; fi
@@ -124,7 +133,7 @@ sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1stora
 
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
-echo "Copying generate pipeline validation yml to Infra HLD repo" 
+echo "Copying generate pipeline validation yml to Infra HLD repo from $generate_pipeline_path" 
 cp $generate_pipeline_path .
 git init
 
