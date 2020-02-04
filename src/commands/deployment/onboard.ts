@@ -200,7 +200,7 @@ export const onboard = async (
   // if key vault is not specified, exit without reading storage account key and setting it in the key vault
   if (keyVaultName) {
     logger.debug(
-      `Calling setSecret with storage account primary key ${accessKey} and ${keyVaultName}`
+      `Calling setSecret with storage account primary key *** and ${keyVaultName}`
     );
 
     await setSecret(keyVaultName, `${accountName}Key`, accessKey!, opts);
@@ -210,7 +210,7 @@ export const onboard = async (
       `Please set the storage account access key in environment variable INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.`
     );
 
-    logger.info(`Storage account ${accountName} access key: ${accessKey}`);
+    logger.info(`Storage account ${accountName} access key: ***`);
   }
 
   // save storage account and table names in configuration
