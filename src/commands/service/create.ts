@@ -171,7 +171,7 @@ export const createService = async (
   shelljs.mkdir("-p", newServiceDir);
 
   // Create azure pipelines yaml in directory
-  await generateServiceBuildAndUpdatePipelineYaml(
+  generateServiceBuildAndUpdatePipelineYaml(
     rootProjectPath,
     values.ringNames,
     serviceName,
