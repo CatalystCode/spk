@@ -69,7 +69,7 @@ export const loadConfigurationFromLocalEnv = <T>(configObj: T): T => {
 export const updateVariableWithLocalEnv = (value: string): string => {
   const regexp = /\${env:([a-zA-Z_$][a-zA-Z_$0-9]+)}/g;
   const original = value;
-  let matches = regexp.exec(value as string);
+  let matches = regexp.exec(value);
   while (matches) {
     if (matches.length > 1) {
       if (process.env[matches[1]]) {
@@ -80,7 +80,7 @@ export const updateVariableWithLocalEnv = (value: string): string => {
           `Environment variable needs to be defined for ${matches[1]} since it's referenced in the config file.`
         );
       }
-      matches = regexp.exec(original as string);
+      matches = regexp.exec(original);
     }
   }
   return value;
