@@ -173,6 +173,43 @@ Template: ${source.template} source: ${source.source} version: ${source.version}
   return source;
 };
 
+export const checkRemoteGitExist = async (
+  sourcePath: string,
+  source: string,
+  safeLoggingUrl: string
+) => {
+  // Checking for git remote
+  if (!fs.existsSync(sourcePath)) {
+    throw new Error(`${sourcePath} does not exist`);
+  }
+  const result = await simpleGit(sourcePath).listRemote([source]);
+  if (!result) {
+    logger.error(result);
+    throw new Error(
+      `Unable to clone the source remote repository. \
+The remote repo may not exist or you do not have the rights to access it`
+    );
+  }
+
+  logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
+};
+
+export const gitFetchPull = async (
+  sourcePath: string,
+  safeLoggingUrl: string
+) => {
+  // Make sure we have the latest version of all releases cached locally
+  await simpleGit(sourcePath).fetch("all");
+  await simpleGit(sourcePath).pull("origin", "master");
+  logger.info(`${safeLoggingUrl} already cloned. Performing 'git pull'...`);
+};
+
+export const gitCheckout = async (sourcePath: string, version: string) => {
+  // Checkout tagged version
+  logger.info(`Checking out template version: ${version}`);
+  await simpleGit(sourcePath).checkout(version);
+};
+
 /**
  * Checks if provided source, template and version are valid. TODO/ Private Repo, PAT, ssh-key agent
  *
@@ -201,16 +238,8 @@ export const validateRemoteSource = async (
       `Source template folder found. Validating existence of repository.`
     );
   }
-  // Checking for git remote
-  const result = await simpleGit(sourcePath).listRemote([source]);
-  if (!result) {
-    logger.error(result);
-    throw new Error(
-      `Unable to clone the source remote repository. \
-The remote repo may not exist or you do not have the rights to access it`
-    );
-  }
-  logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
+
+  await checkRemoteGitExist(sourcePath, source, safeLoggingUrl);
   logger.info(
     `Checking if source repo: ${safeLoggingUrl} has been already cloned to: ${sourcePath}.`
   );
@@ -219,7 +248,7 @@ The remote repo may not exist or you do not have the rights to access it`
     await infraCommon.repoClone(sourcePath, source);
     // Checkout tagged version
     logger.info(`Checking out template version: ${version}`);
-    await simpleGit(sourcePath).checkout(version);
+    await gitCheckout(sourcePath, version);
   } catch (err) {
     if (err instanceof Error) {
       // Retry logic on failed clones
@@ -236,7 +265,7 @@ The remote repo may not exist or you do not have the rights to access it`
           await infraCommon.repoClone(sourcePath, source);
           // Checkout tagged version
           logger.info(`Checking out template version: ${version}`);
-          await simpleGit(sourcePath).checkout(version);
+          await gitCheckout(sourcePath, version);
           logger.info(`Successfully re-cloned repo`);
         }
         // Case 2: Remote source and cached repo have conflicting PATs
@@ -250,7 +279,7 @@ The remote repo may not exist or you do not have the rights to access it`
           await infraCommon.repoClone(sourcePath, source);
           // Checkout tagged version
           logger.info(`Checking out template version: ${version}`);
-          await simpleGit(sourcePath).checkout(version);
+          await gitCheckout(sourcePath, version);
           logger.info(`Successfully re-cloned repo`);
         } else {
           throw new Error(`Unable to determine error from retry cases ${err}`);
