@@ -97,13 +97,6 @@ wish to utilize `spk` with another project or target, then you must rerun
 `spk init` with another configuration first OR, you may overwrite each commands
 via flags.
 
-### Create Environmental Variables
-
-The following workflow uses a number of environmental variables. Set the
-following such that you have them in the command line steps that will follow.
-
-ACR_NAME=myacr SP_APP_ID= SP_TENANT= SP_PASS=
-
 ## Repositories
 
 Our next step is to create or onboard the repositories that support the
@@ -112,8 +105,6 @@ deployment of our services:
 1. The high level definition repository
 2. The materialized manifest repository
 3. The application source code repository
-
-The
 
 ### High Level Definition Repository
 
@@ -127,6 +118,7 @@ applied to the Kubernetes cluster by Flux.
 ##### Initializing the High Level Definition Repository
 
 - [Create a repository in the given AzDO project.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
+- Edit your SPK config to point to this repo (if you haven't already done this).
 - [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
 - Initialize via `spk`, this will add the fabrikate
   [cloud-native](https://github.com/microsoft/fabrikate-definitions/tree/master/definitions/fabrikate-cloud-native)
@@ -136,11 +128,6 @@ applied to the Kubernetes cluster by Flux.
   git add -A
   git commit -m "Initializing HLD repository with the cloud-native stack."
   git push -u origin --all
-  ```
-- Deploy the Manifest Generation pipeline (optional flag parameters can be used
-  if `spk` was not intialized)
-  ```
-  spk hld install-manifest-pipeline
   ```
 
 **NOTE** `spk hld` command documentation can be found
@@ -156,6 +143,7 @@ deploy all manifests in this repository to the cluster periodically.
 ##### Initializing the Materialized Manifests Repository
 
 - [Create a repository in the given AzDO project.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#create-a-repo-using-the-web-portal)
+- Edit your SPK config to point to this repo (if you haven't already done this).
 - [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
 - Add a simple README to the repository
   ```
@@ -165,6 +153,16 @@ deploy all manifests in this repository to the cluster periodically.
   git commit -m "Initializing Materialized Manifests repository with a README."
   git push -u origin --all
   ```
+
+#### Deploy Manifest Generation Pipeline
+
+Deploy a manifest generation pipeline between the high level definition repo and
+the materialized manifests repo. Assuming you have configured `spk`, you can run
+this without flag parameters from your HLD repo root:
+
+```
+$ spk hld install-manifest-pipeline
+```
 
 ### Application Repositories
 
@@ -190,20 +188,19 @@ application repositories
 - [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
 - Initialize the project via `spk`
   ```
-  spk project init
-  git add -A
-  git commit -m "Initializing application repository."
-  git push -u origin --all
+  $ spk project init
+  $ git add -A
+  $ git commit -m "Initializing application repository."
+  $ git push -u origin --all
   ```
-- Create Variable Group via `spk` (optional flag parameters can be used if `spk`
-  was not intialized). If you are using a one repo per service strategy, you
-  only need to do this once.
+- Create a variable group via `spk`. If you are using a repo per service source
+  control strategy, you only need to do this once.
   ```
-  VARIABLE_GROUP_NAME=<my-vg-name>
-  spk project create-variable-group $VARIABLE_GROUP_NAME -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
-  git add -A
-  git commit -m "Adding Project Variable Group."
-  git push -u origin --all
+  $ export VARIABLE_GROUP_NAME=<my-vg-name>
+  $ spk project create-variable-group $VARIABLE_GROUP_NAME -r $ACR_NAME -u $SP_APP_ID -t $SP_TENANT -p $SP_PASS
+  $ git add -A
+  $ git commit -m "Adding Project Variable Group."
+  $ git push -u origin --all
   ```
   where `ACR_NAME` is the name of the Azure Container Registry where the Docker
   Images will be served from and `SP_APP_ID`, `SP_PASS`, and, `SP_TENANT` are an
@@ -213,12 +210,16 @@ application repositories
   was not intialized)
 
   ```
-
-  spk project install-lifecycle-pipeline
+  $ spk project install-lifecycle-pipeline --org-name $ORG_NAME --devops-project $DEVOPS_PROJECT --repo-url $SERVICE_REPO_URL --repo-name $SERVICE_NAME --pipeline-name $SERVICE_NAME-lifecycle-pipeline
   ```
 
-Note: If you have a repo per service you should run `install-lifecycle-pipeline`
-once per repo.
+  where `ORG_NAME` is the name of your Azure Devops org, `DEVOPS_PROJECT` is the
+  name of your Azure Devops project, `SERVICE_REPO_URL` is the url that you used
+  to clone your service from Azure Devops, and `SERVICE_NAME` is the name of the
+  service.
+
+  Note: If you are using a repo per service source control strategy you should
+  run `install-lifecycle-pipeline` once for each repo.
 
 **NOTE** `spk project` command documentation can be found
 [here](/docs/project-management.md).
@@ -231,7 +232,7 @@ once per repo.
   flag parameters can be used if `spk` was not intialized)
   ```
   SERVICE_NAME=<my-new-service-name>
-  spk service create $SERVICE_NAME
+  spk service create . --display-name $SERVICE_NAME ...
   git add -A
   git commit -m "Adding $SERVICE_NAME to the repository."
   git push -u origin --all
@@ -239,8 +240,10 @@ once per repo.
 - Deploy the service's multistage build pipeline via `spk` (optional flag
   parameters can be used if `spk` was not intialized)
   ```
-  spk service install-build-pipeline $SERVICE_NAME
+  spk service install-build-pipeline . -n log-service-build-pipeline -o tpark -r log-service -u https://tpark.visualstudio.com/spk-test/_git/log-service -d spk-test
   ```
+- Review and accept the pull request to add the service to the high level
+  definition in Azure Devops.
 
 **NOTE** `spk service` command documentation can be found
 [here](/docs/service-management.md).
@@ -262,7 +265,7 @@ once per repo.
 - Create Service Revision via `spk` (optional flag parameters can be used if
   `spk` was not intialized)
   ```
-  spk service create-revision
+  spk service create-revision . -n log-service-build-pipeline -o tpark -r log-service -u https://tpark.visualstudio.com/spk-test/_git/log-service -d spk-test
   ```
 
 **NOTE** `spk service` command documentation can be found
