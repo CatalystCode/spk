@@ -210,7 +210,7 @@ application repositories
   was not intialized)
 
   ```
-  $ spk project install-lifecycle-pipeline --org-name $ORG_NAME --devops-project $DEVOPS_PROJECT --repo-url $SERVICE_REPO_URL --repo-name $SERVICE_NAME --pipeline-name $SERVICE_NAME-lifecycle-pipeline
+  $ spk project install-lifecycle-pipeline --org-name $ORG_NAME --devops-project $DEVOPS_PROJECT --repo-url $SERVICE_REPO_URL --repo-name $SERVICE_NAME
   ```
 
   where `ORG_NAME` is the name of your Azure Devops org, `DEVOPS_PROJECT` is the
