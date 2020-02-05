@@ -260,6 +260,7 @@ echo "Successfully reached the end of the service validations scripts."
 # spk deployment get
 cd $TEST_WORKSPACE
 cd ..
+cd tests
 pwd
 ls
 export sa_access_key=$(echo "$sa_access_key" | tr -d '"')
