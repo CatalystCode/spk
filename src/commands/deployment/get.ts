@@ -130,33 +130,33 @@ export const getDeployments = (
   const config = initObj.config;
 
   return new Promise((resolve, reject) => {
-    try {
-      Deployment.getDeploymentsBasedOnFilters(
-        config.introspection!.azure!.account_name!,
-        initObj.key,
-        config.introspection!.azure!.table_name!,
-        config.introspection!.azure!.partition_key!,
-        initObj.srcPipeline,
-        initObj.hldPipeline,
-        initObj.clusterPipeline,
-        values.env,
-        values.imageTag,
-        values.buildId,
-        values.commitId,
-        values.service,
-        values.deploymentId
-      ).then((deployments: Deployment[]) => {
+    Deployment.getDeploymentsBasedOnFilters(
+      config.introspection!.azure!.account_name!,
+      initObj.key,
+      config.introspection!.azure!.table_name!,
+      config.introspection!.azure!.partition_key!,
+      initObj.srcPipeline,
+      initObj.hldPipeline,
+      initObj.clusterPipeline,
+      values.env,
+      values.imageTag,
+      values.buildId,
+      values.commitId,
+      values.service,
+      values.deploymentId
+    )
+      .then((deployments: Deployment[]) => {
         if (values.outputFormat === OUTPUT_FORMAT.JSON) {
           logger.info(JSON.stringify(deployments, null, 2));
-          resolve();
+          resolve(deployments);
         } else {
           printDeployments(deployments, values.outputFormat, values.nTop);
-          resolve();
+          resolve(deployments);
         }
+      })
+      .catch(e => {
+        reject(new Error(e));
       });
-    } catch (e) {
-      reject(e);
-    }
   });
 };
 

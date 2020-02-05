@@ -59,33 +59,21 @@ const getMockedValues = (): IValidatedOptions => {
 // tslint:disable-next-line: no-var-requires
 const data = require("./mocks/data.json");
 const fakeDeployments = data;
-
-jest.spyOn(get, "getDeployments").mockImplementation(
-  (outputFormat: any): Promise<Deployment[]> => {
-    return new Promise<Deployment[]>(resolve => {
-      const mockedDeps: Deployment[] = [];
-      fakeDeployments.data.forEach((dep: any) => {
-        mockedDeps.push(
-          new Deployment(
-            dep.deploymentId,
-            dep.commitId,
-            dep.hldCommitId,
-            dep.imageTag,
-            dep.timeStamp,
-            dep.environment,
-            dep.service,
-            dep.manifestCommitId,
-            dep.srcToDockerBuild,
-            dep.dockerToHldRelease,
-            dep.hldToManifestBuild
-          )
-        );
-      });
-      resolve(mockedDeps as Deployment[]);
-      return mockedDeps;
-    });
-  }
-);
+const mockedDeps: Deployment[] = fakeDeployments.data.map((dep: Deployment) => {
+  return new Deployment(
+    dep.deploymentId,
+    dep.commitId,
+    dep.hldCommitId || "",
+    dep.imageTag,
+    dep.timeStamp,
+    dep.environment,
+    dep.service,
+    dep.manifestCommitId,
+    dep.srcToDockerBuild,
+    dep.dockerToHldRelease,
+    dep.hldToManifestBuild
+  );
+});
 
 let initObject: IInitObject;
 
@@ -216,7 +204,11 @@ describe("Test printDeployments function", () => {
 });
 
 describe("Get deployments", () => {
-  test("get some basic deployments", async () => {
+  it("get some basic deployments", async () => {
+    jest
+      .spyOn(get, "getDeployments")
+      .mockReturnValueOnce(Promise.resolve(mockedDeps));
+
     const values = getMockedValues();
     values.outputFormat = OUTPUT_FORMAT.WIDE;
     const deployments = await getDeployments(initObject, values);
@@ -225,11 +217,32 @@ describe("Get deployments", () => {
     logger.info("Got " + deployments.length + " deployments");
     expect(deployments).toHaveLength(10);
   });
+  it("getDeploymentsBasedOnFilters throw error", async () => {
+    jest
+      .spyOn(Deployment, "getDeploymentsBasedOnFilters")
+      .mockReturnValueOnce(Promise.reject("Error"));
+    try {
+      await getDeployments(initObject, MOCKED_VALUES);
+      expect(true).toBe(false);
+    } catch (e) {
+      expect(e.message).toBe("Error");
+    }
+  });
+  it("postive test", async () => {
+    jest
+      .spyOn(Deployment, "getDeploymentsBasedOnFilters")
+      .mockReturnValueOnce(Promise.resolve(mockedDeps));
+    const results = await getDeployments(initObject, MOCKED_VALUES);
+    expect(results).toEqual(mockedDeps);
+  });
 });
 
 describe("Watch get deployments", () => {
   test("watch get deployments", async () => {
     jest.useFakeTimers();
+    jest
+      .spyOn(get, "getDeployments")
+      .mockReturnValue(Promise.resolve(mockedDeps));
     const values = getMockedValues();
     values.outputFormat = OUTPUT_FORMAT.WIDE;
 
@@ -244,8 +257,7 @@ describe("Watch get deployments", () => {
 
 describe("Introspect deployments", () => {
   test("verify basic fields are defined", async () => {
-    const deployments = await getDeployments(initObject, getMockedValues());
-    deployments.forEach((deployment: Deployment) => {
+    mockedDeps.forEach((deployment: Deployment) => {
       const dep = deployment as Deployment;
 
       // Make sure the basic fields are defined
@@ -268,11 +280,10 @@ describe("Introspect deployments", () => {
 
 describe("Print deployments", () => {
   test("verify print deployments", async () => {
-    const deployments = await getDeployments(initObject, getMockedValues());
-    let table = printDeployments(deployments, processOutputFormat("json"));
+    let table = printDeployments(mockedDeps, processOutputFormat("normal"));
     expect(table).not.toBeUndefined();
     const deployment = [
-      "",
+      "2019-08-30T21:05:19.047Z",
       "hello-bedrock",
       "7468ca0a24e1",
       "c626394",
@@ -286,26 +297,25 @@ describe("Print deployments", () => {
       6047,
       "✓"
     ];
-    table!.forEach((field, index, array) => {
-      if (field[2] === deployment[2]) {
-        for (let i = 1; i < field.length; i++) {
-          expect(field[i]).toEqual(deployment[i]);
-        }
-        expect(field).toHaveLength(13);
-      }
-    });
 
-    table = printDeployments(deployments, processOutputFormat("json"), 3);
+    const matchItems = table!.filter(field => field[2] === deployment[2]);
+    expect(matchItems).toHaveLength(1); // one matching row
+
+    (matchItems[0] as Deployment[]).forEach((field, i) => {
+      expect(field).toEqual(deployment[i]);
+    });
+    expect(matchItems[0]).toHaveLength(13);
+
+    table = printDeployments(mockedDeps, processOutputFormat("normal"), 3);
     expect(table).toHaveLength(3);
   });
 });
 
 describe("Output formats", () => {
   test("verify wide output", async () => {
-    const deployments = await getDeployments(initObject, getMockedValues());
-    const table = printDeployments(deployments, processOutputFormat("wide"));
+    const table = printDeployments(mockedDeps, processOutputFormat("wide"));
     expect(table).not.toBeUndefined();
-    table!.forEach((field, index, array) => {
+    table!.forEach(field => {
       expect(field).toHaveLength(17);
     });
   });
