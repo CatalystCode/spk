@@ -18,6 +18,11 @@ export enum OUTPUT_FORMAT {
   JSON = 2
 }
 
+/**
+ * Interface for capturing all the
+ * objects and key during the initialization
+ * process
+ */
 export interface IInitObject {
   config: IConfigYaml;
   clusterPipeline: AzureDevOpsPipeline;
@@ -25,6 +30,10 @@ export interface IInitObject {
   key: string;
   srcPipeline: AzureDevOpsPipeline;
 }
+
+/**
+ * Command Line values from the commander
+ */
 export interface ICommandOptions {
   watch: boolean;
   output: string;
@@ -37,11 +46,22 @@ export interface ICommandOptions {
   top: string;
 }
 
+/**
+ * Validated commandline values. After verify top value and
+ * the output format.
+ */
 export interface IValidatedOptions extends ICommandOptions {
   nTop: number;
   outputFormat: OUTPUT_FORMAT;
 }
 
+/**
+ * Validating the options values from commander.
+ *
+ * @param opts options values from commander
+ * @return validated values
+ * @throws Error if opts.top is not a positive integer
+ */
 export const validateValues = (opts: ICommandOptions): IValidatedOptions => {
   let top = 0; // no limits
   if (opts.top) {
@@ -67,6 +87,13 @@ export const validateValues = (opts: ICommandOptions): IValidatedOptions => {
   };
 };
 
+/**
+ * Executes the command, can all exit function with 0 or 1
+ * when command completed successfully or failed respectively.
+ *
+ * @param opts validated option values
+ * @param exitFn exit function
+ */
 export const execute = async (
   opts: ICommandOptions,
   exitFn: (status: number) => Promise<void>
@@ -147,6 +174,7 @@ export const getDeployments = (
     )
       .then((deployments: Deployment[]) => {
         if (values.outputFormat === OUTPUT_FORMAT.JSON) {
+          // tslint:disable-next-line: no-console
           console.log(JSON.stringify(deployments, null, 2));
           resolve(deployments);
         } else {
@@ -358,6 +386,7 @@ export const printDeployments = (
       table.push(row);
     });
 
+    // tslint:disable-next-line: no-console
     console.log("\n" + table.toString());
     return table;
   } else {
