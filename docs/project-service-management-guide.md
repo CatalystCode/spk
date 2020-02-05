@@ -77,6 +77,8 @@ This guide assumes a few things:
    [release](https://github.com/catalystcode/spk/releases).
 6. The user has
    [Azure CLI installed](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest).
+7. The user is running [git](http://git-scm.org) version
+   [2.22](https://github.blog/2019-06-07-highlights-from-git-2-22/) or later.
 
 ## Components
 
@@ -172,10 +174,7 @@ repository.
   [cloud-native](https://github.com/microsoft/fabrikate-definitions/tree/master/definitions/fabrikate-cloud-native)
   stack as a initial sample component.
   ```
-  spk hld init
-  git add -A
-  git commit -m "Initializing HLD repository with the cloud-native stack."
-  git push -u origin --all
+  spk hld init --git-push
   ```
 - Deploy the Manifest Generation pipeline (optional flag parameters can be used
   if `spk` was not intialized)
@@ -191,11 +190,11 @@ repository.
 These repositories hold the application code and its associated Dockerfiles.
 Additionally, these repositories can hold one (single application) or more
 (monorepository) applications depending on usecase and configuration. Typically,
-each repository should be configured with a "hld-lifecycle" Azure DevOps pipeline
-that will add all managed applications inside the repository to the High Level
-Definition Repository. Additionally, each application inside the repository
-should also have an associated Azure DevOps multi-stage pipeline that both
-builds and deploys the latest Docker image to Azure Container Registry and
+each repository should be configured with a "hld-lifecycle" Azure DevOps
+pipeline that will add all managed applications inside the repository to the
+High Level Definition Repository. Additionally, each application inside the
+repository should also have an associated Azure DevOps multi-stage pipeline that
+both builds and deploys the latest Docker image to Azure Container Registry and
 updates the associated configuation in the HLD repository with the latest image
 tag.
 
@@ -280,7 +279,7 @@ application repositories
 **NOTE** `spk service` command documentation can be found
 [here](/docs/service-management.md).
 
-### Varible Groups
+### Variable Groups
 
 TBD
 
