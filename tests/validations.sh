@@ -260,6 +260,8 @@ echo "Successfully reached the end of the service validations scripts."
 # spk deployment get
 cd $TEST_WORKSPACE
 cd ..
+pwd
+ls
 export sa_access_key=$(echo "$sa_access_key" | tr -d '"')
 spk init -f ./spk-config-test.yaml
 export output=$(spk deployment get -o json > file.json )
