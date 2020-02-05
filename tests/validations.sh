@@ -31,11 +31,11 @@ echo "AZ_STORAGE_ACCOUNT: $AZ_STORAGE_ACCOUNT"
 branchName=myFeatureBranch
 FrontEnd=fabrikam.acme.frontend
 BackEnd=fabrikam.acme.backend
-hld_dir=fabrikam-hld
-manifests_dir=fabrikam-manifests
+export hld_dir=fabrikam-hld
+export manifests_dir=fabrikam-manifests
 vg_name=fabrikam-vg
-sat_name=fabrikamtestdeployments
-sa_partition_key="integration-test"
+export sat_name=fabrikamtestdeployments
+export sa_partition_key="integration-test"
 services_dir=services
 mono_repo_dir=fabrikam2019
 services_full_dir="$TEST_WORKSPACE/$mono_repo_dir/$services_dir"
