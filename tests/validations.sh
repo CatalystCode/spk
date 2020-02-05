@@ -257,12 +257,9 @@ echo "Successfully reached the end of the service validations scripts."
 
 # TODO hook up helm chart, approve HLD pull request, verify manifest gen pipeline
 
-echo "\nBEGIN SPK INTROSPECTION TESTS\n"
-
 # spk deployment get
 cd $TEST_WORKSPACE
 cd ..
-pwd
 export sa_access_key=$(echo "$sa_access_key" | tr -d '"')
 spk init -f ./spk-config-test.yaml
 export output=$(spk deployment get -o json > file.json )
@@ -285,4 +282,4 @@ else
   exit 1
 fi
 
-echo "\nSPK INTROSPECTION TESTS COMPLETED SUCCESSFULLY"
+echo "\nSuccessfully reached the end of spk deployment get tests."
