@@ -275,7 +275,6 @@ else
 fi 
 
 # Compare $pipeline_id with the data returned by get. 
-echo "Checking if Pipeline id $pipeline_id was returned by get"
 pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organization $AZDO_ORG_URL --project $AZDO_PROJECT | jq '.[0].id')
 listofIds=$(cat file.json | jq '.[].srcToDockerBuild.id')
 
