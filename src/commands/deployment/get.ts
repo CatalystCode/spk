@@ -147,7 +147,7 @@ export const getDeployments = (
     )
       .then((deployments: Deployment[]) => {
         if (values.outputFormat === OUTPUT_FORMAT.JSON) {
-          logger.info(JSON.stringify(deployments, null, 2));
+          console.log(JSON.stringify(deployments, null, 2));
           resolve(deployments);
         } else {
           printDeployments(deployments, values.outputFormat, values.nTop);
@@ -358,7 +358,7 @@ export const printDeployments = (
       table.push(row);
     });
 
-    logger.info("\n" + table.toString());
+    console.log("\n" + table.toString());
     return table;
   } else {
     logger.info("No deployments found for specified filters.");
