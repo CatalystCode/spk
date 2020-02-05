@@ -1,16 +1,66 @@
-import Table from "cli-table";
+import path from "path";
 import Deployment from "spektate/lib/Deployment";
+import { loadConfiguration } from "../../config";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
-import * as Get from "./get";
+import {
+  execute,
+  getDeployments,
+  getStatus,
+  ICommandOptions,
+  IInitObject,
+  initialize,
+  IValidatedOptions,
+  OUTPUT_FORMAT,
+  printDeployments,
+  processOutputFormat,
+  validateValues,
+  watchGetDeployments
+} from "./get";
+import * as get from "./get";
+
+const MOCKED_INPUT_VALUES: ICommandOptions = {
+  buildId: "",
+  commitId: "",
+  deploymentId: "",
+  env: "",
+  imageTag: "",
+  output: "",
+  service: "",
+  top: "",
+  watch: false
+};
+
+const MOCKED_VALUES: IValidatedOptions = {
+  buildId: "",
+  commitId: "",
+  deploymentId: "",
+  env: "",
+  imageTag: "",
+  nTop: 0,
+  output: "",
+  outputFormat: OUTPUT_FORMAT.NORMAL,
+  service: "",
+  top: "",
+  watch: false
+};
+
+const getMockedInputValues = (): ICommandOptions => {
+  return JSON.parse(JSON.stringify(MOCKED_INPUT_VALUES));
+};
+
+const getMockedValues = (): IValidatedOptions => {
+  return JSON.parse(JSON.stringify(MOCKED_VALUES));
+};
 
 // tslint:disable-next-line: no-var-requires
 const data = require("./mocks/data.json");
 const fakeDeployments = data;
-jest.spyOn(Get, "getDeployments").mockImplementation(
+
+jest.spyOn(get, "getDeployments").mockImplementation(
   (outputFormat: any): Promise<Deployment[]> => {
     return new Promise<Deployment[]>(resolve => {
       const mockedDeps: Deployment[] = [];
@@ -37,18 +87,139 @@ jest.spyOn(Get, "getDeployments").mockImplementation(
   }
 );
 
-beforeAll(() => {
+let initObject: IInitObject;
+
+beforeAll(async () => {
   enableVerboseLogging();
+
+  const mockFileName = "src/commands/mocks/spk-config.yaml";
+  const filename = path.resolve(mockFileName);
+  process.env.test_name = "my_storage_account";
+  process.env.test_key = "my_storage_key";
+  loadConfiguration(filename);
+  initObject = await initialize();
 });
 
 afterAll(() => {
   disableVerboseLogging();
 });
 
-let deployments: Deployment[];
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe("Test getStatus function", () => {
+  it("with succeeded as value", () => {
+    expect(getStatus("succeeded")).toBe("\u2713");
+  });
+  it("with empty string as value", () => {
+    expect(getStatus("")).toBe("...");
+  });
+  it("with other string as value", () => {
+    expect(getStatus("test")).toBe("\u0445");
+  });
+});
+
+describe("Test processOutputFormat function", () => {
+  it("with empty string as value", () => {
+    expect(processOutputFormat("")).toBe(OUTPUT_FORMAT.NORMAL);
+  });
+  it("with normal string as value", () => {
+    expect(processOutputFormat("normal")).toBe(OUTPUT_FORMAT.NORMAL);
+  });
+  it("with wide string as value", () => {
+    expect(processOutputFormat("wide")).toBe(OUTPUT_FORMAT.WIDE);
+  });
+  it("with json string as value", () => {
+    expect(processOutputFormat("json")).toBe(OUTPUT_FORMAT.JSON);
+  });
+});
+
+describe("Test validateValues function", () => {
+  it("positive test: valid values", () => {
+    const vals = validateValues(MOCKED_INPUT_VALUES);
+    expect(vals.nTop).toBe(0);
+    expect(vals.outputFormat).toBe(OUTPUT_FORMAT.NORMAL);
+  });
+  it("positive test: valid values with output format as JSON", () => {
+    const mockedValues = getMockedInputValues();
+    mockedValues.output = "json";
+    const vals = validateValues(mockedValues);
+    expect(vals.nTop).toBe(0);
+    expect(vals.outputFormat).toBe(OUTPUT_FORMAT.JSON);
+  });
+  it("positive test: valid values with output format as wiDE", () => {
+    const mockedValues = getMockedInputValues();
+    mockedValues.output = "wiDE";
+    const vals = validateValues(mockedValues);
+    expect(vals.nTop).toBe(0);
+    expect(vals.outputFormat).toBe(OUTPUT_FORMAT.WIDE);
+  });
+  it("positive test: valid values with top = 5", () => {
+    const mockedValues = getMockedValues();
+    mockedValues.top = "5";
+    const vals = validateValues(mockedValues);
+    expect(vals.nTop).toBe(5);
+    expect(vals.outputFormat).toBe(OUTPUT_FORMAT.NORMAL);
+  });
+  it("negative test: valid values with top = -5", () => {
+    const mockedValues = getMockedValues();
+    mockedValues.top = "-5";
+    try {
+      validateValues(mockedValues);
+    } catch (e) {
+      expect(e.message).toBe(
+        "value for top option has to be a positive number"
+      );
+    }
+  });
+});
+
+describe("Test execute function", () => {
+  it("positive test", async () => {
+    jest
+      .spyOn(get, "initialize")
+      .mockReturnValueOnce(Promise.resolve(initObject));
+    jest.spyOn(get, "getDeployments").mockReturnValueOnce(Promise.resolve([]));
+    const exitFn = jest.fn();
+    await execute(getMockedInputValues(), exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[0]]);
+  });
+  it("positive test with watch", async () => {
+    jest
+      .spyOn(get, "initialize")
+      .mockReturnValueOnce(Promise.resolve(initObject));
+    jest.spyOn(get, "watchGetDeployments").mockReturnValueOnce();
+    const exitFn = jest.fn();
+
+    const mockedVals = getMockedInputValues();
+    mockedVals.watch = true;
+    await execute(mockedVals, exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[0]]);
+  });
+  it("negative test", async () => {
+    jest.spyOn(get, "initialize").mockReturnValueOnce(Promise.reject("Error"));
+    const exitFn = jest.fn();
+
+    await execute(getMockedInputValues(), exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[1]]);
+  });
+});
+
+describe("Test printDeployments function", () => {
+  it("without deployments", () => {
+    expect(printDeployments([], OUTPUT_FORMAT.NORMAL)).not.toBeDefined();
+  });
+});
+
 describe("Get deployments", () => {
   test("get some basic deployments", async () => {
-    deployments = await Get.getDeployments(Get.OUTPUT_FORMAT.WIDE);
+    const values = getMockedValues();
+    values.outputFormat = OUTPUT_FORMAT.WIDE;
+    const deployments = await getDeployments(initObject, values);
     expect(deployments).not.toBeUndefined();
     expect(deployments.length).not.toBeUndefined();
     logger.info("Got " + deployments.length + " deployments");
@@ -59,17 +230,21 @@ describe("Get deployments", () => {
 describe("Watch get deployments", () => {
   test("watch get deployments", async () => {
     jest.useFakeTimers();
-    Get.watchGetDeployments(Get.OUTPUT_FORMAT.WIDE);
-    expect(Get.getDeployments).toBeCalled();
+    const values = getMockedValues();
+    values.outputFormat = OUTPUT_FORMAT.WIDE;
+
+    watchGetDeployments(initObject, values);
+    expect(getDeployments).toBeCalled();
     jest.advanceTimersByTime(6000);
-    expect(Get.getDeployments).toBeCalledTimes(3);
+    expect(getDeployments).toBeCalledTimes(2);
 
     jest.clearAllTimers();
   });
 });
 
 describe("Introspect deployments", () => {
-  test("verify basic fields are defined", () => {
+  test("verify basic fields are defined", async () => {
+    const deployments = await getDeployments(initObject, getMockedValues());
     deployments.forEach((deployment: Deployment) => {
       const dep = deployment as Deployment;
 
@@ -92,11 +267,9 @@ describe("Introspect deployments", () => {
 });
 
 describe("Print deployments", () => {
-  test("verify print deployments", () => {
-    let table = Get.printDeployments(
-      deployments,
-      Get.processOutputFormat("json")
-    );
+  test("verify print deployments", async () => {
+    const deployments = await getDeployments(initObject, getMockedValues());
+    let table = printDeployments(deployments, processOutputFormat("json"));
     expect(table).not.toBeUndefined();
     const deployment = [
       "",
@@ -122,21 +295,15 @@ describe("Print deployments", () => {
       }
     });
 
-    table = Get.printDeployments(
-      deployments,
-      Get.processOutputFormat("json"),
-      3
-    );
+    table = printDeployments(deployments, processOutputFormat("json"), 3);
     expect(table).toHaveLength(3);
   });
 });
 
 describe("Output formats", () => {
-  test("verify wide output", () => {
-    const table = Get.printDeployments(
-      deployments,
-      Get.processOutputFormat("wide")
-    );
+  test("verify wide output", async () => {
+    const deployments = await getDeployments(initObject, getMockedValues());
+    const table = printDeployments(deployments, processOutputFormat("wide"));
     expect(table).not.toBeUndefined();
     table!.forEach((field, index, array) => {
       expect(field).toHaveLength(17);
