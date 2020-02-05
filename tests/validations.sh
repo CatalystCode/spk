@@ -253,6 +253,37 @@ echo "Attempting to approve pull request: '$pr_title'"
 # Get the id of the pr created and set the PR to be approved
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
 
-echo "Successfully reached the end of the validations scripts."
+echo "Successfully reached the end of the service validations scripts."
 
 # TODO hook up helm chart, approve HLD pull request, verify manifest gen pipeline
+
+echo "\nBEGIN SPK INTROSPECTION TESTS\n"
+
+# spk deployment get
+cd $TEST_WORKSPACE
+cd ..
+pwd
+export sa_access_key=$(echo "$sa_access_key" | tr -d '"')
+spk init -f ./spk-config-test.yaml
+export output=$(spk deployment get -f file.json -o json)
+length=$(cat file.json | jq 'length')
+if (( length > 0 )); then
+  echo "$length deployments were returned by spk deployment get"
+else 
+  echo "Error: Empty JSON was returned from spk deployment get"
+  exit 1
+fi 
+
+# Compare $pipeline_id with the data returned by get. 
+echo "Checking if Pipeline id $pipeline_id was returned by get"
+pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organization $AZDO_ORG_URL --project $AZDO_PROJECT | jq '.[0].id')
+listofIds=$(cat file.json | jq '.[].srcToDockerBuild.id')
+
+if [[ $listofIds == *"$pipeline1id"* ]]; then
+  echo "Pipeline Id $pipeline1id exists. Verified that data exists in storage and could be retrieved."
+else
+  echo "Error: Pipeline Id $pipeline1id is not found in data returned from get. "
+  exit 1
+fi
+
+echo "\nSPK INTROSPECTION TESTS COMPLETED SUCCESSFULLY"
