@@ -47,6 +47,7 @@ This guide assumes a few things as requirements to use this automation:
    [release](https://github.com/catalystcode/spk/releases).
 5. The user has
    [Azure CLI installed](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest).
+7. The user is running [git](http://git-scm.org) version [2.22](https://github.blog/2019-06-07-highlights-from-git-2-22/) or later.
 
 ## Installing and Configuring SPK
 
@@ -124,10 +125,7 @@ applied to the Kubernetes cluster by Flux.
   [cloud-native](https://github.com/microsoft/fabrikate-definitions/tree/master/definitions/fabrikate-cloud-native)
   stack as a initial sample component.
   ```
-  spk hld init
-  git add -A
-  git commit -m "Initializing HLD repository with the cloud-native stack."
-  git push -u origin --all
+  spk hld init --git-push
   ```
 
 **NOTE** `spk hld` command documentation can be found
@@ -271,7 +269,7 @@ application repositories
 **NOTE** `spk service` command documentation can be found
 [here](/docs/service-management.md).
 
-### Varible Groups
+### Variable Groups
 
 TBD
 
