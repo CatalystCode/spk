@@ -1,6 +1,5 @@
 import Table from "cli-table";
 import commander from "commander";
-import * as fs from "fs";
 import Deployment from "spektate/lib/Deployment";
 import AzureDevOpsPipeline from "spektate/lib/pipeline/AzureDevOpsPipeline";
 import IPipeline from "spektate/lib/pipeline/Pipeline";
@@ -61,7 +60,6 @@ export const getCommandDecorator = (command: commander.Command): void => {
       "Output the information one of the following: normal, wide, JSON"
     )
     .option("-w, --watch", "Watch the deployments for a live view")
-    .option("-f, --file <filename>", "File name to write output into")
     .action(async opts => {
       try {
         await initialize();
@@ -74,8 +72,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
             opts.commitId,
             opts.service,
             opts.deploymentId,
-            opts.top,
-            opts.file
+            opts.top
           );
         } else {
           await getDeployments(
@@ -86,8 +83,7 @@ export const getCommandDecorator = (command: commander.Command): void => {
             opts.commitId,
             opts.service,
             opts.deploymentId,
-            opts.top,
-            opts.file
+            opts.top
           );
         }
       } catch (err) {
@@ -129,8 +125,7 @@ export const getDeployments = async (
   commitId?: string,
   service?: string,
   deploymentId?: string,
-  limit?: number,
-  fileName?: string
+  limit?: number
 ): Promise<Deployment[]> => {
   const config = Config();
   const key = await Config().introspection!.azure!.key;
@@ -151,31 +146,14 @@ export const getDeployments = async (
     deploymentId
   ).then((deployments: Deployment[]) => {
     if (outputFormat === OUTPUT_FORMAT.JSON) {
-      writeOutput(JSON.stringify(deployments, null, 2), fileName);
+      // Use console.log since it helps piping output to a file using > filename.json
+      // tslint:disable-next-line: no-console
+      console.log(JSON.stringify(deployments, null, 2));
     } else {
-      printDeployments(deployments, outputFormat, limit, fileName);
+      printDeployments(deployments, outputFormat, limit);
     }
     return deployments;
   });
-};
-
-/**
- * writes output to file or console
- * @param output output to be printed / written to file
- * @param fileName name of the file (optional)
- */
-const writeOutput = async (output: string, fileName?: string) => {
-  if (fileName) {
-    logger.info(`Writing output to ${fileName}`);
-    fs.writeFile(fileName, output, err => {
-      if (err) {
-        logger.error(`Error occurred while writing to file. \n${err}`);
-        process.exit(1);
-      }
-    });
-  } else {
-    logger.info(output);
-  }
 };
 
 /**
@@ -241,8 +219,7 @@ export const watchGetDeployments = (
   commitId?: string,
   service?: string,
   deploymentId?: string,
-  limit?: number,
-  fileName?: string
+  limit?: number
 ): void => {
   const timeInterval = 5000;
 
@@ -255,8 +232,7 @@ export const watchGetDeployments = (
     commitId,
     service,
     deploymentId,
-    limit,
-    fileName
+    limit
   );
 
   setInterval(() => {
@@ -268,8 +244,7 @@ export const watchGetDeployments = (
       commitId,
       service,
       deploymentId,
-      limit,
-      fileName
+      limit
     );
   }, timeInterval);
 };
@@ -282,8 +257,7 @@ export const watchGetDeployments = (
 export const printDeployments = (
   deployments: Deployment[],
   outputFormat: OUTPUT_FORMAT,
-  limit?: number,
-  fileName?: string
+  limit?: number
 ): Table | undefined => {
   if (deployments.length > 0) {
     let row = [];
@@ -409,8 +383,9 @@ export const printDeployments = (
         break;
       }
     }
-
-    writeOutput("\n" + table.toString(), fileName);
+    // Use console.log since it helps piping output to a file using > filename.txt
+    // tslint:disable-next-line: no-console
+    console.log("\n" + table.toString());
     return table;
   } else {
     logger.info("No deployments found for specified filters.");
