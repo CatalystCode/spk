@@ -265,7 +265,7 @@ cd ..
 pwd
 export sa_access_key=$(echo "$sa_access_key" | tr -d '"')
 spk init -f ./spk-config-test.yaml
-export output=$(spk deployment get -f file.json -o json)
+export output=$(spk deployment get -o json > file.json )
 length=$(cat file.json | jq 'length')
 if (( length > 0 )); then
   echo "$length deployments were returned by spk deployment get"
