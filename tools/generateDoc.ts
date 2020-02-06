@@ -26,9 +26,14 @@ const listCommands = (
 ): { [key: string]: ICommandBuildElements } => {
   const mainCommands: { [key: string]: ICommandBuildElements } = {};
   allCommands.forEach(cmd => {
-    const level1 = cmd.command;
+    let level1 = cmd.command;
+    if (level1 === "commands") {
+      level1 = "";
+    } else {
+      level1 = level1 + " ";
+    }
     cmd.subcommands.forEach(c => {
-      const key = `${level1} ${c.command.replace(/ .+/, "")}`;
+      const key = `${level1}${c.command.replace(/ .+/, "")}`;
       mainCommands[key] = c;
     });
   });
@@ -37,6 +42,7 @@ const listCommands = (
 
 const dir = path.join(process.cwd(), "src", "commands");
 const commandDirs = getSubDirectories(dir);
+commandDirs.unshift(dir);
 
 const commands: ICommand[] = commandDirs
   .map(d => {
