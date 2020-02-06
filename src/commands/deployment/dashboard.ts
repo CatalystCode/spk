@@ -5,10 +5,9 @@ import { Config } from "../../config";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { getRepositoryName } from "../../lib/gitutils";
 import { exec } from "../../lib/shell";
-import { isPortNumberString } from "../../lib/validator";
+import { isPortNumberString, validatePrereqs } from "../../lib/validator";
 import { logger } from "../../logger";
 import { IConfigYaml } from "../../types";
-import { validatePrereqs } from "../init";
 import decorator from "./dashboard.decorator.json";
 
 export interface IIntrospectionManifest {

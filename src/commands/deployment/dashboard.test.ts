@@ -4,12 +4,12 @@ import path from "path";
 jest.mock("../../config");
 import { Config } from "../../config";
 import { exec } from "../../lib/shell";
+import { validatePrereqs } from "../../lib/validator";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { validatePrereqs } from "../init";
 import {
   execute,
   extractManifestRepositoryInformation,
