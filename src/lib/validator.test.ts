@@ -1,9 +1,13 @@
+import path from "path";
+import { Config, loadConfiguration } from "../config";
 import {
   hasValue,
   isIntegerString,
   isPortNumberString,
-  validateForNonEmptyValue
+  validateForNonEmptyValue,
+  validatePrereqs
 } from "./validator";
+import mock from "mock-fs";
 
 describe("Tests on validator helper functions", () => {
   it("Test hasValue function", () => {
@@ -77,5 +81,44 @@ describe("Tests on validator helper functions", () => {
         })
       ).toBe("");
     });
+  });
+});
+
+const testvalidatePrereqs = (
+  global: boolean,
+  cmd: string,
+  expectedResult: boolean
+) => {
+  const filename = path.resolve("src/commands/mocks/spk-config.yaml");
+  process.env.test_name = "my_storage_account";
+  process.env.test_key = "my_storage_key";
+  loadConfiguration(filename);
+  const fakeBinaries: string[] = [cmd];
+  const result = validatePrereqs(fakeBinaries, global);
+
+  if (global) {
+    const config = Config();
+    expect(config.infra!).toBeDefined();
+    expect(config.infra!.checks).toBeDefined();
+    expect(config.infra!.checks![cmd]!).toBe(expectedResult);
+  } else {
+    expect(result).toBe(expectedResult);
+  }
+};
+
+describe("Validating executable prerequisites in spk-config", () => {
+  test("Validate that exectuable boolean matches in spk-config - global = true", () => {
+    // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
+    testvalidatePrereqs(true, "foobar", false);
+  });
+  test("Validate that exectuable boolean matches in spk-config - global = false", () => {
+    // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
+    testvalidatePrereqs(false, "foobar", false);
+  });
+  test("positive test - global = true", () => {
+    testvalidatePrereqs(true, "cd", true);
+  });
+  test("positive test - global = false", () => {
+    testvalidatePrereqs(false, "cd", true);
   });
 });
