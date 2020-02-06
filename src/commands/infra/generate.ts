@@ -247,7 +247,6 @@ export const validateRemoteSource = async (
     // Clone remote source
     await infraCommon.repoClone(sourcePath, source);
     // Checkout tagged version
-    logger.info(`Checking out template version: ${version}`);
     await gitCheckout(sourcePath, version);
   } catch (err) {
     if (err instanceof Error) {
@@ -573,9 +572,7 @@ export const generateTfvars = (
   if (!definition) {
     return [];
   }
-  return Object.keys(definition).map(
-    k => `${k} = "${definition[k].replace(/"/g, '\\"')}"`
-  );
+  return Object.keys(definition).map(k => `${k} = "${definition[k]}"`);
 };
 
 /**
