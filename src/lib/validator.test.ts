@@ -7,7 +7,6 @@ import {
   validateForNonEmptyValue,
   validatePrereqs
 } from "./validator";
-import mock from "mock-fs";
 
 describe("Tests on validator helper functions", () => {
   it("Test hasValue function", () => {
