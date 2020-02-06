@@ -114,10 +114,4 @@ describe("Validating executable prerequisites in spk-config", () => {
     // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
     testvalidatePrereqs(false, "foobar", false);
   });
-  test("positive test - global = true", () => {
-    testvalidatePrereqs(true, "cd", true);
-  });
-  test("positive test - global = false", () => {
-    testvalidatePrereqs(false, "cd", true);
-  });
 });
