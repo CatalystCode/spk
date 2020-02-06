@@ -24,7 +24,7 @@ echo "AZDO_ORG: $AZDO_ORG"
 echo "AZDO_ORG_URL: $AZDO_ORG_URL"
 echo "ACR_NAME: $ACR_NAME"
 
-branchName=myFeatureBranch
+branchName=dev-ring
 FrontEnd=fabrikam.acme.frontend
 BackEnd=fabrikam.acme.backend
 hld_dir=fabrikam-hld
@@ -127,9 +127,6 @@ push_remote_git_repo $AZDO_ORG_URL $AZDO_PROJECT $helm_charts_dir
 cd $TEST_WORKSPACE
 create_spk_project_and_service $AZDO_ORG_URL $AZDO_PROJECT $SPK_LOCATION $TEST_WORKSPACE $frontend_repo_dir $vg_name "http://$repo_url"
 
-# HACK because of https://github.com/microsoft/bedrock/issues/907
-echo "sleeping so I can manually edit file on disk before git push" && sleep 60
-
 git add -A
 # See if the remote repo exists
 repo_exists $AZDO_ORG_URL $AZDO_PROJECT $frontend_repo_dir
@@ -175,21 +172,48 @@ pipeline_created=$(az pipelines show --name $frontend_pipeline_name --org $AZDO_
 
 # Verify frontend service pipeline run was successful
 verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15
-# TODO: Bug fix incoming --> Pipeline fails see https://github.com/microsoft/bedrock/issues/907
-# TODO: Approve the PR this build creates on the HLD
 
-# The PR starts with "Merge DEPLOY/fabrikam-frontend"
-# After approved the HLD to Manifest pipeline will run
-# We then need to do a git pull on the manifest repo we have locally and validate that the docker image tag is correct.
-# Then perhaps kubectl push or have flux setup to pull (harder)
+echo "Finding pull request that $frontend_pipeline_name pipeline created..."
+approve_pull_request_v2 $AZDO_ORG_URL $AZDO_PROJECT "Updating $frontend_repo_dir-service image tag to master"
 
-echo "Finding pull request in $frontend_repo_dir-lifecycle pipeline created (triggered from $frontend_pipeline_name pipeline"
-approve_pull_request_v2 $AZDO_ORG_URL $AZDO_PROJECT "Merge DEPLOY/$frontend_repo_dir"
 
-# TODO: Bug fix incoming --> Image tagnot updated: https://github.com/microsoft/bedrock/issues/908
+
+# TODO: Bug fix incoming --> Image tag not updated: https://github.com/microsoft/bedrock/issues/908
 # Uncomment below when fixed
 # echo "Finding pull request that $frontend_pipeline_name pipeline created..."
 # approve_pull_request_v2 $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+
+# NOTE ##################################
+# The PR starts with "Merge DEPLOY/fabrikam-frontend"
+# After approved the HLD to Manifest pipeline will run
+# We then need to do a git pull on the manifest repo we have locally and validate that the docker image tag is correct.
+# Then perhaps kubectl push or have flux setup to pull
+
+# Uncomment below when fixed
+# echo "Finding pull request in $frontend_repo_dir-lifecycle pipeline created (triggered from $frontend_pipeline_name pipeline"
+# approve_pull_request_v2 $AZDO_ORG_URL $AZDO_PROJECT "Merge DEPLOY/$frontend_repo_dir"
+
+# Start creating a service revision
+echo "Creating service revision"
+git branch $branchName
+git checkout $branchName
+echo "# My New Added File" >> myNewFile.md
+git add myNewFile.md
+git commit -m "Adding my new file"
+git push --set-upstream origin $branchName
+
+# Create a PR for the change
+current_time=$(date +"%Y-%m-%d-%H-%M-%S")
+pr_title="Automated Test PR $current_time"
+echo "Creating pull request: '$pr_title'" 
+spk service create-revision -t "$pr_title" -d "Adding my new file" --org-name $AZDO_ORG --personal-access-token $ACCESS_TOKEN_SECRET --remote-url $frontend_repo_url >> $TEST_WORKSPACE/log.txt
+
+echo "Attempting to approve pull request: '$pr_title'" 
+# Get the id of the pr created and set the PR to be approved
+approve_pull_request_v2 $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
+
+echo "Successfully reached the end of the validations scripts."
+
 # --------------------------------
 
 

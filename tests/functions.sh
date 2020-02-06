@@ -416,7 +416,7 @@ function create_spk_project_and_service () {
     echo "$spk service create . -n "$repo_dir_name-service" -p "$repo_dir_name/chart" -g $helm_repo_url -b master"
     $spk service create . -n "$repo_dir_name-service" -p "$repo_dir_name/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
     directory_to_check="$TEST_WORKSPACE/$repo_dir_name"
-    file_we_expect=(".gitignore" "azure-pipelines.yaml" "Dockerfile" "maintainers.yaml" "hld-lifecycle.yaml" "spk.log" "bedrock.yaml") 
+    file_we_expect=(".gitignore" "build-update-hld.yaml" "Dockerfile" "maintainers.yaml" "hld-lifecycle.yaml" "spk.log" "bedrock.yaml") 
     validate_directory $directory_to_check "${file_we_expect[@]}"
 }   
 
@@ -531,7 +531,7 @@ function push_remote_git_repo () {
     git remote add origin https://service_account:$ACCESS_TOKEN_SECRET@$repo_url
     echo "git push"
     git push -u origin --all
-
+    
     cd ..
 }
 
