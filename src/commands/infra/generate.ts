@@ -198,10 +198,14 @@ export const gitFetchPull = async (
   sourcePath: string,
   safeLoggingUrl: string
 ) => {
-  // Make sure we have the latest version of all releases cached locally
-  await simpleGit(sourcePath).fetch("all");
-  await simpleGit(sourcePath).pull("origin", "master");
-  logger.info(`${safeLoggingUrl} already cloned. Performing 'git pull'...`);
+  try {
+    // Make sure we have the latest version of all releases cached locally
+    await simpleGit(sourcePath).fetch("all");
+    await simpleGit(sourcePath).pull("origin", "master");
+    logger.info(`${safeLoggingUrl} already cloned. Performing 'git pull'...`);
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const gitCheckout = async (sourcePath: string, version: string) => {
@@ -244,8 +248,13 @@ export const validateRemoteSource = async (
     `Checking if source repo: ${safeLoggingUrl} has been already cloned to: ${sourcePath}.`
   );
   try {
-    // Clone remote source
-    await infraCommon.repoClone(sourcePath, source);
+    // Check if .git folder exists in ${sourcePath}, if not, then clone
+    // if already cloned, 'git pull'
+    if (fs.existsSync(path.join(sourcePath, ".git"))) {
+      await gitFetchPull(sourcePath, safeLoggingUrl);
+    } else {
+      await gitClone(source, sourcePath);
+    }
     // Checkout tagged version
     await gitCheckout(sourcePath, version);
   } catch (err) {
@@ -261,7 +270,8 @@ export const validateRemoteSource = async (
           // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
           await fsextra.removeSync(sourcePath);
           createGenerated(sourcePath);
-          await infraCommon.repoClone(sourcePath, source);
+          await gitClone(source, sourcePath);
+          await gitFetchPull(sourcePath, safeLoggingUrl);
           // Checkout tagged version
           logger.info(`Checking out template version: ${version}`);
           await gitCheckout(sourcePath, version);
@@ -275,7 +285,8 @@ export const validateRemoteSource = async (
           // SPK will reassign the PAT for the cached directory by deleting the cache and resetting with the provided remote
           await fsextra.removeSync(sourcePath);
           createGenerated(sourcePath);
-          await infraCommon.repoClone(sourcePath, source);
+          await gitClone(source, sourcePath);
+          await gitFetchPull(sourcePath, safeLoggingUrl);
           // Checkout tagged version
           logger.info(`Checking out template version: ${version}`);
           await gitCheckout(sourcePath, version);
@@ -300,8 +311,12 @@ export const gitClone = async (
   source: string,
   sourcePath: string
 ): Promise<void> => {
-  await git.clone(source, `${sourcePath}`);
-  logger.info(`Cloning source repo to .spk/templates was successful.`);
+  try {
+    await git.clone(source, `${sourcePath}`);
+    logger.info(`Cloning source repo to .spk/templates was successful.`);
+  } catch (error) {
+    throw error;
+  }
 };
 
 /**
