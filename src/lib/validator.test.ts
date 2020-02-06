@@ -11,7 +11,7 @@ describe("Tests on validator helper functions", () => {
     expect(hasValue(undefined)).toBe(false);
     expect(hasValue(null)).toBe(false);
 
-    expect(hasValue(" ")).toBe(true);
+    expect(hasValue(" ")).toBe(false);
     expect(hasValue(" b ")).toBe(true);
     expect(hasValue(" a ")).toBe(true);
   });
@@ -61,7 +61,7 @@ describe("Tests on validator helper functions", () => {
       ).toBe("");
     });
     // positive tests
-    [" ", " b ", "a"].forEach(val => {
+    [" c ", " b ", "a"].forEach(val => {
       expect(
         validateForNonEmptyValue({
           error: "",
@@ -69,10 +69,10 @@ describe("Tests on validator helper functions", () => {
         })
       ).toBe("");
     });
-    [" ", " b ", "a"].forEach(val => {
+    [" b ", "a"].forEach(val => {
       expect(
         validateForNonEmptyValue({
-          error: "error",
+          error: "",
           value: val
         })
       ).toBe("");
