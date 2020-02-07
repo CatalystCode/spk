@@ -292,7 +292,9 @@ export const validateRemoteSource = async (
           await gitCheckout(sourcePath, version);
           logger.info(`Successfully re-cloned repo`);
         } else {
-          throw new Error(`Unable to determine error from retry cases ${err}`);
+          throw new Error(
+            `Unable to determine error from supported retry cases ${err.message}`
+          );
         }
       } catch (retryError) {
         throw new Error(`Failure error thrown during retry ${retryError}`);
