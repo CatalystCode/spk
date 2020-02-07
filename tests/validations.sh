@@ -283,4 +283,4 @@ else
   exit 1
 fi
 
-echo "\nSuccessfully reached the end of spk deployment get tests."
+echo "Successfully reached the end of spk deployment get tests."
