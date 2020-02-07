@@ -132,7 +132,12 @@ export const execute = async (
         opts.repository
       );
     } else if (hasValue(opts.p3) && hasValue(opts.manifestCommitId)) {
-      await updateManifestCommitId(tableInfo, opts.p3, opts.manifestCommitId);
+      await updateManifestCommitId(
+        tableInfo,
+        opts.p3,
+        opts.manifestCommitId,
+        opts.repository
+      );
     } else {
       throw new Error("No action could be performed for specified arguments.");
     }
