@@ -109,6 +109,7 @@ export const execute = async (
     await exitFn(1);
     return;
   }
+
   if (serviceName === "." && opts.displayName === "") {
     logger.error(
       `If specifying the current directory as service name, please incluce a display name using '-n'`
@@ -116,6 +117,18 @@ export const execute = async (
     await exitFn(1);
     return;
   }
+
+  if (opts.helmConfigGit !== "") {
+    try {
+      // tslint:disable-next-line: no-unused-expression
+      new URL(opts.helmConfigGit);
+    } catch (err) {
+      logger.error(`Provided helm git URL is invalid: ${opts.helmConfigGit}`);
+      await exitFn(1);
+      return;
+    }
+  }
+
   const projectPath = process.cwd();
   logger.verbose(`project path: ${projectPath}`);
 
