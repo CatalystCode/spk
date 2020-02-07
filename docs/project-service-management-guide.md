@@ -274,13 +274,26 @@ application repositories
 **NOTE** `spk service` command documentation can be found
 [here](/docs/service-management.md).
 
-### Variable Groups
+## Helm Charts
+
+To have spk's build pipelines work properly, an application needs an associated
+[Helm](https://helm.sh/) chart with specific variables.
+
+### Requirements
+
+TBD
+
+### Sample Helm Chart
+
+TBD
+
+## Variable Groups
 
 TBD
 
 - Done to hold secure credentials and secrets.
 
-### Pipelines
+## Pipelines
 
 TBD
 
