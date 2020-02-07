@@ -546,7 +546,10 @@ export const dirIteration = (
 /**
  * Creates "generated" directory if it does not already exists
  *
- * @param projectPath Path to the definition.yaml file
+ * @param source remote URL for cloning to cache
+ * @param sourcePath Path to the template folder cache
+ * @param safeLoggingUrl URL with redacted authentication
+ * @param version version of terraform template repo to download
  */
 export const createGenerated = (projectPath: string) => {
   mkdirp.sync(projectPath);
@@ -565,12 +568,6 @@ export const retryRemoteValidate = async (
     createGenerated(sourcePath);
     await gitClone(source, sourcePath);
     await gitFetchPull(sourcePath, safeLoggingUrl);
-    // logger.info(`Check1`);
-    // await gitClone(source, sourcePath);
-    // logger.info(`Check2`);
-    // await gitFetchPull(sourcePath, safeLoggingUrl);
-    // logger.info(`Check3`);
-    // Checkout tagged version
     logger.info(`Checking out template version: ${version}`);
     await gitCheckout(sourcePath, version);
     logger.info(`Successfully re-cloned repo`);
