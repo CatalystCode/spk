@@ -24,7 +24,8 @@ export const addSrcToACRPipeline = (
   pipelineId: string,
   imageTag: string,
   serviceName: string,
-  commitId: string
+  commitId: string,
+  repository?: string
 ): Promise<any> => {
   const entry: any = {};
   entry.RowKey = getRowKey();
@@ -33,6 +34,9 @@ export const addSrcToACRPipeline = (
   entry.service = serviceName;
   entry.commitId = commitId;
   entry.PartitionKey = tableInfo.partitionKey;
+  if (repository) {
+    entry.sourceRepo = repository.toLowerCase();
+  }
   return new Promise(resolve => {
     insertToTable(tableInfo, entry)
       .then(() => {
@@ -59,7 +63,8 @@ export const updateACRToHLDPipeline = (
   imageTag: string,
   hldCommitId: string,
   env: string,
-  pr?: string
+  pr?: string,
+  repository?: string
 ): Promise<any> => {
   return new Promise(resolve => {
     findMatchingDeployments(tableInfo, "imageTag", imageTag).then(entries => {
@@ -76,6 +81,9 @@ export const updateACRToHLDPipeline = (
           entry.env = env.toLowerCase();
           if (pr) {
             entry.pr = pr.toLowerCase();
+          }
+          if (repository) {
+            entry.hldRepo = repository.toLowerCase();
           }
           updateEntryInTable(tableInfo, entry)
             .then(() => {
@@ -100,6 +108,9 @@ export const updateACRToHLDPipeline = (
         if (pr) {
           entryToInsert.pr = pr.toLowerCase();
         }
+        if (repository) {
+          entryToInsert.hldRepo = repository.toLowerCase();
+        }
         insertToTable(tableInfo, entryToInsert)
           .then(() => {
             logger.info(
@@ -122,6 +133,9 @@ export const updateACRToHLDPipeline = (
       newEntry.imageTag = imageTag.toLowerCase();
       if (pr) {
         newEntry.pr = pr.toLowerCase();
+      }
+      if (repository) {
+        newEntry.hldRepo = repository.toLowerCase();
       }
       insertToTable(tableInfo, newEntry)
         .then(() => {
@@ -152,7 +166,8 @@ export const updateHLDToManifestPipeline = async (
   hldCommitId: string,
   pipelineId: string,
   manifestCommitId?: string,
-  pr?: string
+  pr?: string,
+  repository?: string
 ): Promise<any> => {
   const entries = await findMatchingDeployments(
     tableInfo,
@@ -167,7 +182,8 @@ export const updateHLDToManifestPipeline = async (
       hldCommitId,
       pipelineId,
       manifestCommitId,
-      pr
+      pr,
+      repository
     );
   }
   return updateHLDtoManifestHelper(
@@ -176,7 +192,8 @@ export const updateHLDToManifestPipeline = async (
     hldCommitId,
     pipelineId,
     manifestCommitId,
-    pr
+    pr,
+    repository
   );
 };
 
@@ -195,7 +212,8 @@ export const updateHLDtoManifestHelper = (
   hldCommitId: string,
   pipelineId: string,
   manifestCommitId?: string,
-  pr?: string
+  pr?: string,
+  repository?: string
 ): Promise<any> => {
   return new Promise(resolve => {
     let entryToInsert: any;
@@ -232,6 +250,9 @@ export const updateHLDtoManifestHelper = (
       if (pr) {
         entryToInsert.pr = pr.toLowerCase();
       }
+      if (repository) {
+        entryToInsert.manifestRepo = repository.toLowerCase();
+      }
       entryToInsert.hldCommitId = hldCommitId.toLowerCase();
       entryToInsert.RowKey = getRowKey();
       insertToTable(tableInfo, entryToInsert)
@@ -257,6 +278,9 @@ export const updateHLDtoManifestHelper = (
     }
     if (pr) {
       newEntry.pr = pr.toLowerCase();
+    }
+    if (repository) {
+      newEntry.manifestRepo = repository.toLowerCase();
     }
     insertToTable(tableInfo, newEntry)
       .then(() => {

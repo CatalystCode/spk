@@ -29,6 +29,7 @@ export interface ICommandOptions {
   partitionKey: string | undefined;
   service: string | undefined;
   tableName: string | undefined;
+  repository: string | undefined;
 }
 
 /**
@@ -67,7 +68,8 @@ export const handlePipeline1 = async (
     opts.p1!,
     opts.imageTag,
     opts.service,
-    opts.commitId
+    opts.commitId,
+    opts.repository
   );
 };
 
@@ -90,7 +92,8 @@ export const handlePipeline2 = async (
     opts.imageTag,
     opts.hldCommitId,
     opts.env,
-    opts.pr
+    opts.pr,
+    opts.repository
   );
 };
 
@@ -125,7 +128,8 @@ export const execute = async (
         opts.hldCommitId!,
         opts.p3!,
         opts.manifestCommitId,
-        opts.pr
+        opts.pr,
+        opts.repository
       );
     } else if (hasValue(opts.p3) && hasValue(opts.manifestCommitId)) {
       await updateManifestCommitId(tableInfo, opts.p3, opts.manifestCommitId);
