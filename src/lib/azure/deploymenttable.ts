@@ -305,7 +305,8 @@ export const updateHLDtoManifestHelper = (
 export const updateManifestCommitId = (
   tableInfo: IDeploymentTable,
   pipelineId: string,
-  manifestCommitId: string
+  manifestCommitId: string,
+  repository?: string
 ): Promise<any> => {
   return new Promise(resolve => {
     findMatchingDeployments(tableInfo, "p3", pipelineId).then(entries => {
@@ -313,6 +314,9 @@ export const updateManifestCommitId = (
       if (entries.length > 0) {
         const entry = entries[0];
         entry.manifestCommitId = manifestCommitId;
+        if (repository) {
+          entry.manifestRepo = repository.toLowerCase();
+        }
         updateEntryInTable(tableInfo, entry)
           .then(() => {
             logger.info(
