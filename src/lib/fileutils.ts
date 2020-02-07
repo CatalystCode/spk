@@ -2,13 +2,42 @@ import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
 import {
+  ACCESS_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
   VM_IMAGE
 } from "../lib/constants";
 import { logger } from "../logger";
-import { IAzurePipelinesYaml, IMaintainersFile, IUser } from "../types";
+import {
+  IAccessYaml,
+  IAzurePipelinesYaml,
+  IMaintainersFile,
+  IUser
+} from "../types";
+
+/**
+ * Create an access.yaml file for fabrikate authorization. Should only be used by spk hld reconcile, which is an idempotent operation.
+ * @param accessYamlPath
+ * @param gitRepoUrl
+ */
+export const generateAccessYaml = (
+  accessYamlPath: string,
+  gitRepoUrl: string
+) => {
+  const accessYaml: IAccessYaml = {
+    [gitRepoUrl]: "ACCESS_TOKEN_SECRET"
+  };
+
+  const filePath = path.resolve(path.join(accessYamlPath, ACCESS_FILENAME));
+
+  // Always overwrite what exists.
+  fs.writeFileSync(
+    filePath,
+    yaml.safeDump(accessYaml, { lineWidth: Number.MAX_SAFE_INTEGER }),
+    "utf8"
+  );
+};
 
 /**
  * Outputs a bash string for a _safe_ source branch string -- a string where all
@@ -204,7 +233,7 @@ export const serviceBuildAndUpdatePipeline = (
                   `# Initialization`,
                   `verify_access_token`,
                   `init`,
-                  `helm init`,
+                  `helm_init`,
                   ``,
                   `# Fabrikate`,
                   `get_fab_version`,
@@ -539,7 +568,7 @@ const hldLifecyclePipelineYaml = () => {
           `# Initialization`,
           `verify_access_token`,
           `init`,
-          `helm init`,
+          `helm_init`,
           ``,
           `# Fabrikate`,
           `get_fab_version`,
