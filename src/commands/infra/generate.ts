@@ -549,7 +549,7 @@ export const dirIteration = (
  * @param source remote URL for cloning to cache
  * @param sourcePath Path to the template folder cache
  * @param safeLoggingUrl URL with redacted authentication
- * @param version version of terraform template repo to download
+ * @param version version of terraform template
  */
 export const createGenerated = (projectPath: string) => {
   mkdirp.sync(projectPath);
