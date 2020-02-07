@@ -63,12 +63,6 @@ tests.
 | spk hld init                      | ✅       |
 | spk hld install-manifest-pipeline | ✅       |
 
-## Ingress Route Management
-
-| Command                  | Coverage |
-| ------------------------ | -------- |
-| spk ingress-route create | 🚫       |
-
 ## Variable Group Management
 
 | Command                   | Coverage |
