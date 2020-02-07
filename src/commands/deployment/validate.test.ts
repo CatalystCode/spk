@@ -1,18 +1,18 @@
 // imports
-import { logger } from "@azure/keyvault-secrets";
-import * as path from "path";
 import uuid from "uuid/v4";
-import { Config, loadConfiguration } from "../../config";
+import * as update from "../../lib/azure/deploymenttable";
 import * as storage from "../../lib/azure/storage";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-
-// Mocks
-jest.mock("../../config");
-import * as update from "../../lib/azure/deploymenttable";
-import { isValidConfig, isValidStorageAccount } from "./validate";
-
-import { StorageManagementClient } from "@azure/arm-storage";
-import { deleteSelfTestData, writeSelfTestData } from "./validate";
+import { IConfigYaml } from "../../types";
+import {
+  deleteSelfTestData,
+  execute,
+  isValidConfig,
+  isValidStorageAccount,
+  runSelfTest,
+  writeSelfTestData
+} from "./validate";
+import * as validate from "./validate";
 
 jest.spyOn(storage, "getStorageManagementClient").mockImplementation(
   async (): Promise<any> => {
@@ -25,7 +25,6 @@ jest.spyOn(storage, "getStorageAccountKeys").mockImplementation(
     if (accountName === "epi-test") {
       return ["mock access key", "mock access key2"];
     }
-
     return [];
   }
 );
@@ -114,7 +113,7 @@ afterAll(() => {
 
 describe("Validate deployment configuration", () => {
   test("valid deployment configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       azure_devops: {
         org: uuid(),
         project: uuid()
@@ -122,192 +121,291 @@ describe("Validate deployment configuration", () => {
       introspection: {
         azure: {
           account_name: uuid(),
-          key: uuid(),
+          key: Promise.resolve(uuid()),
           partition_key: uuid(),
           table_name: uuid()
         }
       }
-    });
-    const isValid = await isValidConfig();
-    logger.info(`ret val: ${isValid}`);
-    expect(isValid).toBe(true);
+    };
+    await isValidConfig(config);
+  });
+});
+
+describe("test execute function", () => {
+  it("positive test", async () => {
+    jest
+      .spyOn(validate, "isValidConfig")
+      .mockReturnValueOnce(Promise.resolve());
+    jest
+      .spyOn(validate, "isValidStorageAccount")
+      .mockReturnValueOnce(Promise.resolve());
+    const exitFn = jest.fn();
+    await execute(
+      {
+        selfTest: false
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[0]]);
+  });
+  it("positive test with self test set", async () => {
+    jest
+      .spyOn(validate, "isValidConfig")
+      .mockReturnValueOnce(Promise.resolve());
+    jest
+      .spyOn(validate, "isValidStorageAccount")
+      .mockReturnValueOnce(Promise.resolve());
+    jest.spyOn(validate, "runSelfTest").mockReturnValueOnce(Promise.resolve());
+    const exitFn = jest.fn();
+    await execute(
+      {
+        selfTest: true
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[0]]);
+  });
+  it("negative test with self test set", async () => {
+    jest
+      .spyOn(validate, "isValidConfig")
+      .mockReturnValueOnce(Promise.reject(new Error("error")));
+    const exitFn = jest.fn();
+    await execute(
+      {
+        selfTest: true
+      },
+      exitFn
+    );
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[1]]);
+  });
+});
+
+describe("test runSelfTest function", () => {
+  it("positive test", async () => {
+    jest
+      .spyOn(validate, "writeSelfTestData")
+      .mockReturnValueOnce(Promise.resolve("buildId"));
+    jest
+      .spyOn(validate, "deleteSelfTestData")
+      .mockReturnValueOnce(Promise.resolve(true));
+
+    const config: IConfigYaml = {
+      introspection: {
+        azure: {
+          key: Promise.resolve(uuid()),
+          table_name: undefined
+        }
+      }
+    };
+
+    await runSelfTest(config);
+  });
+  it("negative test", async () => {
+    jest
+      .spyOn(validate, "writeSelfTestData")
+      .mockReturnValueOnce(Promise.resolve("buildId"));
+    jest
+      .spyOn(validate, "deleteSelfTestData")
+      .mockReturnValueOnce(Promise.resolve(false));
+
+    const config: IConfigYaml = {
+      introspection: {
+        azure: {
+          key: Promise.resolve(uuid()),
+          table_name: undefined
+        }
+      }
+    };
+    await runSelfTest(config);
+  });
+  it("negative test: error thrown", async () => {
+    jest
+      .spyOn(validate, "writeSelfTestData")
+      .mockReturnValueOnce(Promise.reject(new Error("error")));
+
+    const config: IConfigYaml = {
+      introspection: {
+        azure: {
+          key: Promise.resolve(uuid()),
+          table_name: undefined
+        }
+      }
+    };
+    await expect(runSelfTest(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment configuration", () => {
   test("no deployment configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: undefined
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.storage configuration", () => {
   test("missing deployment.storage", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: undefined
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.storage configuration", () => {
   test("missing deployment.storage.account_name configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
-          account_name: undefined
+          account_name: undefined,
+          key: Promise.resolve(uuid())
         }
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.storage configuration", () => {
   test("missing deployment.storage.table_name configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
+          key: Promise.resolve(uuid()),
           table_name: undefined
         }
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.storage configuration", () => {
   test("missing deployment.storage.partition_key configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
+          key: Promise.resolve(uuid()),
           partition_key: undefined
         }
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.storage configuration", () => {
   test("missing deployment.storage.key configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
-          key: undefined
+          key: Promise.resolve(undefined)
         }
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.pipeline configuration", () => {
   test("missing deployment.pipeline configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: undefined
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    const config: IConfigYaml = {
+      introspection: {
+        azure: {
+          key: Promise.resolve(undefined)
+        }
+      }
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.pipeline configuration", () => {
   test("missing deployment.pipeline.org configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       azure_devops: {
         org: undefined
+      },
+      introspection: {
+        azure: {
+          key: Promise.resolve(undefined)
+        }
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate missing deployment.pipeline configuration", () => {
   test("missing deployment.pipeline.project configuration", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       azure_devops: {
+        org: "org",
         project: undefined
+      },
+      introspection: {
+        azure: {
+          key: Promise.resolve(undefined)
+        }
       }
-    });
-    const isValid = await isValidConfig();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidConfig(config)).rejects.toThrow();
   });
 });
 
 describe("Validate storage account", () => {
   test("non-existing storage account", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
-          account_name: "non-existing-account-name"
+          account_name: "non-existing-account-name",
+          key: Promise.resolve(undefined)
         }
       }
-    });
-    const isValid = await isValidStorageAccount();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidStorageAccount(config)).rejects.toThrow();
   });
 
   test("existing storage account no keys", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
-          account_name: "epi-test-no-keys"
+          account_name: "epi-test-no-keys",
+          key: Promise.resolve(undefined)
         }
       }
-    });
-    const isValid = await isValidStorageAccount();
-
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidStorageAccount(config)).rejects.toThrow();
   });
 
-  test("existing storage account with valid key", async () => {
-    (Config as jest.Mock).mockReturnValue({
+  it("existing storage account with valid key", async () => {
+    const config: IConfigYaml = {
       introspection: {
         azure: {
           account_name: "epi-test",
-          key: "mock access key2"
+          key: Promise.resolve("mock access key2")
         }
       }
-    });
-    const isValid = await isValidStorageAccount();
-
-    expect(isValid).toBe(true);
+    };
+    await isValidStorageAccount(config);
   });
 
   test("existing storage account with invalid key", async () => {
-    (Config as jest.Mock).mockReturnValue({
+    const config: IConfigYaml = {
       introspection: {
         azure: {
           account_name: "epi-test",
-          key: "mock access key3"
+          key: Promise.resolve("mock access key3")
         }
       }
-    });
-
-    const isValid = await isValidStorageAccount();
-    expect(isValid).toBe(false);
+    };
+    await expect(isValidStorageAccount(config)).rejects.toThrow();
   });
 });
 
@@ -323,6 +421,19 @@ describe("Write self-test data", () => {
     expect(mockedDB).toHaveLength(1);
     expect(mockedDB[0].p1).toBe("500");
     expect(mockedDB[0].service).toBe("spk-self-test");
+  });
+  it("negative test", async () => {
+    jest
+      .spyOn(update, "addSrcToACRPipeline")
+      .mockReturnValueOnce(Promise.reject(new Error("error")));
+    await expect(
+      writeSelfTestData(
+        "test-key",
+        "test-name",
+        "test-partition-key",
+        "test-table-name"
+      )
+    ).rejects.toThrow();
   });
 });
 
