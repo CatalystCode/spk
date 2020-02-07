@@ -16,6 +16,7 @@ import path from "path";
 import shelljs from "shelljs";
 import uuid from "uuid/v4";
 import {
+  ACCESS_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
@@ -28,15 +29,17 @@ import {
   createTestMaintainersYaml,
   createTestServiceBuildAndUpdatePipelineYaml
 } from "../test/mockFactory";
-import { IAzurePipelinesYaml, IMaintainersFile } from "../types";
+import { IAccessYaml, IAzurePipelinesYaml, IMaintainersFile } from "../types";
 import {
   addNewServiceToMaintainersFile,
+  generateAccessYaml,
   generateDefaultHldComponentYaml,
   generateDockerfile,
   generateGitIgnoreFile,
   generateHldAzurePipelinesYaml,
   generateHldLifecyclePipelineYaml,
   generateServiceBuildAndUpdatePipelineYaml,
+  generateYamlScript,
   serviceBuildAndUpdatePipeline
 } from "./fileutils";
 
@@ -50,6 +53,45 @@ afterAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+describe("generateAccessYaml", () => {
+  const targetDirectory = "hld-repository";
+  const serviceDirectory = "my-service";
+  const writeSpy = jest.spyOn(fs, "writeFileSync");
+
+  beforeEach(() => {
+    mockFs({
+      "hld-repository": {
+        "my-service": {}
+      }
+    });
+  });
+
+  afterEach(() => {
+    mockFs.restore();
+  });
+
+  it("should generate the access.yaml in the filepath.", async () => {
+    const absTargetPath = path.resolve(
+      path.join(targetDirectory, serviceDirectory)
+    );
+    const expectedFilePath = path.join(absTargetPath, ACCESS_FILENAME);
+    const gitRepoUrl =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
+
+    const accessYaml: IAccessYaml = {};
+    accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
+
+    generateAccessYaml(absTargetPath, gitRepoUrl);
+
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      yaml.safeDump(accessYaml),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
 });
 
 describe("generateServiceBuildAndUpdatePipelineYaml", () => {
@@ -425,23 +467,30 @@ describe("serviceBuildUpdatePipeline", () => {
       );
       expect(hasCorrectIncludes).toBe(true);
 
-      let hasCorrecctVariableGroup1: boolean = false;
-      let hasCorrecctVariableGroup2: boolean = false;
+      let hasCorrectVariableGroup1: boolean = false;
+      let hasCorrectVariableGroup2: boolean = false;
       for (const [key, value] of Object.entries(azureYaml.variables!)) {
         const item: { group: string } = value as { group: string };
 
         if (item.group === variableGroups[0]) {
-          hasCorrecctVariableGroup1 = true;
+          hasCorrectVariableGroup1 = true;
         }
 
         if (item.group === variableGroups[1]) {
-          hasCorrecctVariableGroup2 = true;
+          hasCorrectVariableGroup2 = true;
         }
       }
 
       expect(hasCorrectIncludes).toBe(true);
-      expect(hasCorrecctVariableGroup1).toBe(true);
-      expect(hasCorrecctVariableGroup2).toBe(true);
+      expect(hasCorrectVariableGroup1).toBe(true);
+      expect(hasCorrectVariableGroup2).toBe(true);
     }
+  });
+});
+
+describe("generateYamlScript", () => {
+  test("'set -e' is injected as the first line", async () => {
+    const generated = generateYamlScript(["foo", "bar", "baz"]);
+    expect(generated.startsWith("set -e\n")).toBe(true);
   });
 });
