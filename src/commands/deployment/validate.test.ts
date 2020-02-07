@@ -1,6 +1,6 @@
 // imports
 import uuid from "uuid/v4";
-import * as update from "../../lib/azure/deploymenttable";
+import * as deploymenttable from "../../lib/azure/deploymenttable";
 import * as storage from "../../lib/azure/storage";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { IConfigYaml } from "../../types";
@@ -40,16 +40,16 @@ jest.spyOn(storage, "isStorageAccountNameAvailable").mockImplementation(
 );
 
 let mockedDB: any[] = [];
-const mockTableInfo: update.IDeploymentTable = {
+const mockTableInfo: deploymenttable.IDeploymentTable = {
   accountKey: "test",
   accountName: "test",
   partitionKey: "test",
   tableName: "test"
 };
 
-jest.spyOn(update, "findMatchingDeployments").mockImplementation(
+jest.spyOn(deploymenttable, "findMatchingDeployments").mockImplementation(
   (
-    tableInfo: update.IDeploymentTable,
+    tableInfo: deploymenttable.IDeploymentTable,
     filterName: string,
     filterValue: string
   ): Promise<any> => {
@@ -65,8 +65,8 @@ jest.spyOn(update, "findMatchingDeployments").mockImplementation(
   }
 );
 
-jest.spyOn(update, "insertToTable").mockImplementation(
-  (tableInfo: update.IDeploymentTable, entry: any): Promise<any> => {
+jest.spyOn(deploymenttable, "insertToTable").mockImplementation(
+  (tableInfo: deploymenttable.IDeploymentTable, entry: any): Promise<any> => {
     return new Promise(resolve => {
       mockedDB.push(entry);
       resolve(entry);
@@ -74,8 +74,8 @@ jest.spyOn(update, "insertToTable").mockImplementation(
   }
 );
 
-jest.spyOn(update, "deleteFromTable").mockImplementation(
-  (tableInfo: update.IDeploymentTable, entry: any): Promise<any> => {
+jest.spyOn(deploymenttable, "deleteFromTable").mockImplementation(
+  (tableInfo: deploymenttable.IDeploymentTable, entry: any): Promise<any> => {
     return new Promise(resolve => {
       if (mockedDB.length === 1 && mockedDB[0].p1 === "500") {
         mockedDB = [];
@@ -85,8 +85,8 @@ jest.spyOn(update, "deleteFromTable").mockImplementation(
   }
 );
 
-jest.spyOn(update, "updateEntryInTable").mockImplementation(
-  (tableInfo: update.IDeploymentTable, entry: any): Promise<any> => {
+jest.spyOn(deploymenttable, "updateEntryInTable").mockImplementation(
+  (tableInfo: deploymenttable.IDeploymentTable, entry: any): Promise<any> => {
     return new Promise(resolve => {
       mockedDB.forEach((row: any, index: number) => {
         if (row.RowKey === entry.RowKey) {
@@ -424,7 +424,7 @@ describe("Write self-test data", () => {
   });
   it("negative test", async () => {
     jest
-      .spyOn(update, "addSrcToACRPipeline")
+      .spyOn(deploymenttable, "addSrcToACRPipeline")
       .mockReturnValueOnce(Promise.reject(new Error("error")));
     await expect(
       writeSelfTestData(
