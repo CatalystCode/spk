@@ -14,8 +14,6 @@ import decorator from "./generate.decorator.json";
 import * as infraCommon from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
 
-const git = simpleGit();
-
 const DEF_YAML = "definition.yaml";
 
 interface ICommandOptions {
@@ -253,7 +251,8 @@ export const validateRemoteSource = async (
     if (fs.existsSync(path.join(sourcePath, ".git"))) {
       await gitFetchPull(sourcePath, safeLoggingUrl);
     } else {
-      await gitClone(source, sourcePath);
+      const git = simpleGit();
+      await gitClone(git, source, sourcePath);
     }
     // Checkout tagged version
     await gitCheckout(sourcePath, version);
@@ -304,6 +303,7 @@ export const validateRemoteSource = async (
  * @param sourcePath location to clone repo to
  */
 export const gitClone = async (
+  git: simpleGit.SimpleGit,
   source: string,
   sourcePath: string
 ): Promise<void> => {
@@ -566,7 +566,8 @@ export const retryRemoteValidate = async (
     // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
     fsExtra.removeSync(sourcePath);
     createGenerated(sourcePath);
-    await gitClone(source, sourcePath);
+    const git = simpleGit();
+    await gitClone(git, source, sourcePath);
     await gitFetchPull(sourcePath, safeLoggingUrl);
     logger.info(`Checking out template version: ${version}`);
     await gitCheckout(sourcePath, version);
