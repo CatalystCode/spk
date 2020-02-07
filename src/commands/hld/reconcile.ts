@@ -8,6 +8,8 @@ import shelljs, { TestOptions } from "shelljs";
 import { Bedrock } from "../../config";
 import { assertIsStringWithContent } from "../../lib/assertions";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
+import { generateAccessYaml } from "../../lib/fileutils";
+import { getOriginUrl } from "../../lib/gitutils";
 import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
 import {
   ITraefikMiddleware,
@@ -62,6 +64,23 @@ export interface IReconcileDependencies {
   writeFile: (path: string, contents: string) => void;
 
   test: (option: shelljs.TestOptions, path: string) => boolean;
+
+  getGitOrigin: (path?: string) => Promise<string>;
+
+  generateAccessYaml: (
+    absRepositoryPathInHldPath: string,
+    originUrl: string
+  ) => void;
+
+  createAccessYaml: (
+    getGitOrigin: (path?: string) => Promise<string>,
+    writeAccessYaml: (
+      absRepositoryPathInHldPath: string,
+      originUrl: string
+    ) => void,
+    absBedrockApplicationPath: string,
+    absRepositoryPathInHldPath: string
+  ) => void;
 
   createRepositoryComponent: (
     execCmd: (commandToRun: string) => Promise<IExecResult>,
@@ -139,6 +158,7 @@ export const execute = async (
 
     const reconcileDependencies: IReconcileDependencies = {
       addChartToRing,
+      createAccessYaml,
       createIngressRouteForRing,
       createMiddlewareForRing,
       createRepositoryComponent,
@@ -146,6 +166,8 @@ export const execute = async (
       createServiceComponent,
       createStaticComponent,
       exec: execAndLog,
+      generateAccessYaml,
+      getGitOrigin: getOriginUrl,
       test: shelljs.test,
       writeFile: writeFileSync
     };
@@ -154,7 +176,8 @@ export const execute = async (
       reconcileDependencies,
       bedrockConfig,
       repositoryName,
-      absHldPath
+      absHldPath,
+      absBedrockPath
     );
     await exitFn(0);
   } catch (err) {
@@ -189,7 +212,8 @@ export const reconcileHld = async (
   dependencies: IReconcileDependencies,
   bedrockYaml: IBedrockFile,
   repositoryName: string,
-  absHldPath: string
+  absHldPath: string,
+  absBedrockPath: string
 ) => {
   const { services: managedServices, rings: managedRings } = bedrockYaml;
 
@@ -203,6 +227,14 @@ export const reconcileHld = async (
 
   // Repository in HLD ie /path/to/hld/repositoryName/
   const absRepositoryInHldPath = path.join(absHldPath, repositoryName);
+
+  // Create access.yaml containing the bedrock application repo's URL in access.yaml.
+  await dependencies.createAccessYaml(
+    dependencies.getGitOrigin,
+    dependencies.generateAccessYaml,
+    absBedrockPath,
+    absRepositoryInHldPath
+  );
 
   for (const [serviceRelPath, serviceConfig] of Object.entries(
     managedServices
@@ -315,6 +347,24 @@ export const execAndLog = async (
     throw result.error;
   }
   return result;
+};
+
+export const createAccessYaml = async (
+  getGitOrigin: (path?: string) => Promise<string>,
+  writeAccessYaml: (
+    absRepositoryPathInHldPath: string,
+    originUrl: string
+  ) => void,
+  absBedrockApplicationPath: string,
+  absRepositoryPathInHldPath: string
+) => {
+  const originUrl = await getGitOrigin(absBedrockApplicationPath);
+
+  logger.info(
+    `Writing access.yaml for ${originUrl} to ${absRepositoryPathInHldPath}`
+  );
+
+  writeAccessYaml(absRepositoryPathInHldPath, originUrl);
 };
 
 const createIngressRouteForRing = (
