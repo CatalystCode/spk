@@ -1,6 +1,6 @@
 import commander from "commander";
 import fs from "fs";
-import fsextra from "fs-extra";
+import fsExtra from "fs-extra";
 import mkdirp from "mkdirp";
 import path from "path";
 import process from "process";
@@ -267,30 +267,24 @@ export const validateRemoteSource = async (
           logger.info(
             `Detected a refusal to merge unrelated histories, attempting to reset the cached folder to the remote: ${sourcePath}`
           );
-          // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
-          await fsextra.removeSync(sourcePath);
-          createGenerated(sourcePath);
-          await gitClone(source, sourcePath);
-          await gitFetchPull(sourcePath, safeLoggingUrl);
-          // Checkout tagged version
-          logger.info(`Checking out template version: ${version}`);
-          await gitCheckout(sourcePath, version);
-          logger.info(`Successfully re-cloned repo`);
+          await retryRemoteValidate(
+            source,
+            sourcePath,
+            safeLoggingUrl,
+            version
+          );
         }
         // Case 2: Remote source and cached repo have conflicting PATs
         else if (err.message.includes("Authentication failed")) {
           logger.info(
             `Detected an authentication failure with existing cache, attempting to reset the cached folder to the remote: ${sourcePath}`
           );
-          // SPK will reassign the PAT for the cached directory by deleting the cache and resetting with the provided remote
-          await fsextra.removeSync(sourcePath);
-          createGenerated(sourcePath);
-          await gitClone(source, sourcePath);
-          await gitFetchPull(sourcePath, safeLoggingUrl);
-          // Checkout tagged version
-          logger.info(`Checking out template version: ${version}`);
-          await gitCheckout(sourcePath, version);
-          logger.info(`Successfully re-cloned repo`);
+          await retryRemoteValidate(
+            source,
+            sourcePath,
+            safeLoggingUrl,
+            version
+          );
         } else {
           throw new Error(
             `Unable to determine error from supported retry cases ${err.message}`
@@ -557,6 +551,32 @@ export const dirIteration = (
 export const createGenerated = (projectPath: string) => {
   mkdirp.sync(projectPath);
   logger.info(`Created generated directory: ${projectPath}`);
+};
+
+export const retryRemoteValidate = async (
+  source: string,
+  sourcePath: string,
+  safeLoggingUrl: string,
+  version: string
+) => {
+  try {
+    // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
+    fsExtra.removeSync(sourcePath);
+    createGenerated(sourcePath);
+    await gitClone(source, sourcePath);
+    await gitFetchPull(sourcePath, safeLoggingUrl);
+    // logger.info(`Check1`);
+    // await gitClone(source, sourcePath);
+    // logger.info(`Check2`);
+    // await gitFetchPull(sourcePath, safeLoggingUrl);
+    // logger.info(`Check3`);
+    // Checkout tagged version
+    logger.info(`Checking out template version: ${version}`);
+    await gitCheckout(sourcePath, version);
+    logger.info(`Successfully re-cloned repo`);
+  } catch (error) {
+    throw error;
+  }
 };
 
 /**
