@@ -30,7 +30,6 @@ echo "ACR_NAME: $ACR_NAME"
 echo "AZ_STORAGE_ACCOUNT: $AZ_STORAGE_ACCOUNT"
 
 vg_name=fabrikam-intro-vg
-sat_name=fabrikamtestdeployments
 sa_location=westus
 kv_name=fabrikamkv
 kv_location=westus
