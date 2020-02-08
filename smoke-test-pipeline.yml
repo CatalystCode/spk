@@ -81,13 +81,8 @@ stages:
               # Get exit status
               status=$?
               [ $status -eq 0 ] && echo "Test Done!" || (echo "Test had issues" && exit 1)
-            displayName: "Run Validation Tests"
+            displayName: "Run Introspection onboard Validation Tests"
             timeoutInMinutes: 15
-          - task: PublishPipelineArtifact@1
-            inputs:
-              path: $(System.DefaultWorkingDirectory)/spk-env/log.txt
-              artifact: test_logs
-            condition: always()
       - job: rings_integration_tests
         variables:
           - group: "spk-vg"
