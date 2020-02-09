@@ -124,7 +124,7 @@ export const exit = (
   statusCode: number
 ): Promise<void> => {
   return new Promise(resolve => {
-    const hasFileLogger = logger.transports.some(t => {
+    const hasFileLogger = log.transports.some(t => {
       if (t instanceof transports.File) {
         // callback will be called once if spk.log
         // already exist.
