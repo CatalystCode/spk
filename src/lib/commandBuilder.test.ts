@@ -1,4 +1,6 @@
 import commander from "commander";
+import { watchFile } from "fs";
+jest.mock("fs");
 import { logger } from "../logger";
 import {
   build,
@@ -132,14 +134,16 @@ describe("Tests Command Builder's validation function", () => {
   });
 });
 
-// disable this test because the file listener in
-// CommandBuilder may take over 1 sec to complete
-xdescribe("Tests Command Builder's exit function", () => {
-  it("calling exit function", async () => {
+describe("Tests Command Builder's exit function", () => {
+  it("calling exit function", async done => {
+    (watchFile as jest.Mock).mockImplementationOnce((f, cb) => {
+      cb({ size: 100 });
+    });
     const exitFn = jest.fn();
-    exitCmd(logger, exitFn, 1).then(() => {
+    await exitCmd(logger, exitFn, 1).then(() => {
       expect(exitFn).toBeCalledTimes(1);
       expect(exitFn.mock.calls).toEqual([[1]]);
+      done();
     });
   });
 });
