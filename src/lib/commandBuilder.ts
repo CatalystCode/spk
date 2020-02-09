@@ -1,4 +1,5 @@
 import commander from "commander";
+import fs from "fs";
 import { Logger, transports } from "winston";
 import { logger } from "../logger";
 import { hasValue } from "./validator";
@@ -124,13 +125,18 @@ export const exit = (
 ): Promise<void> => {
   return new Promise(resolve => {
     logger.transports.forEach(t => {
-      if (t instanceof transports.Console) {
-        t.silent = true;
+      if (t instanceof transports.File) {
+        // callback will be called once if spk.log
+        // already exist.
+        // it will be called twice if spk.log
+        // do not exist. the one call has size === 0
+        fs.watchFile(t.filename, curr => {
+          if (curr.size > 0) {
+            exitFn(statusCode);
+            resolve();
+          }
+        });
       }
-    });
-    log.info(`--end log: ${statusCode} --`, () => {
-      exitFn(statusCode);
-      resolve();
     });
   });
 };
