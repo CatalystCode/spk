@@ -7,11 +7,26 @@ interface ICommand {
   subcommands: ICommandBuildElements[];
 }
 
+interface ICommandElement extends ICommandBuildElements {
+  markdown?: string;
+}
+
 const getAllDecorators = (curDir: string): ICommandBuildElements[] => {
-  return fs
-    .readdirSync(curDir)
-    .filter(f => f.endsWith(".json"))
-    .map(f => require(path.join(curDir, f)) as ICommandBuildElements);
+  const allFiles = fs.readdirSync(curDir);
+  const jsonFiles = allFiles.filter(f => f.endsWith(".json"));
+  const arrJson: ICommandElement[] = [];
+  jsonFiles.forEach(fileName => {
+    const json = require(path.join(curDir, fileName)) as ICommandElement;
+    const mdPath = path.join(
+      curDir,
+      fileName.replace(/decorator\.json$/, "md")
+    );
+    if (fs.existsSync(mdPath)) {
+      json.markdown = fs.readFileSync(mdPath, "utf8");
+    }
+    arrJson.push(json);
+  });
+  return arrJson;
 };
 
 const getSubDirectories = (curDir: string) => {
