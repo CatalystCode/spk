@@ -284,7 +284,6 @@ export const generateClusterDefinition = (
   vartfData: string
 ): { [key: string]: string | { [key: string]: string } } => {
   const fields = parseVariablesTf(vartfData);
-
   // map of string to string or map of string to string
   const def: { [key: string]: string | { [key: string]: string } } = {
     name: values.name,
@@ -301,12 +300,18 @@ export const generateClusterDefinition = (
     Object.keys(fields).forEach(key => {
       fieldDict[key] = fields[key] || "<insert value>";
     });
+    // If the value contains a default value, exclude from fieldDict
+    Object.keys(fieldDict).forEach(key => {
+      if (fieldDict[key] !== "<insert value>") {
+        delete fieldDict[key];
+      }
+    });
     def.variables = fieldDict;
   }
   return def;
 };
 
-/**
+/**t
  * Given a Bedrock template, source URL, and version, this function creates a
  * primary base definition for generating cluster definitions from.
  *
