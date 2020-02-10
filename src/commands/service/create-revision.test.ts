@@ -3,15 +3,14 @@ import path from "path";
 import shell from "shelljs";
 import uuid from "uuid/v4";
 import { write } from "../../config";
-import * as gitutils from "../../lib/gitutils";
 import * as azure from "../../lib/git/azure";
+import * as gitutils from "../../lib/gitutils";
 import { IBedrockFile } from "../../types";
 import {
   getDefaultRings,
   getSourceBranch,
   makePullRequest
 } from "./create-revision";
-import { logger } from "@azure/keyvault-secrets";
 
 jest
   .spyOn(gitutils, "getCurrentBranch")

@@ -52,7 +52,8 @@ export const createServiceRevisionCommandDecorator = (
           personalAccessToken = azure_devops && azure_devops.access_token,
           targetBranch
         } = opts;
-        let { description, remoteUrl, sourceBranch, title } = opts;
+        let { description, remoteUrl, sourceBranch } = opts;
+        const title = opts.title;
 
         ////////////////////////////////////////////////////////////////////////
         // Give defaults
