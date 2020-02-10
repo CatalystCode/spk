@@ -311,7 +311,7 @@ export const generateClusterDefinition = (
   return def;
 };
 
-/**t
+/**
  * Given a Bedrock template, source URL, and version, this function creates a
  * primary base definition for generating cluster definitions from.
  *
