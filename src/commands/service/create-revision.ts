@@ -8,6 +8,7 @@ import {
   safeGitUrlForLogging
 } from "../../lib/gitutils";
 import { logger } from "../../logger";
+import { IBedrockFile } from "../../types";
 
 export const createServiceRevisionCommandDecorator = (
   command: commander.Command
@@ -59,43 +60,13 @@ export const createServiceRevisionCommandDecorator = (
         // default pull request against initial ring
         const bedrockConfig = Bedrock();
         // Default to the --target-branch for creating a revision; if not specified, fallback to default rings in bedrock.yaml
-        const defaultRings: string[] = targetBranch
-          ? [targetBranch]
-          : Object.entries(bedrockConfig.rings || {})
-              .map(([branch, config]) => ({ branch, ...config }))
-              .filter(ring => !!ring.isDefault)
-              .map(ring => ring.branch);
-        if (defaultRings.length === 0) {
-          throw Error(
-            `Default branches/rings must either be specified in ${join(
-              __dirname,
-              "bedrock.yaml"
-            )} or provided via --target-branch`
-          );
-        }
-        logger.info(
-          `Creating pull request against branches: ${defaultRings.join(", ")}`
+        const defaultRings: string[] = getDefaultRings(
+          targetBranch,
+          bedrockConfig
         );
 
         // default pull request source branch to the current branch
-        if (
-          typeof sourceBranch !== "string" ||
-          (typeof sourceBranch === "string" && sourceBranch.length === 0)
-        ) {
-          // Parse the source branch from options
-          // If it does not exist, parse from the git client
-          logger.info(
-            `No source-branch provided, parsing the current branch for git client`
-          );
-          sourceBranch = await getCurrentBranch().then(branch => {
-            if (branch.length === 0) {
-              throw Error(
-                `Zero length branch string parsed from git client; cannot automate PR`
-              );
-            }
-            return branch;
-          });
-        }
+        sourceBranch = await getSourceBranch(sourceBranch);
 
         // Make sure the user isn't trying to make a PR for a branch against itself
         if (defaultRings.includes(sourceBranch)) {
@@ -122,54 +93,121 @@ export const createServiceRevisionCommandDecorator = (
           logger.info(`Parsed remote-url for origin: ${safeLoggingUrl}`);
         }
 
-        ////////////////////////////////////////////////////////////////////////
-        // Type-check data
-        ////////////////////////////////////////////////////////////////////////
-        if (typeof description !== "string") {
-          throw Error(
-            `--description must be of type 'string', ${typeof description} given.`
-          );
-        }
-        if (typeof remoteUrl !== "string") {
-          throw Error(
-            `--remote-url must be of type 'string', ${typeof remoteUrl} given.`
-          );
-        }
-        if (typeof sourceBranch !== "string") {
-          throw Error(
-            `--source-branch must be of type 'string', ${typeof sourceBranch} given.`
-          );
-        }
-        if (typeof personalAccessToken !== "string") {
-          throw Error(
-            `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
-          );
-        }
-        if (typeof orgName !== "string") {
-          throw Error(
-            `--org-name must be of type 'string', ${typeof orgName} given.`
-          );
-        }
-
-        ////////////////////////////////////////////////////////////////////////
-        // Main
-        ////////////////////////////////////////////////////////////////////////
-        // Make a PR against all default rings
-        for (const ring of defaultRings) {
-          if (typeof title !== "string") {
-            title = `[SPK] ${sourceBranch} => ${ring}`;
-            logger.info(`--title not set, defaulting to: '${title}'`);
-          }
-          await createPullRequest(title, sourceBranch, ring, {
-            description,
-            orgName,
-            originPushUrl: remoteUrl,
-            personalAccessToken
-          });
-        }
+        await makePullRequest(
+          defaultRings,
+          title,
+          sourceBranch,
+          description,
+          orgName,
+          remoteUrl,
+          personalAccessToken
+        );
       } catch (err) {
         logger.error(err);
         process.exitCode = 1;
       }
     });
+};
+
+/**
+ * Gets the default rings
+ * @param targetBranch Target branch/ring to create a PR against
+ * @param bedrockConfig The bedrock configuration file
+ */
+export const getDefaultRings = (
+  targetBranch: any,
+  bedrockConfig: IBedrockFile
+): string[] => {
+  const defaultRings: string[] = targetBranch
+    ? [targetBranch]
+    : Object.entries(bedrockConfig.rings || {})
+        .map(([branch, config]) => ({ branch, ...config }))
+        .filter(ring => !!ring.isDefault)
+        .map(ring => ring.branch);
+  if (defaultRings.length === 0) {
+    throw Error(
+      `Default branches/rings must either be specified in ${join(
+        __dirname,
+        "bedrock.yaml"
+      )} or provided via --target-branch`
+    );
+  }
+  logger.info(
+    `Creating pull request against branches: ${defaultRings.join(", ")}`
+  );
+  return defaultRings;
+};
+
+/**
+ * Gets the source branch or parses git for the source branch
+ * @param sourceBranch The source branch
+ */
+export const getSourceBranch = async (sourceBranch: any): Promise<string> => {
+  if (
+    typeof sourceBranch !== "string" ||
+    (typeof sourceBranch === "string" && sourceBranch.length === 0)
+  ) {
+    // Parse the source branch from options
+    // If it does not exist, parse from the git client
+    logger.info(
+      `No source-branch provided, parsing the current branch for git client`
+    );
+    sourceBranch = await getCurrentBranch().then(branch => {
+      if (branch.length === 0) {
+        throw Error(
+          `Zero length branch string parsed from git client; cannot automate PR`
+        );
+      }
+      return branch;
+    });
+  }
+  return sourceBranch;
+};
+
+export const makePullRequest = async (
+  defaultRings: string[],
+  title: any,
+  sourceBranch: any,
+  description: any,
+  orgName: any,
+  remoteUrl: any,
+  personalAccessToken: any
+) => {
+  if (typeof description !== "string") {
+    throw Error(
+      `--description must be of type 'string', ${typeof description} given.`
+    );
+  }
+  if (typeof remoteUrl !== "string") {
+    throw Error(
+      `--remote-url must be of type 'string', ${typeof remoteUrl} given.`
+    );
+  }
+  if (typeof sourceBranch !== "string") {
+    throw Error(
+      `--source-branch must be of type 'string', ${typeof sourceBranch} given.`
+    );
+  }
+  if (typeof personalAccessToken !== "string") {
+    throw Error(
+      `--personal-access-token must be of type 'string', ${typeof personalAccessToken} given.`
+    );
+  }
+  if (typeof orgName !== "string") {
+    throw Error(
+      `--org-name must be of type 'string', ${typeof orgName} given.`
+    );
+  }
+  for (const ring of defaultRings) {
+    if (typeof title !== "string") {
+      title = `[SPK] ${sourceBranch} => ${ring}`;
+      logger.info(`--title not set, defaulting to: '${title}'`);
+    }
+    await createPullRequest(title, sourceBranch, ring, {
+      description,
+      orgName,
+      originPushUrl: remoteUrl,
+      personalAccessToken
+    });
+  }
 };
