@@ -1,4 +1,3 @@
-import { Config, loadConfiguration } from "../../config";
 import * as config from "../../config";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { getRepositoryName } from "../../lib/gitutils";
