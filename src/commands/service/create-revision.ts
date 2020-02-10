@@ -165,6 +165,16 @@ export const getSourceBranch = async (sourceBranch: any): Promise<string> => {
   return sourceBranch;
 };
 
+/**
+ * Creates a pull request from the given source branch
+ * @param defaultRings List of default rings
+ * @param title Title of pr
+ * @param sourceBranch Source branch for pr
+ * @param description Description for pr
+ * @param orgName Organization name
+ * @param remoteUrl Remote url
+ * @param personalAccessToken Access token
+ */
 export const makePullRequest = async (
   defaultRings: string[],
   title: any,
