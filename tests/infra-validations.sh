@@ -203,16 +203,13 @@ git push origin "$infra_generated_version"
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
 # Create variable group
-<<<<<<< HEAD
-vg_ID=$(az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID"| jq '.id')
+variable_group_id=$(az pipelines variable-group create --name $vg_name --authorize true --variables  "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" | jq '.id')
 
 # Update secret variables in variable group
-az pipelines variable-group variable update --group-id $vg_ID --name ACCESS_TOKEN_SECRET --secret true
-az pipelines variable-group variable update --group-id $vg_ID --name ARM_CLIENT_SECRET --secret true
-az pipelines variable-group variable update --group-id $vg_ID --name ARM_CLIENT_ID --secret true
-=======
-az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID"
->>>>>>> 5542195cb5510ca7ecab0f2f56a7ea47e1e1c3b3
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCESS_TOKEN_SECRET" $ACCESS_TOKEN_SECRET "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ARM_CLIENT_ID" $SP_APP_ID "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ARM_CLIENT_SECRET" $SP_PASS "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ARM_SUBSCRIPTION_ID" $SP_SUBSCRIPTION_ID "secret"
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
