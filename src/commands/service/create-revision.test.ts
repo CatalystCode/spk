@@ -113,6 +113,34 @@ describe("Source branch", () => {
 });
 
 describe("Create pull request", () => {
+  test("invalid parameters", async () => {
+    const params: any[] = [
+      "sourceBranch",
+      "description",
+      "orgName",
+      "remoteUrl",
+      "token"
+    ];
+    for (const [i, v] of params) {
+      const tmp = params[i];
+      params[i] = undefined;
+      let hasError = false;
+      try {
+        await makePullRequest(
+          ["master"],
+          "testTitle",
+          params[0],
+          params[1],
+          params[3],
+          params[4],
+          params[5]
+        );
+      } catch (err) {
+        hasError = true;
+      }
+      expect(hasError).toBe(true);
+    }
+  });
   test("Valid parameters", async () => {
     await makePullRequest(
       ["master"],
