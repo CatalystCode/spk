@@ -5,6 +5,7 @@ import uuid from "uuid/v4";
 import { write } from "../../config";
 import * as azure from "../../lib/git/azure";
 import * as gitutils from "../../lib/gitutils";
+import { createTempDir } from "../../lib/ioUtil";
 import { IBedrockFile } from "../../types";
 import {
   getDefaultRings,
@@ -22,8 +23,7 @@ const prSpy = jest
 
 describe("Default rings", () => {
   test("Get multiple default rings", () => {
-    const randomTmpDir = path.join(os.tmpdir(), uuid());
-    shell.mkdir("-p", randomTmpDir);
+    const randomTmpDir = createTempDir();
     const validBedrockYaml: IBedrockFile = {
       rings: {
         master: { isDefault: true },
@@ -33,14 +33,18 @@ describe("Default rings", () => {
       services: {
         "foo/a": {
           helm: {
-            // Missing 'chart'
             chart: {
+              chart: "elastic",
               repository: "some-repo"
             }
-          }
+          },
+          k8sBackend: "backendservice",
+          k8sBackendPort: 1337,
+          pathPrefix: "servicepath",
+          pathPrefixMajorVersion: "v1"
         }
       }
-    } as any;
+    };
 
     write(validBedrockYaml, randomTmpDir);
     const defaultRings = getDefaultRings(undefined, validBedrockYaml);
@@ -50,8 +54,7 @@ describe("Default rings", () => {
   });
 
   test("No default rings", () => {
-    const randomTmpDir = path.join(os.tmpdir(), uuid());
-    shell.mkdir("-p", randomTmpDir);
+    const randomTmpDir = createTempDir();
     const validBedrockYaml: IBedrockFile = {
       rings: {
         master: { isDefault: false },
@@ -61,14 +64,18 @@ describe("Default rings", () => {
       services: {
         "foo/a": {
           helm: {
-            // Missing 'chart'
             chart: {
+              chart: "elastic",
               repository: "some-repo"
             }
-          }
+          },
+          k8sBackend: "backendservice",
+          k8sBackendPort: 1337,
+          pathPrefix: "servicepath",
+          pathPrefixMajorVersion: "v1"
         }
       }
-    } as any;
+    };
 
     write(validBedrockYaml, randomTmpDir);
     let hasError = false;

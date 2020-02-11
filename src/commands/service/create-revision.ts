@@ -116,7 +116,7 @@ export const createServiceRevisionCommandDecorator = (
  * @param bedrockConfig The bedrock configuration file
  */
 export const getDefaultRings = (
-  targetBranch: any,
+  targetBranch: string | undefined,
   bedrockConfig: IBedrockFile
 ): string[] => {
   const defaultRings: string[] = targetBranch
@@ -143,7 +143,9 @@ export const getDefaultRings = (
  * Gets the source branch or parses git for the source branch
  * @param sourceBranch The source branch
  */
-export const getSourceBranch = async (sourceBranch: any): Promise<string> => {
+export const getSourceBranch = async (
+  sourceBranch: string | undefined
+): Promise<string | undefined> => {
   if (
     typeof sourceBranch !== "string" ||
     (typeof sourceBranch === "string" && sourceBranch.length === 0)
@@ -153,14 +155,12 @@ export const getSourceBranch = async (sourceBranch: any): Promise<string> => {
     logger.info(
       `No source-branch provided, parsing the current branch for git client`
     );
-    sourceBranch = await getCurrentBranch().then(branch => {
-      if (branch.length === 0) {
-        throw Error(
-          `Zero length branch string parsed from git client; cannot automate PR`
-        );
-      }
-      return branch;
-    });
+    sourceBranch = await getCurrentBranch();
+    if (sourceBranch.length === 0) {
+      throw Error(
+        `Zero length branch string parsed from git client; cannot automate PR`
+      );
+    }
   }
   return sourceBranch;
 };
@@ -177,12 +177,12 @@ export const getSourceBranch = async (sourceBranch: any): Promise<string> => {
  */
 export const makePullRequest = async (
   defaultRings: string[],
-  title: any,
-  sourceBranch: any,
-  description: any,
-  orgName: any,
-  remoteUrl: any,
-  personalAccessToken: any
+  title: string | undefined,
+  sourceBranch: string | undefined,
+  description: string | undefined,
+  orgName: string | undefined,
+  remoteUrl: string | undefined,
+  personalAccessToken: string | undefined
 ) => {
   if (typeof description !== "string") {
     throw Error(
