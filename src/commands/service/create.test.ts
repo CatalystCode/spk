@@ -19,7 +19,13 @@ import {
   createTestBedrockYaml,
   createTestMaintainersYaml
 } from "../../test/mockFactory";
-import { createService, execute, fetchValues, ICommandValues } from "./create";
+import {
+  createService,
+  execute,
+  fetchValues,
+  ICommandValues,
+  validateGitUrl
+} from "./create";
 jest.mock("../../lib/gitutils");
 
 beforeAll(() => {
@@ -138,17 +144,6 @@ describe("Test execute function", () => {
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
 
-  it("Should error when providing an invalid git url", async () => {
-    const exitFn = jest.fn();
-    const values = getMockValues();
-
-    values.helmConfigPath = "dev.azure.com/foo/bar";
-
-    await execute(uuid(), values, exitFn);
-    expect(exitFn).toBeCalledTimes(1);
-    expect(exitFn.mock.calls).toEqual([[1]]);
-  });
-
   it("Negative test: missing bedrock file", async () => {
     const testServiceName = uuid();
     const exitFn = jest.fn();
@@ -183,6 +178,49 @@ describe("Test execute function", () => {
     } finally {
       removeDir(testServiceName); // housekeeping
     }
+  });
+});
+
+describe("Validate Git URLs", () => {
+  it("Should error when providing an invalid git url", async () => {
+    const exitFn = jest.fn();
+    const helmConfigPath = "dev.azure.com/foo/bar";
+
+    validateGitUrl(helmConfigPath, exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+  });
+
+  it("Should not error when providing a valid github https url", async () => {
+    const exitFn = jest.fn();
+    const helmConfigPath = "https://github.com/CatalystCode/spk.git";
+
+    validateGitUrl(helmConfigPath, exitFn);
+    expect(exitFn).toBeCalledTimes(0);
+  });
+
+  it("Should not error when providing a valid azdo https url", async () => {
+    const exitFn = jest.fn();
+    const helmConfigPath =
+      "https://dev@dev.azure.com/catalystcode/project/_git/repo";
+
+    validateGitUrl(helmConfigPath, exitFn);
+    expect(exitFn).toBeCalledTimes(0);
+  });
+
+  it("Should not error when providing a valid azdo git+ssh url", async () => {
+    const exitFn = jest.fn();
+    const helmConfigPath = "git@ssh.dev.azure.com:v3/CatalystCode/project/repo";
+
+    validateGitUrl(helmConfigPath, exitFn);
+    expect(exitFn).toBeCalledTimes(0);
+  });
+
+  it("Should not error when providing a valid github git+ssh url", async () => {
+    const exitFn = jest.fn();
+    const helmConfigPath = "git@github.com:CatalystCode/spk.git";
+
+    validateGitUrl(helmConfigPath, exitFn);
+    expect(exitFn).toBeCalledTimes(0);
   });
 });
 
