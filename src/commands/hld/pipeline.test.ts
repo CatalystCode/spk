@@ -2,7 +2,6 @@ import * as config from "../../config";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { getRepositoryName } from "../../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-
 jest.mock("../../lib/pipelines/pipelines");
 
 import {
@@ -10,6 +9,7 @@ import {
   getBuildApiClient,
   queueBuild
 } from "../../lib/pipelines/pipelines";
+import { deepClone } from "../../lib/util";
 import { IConfigYaml } from "../../types";
 
 import {
@@ -45,7 +45,7 @@ const MOCKED_CONFIG = {
 };
 
 const getMockObject = (): ICommandOptions => {
-  return JSON.parse(JSON.stringify(MOCKED_VALUES));
+  return deepClone(MOCKED_VALUES);
 };
 
 beforeAll(() => {
