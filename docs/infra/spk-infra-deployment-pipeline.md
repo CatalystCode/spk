@@ -3,11 +3,11 @@
 Before reading this guide, it is recommended to visit the guide on deploying an
 [Infra Generation Pipeline](./spk-infra-generation-pipeline.md).
 
-This section will walkthrough several approaches for creating deploying your
-infrastructure, which captures the process for applying changes to your existing
-Terraform infrastructure. This guide will not go into detail about implementing
-each of the approaches, but instead will shed light on why the following
-approaches may work well, especially with `spk`.
+This section will walkthrough approaches for deploying your infrastructure,
+which captures the process for applying changes to your existing Terraform
+infrastructure. This guide will not go into detail about implementing each of
+the approaches, but instead will suggest different methods for deploying your
+infrastructure when already using `spk` to manage infrastructure.
 
 ## Approaches
 

@@ -56,7 +56,7 @@ definition.yaml output:
 
 ```yaml
 name: fabrikam
-source: "https://github.com/Microsoft/bedrock.git"
+source: "https://github.com/microsoft/bedrock.git"
 template: cluster/environments/azure-single-keyvault
 version: master
 backend:
@@ -194,7 +194,7 @@ Example:
 
 ```yaml
 name: fabrikam
-source: "https://github.com/Microsoft/bedrock.git"
+source: "https://github.com/microsoft/bedrock.git"
 template: cluster/environments/azure-single-keyvault
 version: master
 backend:
