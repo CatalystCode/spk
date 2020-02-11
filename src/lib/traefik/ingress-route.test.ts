@@ -1,5 +1,4 @@
 import uuid from "uuid/v4";
-import { logger } from "../../logger";
 import { TraefikIngressRoute } from "./ingress-route";
 
 describe("TraefikIngressRoute", () => {
