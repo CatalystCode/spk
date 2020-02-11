@@ -384,9 +384,9 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
 };
 
 /**
- * A default fabrikate component that includes the cloud native stack.
+ * Populate the default Component with what's given. If excluded, only add Traefik2.
  */
-const defaultComponentYaml = () => {
+const defaultComponentYaml = (componentGit: string, componentPath: string) => {
   const componentYaml = {
     name: "default-component",
     subcomponents: [
@@ -395,10 +395,26 @@ const defaultComponentYaml = () => {
         // tslint:disable-next-line:object-literal-sort-keys
         method: "git",
         source: "https://github.com/microsoft/fabrikate-definitions.git",
-        path: "definitions/fabrikate-cloud-native"
+        path: "definitions/traefik2"
       }
     ]
   };
+
+  if (componentGit! && componentPath!) {
+    componentYaml.subcomponents.push();
+  } else {
+    componentYaml.subcomponents.push({
+      name: "traefik2",
+      // tslint:disable-next-line:object-literal-sort-keys
+      method: "git",
+      source: "https://github.com/microsoft/fabrikate-definitions.git",
+      path: "definitions/traefik2"
+    });
+  }
+
+  // --default-component-git https://github.com/microsoft/fabrikate-definitions --default-component-path definitions/cloud-native
+
+  // const
 
   return yaml.safeDump(componentYaml, { lineWidth: Number.MAX_SAFE_INTEGER });
 };

@@ -8,6 +8,24 @@
       "description": "SPK CLI will try to commit and push these changes to a new origin/branch.",
       "required": false,
       "defaultValue": false
+    },
+    {
+      "arg": "--default-component-git",
+      "description": "SPK CLI will try to commit and push these changes to a new origin/branch.",
+      "required": false,
+      "defaultValue": "https://github.com/microsoft/fabrikate-definitions.git"
+    },
+    {
+      "arg": "--default-component-name",
+      "description": "SPK CLI will try to commit and push these changes to a new origin/branch.",
+      "required": false,
+      "defaultValue": "traefik2"
+    },
+    {
+      "arg": "--default-component-path",
+      "description": "SPK CLI will try to commit and push these changes to a new origin/branch.",
+      "required": false,
+      "defaultValue": "definitions/traefik2"
     }
   ]
 }
