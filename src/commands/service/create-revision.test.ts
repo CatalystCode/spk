@@ -152,4 +152,16 @@ describe("Create pull request", () => {
     );
     expect(prSpy).toHaveBeenCalled();
   });
+  test("Default title", async () => {
+    await makePullRequest(
+      ["master"],
+      undefined,
+      "testBranch",
+      "description",
+      "testOrg",
+      "testUrl",
+      "testToken"
+    );
+    expect(prSpy).toHaveBeenCalled();
+  });
 });
