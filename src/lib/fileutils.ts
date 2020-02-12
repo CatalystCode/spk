@@ -361,7 +361,12 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
 /**
  * Add a default component.yaml when running `hld init`.
  */
-export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
+export const generateDefaultHldComponentYaml = (
+  targetDirectory: string,
+  componentGit: string,
+  componentName: string,
+  componentPath: string
+) => {
   const absTargetPath = path.resolve(targetDirectory);
   logger.info(`Generating component.yaml in ${absTargetPath}`);
 
@@ -375,7 +380,11 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
     return;
   }
 
-  const componentYaml = defaultComponentYaml();
+  const componentYaml = defaultComponentYaml(
+    componentGit,
+    componentName,
+    componentPath
+  );
   logger.info(
     `Writing ${RENDER_HLD_PIPELINE_FILENAME} file to ${fabrikateComponentPath}`
   );
@@ -384,37 +393,25 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
 };
 
 /**
- * Populate the default Component with what's given. If excluded, only add Traefik2.
+ * Populate the hld's default component.yaml
  */
-const defaultComponentYaml = (componentGit: string, componentPath: string) => {
+const defaultComponentYaml = (
+  componentGit: string,
+  componentName: string,
+  componentPath: string
+) => {
   const componentYaml = {
     name: "default-component",
     subcomponents: [
       {
-        name: "cloud-native",
+        name: componentName,
         // tslint:disable-next-line:object-literal-sort-keys
         method: "git",
-        source: "https://github.com/microsoft/fabrikate-definitions.git",
-        path: "definitions/traefik2"
+        source: componentGit,
+        path: componentPath
       }
     ]
   };
-
-  if (componentGit! && componentPath!) {
-    componentYaml.subcomponents.push();
-  } else {
-    componentYaml.subcomponents.push({
-      name: "traefik2",
-      // tslint:disable-next-line:object-literal-sort-keys
-      method: "git",
-      source: "https://github.com/microsoft/fabrikate-definitions.git",
-      path: "definitions/traefik2"
-    });
-  }
-
-  // --default-component-git https://github.com/microsoft/fabrikate-definitions --default-component-path definitions/cloud-native
-
-  // const
 
   return yaml.safeDump(componentYaml, { lineWidth: Number.MAX_SAFE_INTEGER });
 };
