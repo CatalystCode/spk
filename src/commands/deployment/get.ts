@@ -465,6 +465,11 @@ export const printDeployments = (
   }
 };
 
+/**
+ * Returns a matching sync status for a deployment
+ * @param deployment Deployment object
+ * @param syncStatuses list of sync statuses for manifest
+ */
 export const getClusterSyncStatusForDeployment = (
   deployment: Deployment,
   syncStatuses: ITag[]
