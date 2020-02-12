@@ -117,11 +117,11 @@ export const validateForRequiredValues = (
  * @param exitFn exit function
  * @param statusCode Exit status code
  */
-
 export const exit = (
   log: Logger,
   exitFn: (status: number) => void,
-  statusCode: number
+  statusCode: number,
+  timeout = 10000
 ): Promise<void> => {
   return new Promise(resolve => {
     const hasFileLogger = log.transports.some(t => {
@@ -144,6 +144,13 @@ export const exit = (
     if (!hasFileLogger) {
       exitFn(statusCode);
       resolve();
+    } else {
+      // this is to handle the case when nothing to be written to spk.log
+      // handle fs.watchFile callback will not be execute.
+      setTimeout(() => {
+        exitFn(statusCode);
+        resolve();
+      }, timeout); // 10 seconds should be enough
     }
   });
 };
