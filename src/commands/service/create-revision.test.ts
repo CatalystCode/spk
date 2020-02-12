@@ -1,8 +1,3 @@
-import { logger } from "@azure/identity";
-import os from "os";
-import path from "path";
-import shell from "shelljs";
-import uuid from "uuid/v4";
 import { write } from "../../config";
 import * as azure from "../../lib/git/azure";
 import * as gitutils from "../../lib/gitutils";
