@@ -145,50 +145,9 @@ export const processOutputFormat = (outputFormat: string): OUTPUT_FORMAT => {
 
 /**
  * Gets a list of deployments for the specified filters
- * @param outputFormat output format: normal | wide | json
- * @param environment release environment, such as Dev, Staging, Prod etc.
- * @param imageTag docker image tag name
- * @param p1Id identifier of the first build pipeline (src to ACR)
- * @param commitId commit Id into the source repo
- * @param service name of the service that was modified
- * @param deploymentId unique identifier for the deployment
+ * @param initObj captures keys and objects during the initialization process
+ * @param values validated command line values
  */
-// export const getDeployments = async (
-//   initObj: IInitObject,
-//   values: IValidatedOptions
-// ): Promise<Deployment[]> => {
-//   const config = initObj.config;
-//   return new Promise((resolve, reject) => {
-//     Deployment.getDeploymentsBasedOnFilters(
-//       config.introspection!.azure!.account_name!,
-//       initObj.key,
-//       config.introspection!.azure!.table_name!,
-//       config.introspection!.azure!.partition_key!,
-//       initObj.srcPipeline,
-//       initObj.hldPipeline,
-//       initObj.clusterPipeline,
-//       values.env,
-//       values.imageTag,
-//       values.buildId,
-//       values.commitId,
-//       values.service,
-//       values.deploymentId
-//     )
-//       .then((deployments: Deployment[]) => {
-//         if (values.outputFormat === OUTPUT_FORMAT.JSON) {
-//           // tslint:disable-next-line: no-console
-//           console.log(JSON.stringify(deployments, null, 2));
-//           resolve(deployments);
-//         } else {
-//           printDeployments(deployments, values.outputFormat, values.nTop);
-//           resolve(deployments);
-//         }
-//       })
-//       .catch(e => {
-//         reject(new Error(e));
-//       });
-//   });
-// };
 export const getDeployments = async (
   initObj: IInitObject,
   values: IValidatedOptions
@@ -235,6 +194,10 @@ export const getDeployments = async (
   });
 };
 
+/**
+ * Gets cluster sync statuses
+ * @param initObj captures keys and objects during the initialization process
+ */
 export const getClusterSyncStatuses = (
   initObj: IInitObject
 ): Promise<ITag[] | undefined> => {
@@ -254,11 +217,7 @@ export const getClusterSyncStatuses = (
           manifestUrlSplit[6],
           config.azure_devops.access_token
         );
-        logger.info(
-          `Initializing repo for ${manifestUrlSplit[3]} ${manifestUrlSplit[4]} ${manifestUrlSplit[6]}`
-        );
         manifestRepo.getManifestSyncState().then((syncCommits: ITag[]) => {
-          logger.info(syncCommits);
           resolve(syncCommits);
         });
       } else if (
@@ -273,11 +232,7 @@ export const getClusterSyncStatuses = (
           manifestUrlSplit[4],
           config.azure_devops.access_token
         );
-        logger.info(
-          `Initializing repo for ${manifestUrlSplit[3]} ${manifestUrlSplit[4]}`
-        );
         manifestRepo.getManifestSyncState().then((syncCommits: ITag[]) => {
-          logger.info(syncCommits);
           resolve(syncCommits);
         });
       } else {
