@@ -6,7 +6,7 @@ There have been several design iterations for Cluster/Infrastructure creation
 and management. The following pieces of information discuss the direction of how
 to create, manage, and deploy your infrastructure using `spk infra`.
 
-- [SPK Infrastructure End to End](./spk-infra-end-to-end.md)
+- [SPK Infrastructure end-to-end](./spk-infra-end-to-end.md)
   - [Under the Hood](spk-infra-under-the-hood.md)
 
 ## Guides
