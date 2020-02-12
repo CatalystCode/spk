@@ -47,12 +47,6 @@ export const commandDecorator = (command: commander.Command): void => {
         );
       }
 
-      // Give a default description
-      if (typeof description !== "string") {
-        description = `This is automated PR generated via SPK`;
-        logger.info(`--description not set, defaulting to: '${description}'`);
-      }
-
       // Default the remote to the git origin
       if (typeof remoteUrl !== "string") {
         logger.info(
@@ -155,10 +149,10 @@ export const makePullRequest = async (
   remoteUrl: string | undefined,
   personalAccessToken: string | undefined
 ) => {
+  // Give a default description
   if (typeof description !== "string") {
-    throw Error(
-      `--description must be of type 'string', ${typeof description} given.`
-    );
+    description = `This is automated PR generated via SPK`;
+    logger.info(`--description not set, defaulting to: '${description}'`);
   }
   if (typeof remoteUrl !== "string") {
     throw Error(

@@ -12,6 +12,7 @@ import {
   getSourceBranch,
   makePullRequest
 } from "./create-revision";
+import { logger } from "@azure/identity";
 
 jest
   .spyOn(gitutils, "getCurrentBranch")
@@ -114,26 +115,17 @@ describe("Source branch", () => {
 
 describe("Create pull request", () => {
   test("invalid parameters", async () => {
-    const params: any[] = [
-      "sourceBranch",
-      "description",
-      "orgName",
-      "remoteUrl",
-      "token"
-    ];
-    for (const [i, v] of params) {
-      const tmp = params[i];
-      params[i] = undefined;
+    for (const i of Array(4).keys()) {
       let hasError = false;
       try {
         await makePullRequest(
           ["master"],
           "testTitle",
-          params[0],
-          params[1],
-          params[3],
-          params[4],
-          params[5]
+          i === 0 ? undefined : "branch",
+          "description",
+          i === 1 ? undefined : "org",
+          i === 2 ? undefined : "url",
+          i === 3 ? undefined : "token"
         );
       } catch (err) {
         hasError = true;
@@ -147,6 +139,18 @@ describe("Create pull request", () => {
       "testTitle",
       "testBranch",
       "testDescription",
+      "testOrg",
+      "testUrl",
+      "testToken"
+    );
+    expect(prSpy).toHaveBeenCalled();
+  });
+  test("Default description", async () => {
+    await makePullRequest(
+      ["master"],
+      "testTitle",
+      "testBranch",
+      undefined,
       "testOrg",
       "testUrl",
       "testToken"
