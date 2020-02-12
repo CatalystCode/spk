@@ -4,6 +4,7 @@ import Deployment from "spektate/lib/Deployment";
 import AzureDevOpsPipeline from "spektate/lib/pipeline/AzureDevOpsPipeline";
 import { AzureDevOpsRepo } from "spektate/lib/repository/AzureDevOpsRepo";
 import { GitHub } from "spektate/lib/repository/GitHub";
+import { IRepository } from "spektate/lib/repository/Repository";
 import { ITag } from "spektate/lib/repository/Tag";
 import { Config } from "../../config";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
@@ -211,7 +212,7 @@ export const getClusterSyncStatuses = (
         const manifestUrlSplit = config.azure_devops?.manifest_repository.split(
           "/"
         );
-        const manifestRepo = new AzureDevOpsRepo(
+        const manifestRepo: IRepository = new AzureDevOpsRepo(
           manifestUrlSplit[3],
           manifestUrlSplit[4],
           manifestUrlSplit[6],
@@ -227,7 +228,7 @@ export const getClusterSyncStatuses = (
         const manifestUrlSplit = config.azure_devops?.manifest_repository.split(
           "/"
         );
-        const manifestRepo = new GitHub(
+        const manifestRepo: IRepository = new GitHub(
           manifestUrlSplit[3],
           manifestUrlSplit[4],
           config.azure_devops.access_token
@@ -448,6 +449,8 @@ export const printDeployments = (
         const tag = getClusterSyncStatusForDeployment(deployment, syncStatuses);
         if (tag) {
           row.push(tag.name);
+        } else {
+          row.push("-");
         }
       }
       table.push(row);
