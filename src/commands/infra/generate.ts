@@ -19,7 +19,6 @@ const DEF_YAML = "definition.yaml";
 
 interface ICommandOptions {
   project: string | undefined;
-  all: string | undefined;
   output: string | undefined;
 }
 
@@ -34,26 +33,10 @@ export enum DefinitionYAMLExistence {
   PARENT_ONLY
 }
 
-/* export const fetchValues = (opts: ICommandOptions) => {
-   if (opts.project) {
-    logger.info(`spk will generate the following project: ${opts.project}`);
-    // return opts.project;
-    opts.project = opts.project
-  }
-  opts.all = opts.all
-  opts.output = opts.output
-  logger.warn(
-    `No project folder was provided, spk will generate the current folder as a project`
-  );
-  // return process.cwd()
-  return opts
-}; */
-
 export const execute = async (
   opts: ICommandOptions,
   exitFn: (status: number) => Promise<void>
 ) => {
-  // const projectPath = fetchValues(opts);
   const parentPath = process.cwd();
   const projectPath = opts.project || "";
   const outputPath = opts.output || "";
