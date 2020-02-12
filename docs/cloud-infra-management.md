@@ -99,7 +99,7 @@ on definitions provided from a scaffolded project.
 It will do the following:
 
 - Check if a provided project folder contains a `definition.yaml`
-- Verify the configiration of parent and leaf definitions.
+- Verify the configuration of parent and leaf definitions.
 - Check if the terraform template `source` provided has a valid remote
   repository.
 - Clone and cache the master version of the provided `source` repository locally
