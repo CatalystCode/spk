@@ -3,6 +3,7 @@ import yaml from "js-yaml";
 import path from "path";
 import {
   ACCESS_FILENAME,
+  HLD_COMPONENT_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
@@ -12,6 +13,7 @@ import { logger } from "../logger";
 import {
   IAccessYaml,
   IAzurePipelinesYaml,
+  IComponentYaml,
   IMaintainersFile,
   IUser
 } from "../types";
@@ -385,11 +387,16 @@ export const generateDefaultHldComponentYaml = (
     componentName,
     componentPath
   );
+
   logger.info(
-    `Writing ${RENDER_HLD_PIPELINE_FILENAME} file to ${fabrikateComponentPath}`
+    `Writing ${HLD_COMPONENT_FILENAME} file to ${fabrikateComponentPath}`
   );
 
-  fs.writeFileSync(fabrikateComponentPath, componentYaml, "utf8");
+  fs.writeFileSync(
+    fabrikateComponentPath,
+    yaml.safeDump(componentYaml, { lineWidth: Number.MAX_SAFE_INTEGER }),
+    "utf8"
+  );
 };
 
 /**
@@ -399,8 +406,8 @@ const defaultComponentYaml = (
   componentGit: string,
   componentName: string,
   componentPath: string
-) => {
-  const componentYaml = {
+): IComponentYaml => {
+  const componentYaml: IComponentYaml = {
     name: "default-component",
     subcomponents: [
       {
@@ -413,7 +420,7 @@ const defaultComponentYaml = (
     ]
   };
 
-  return yaml.safeDump(componentYaml, { lineWidth: Number.MAX_SAFE_INTEGER });
+  return componentYaml;
 };
 
 /**

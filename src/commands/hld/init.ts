@@ -53,9 +53,6 @@ export const commandDecorator = (command: commander.Command): void => {
     const hldRepoPath = process.cwd();
     // gitPush will is always true or false. It shall not be
     // undefined because default value is set in the commander decorator
-    logger.info(`opts.defaultComponentGit: ${opts.defaultComponentGit}`);
-    logger.info(`opts.defaultComponentName: ${opts.defaultComponentName}`);
-    logger.info(`opts.defaultComponentPath: ${opts.defaultComponentPath}`);
 
     await execute(
       hldRepoPath,
