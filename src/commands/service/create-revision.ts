@@ -21,7 +21,8 @@ export const commandDecorator = (command: commander.Command): void => {
         personalAccessToken = azure_devops && azure_devops.access_token,
         targetBranch
       } = opts;
-      let { description, remoteUrl, sourceBranch } = opts;
+      let { remoteUrl, sourceBranch } = opts;
+      const description = opts.description;
       const title = opts.title;
 
       ////////////////////////////////////////////////////////////////////////

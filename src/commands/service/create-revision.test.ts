@@ -1,3 +1,4 @@
+import { logger } from "@azure/identity";
 import os from "os";
 import path from "path";
 import shell from "shelljs";
@@ -12,7 +13,6 @@ import {
   getSourceBranch,
   makePullRequest
 } from "./create-revision";
-import { logger } from "@azure/identity";
 
 jest
   .spyOn(gitutils, "getCurrentBranch")
