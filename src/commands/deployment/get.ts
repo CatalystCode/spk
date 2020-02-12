@@ -149,7 +149,7 @@ export const processOutputFormat = (outputFormat: string): OUTPUT_FORMAT => {
  * @param initObj captures keys and objects during the initialization process
  * @param values validated command line values
  */
-export const getDeployments = async (
+export const getDeployments = (
   initObj: IInitObject,
   values: IValidatedOptions
 ): Promise<Deployment[]> => {
