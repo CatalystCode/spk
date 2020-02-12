@@ -151,9 +151,7 @@ $ terraform apply
 
 and likewise, afterwards in the east and west sub-directories.
 
-# CI/CD (Day 2+)
-
-## Version 1
+# CI/CD: Infrastructure GitOps (Day 2+)
 
 From Olina, Hugo has learned of the headaches from manually updating and
 versioning his cluster at scale. So, he attempts to come up with an approach to
