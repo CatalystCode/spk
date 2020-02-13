@@ -1,3 +1,4 @@
+import axios from "axios";
 import fs from "fs";
 import inquirer from "inquirer";
 import yaml from "js-yaml";
@@ -16,6 +17,7 @@ import {
   prompt,
   validateAccessToken,
   validateOrgName,
+  validatePersonalAccessToken,
   validateProjectName
 } from "./init";
 import * as init from "./init";
@@ -201,30 +203,70 @@ describe("test getConfig function", () => {
   });
 });
 
-describe("test handleInteractiveMode function", () => {
-  it("postive test", async done => {
-    jest.spyOn(init, "getConfig").mockReturnValueOnce({
-      azure_devops: {
-        access_token: "",
-        org: "",
-        project: ""
-      }
-    });
-    jest.spyOn(init, "prompt").mockReturnValueOnce(
+describe("test validatePersonalAccessToken function", () => {
+  it("positive test", async done => {
+    jest.spyOn(axios, "get").mockReturnValueOnce(
       Promise.resolve({
-        azdo_org_name: "org_name",
-        azdo_pat: "pat",
-        azdo_project_name: "project"
+        status: 200
       })
     );
-    const tmpFile = path.join(createTempDir(), "config.yaml");
-    jest.spyOn(config, "defaultConfigFile").mockReturnValueOnce(tmpFile);
-    await handleInteractiveMode();
-    const content = fs.readFileSync(tmpFile, "utf8");
-    const data = yaml.safeLoad(content) as IConfigYaml;
-    expect(data.azure_devops?.access_token).toBe("pat");
-    expect(data.azure_devops?.org).toBe("org_name");
-    expect(data.azure_devops?.project).toBe("project");
+    const result = await validatePersonalAccessToken({
+      access_token: "token",
+      org: "org",
+      project: "project"
+    });
+    expect(result).toBe(true);
+    done();
+  });
+  it("negative test", async done => {
+    jest
+      .spyOn(axios, "get")
+      .mockReturnValueOnce(Promise.reject(new Error("fake")));
+    const result = await validatePersonalAccessToken({
+      access_token: "token",
+      org: "org",
+      project: "project"
+    });
+    expect(result).toBe(false);
+    done();
+  });
+});
+
+const testHandleInteractiveModeFunc = async (verified: boolean) => {
+  jest.spyOn(init, "getConfig").mockReturnValueOnce({
+    azure_devops: {
+      access_token: "",
+      org: "",
+      project: ""
+    }
+  });
+  jest.spyOn(init, "prompt").mockReturnValueOnce(
+    Promise.resolve({
+      azdo_org_name: "org_name",
+      azdo_pat: "pat",
+      azdo_project_name: "project"
+    })
+  );
+  jest
+    .spyOn(init, "validatePersonalAccessToken")
+    .mockReturnValueOnce(Promise.resolve(verified));
+  const tmpFile = path.join(createTempDir(), "config.yaml");
+  jest.spyOn(config, "defaultConfigFile").mockReturnValueOnce(tmpFile);
+  await handleInteractiveMode();
+  const content = fs.readFileSync(tmpFile, "utf8");
+  const data = yaml.safeLoad(content) as IConfigYaml;
+  expect(data.azure_devops?.access_token).toBe("pat");
+  expect(data.azure_devops?.org).toBe("org_name");
+  expect(data.azure_devops?.project).toBe("project");
+};
+
+describe("test handleInteractiveMode function", () => {
+  it("postive test: verified access token", async done => {
+    await testHandleInteractiveModeFunc(true);
+    done();
+  });
+  it("negative test", async done => {
+    await testHandleInteractiveModeFunc(false);
     done();
   });
 });

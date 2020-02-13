@@ -1,3 +1,4 @@
+import axios from "axios";
 import commander from "commander";
 import fs from "fs";
 import inquirer from "inquirer";
@@ -29,12 +30,22 @@ interface IAnswer {
 export const ORG_NAME_VIOLATION =
   "Organization names must start with a letter or number, followed by letters, numbers or hyphens, and must end with a letter or number.";
 
+/**
+ * Handles the case where command is loading a file.
+ *
+ * @param file File name
+ */
 export const handleFileConfig = async (file: string) => {
   loadConfiguration(file);
   await saveConfiguration(file);
   logger.info("Successfully initialized the spk tool!");
 };
 
+/**
+ * Returns true if organization name is proper.
+ *
+ * @param value Organization Name
+ */
 export const validateOrgName = (value: string): string | boolean => {
   if (!hasValue(value.trim())) {
     return "Must enter an organization";
@@ -48,6 +59,11 @@ export const validateOrgName = (value: string): string | boolean => {
   return ORG_NAME_VIOLATION;
 };
 
+/**
+ * Returns true if project name is proper.
+ *
+ * @param value Project Name
+ */
 export const validateProjectName = (value: string): string | boolean => {
   if (!hasValue(value)) {
     return "Must enter a project name";
@@ -98,6 +114,11 @@ export const validateProjectName = (value: string): string | boolean => {
   return true;
 };
 
+/**
+ * Returns true if access token is not empty string
+ *
+ * @param value Access token
+ */
 export const validateAccessToken = (value: string): string | boolean => {
   if (!hasValue(value)) {
     return "Must enter a personal access token with read/write/manage permissions";
@@ -105,6 +126,12 @@ export const validateAccessToken = (value: string): string | boolean => {
   return true;
 };
 
+/**
+ * Prompts for questions
+ *
+ * @param curConfig Configuration is used to provide default values to the questions.
+ * @return answers to the questions
+ */
 export const prompt = async (curConfig: IConfigYaml): Promise<IAnswer> => {
   const questions = [
     {
@@ -138,6 +165,10 @@ export const prompt = async (curConfig: IConfigYaml): Promise<IAnswer> => {
   };
 };
 
+/**
+ * Returns SPK Configuration. Empty azure devops values are returned
+ * if config.yaml is absent.
+ */
 export const getConfig = (): IConfigYaml => {
   try {
     loadConfiguration();
@@ -154,6 +185,35 @@ export const getConfig = (): IConfigYaml => {
   }
 };
 
+/**
+ * Verifying organization, project name and access token as
+ * azure dev-op API.
+ *
+ * @param azure Azure devops values
+ * @return true if verification is successful
+ */
+export const validatePersonalAccessToken = async (
+  azure: IConfigYaml["azure_devops"]
+): Promise<boolean> => {
+  try {
+    const res = await axios.get(
+      `https://dev.azure.com/${azure!.org}/_apis/projects/${azure!.project}`,
+      {
+        auth: {
+          password: azure!.access_token as string,
+          username: ""
+        }
+      }
+    );
+    return res.status === 200;
+  } catch (_) {
+    return false;
+  }
+};
+
+/**
+ * Handles the interactive mode of the command.
+ */
 export const handleInteractiveMode = async () => {
   const curConfig = deepClone(getConfig());
   const answer = await prompt(curConfig);
@@ -163,6 +223,16 @@ export const handleInteractiveMode = async () => {
   const data = yaml.safeDump(curConfig);
   fs.writeFileSync(defaultConfigFile(), data);
   logger.info("Successfully constructed SPK configuration file.");
+  const ok = await validatePersonalAccessToken(curConfig.azure_devops);
+  if (ok) {
+    logger.info(
+      "Organization name, project name and personal access token are verified."
+    );
+  } else {
+    logger.error(
+      "Unable to verify organization name, project name and personal access token."
+    );
+  }
 };
 
 /**
