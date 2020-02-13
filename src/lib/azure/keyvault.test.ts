@@ -14,7 +14,7 @@ import { getSecret, setSecret } from "./keyvault";
 import * as keyvault from "./keyvault";
 
 const keyVaultName = uuid();
-const secretName = uuid();
+const mockedName = uuid();
 const secretValue = uuid();
 
 jest.spyOn(keyvault, "getClient").mockReturnValue(
@@ -62,7 +62,7 @@ describe("set secret", () => {
   });
   test("should create storage account", async () => {
     try {
-      await setSecret(keyVaultName, secretName, secretValue);
+      await setSecret(keyVaultName, mockedName, secretValue);
     } catch (_) {
       expect(true).toBe(false);
     }
@@ -80,7 +80,7 @@ describe("set secret", () => {
       } as SecretClient)
     );
     try {
-      await setSecret(keyVaultName, secretName, secretValue);
+      await setSecret(keyVaultName, mockedName, secretValue);
       expect(true).toBe(false);
     } catch (e) {
       expect(e).toBeDefined();
@@ -94,7 +94,7 @@ describe("get secret", () => {
   });
   it("should get storage account key", async () => {
     try {
-      const val = await getSecret(keyVaultName, secretName);
+      const val = await getSecret(keyVaultName, mockedName);
       expect(val).toBe("secretValue");
     } catch (err) {
       expect(true).toBe(false);
@@ -115,7 +115,7 @@ describe("get secret", () => {
       } as SecretClient)
     );
     try {
-      const val = await getSecret(keyVaultName, secretName);
+      const val = await getSecret(keyVaultName, mockedName);
       expect(val).toBe(undefined);
     } catch (err) {
       expect(true).toBe(false);
@@ -136,7 +136,7 @@ describe("get secret", () => {
       } as SecretClient)
     );
     try {
-      const val = await getSecret(keyVaultName, secretName);
+      const val = await getSecret(keyVaultName, mockedName);
       expect(true).toBe(false);
     } catch (err) {
       expect(err).toBeDefined();
