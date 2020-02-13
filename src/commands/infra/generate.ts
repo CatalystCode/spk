@@ -38,7 +38,7 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   const parentPath = process.cwd();
-  const projectPath = opts.project || "";
+  const projectPath = opts.project || parentPath;
   const outputPath = opts.output || "";
   try {
     const definitionConfig = validateDefinition(parentPath, projectPath);
