@@ -14,7 +14,8 @@ import {
 import {
   getOriginUrl,
   getRepositoryName,
-  getRepositoryUrl
+  getRepositoryUrl,
+  repositoryHasFile
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -61,6 +62,17 @@ export const execute = async (
 ) => {
   try {
     await fetchValues(serviceName, opts);
+    const pipelineFileName = serviceName + "/azure-pipelines.yaml";
+    const hasPipelineFile = await repositoryHasFile(pipelineFileName);
+
+    if (!hasPipelineFile) {
+      logger.error(
+        "Error installing build pipeline. Repository does not have a " +
+          pipelineFileName +
+          " file."
+      );
+      await exitFn(1);
+    }
     await installBuildUpdatePipeline(serviceName, opts);
     await exitFn(0);
   } catch (err) {

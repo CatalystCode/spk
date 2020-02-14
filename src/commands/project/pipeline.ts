@@ -20,7 +20,8 @@ import {
 import {
   getOriginUrl,
   getRepositoryName,
-  getRepositoryUrl
+  getRepositoryUrl,
+  repositoryHasFile
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -120,6 +121,14 @@ export const execute = async (
     checkDependencies(projectPath);
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
+    const hasPipelineFile = await repositoryHasFile("hld-lifecycle.yaml");
+
+    if (!hasPipelineFile) {
+      logger.error(
+        "Error installing lifecycle pipeline. Repository does not have an hld-lifecycle.yaml file."
+      );
+      await exitFn(1);
+    }
 
     if (values === null) {
       await exitFn(1);

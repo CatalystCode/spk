@@ -1,3 +1,4 @@
+import * as gitutils from "../../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 
 jest.mock("../../lib/pipelines/pipelines");
@@ -44,6 +45,10 @@ beforeEach(() => {
 const getMockedValues = () => {
   return deepClone(MOCKED_VALUES);
 };
+
+jest
+  .spyOn(gitutils, "repositoryHasFile")
+  .mockReturnValue(Promise.resolve(true));
 
 describe("test fetchValues function", () => {
   it("with all values set", async () => {

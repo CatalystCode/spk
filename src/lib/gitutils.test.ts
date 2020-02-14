@@ -9,6 +9,7 @@ import {
   getRepositoryName,
   getRepositoryUrl,
   pushBranch,
+  repositoryHasFile,
   safeGitUrlForLogging
 } from "../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../logger";
@@ -71,6 +72,26 @@ describe("getCurrentBranch", () => {
     }
 
     expect(error).not.toBeUndefined();
+  });
+});
+
+describe("repositoryHasFile", () => {
+  it("Should return detect file is present", async () => {
+    (exec as jest.Mock).mockReturnValue(
+      "README.md\nazure-vote/.gitignore\nmaintainers.yaml\nbedrock.yaml"
+    );
+
+    const hasFile = await repositoryHasFile("maintainers.yaml");
+    expect(hasFile).toBe(true);
+  });
+
+  it("Should return detect file is not present", async () => {
+    (exec as jest.Mock).mockReturnValue(
+      "README.md\nazure-vote/.gitignore\nmaintainers.yaml\nbedrock.yaml"
+    );
+
+    const hasFile = await repositoryHasFile("hld-lifecycle.yaml");
+    expect(hasFile).toBe(false);
   });
 });
 

@@ -10,7 +10,7 @@ import {
   BUILD_SCRIPT_URL,
   RENDER_HLD_PIPELINE_FILENAME
 } from "../../lib/constants";
-import { getRepositoryName } from "../../lib/gitutils";
+import { getRepositoryName, repositoryHasFile } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
@@ -82,6 +82,15 @@ export const execute = async (
 ) => {
   try {
     populateValues(opts);
+    const hasPipelineFile = await repositoryHasFile("manifest-generation.yaml");
+
+    if (!hasPipelineFile) {
+      logger.error(
+        "Error installing manifest generation pipeline. Repository does not have a manifest-generation.yaml file."
+      );
+      await exitFn(1);
+    }
+
     await installHldToManifestPipeline(opts);
     await exitFn(0);
   } catch (err) {

@@ -1,6 +1,7 @@
 import * as config from "../../config";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { getRepositoryName } from "../../lib/gitutils";
+import * as gitutils from "../../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 jest.mock("../../lib/pipelines/pipelines");
 
@@ -55,6 +56,10 @@ beforeAll(() => {
 afterAll(() => {
   disableVerboseLogging();
 });
+
+jest
+  .spyOn(gitutils, "repositoryHasFile")
+  .mockReturnValue(Promise.resolve(true));
 
 describe("test emptyStringIfUndefined function", () => {
   it("pass in undefined", () => {

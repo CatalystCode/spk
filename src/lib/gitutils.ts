@@ -133,6 +133,26 @@ export const getOriginUrl = async (
 };
 
 /**
+ * Checks if the repository has a given file.
+ * @param fileName The name of the file
+ * @param absRepositoryPath The path to the repository
+ */
+export const repositoryHasFile = async (
+  fileName: string,
+  absRepositoryPath = "."
+): Promise<boolean> => {
+  try {
+    const files = await exec("git", ["ls-files"], { cwd: absRepositoryPath });
+
+    return files.includes(fileName);
+  } catch (_) {
+    throw Error(
+      "Unable to check if file " + fileName + " exists in repository."
+    );
+  }
+};
+
+/**
  * Will return the name of the repository
  * Currently only AzDo and Github are supported.
  * @param originUrl
