@@ -41,6 +41,9 @@ export const fetchValues = async (
   opts: ICommandOptions
 ) => {
   const { azure_devops } = Config();
+  if (!opts.repoUrl) {
+    throw Error(`Repo url not defined`);
+  }
   const gitOriginUrl = await getOriginUrl();
 
   opts.orgName = opts.orgName || azure_devops?.org || "";
@@ -48,7 +51,7 @@ export const fetchValues = async (
     opts.personalAccessToken || azure_devops?.access_token || "";
   opts.devopsProject = opts.devopsProject || azure_devops?.project || "";
   opts.pipelineName = opts.pipelineName || serviceName + "-pipeline";
-  opts.repoName = opts.repoName || getRepositoryName(gitOriginUrl);
+  opts.repoName = getRepositoryName(opts.repoUrl);
   opts.repoUrl = opts.repoUrl || getRepositoryUrl(gitOriginUrl);
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
   return opts;
@@ -135,17 +138,14 @@ export const installBuildUpdatePipeline = async (
       `Error occurred during pipeline creation for ${values.pipelineName}`
     );
   }
-
   if (typeof builtDefinition.id === "undefined") {
     const builtDefnString = JSON.stringify(builtDefinition);
     throw Error(
       `Invalid BuildDefinition created, parameter 'id' is missing from ${builtDefnString}`
     );
   }
-
   logger.info(`Created pipeline for ${values.pipelineName}`);
   logger.info(`Pipeline ID: ${builtDefinition.id}`);
-
   try {
     await queueBuild(devopsClient, values.devopsProject, builtDefinition.id);
   } catch (err) {

@@ -101,7 +101,6 @@ Options:
   -n, --pipeline-name <pipeline-name>                  Name of the pipeline to be created
   -p, --personal-access-token <personal-access-token>  Personal Access Token
   -o, --org-name <org-name>                            Organization Name for Azure DevOps
-  -r, --repo-name <repo-name>                          Repository Name in Azure DevOps
   -u, --repo-url <repo-url>                            Repository URL
   -d, --devops-project <devops-project>                Azure DevOps Project
   -b, --build-script-url <build-script-url>            Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.

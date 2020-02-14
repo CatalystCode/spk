@@ -49,7 +49,7 @@ export const populateValues = (opts: ICommandOptions) => {
     opts.manifestUrl ||
     emptyStringIfUndefined(azure_devops?.manifest_repository);
 
-  opts.hldName = opts.hldName || getRepositoryName(opts.hldUrl);
+  opts.hldName = getRepositoryName(opts.hldUrl);
 
   opts.orgName = opts.orgName || emptyStringIfUndefined(azure_devops?.org);
 

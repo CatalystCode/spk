@@ -85,7 +85,6 @@ Options:
   -n, --pipeline-name <pipeline-name>                  Name of the pipeline to be created
   -p, --personal-access-token <personal-access-token>  Personal Access Token
   -o, --org-name <org-name>                            Organization Name for Azure DevOps
-  -r, --hld-name <hld-name>                            HLD Repository Name in Azure DevOps
   -u, --hld-url <hld-url>                              HLD Repository URL
   -m, --manifest-url <manifest-url>                    Manifest Repository URL
   -d, --devops-project <devops-project>                Azure DevOps Project
