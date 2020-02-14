@@ -111,7 +111,7 @@ export const getDefaultRings = (
  */
 export const getSourceBranch = async (
   sourceBranch: string | undefined
-): Promise<string | undefined> => {
+): Promise<string> => {
   if (
     typeof sourceBranch !== "string" ||
     (typeof sourceBranch === "string" && sourceBranch.length === 0)
