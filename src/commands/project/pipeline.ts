@@ -69,11 +69,9 @@ export const fetchValidateValues = (
     throw new Error("SPK Config is missing");
   }
   const azure_devops = spkConfig?.azure_devops;
-
   if (!opts.repoUrl) {
     throw Error(`Repo url not defined`);
   }
-
   const values: ICommandOptions = {
     buildScriptUrl: opts.buildScriptUrl || BUILD_SCRIPT_URL,
     devopsProject: opts.devopsProject || azure_devops?.project,
@@ -101,19 +99,6 @@ export const fetchValidateValues = (
 };
 
 /**
- * Validates whether a url is a github url
- *
- * @param url the url string
- */
-/*const isGitHubUrl = (url: string) => {
-  const gitUrl = url.includes('github')
-  if (gitUrl){
-    return true
-  }
-  return false
-}
- */
-/**
  * Executes the command.
  *
  * @param opts Options object from commander.
@@ -128,7 +113,6 @@ export const execute = async (
   if (!opts.repoUrl || !opts.pipelineName) {
     logger.error(`Values for repo url and/or pipeline name are missing`);
   }
-
   if (!projectPath) {
     logger.error("Project Path is missing");
     await exitFn(1);
