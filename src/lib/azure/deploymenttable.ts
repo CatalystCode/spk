@@ -19,11 +19,8 @@ export interface IRowSrcToACRPipeline {
   p1: string;
   service: string;
 }
-export interface IRowACRToHLDPipeline {
-  PartitionKey: string;
-  RowKey: string;
+export interface IRowACRToHLDPipeline extends IRowSrcToACRPipeline {
   p2: string;
-  imageTag: string;
   hldCommitId: string;
   env: string;
   pr?: string;
@@ -32,6 +29,10 @@ export interface IRowACRToHLDPipeline {
 export interface IEntryACRToHLDPipeline {
   RowKey: string;
   partitionKey: string;
+  commitId: string;
+  imageTag: string;
+  p1: string;
+  service: string;
   p2: {
     _: string;
   };
@@ -43,19 +44,15 @@ export interface IEntryACRToHLDPipeline {
   };
 }
 
-export interface IRowHLDToManifestPipeline {
-  PartitionKey: string;
-  RowKey: string;
+export interface IRowHLDToManifestPipeline extends IRowACRToHLDPipeline {
   p3: string;
-  hldCommitId: string;
   manifestCommitId?: string;
-  pr?: string;
 }
 
-export interface IEntryHLDToManifestPipeline {
-  PartitionKey: string;
-  RowKey: string;
-  hldCommitId: string;
+export interface IEntryHLDToManifestPipeline extends IEntryACRToHLDPipeline {
+  hldCommitId: {
+    _: string;
+  };
   p3: {
     _: string;
   };
@@ -113,10 +110,13 @@ export const updateMatchingArcToHLDPipelineEntry = async (
     const updateEntry: IRowACRToHLDPipeline = {
       PartitionKey: found.partitionKey,
       RowKey: found.RowKey,
+      commitId: found.commitId,
       env: env.toLowerCase(),
       hldCommitId: hldCommitId.toLowerCase(),
-      imageTag: imageTag.toLowerCase(),
-      p2: pipelineId.toLowerCase()
+      imageTag: found.imageTag,
+      p1: found.p1,
+      p2: pipelineId.toLowerCase(),
+      service: found.service
     };
     if (pr) {
       updateEntry.pr = pr.toLowerCase();
@@ -140,10 +140,13 @@ export const updateLastRowOfArcToHLDPipelines = async (
   const last: IRowACRToHLDPipeline = {
     PartitionKey: lastEntry.partitionKey,
     RowKey: lastEntry.RowKey,
+    commitId: lastEntry.commitId,
     env: env.toLowerCase(),
     hldCommitId: hldCommitId.toLowerCase(),
-    imageTag: imageTag.toLowerCase(),
-    p2: pipelineId.toLowerCase()
+    imageTag: lastEntry.imageTag,
+    p1: lastEntry.p1,
+    p2: pipelineId.toLowerCase(),
+    service: lastEntry.service
   };
   if (pr) {
     last.pr = pr.toLowerCase();
