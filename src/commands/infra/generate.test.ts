@@ -66,6 +66,31 @@ describe("fetch execute function", () => {
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
+  it("negative time, simulate error in generateConfig function", async () => {
+    jest
+      .spyOn(generate, "validateDefinition")
+      .mockReturnValueOnce(DefinitionYAMLExistence.PARENT_ONLY);
+    jest.spyOn(generate, "validateTemplateSources").mockReturnValueOnce({});
+    jest
+      .spyOn(generate, "validateRemoteSource")
+      .mockReturnValueOnce(Promise.resolve());
+    jest
+      .spyOn(infraCommon, "getSourceFolderNameFromURL")
+      .mockImplementationOnce(() => {
+        throw new Error("Fake");
+      });
+    const exitFn = jest.fn();
+    await execute(
+      {
+        output: "",
+        project: "test"
+      },
+      exitFn
+    );
+
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[1]]);
+  });
   it("with project value", async () => {
     jest
       .spyOn(generate, "validateDefinition")
