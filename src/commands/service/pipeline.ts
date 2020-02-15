@@ -41,9 +41,6 @@ export const fetchValues = async (
   opts: ICommandOptions
 ) => {
   const { azure_devops } = Config();
-  if (!opts.repoUrl) {
-    throw Error(`Repo url not defined`);
-  }
   const gitOriginUrl = await getOriginUrl();
 
   opts.orgName = opts.orgName || azure_devops?.org || "";
@@ -63,6 +60,9 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   try {
+    if (!opts.repoUrl) {
+      throw Error(`Repo url not defined`);
+    }
     await fetchValues(serviceName, opts);
     await installBuildUpdatePipeline(serviceName, opts);
     await exitFn(0);
