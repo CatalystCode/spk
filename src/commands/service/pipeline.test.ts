@@ -45,27 +45,6 @@ const getMockedValues = () => {
   return deepClone(MOCKED_VALUES);
 };
 
-describe("test fetchValues function", () => {
-  it("with all values set", async () => {
-    const mockedVals = getMockedValues();
-    const values = await fetchValues("serviceName", mockedVals);
-    expect(values).toEqual(mockedVals);
-  });
-  it("missing packagesDir value", async () => {
-    const mockedVals = getMockedValues();
-    mockedVals.packagesDir = undefined;
-    const values = await fetchValues("serviceName", mockedVals);
-    expect(values).toEqual(mockedVals);
-  });
-  it("check that pipelineName is set when it is not provided ", async () => {
-    const mockedVals = getMockedValues();
-    mockedVals.pipelineName = "";
-    const serviceName = "AAAService";
-    const values = await fetchValues(serviceName, mockedVals);
-    expect(values.pipelineName).toBe(`${serviceName}-pipeline`);
-  });
-});
-
 describe("test execute function", () => {
   it("positive test: with all values set", async () => {
     const exitFn = jest.fn();
@@ -83,6 +62,13 @@ describe("test execute function", () => {
     await execute("serviceName", getMockedValues(), exitFn);
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
+  });
+  it("SPK Config's azure_devops do not have value", async () => {
+    const exitFn = jest.fn();
+    const mockedVals = getMockedValues();
+    mockedVals.repoUrl = "";
+    await execute("serviceName", mockedVals, exitFn);
+    expect(exitFn).toBeCalledTimes(1);
   });
 });
 
@@ -137,5 +123,26 @@ describe("create pipeline tests", () => {
     } catch (_) {
       // expecting exception to be thrown
     }
+  });
+});
+
+describe("test fetchValues function", () => {
+  it("with all values set", async () => {
+    const mockedVals = getMockedValues();
+    const values = await fetchValues("serviceName", mockedVals);
+    expect(values).toEqual(mockedVals);
+  });
+  it("missing packagesDir value", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.packagesDir = undefined;
+    const values = await fetchValues("serviceName", mockedVals);
+    expect(values).toEqual(mockedVals);
+  });
+  it("check that pipelineName is set when it is not provided ", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.pipelineName = "";
+    const serviceName = "AAAService";
+    const values = await fetchValues(serviceName, mockedVals);
+    expect(values.pipelineName).toBe(`${serviceName}-pipeline`);
   });
 });
