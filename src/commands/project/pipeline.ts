@@ -37,8 +37,8 @@ export interface ICommandOptions {
   personalAccessToken: string | undefined;
   devopsProject: string | undefined;
   pipelineName: string | undefined;
-  repoName: string | undefined;
-  repoUrl: string | undefined;
+  repoName: string;
+  repoUrl: string;
   buildScriptUrl: string | undefined;
 }
 

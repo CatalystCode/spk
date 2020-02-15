@@ -145,9 +145,9 @@ export const getRepositoryName = (originUrl: string) => {
   } else if (resource.includes("visualstudio.com")) {
     logger.debug("visualstudio.com repo found");
     return name;
-    /*} else if (resource === "github.com") {
+  } else if (resource === "github.com") {
     logger.debug("github repo found.");
-    return name; */
+    return name;
   } else {
     throw Error(
       "Could not determine origin repository, or it is not a supported type."
