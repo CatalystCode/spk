@@ -36,7 +36,7 @@ export interface ICommandOptions {
   orgName: string | undefined;
   personalAccessToken: string | undefined;
   devopsProject: string | undefined;
-  pipelineName: string | undefined;
+  pipelineName: string;
   repoName: string;
   repoUrl: string;
   buildScriptUrl: string | undefined;
@@ -111,7 +111,7 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   if (!opts.repoUrl || !opts.pipelineName) {
-    logger.error(`Values for repo url and/or pipeline name are missing`);
+    throw Error(`Values for repo url and/or pipeline name are missing`);
   }
   if (!projectPath) {
     logger.error("Project Path is missing");

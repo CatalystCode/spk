@@ -40,9 +40,9 @@ const mockMissingValues: ICommandOptions = {
   devopsProject: undefined,
   orgName: undefined,
   personalAccessToken: undefined,
-  pipelineName: undefined,
+  pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: "repoUrl"
+  repoUrl: ""
 };
 
 const gitUrl = "https://github.com/CatalystCode/spk.git";
@@ -68,10 +68,19 @@ describe("test fetchValidateValues function", () => {
       expect(e).not.toBeNull();
     }
   });
+  it("SPK Config's azure_devops do not have value", () => {
+    expect(() => {
+      fetchValidateValues(mockMissingValues, gitUrl, {
+        azure_devops: {}
+      });
+    }).toThrow(`Repo url not defined`);
+  });
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
     expect(() => {
-      fetchValidateValues(mockMissingValues, gitUrl, { azure_devops: {} });
-    }).toThrow();
+      fetchValidateValues(mockValues, gitUrl, { azure_devops: {} });
+    }).toThrow(
+      `Could not determine origin repository, or it is not a supported type.`
+    );
   });
 });
 
