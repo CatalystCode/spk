@@ -45,6 +45,27 @@ const getMockedValues = () => {
   return deepClone(MOCKED_VALUES);
 };
 
+describe("test fetchValues function", () => {
+  it("with all values set", async () => {
+    const mockedVals = getMockedValues();
+    const values = await fetchValues("serviceName", mockedVals);
+    expect(values).toEqual(mockedVals);
+  });
+  it("missing packagesDir value", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.packagesDir = undefined;
+    const values = await fetchValues("serviceName", mockedVals);
+    expect(values).toEqual(mockedVals);
+  });
+  it("check that pipelineName is set when it is not provided ", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.pipelineName = "";
+    const serviceName = "AAAService";
+    const values = await fetchValues(serviceName, mockedVals);
+    expect(values.pipelineName).toBe(`${serviceName}-pipeline`);
+  });
+});
+
 describe("test execute function", () => {
   it("positive test: with all values set", async () => {
     const exitFn = jest.fn();
@@ -123,26 +144,5 @@ describe("create pipeline tests", () => {
     } catch (_) {
       // expecting exception to be thrown
     }
-  });
-});
-
-describe("test fetchValues function", () => {
-  it("with all values set", async () => {
-    const mockedVals = getMockedValues();
-    const values = await fetchValues("serviceName", mockedVals);
-    expect(values).toEqual(mockedVals);
-  });
-  it("missing packagesDir value", async () => {
-    const mockedVals = getMockedValues();
-    mockedVals.packagesDir = undefined;
-    const values = await fetchValues("serviceName", mockedVals);
-    expect(values).toEqual(mockedVals);
-  });
-  it("check that pipelineName is set when it is not provided ", async () => {
-    const mockedVals = getMockedValues();
-    mockedVals.pipelineName = "";
-    const serviceName = "AAAService";
-    const values = await fetchValues(serviceName, mockedVals);
-    expect(values.pipelineName).toBe(`${serviceName}-pipeline`);
   });
 });
