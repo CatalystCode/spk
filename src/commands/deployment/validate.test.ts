@@ -375,7 +375,7 @@ describe("Write self-test data", () => {
 });
 
 describe("Delete self-test data", () => {
-  fit("should create a row key, add to storage and delete it", async () => {
+  it("should create a row key, add to storage and delete it", async () => {
     mockedDB = [];
     await writeSelfTestData(
       "test-key",

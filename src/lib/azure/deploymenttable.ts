@@ -28,7 +28,7 @@ export interface IRowACRToHLDPipeline extends IRowSrcToACRPipeline {
 
 export interface IEntryACRToHLDPipeline {
   RowKey: string;
-  partitionKey: string;
+  PartitionKey: string;
   commitId: string;
   imageTag: string;
   p1: string;
@@ -49,10 +49,16 @@ export interface IRowHLDToManifestPipeline extends IRowACRToHLDPipeline {
   manifestCommitId?: string;
 }
 
-export interface IEntryHLDToManifestPipeline extends IEntryACRToHLDPipeline {
-  hldCommitId: {
-    _: string;
-  };
+export interface IEntryHLDToManifestPipeline {
+  RowKey: string;
+  PartitionKey: string;
+  commitId: string;
+  env: string;
+  imageTag: string;
+  p1: string;
+  service: string;
+  p2: string;
+  hldCommitId: string;
   p3: {
     _: string;
   };
@@ -60,6 +66,10 @@ export interface IEntryHLDToManifestPipeline extends IEntryACRToHLDPipeline {
     _: string;
   };
 }
+
+export const getTableService = (tableInfo: IDeploymentTable) => {
+  return azure.createTableService(tableInfo.accountName, tableInfo.accountKey);
+};
 
 /**
  * Adds a new deployment in storage for SRC to ACR pipeline.
@@ -99,16 +109,17 @@ export const updateMatchingArcToHLDPipelineEntry = async (
   env: string,
   pr?: string
 ): Promise<IRowACRToHLDPipeline | null> => {
-  const found = entries.find(
-    (entry: IEntryACRToHLDPipeline) =>
+  const found = (entries || []).find((entry: IEntryACRToHLDPipeline) => {
+    return (
       (entry.p2 ? entry.p2._ === pipelineId : true) &&
       (entry.hldCommitId ? entry.hldCommitId._ === hldCommitId : true) &&
       (entry.env ? entry.env._ === env : true)
-  );
+    );
+  });
 
   if (found) {
     const updateEntry: IRowACRToHLDPipeline = {
-      PartitionKey: found.partitionKey,
+      PartitionKey: found.PartitionKey,
       RowKey: found.RowKey,
       commitId: found.commitId,
       env: env.toLowerCase(),
@@ -138,7 +149,7 @@ export const updateLastRowOfArcToHLDPipelines = async (
 ): Promise<IRowACRToHLDPipeline> => {
   const lastEntry = entries[entries.length - 1];
   const last: IRowACRToHLDPipeline = {
-    PartitionKey: lastEntry.partitionKey,
+    PartitionKey: lastEntry.PartitionKey,
     RowKey: lastEntry.RowKey,
     commitId: lastEntry.commitId,
     env: env.toLowerCase(),
@@ -169,10 +180,13 @@ export const addNewRowToArcToHLDPipelines = async (
   const newEntry: IRowACRToHLDPipeline = {
     PartitionKey: tableInfo.partitionKey,
     RowKey: getRowKey(),
+    commitId: "",
     env: env.toLowerCase(),
     hldCommitId: hldCommitId.toLowerCase(),
     imageTag: imageTag.toLowerCase(),
-    p2: pipelineId.toLowerCase()
+    p1: "",
+    p2: pipelineId.toLowerCase(),
+    service: ""
   };
   if (pr) {
     newEntry.pr = pr.toLowerCase();
@@ -307,8 +321,14 @@ export const updateHLDtoManifestEntry = async (
     const entry: IRowHLDToManifestPipeline = {
       PartitionKey: found.PartitionKey,
       RowKey: found.RowKey,
+      commitId: found.commitId,
+      env: found.env,
       hldCommitId: found.hldCommitId,
-      p3: pipelineId.toLowerCase()
+      imageTag: found.imageTag,
+      p1: found.p1,
+      p2: found.p2,
+      p3: pipelineId.toLowerCase(),
+      service: found.service
     };
     if (manifestCommitId) {
       entry.manifestCommitId = manifestCommitId.toLowerCase();
@@ -337,8 +357,14 @@ export const updateLastHLDtoManifestEntry = async (
   const newEntry: IRowHLDToManifestPipeline = {
     PartitionKey: lastEntry.PartitionKey,
     RowKey: getRowKey(),
+    commitId: lastEntry.commitId,
+    env: lastEntry.env,
     hldCommitId: hldCommitId.toLowerCase(),
-    p3: pipelineId.toLowerCase()
+    imageTag: lastEntry.imageTag,
+    p1: lastEntry.p1,
+    p2: lastEntry.p2,
+    p3: pipelineId.toLowerCase(),
+    service: lastEntry.service
   };
   if (manifestCommitId) {
     newEntry.manifestCommitId = manifestCommitId.toLowerCase();
@@ -364,8 +390,14 @@ export const addNewRowToHLDtoManifestPipeline = async (
   const newEntry: IRowHLDToManifestPipeline = {
     PartitionKey: tableInfo.partitionKey,
     RowKey: getRowKey(),
+    commitId: "",
+    env: "",
     hldCommitId: hldCommitId.toLowerCase(),
-    p3: pipelineId.toLowerCase()
+    imageTag: "",
+    p1: "",
+    p2: "",
+    p3: pipelineId.toLowerCase(),
+    service: ""
   };
   if (manifestCommitId) {
     newEntry.manifestCommitId = manifestCommitId.toLowerCase();
@@ -470,10 +502,7 @@ export const findMatchingDeployments = (
   filterName: string,
   filterValue: string
 ): Promise<any> => {
-  const tableService = azure.createTableService(
-    tableInfo.accountName,
-    tableInfo.accountKey
-  );
+  const tableService = getTableService(tableInfo);
   const query: azure.TableQuery = new azure.TableQuery().where(
     `PartitionKey eq '${tableInfo.partitionKey}'`
   );
@@ -506,11 +535,12 @@ export const findMatchingDeployments = (
  * @param tableInfo Table Information
  * @param entry entry to insert
  */
-export const insertToTable = (tableInfo: IDeploymentTable, entry: any) => {
-  const tableService = azure.createTableService(
-    tableInfo.accountName,
-    tableInfo.accountKey
-  );
+export const insertToTable = (
+  tableInfo: IDeploymentTable,
+  entry: IRowSrcToACRPipeline | IRowACRToHLDPipeline | IRowHLDToManifestPipeline
+) => {
+  const tableService = getTableService(tableInfo);
+
   return new Promise((resolve, reject) => {
     tableService.insertEntity(tableInfo.tableName, entry, err => {
       if (!err) {
@@ -522,11 +552,11 @@ export const insertToTable = (tableInfo: IDeploymentTable, entry: any) => {
   });
 };
 
-export const deleteFromTable = (tableInfo: IDeploymentTable, entry: any) => {
-  const tableService = azure.createTableService(
-    tableInfo.accountName,
-    tableInfo.accountKey
-  );
+export const deleteFromTable = (
+  tableInfo: IDeploymentTable,
+  entry: IRowSrcToACRPipeline | IRowACRToHLDPipeline | IRowHLDToManifestPipeline
+) => {
+  const tableService = getTableService(tableInfo);
 
   return new Promise((resolve, reject) => {
     tableService.deleteEntity(tableInfo.tableName, entry, {}, err => {
@@ -545,11 +575,12 @@ export const deleteFromTable = (tableInfo: IDeploymentTable, entry: any) => {
  * @param tableInfo Table Information
  * @param entry entry to update
  */
-export const updateEntryInTable = (tableInfo: IDeploymentTable, entry: any) => {
-  const tableService = azure.createTableService(
-    tableInfo.accountName,
-    tableInfo.accountKey
-  );
+export const updateEntryInTable = (
+  tableInfo: IDeploymentTable,
+  entry: IRowSrcToACRPipeline | IRowACRToHLDPipeline | IRowHLDToManifestPipeline
+) => {
+  const tableService = getTableService(tableInfo);
+
   return new Promise((resolve, reject) => {
     tableService.replaceEntity(tableInfo.tableName, entry, err => {
       if (!err) {
