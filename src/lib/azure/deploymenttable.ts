@@ -26,6 +26,20 @@ export interface IRowACRToHLDPipeline extends IRowSrcToACRPipeline {
   pr?: string;
 }
 
+export interface IEntryACRPipeline {
+  RowKey: string;
+  PartitionKey: string;
+  commitId: string;
+  imageTag: string;
+  service: string;
+  p1: {
+    _: string;
+  };
+  env: {
+    _: string;
+  };
+}
+
 export interface IEntryACRToHLDPipeline {
   RowKey: string;
   PartitionKey: string;
@@ -574,7 +588,7 @@ export const insertToTable = (
 
 export const deleteFromTable = (
   tableInfo: IDeploymentTable,
-  entry: IRowSrcToACRPipeline | IRowACRToHLDPipeline | IRowHLDToManifestPipeline
+  entry: IEntryACRPipeline
 ) => {
   const tableService = getTableService(tableInfo);
 

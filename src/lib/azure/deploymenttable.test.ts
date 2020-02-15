@@ -42,6 +42,20 @@ const mockedEnv = uuid();
 const mockedPr = uuid();
 const mockedManifestCommitId = uuid();
 
+const mockedEntryACRPipeline: deploymenttable.IEntryACRPipeline = {
+  PartitionKey: uuid(),
+  RowKey: uuid(),
+  commitId: mockedCommitId,
+  env: {
+    _: mockedEnv
+  },
+  imageTag: mockedImageTag,
+  p1: {
+    _: mockedPipelineId
+  },
+  service: mockedServiceName
+};
+
 const mockedEntryACRToHLDPipeline = {
   PartitionKey: uuid(),
   RowKey: uuid(),
@@ -147,7 +161,7 @@ describe("test table operation functions", () => {
       insertToTable(mockedTableInfo, mockedEntryACRToHLDPipeline)
     ).rejects.toThrow();
     await expect(
-      deleteFromTable(mockedTableInfo, mockedEntryACRToHLDPipeline)
+      deleteFromTable(mockedTableInfo, mockedEntryACRPipeline)
     ).rejects.toThrow();
     await expect(
       updateEntryInTable(mockedTableInfo, mockedEntryACRToHLDPipeline)
