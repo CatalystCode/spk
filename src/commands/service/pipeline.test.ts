@@ -84,7 +84,7 @@ describe("test execute function", () => {
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
-  it("SPK Config's azure_devops do not have value", async () => {
+  it("negative test: repo url not defined", async () => {
     const exitFn = jest.fn();
     const mockedVals = getMockedValues();
     mockedVals.repoUrl = "";
