@@ -111,7 +111,9 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   if (!opts.repoUrl || !opts.pipelineName) {
-    throw Error(`Values for repo url and/or pipeline name are missing`);
+    logger.error(`Values for repo url and/or pipeline name are missing`);
+    await exitFn(1);
+    return;
   }
   if (!projectPath) {
     logger.error("Project Path is missing");
