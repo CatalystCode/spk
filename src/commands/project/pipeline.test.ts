@@ -36,7 +36,7 @@ const mockValues: ICommandOptions = {
   personalAccessToken: "PAT",
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: "repoUrl"
+  repoUrl: "a.dev.azure.com.repo"
 };
 
 const mockMissingValues: ICommandOptions = {
@@ -45,8 +45,8 @@ const mockMissingValues: ICommandOptions = {
   orgName: undefined,
   personalAccessToken: undefined,
   pipelineName: undefined,
-  repoName: undefined,
-  repoUrl: undefined
+  repoName: "repoName",
+  repoUrl: "repoUrl"
 };
 
 const gitUrl = "https://github.com/CatalystCode/spk.git";
@@ -72,17 +72,10 @@ describe("test fetchValidateValues function", () => {
       expect(e).not.toBeNull();
     }
   });
-  it("SPK Config's azure_devops do not have value", () => {
-    const values = fetchValidateValues(mockValues, gitUrl, {
-      azure_devops: {}
-    });
-    expect(values).toEqual(mockValues);
-  });
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
-    const values = fetchValidateValues(mockMissingValues, gitUrl, {
-      azure_devops: {}
-    });
-    expect(values).toBeNull();
+    expect(() => {
+      fetchValidateValues(mockMissingValues, gitUrl, { azure_devops: {} });
+    }).toThrow();
   });
 });
 
@@ -106,7 +99,7 @@ describe("installLifecyclePipeline and execute tests", () => {
     await execute(mockValues, tmpDir, exitFn);
 
     expect(exitFn).toBeCalledTimes(1);
-    expect(exitFn.mock.calls).toEqual([[0]]);
+    expect(exitFn.mock.calls).toEqual([[1]]);
   });
   it("should create a pipeline", async () => {
     (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
