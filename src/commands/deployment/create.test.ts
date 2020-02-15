@@ -1,8 +1,8 @@
+import uuid = require("uuid");
 import * as azure from "../../lib/azure/deploymenttable";
 import { deepClone } from "../../lib/util";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { execute, ICommandOptions } from "./create";
-import uuid = require("uuid");
 
 beforeAll(() => {
   enableVerboseLogging();
