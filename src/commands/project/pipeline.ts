@@ -128,7 +128,12 @@ export const execute = async (
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
 
-    if (values === null) {
+    if (
+      values?.personalAccessToken === undefined ||
+      values?.devopsProject === undefined ||
+      values?.orgName === undefined
+    ) {
+      logger.error(`PAT, AzDO project name and/or AzDO org are undefined`);
       await exitFn(1);
     } else {
       await installLifecyclePipeline(values);
