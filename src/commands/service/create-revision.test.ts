@@ -250,12 +250,12 @@ describe("Create pull request", () => {
 describe("test getRemoteUrl function", () => {
   it("sanity test: get original url", async done => {
     const res = await getRemoteUrl(undefined);
-    expect(res).toBe("https://github.com/CatalystCode/spk.git");
+    expect(res.startsWith("https://github.com/CatalystCode/spk")).toBe(true);
     done();
   });
   it("sanity test", async done => {
-    const res = await getRemoteUrl("https://github.com/CatalystCode/spk1.git");
-    expect(res).toBe("https://github.com/CatalystCode/spk1.git");
+    const res = await getRemoteUrl("https://github.com/CatalystCode/spk1");
+    expect(res).toBe("https://github.com/CatalystCode/spk1");
     done();
   });
 });
