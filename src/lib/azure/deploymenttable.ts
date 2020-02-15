@@ -48,7 +48,6 @@ export interface IRowHLDToManifestPipeline extends IRowACRToHLDPipeline {
   p3: string;
   manifestCommitId?: string;
 }
-
 export interface IEntryHLDToManifestPipeline {
   RowKey: string;
   PartitionKey: string;
@@ -66,8 +65,13 @@ export interface IEntryHLDToManifestPipeline {
     _: string;
   };
 }
+export interface IRowManifest extends IRowHLDToManifestPipeline {
+  manifestCommitId: string;
+}
 
-export const getTableService = (tableInfo: IDeploymentTable) => {
+export const getTableService = (
+  tableInfo: IDeploymentTable
+): azure.TableService => {
   return azure.createTableService(tableInfo.accountName, tableInfo.accountKey);
 };
 
@@ -214,11 +218,11 @@ export const updateACRToHLDPipeline = async (
   env: string,
   pr?: string
 ): Promise<IRowACRToHLDPipeline> => {
-  const entries: IEntryACRToHLDPipeline[] = await findMatchingDeployments(
+  const entries = (await findMatchingDeployments(
     tableInfo,
     "imageTag",
     imageTag
-  );
+  )) as IEntryACRToHLDPipeline[];
 
   // 1. try to find the matching entry.
   if (entries && entries.length > 0) {
@@ -236,7 +240,8 @@ export const updateACRToHLDPipeline = async (
       return found;
     }
 
-    // 2. when cannot find the entry, we take the last row and update it.
+    // 2. when cannot find the entry, we take the last row and INSERT it.
+    // TODO: rethink this logic.
     return await updateLastRowOfArcToHLDPipelines(
       entries,
       tableInfo,
@@ -250,6 +255,7 @@ export const updateACRToHLDPipeline = async (
 
   // Fallback: Ideally we should not be getting here, because there should
   // always be a p1 for any p2 being created.
+  // TODO: rethink this logic.
   return await addNewRowToArcToHLDPipelines(
     tableInfo,
     pipelineId,
@@ -280,17 +286,21 @@ export const updateHLDToManifestPipeline = async (
   pipelineId: string,
   manifestCommitId?: string,
   pr?: string
-): Promise<any> => {
-  let entries = await findMatchingDeployments(
+): Promise<IRowHLDToManifestPipeline> => {
+  let entries = (await findMatchingDeployments(
     tableInfo,
     "hldCommitId",
     hldCommitId
-  );
+  )) as IEntryHLDToManifestPipeline[];
 
   // cannot find entries by hldCommitId.
   // attempt to find entries by pr
   if ((!entries || entries.length === 0) && pr) {
-    entries = await findMatchingDeployments(tableInfo, "pr", pr);
+    entries = (await findMatchingDeployments(
+      tableInfo,
+      "pr",
+      pr
+    )) as IEntryHLDToManifestPipeline[];
   }
   return updateHLDtoManifestHelper(
     entries,
@@ -445,6 +455,9 @@ export const updateHLDtoManifestHelper = async (
     if (updated) {
       return updated;
     }
+
+    // 2. when cannot find the entry, we take the last row and INSERT it.
+    // TODO: rethink this logic.
     return await updateLastHLDtoManifestEntry(
       entries,
       tableInfo,
@@ -455,6 +468,9 @@ export const updateHLDtoManifestHelper = async (
     );
   }
 
+  // Fallback: Ideally we should not be getting here, because there should
+  // always matching entry
+  // TODO: rethink this logic.
   return await addNewRowToHLDtoManifestPipeline(
     tableInfo,
     hldCommitId,
@@ -474,8 +490,12 @@ export const updateManifestCommitId = async (
   tableInfo: IDeploymentTable,
   pipelineId: string,
   manifestCommitId: string
-): Promise<any> => {
-  const entries = await findMatchingDeployments(tableInfo, "p3", pipelineId);
+): Promise<IRowManifest> => {
+  const entries = (await findMatchingDeployments(
+    tableInfo,
+    "p3",
+    pipelineId
+  )) as IRowManifest[];
   // Ideally there should only be one entry for every pipeline id
   if (entries.length > 0) {
     const entry = entries[0];
@@ -486,7 +506,7 @@ export const updateManifestCommitId = async (
     );
     return entry;
   }
-  logger.error(
+  throw new Error(
     `No manifest generation found to update manifest commit ${manifestCommitId}`
   );
 };
@@ -501,7 +521,7 @@ export const findMatchingDeployments = (
   tableInfo: IDeploymentTable,
   filterName: string,
   filterValue: string
-): Promise<any> => {
+): Promise<unknown[]> => {
   const tableService = getTableService(tableInfo);
   const query: azure.TableQuery = new azure.TableQuery().where(
     `PartitionKey eq '${tableInfo.partitionKey}'`
@@ -577,7 +597,11 @@ export const deleteFromTable = (
  */
 export const updateEntryInTable = (
   tableInfo: IDeploymentTable,
-  entry: IRowSrcToACRPipeline | IRowACRToHLDPipeline | IRowHLDToManifestPipeline
+  entry:
+    | IRowSrcToACRPipeline
+    | IRowACRToHLDPipeline
+    | IRowHLDToManifestPipeline
+    | IRowManifest
 ) => {
   const tableService = getTableService(tableInfo);
 
