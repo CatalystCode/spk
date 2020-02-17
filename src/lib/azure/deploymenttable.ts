@@ -232,11 +232,11 @@ export const updateACRToHLDPipeline = async (
   env: string,
   pr?: string
 ): Promise<IRowACRToHLDPipeline> => {
-  const entries = (await findMatchingDeployments(
+  const entries = await findMatchingDeployments<IEntryACRToHLDPipeline>(
     tableInfo,
     "imageTag",
     imageTag
-  )) as IEntryACRToHLDPipeline[];
+  );
 
   // 1. try to find the matching entry.
   if (entries && entries.length > 0) {
@@ -301,20 +301,20 @@ export const updateHLDToManifestPipeline = async (
   manifestCommitId?: string,
   pr?: string
 ): Promise<IRowHLDToManifestPipeline> => {
-  let entries = (await findMatchingDeployments(
+  let entries = await findMatchingDeployments<IEntryHLDToManifestPipeline>(
     tableInfo,
     "hldCommitId",
     hldCommitId
-  )) as IEntryHLDToManifestPipeline[];
+  );
 
   // cannot find entries by hldCommitId.
   // attempt to find entries by pr
   if ((!entries || entries.length === 0) && pr) {
-    entries = (await findMatchingDeployments(
+    entries = await findMatchingDeployments<IEntryHLDToManifestPipeline>(
       tableInfo,
       "pr",
       pr
-    )) as IEntryHLDToManifestPipeline[];
+    );
   }
   return updateHLDtoManifestHelper(
     entries,
@@ -505,11 +505,11 @@ export const updateManifestCommitId = async (
   pipelineId: string,
   manifestCommitId: string
 ): Promise<IRowManifest> => {
-  const entries = (await findMatchingDeployments(
+  const entries = await findMatchingDeployments<IRowManifest>(
     tableInfo,
     "p3",
     pipelineId
-  )) as IRowManifest[];
+  );
   // Ideally there should only be one entry for every pipeline id
   if (entries.length > 0) {
     const entry = entries[0];
@@ -531,11 +531,11 @@ export const updateManifestCommitId = async (
  * @param filterName name of the filter, such as `imageTag`
  * @param filterValue value of the filter, such as `hello-spk-master-1234`
  */
-export const findMatchingDeployments = (
+export const findMatchingDeployments = <T>(
   tableInfo: IDeploymentTable,
   filterName: string,
   filterValue: string
-): Promise<unknown[]> => {
+): Promise<T[]> => {
   const tableService = getTableService(tableInfo);
   const query: azure.TableQuery = new azure.TableQuery().where(
     `PartitionKey eq '${tableInfo.partitionKey}'`
@@ -554,7 +554,7 @@ export const findMatchingDeployments = (
       nextContinuationToken,
       (error, result) => {
         if (!error) {
-          resolve(result.entries);
+          resolve(result.entries as T[]);
         } else {
           reject(error);
         }
