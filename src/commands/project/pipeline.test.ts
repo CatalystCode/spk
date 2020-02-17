@@ -25,6 +25,8 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
+const gitUrl = "https://github.com/CatalystCode/spk.git";
+
 const mockValues: ICommandOptions = {
   buildScriptUrl: "buildScriptUrl",
   devopsProject: "azDoProject",
@@ -32,7 +34,7 @@ const mockValues: ICommandOptions = {
   personalAccessToken: "PAT",
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: "a.dev.azure.com.repo"
+  repoUrl: "repoUrl"
 };
 
 const mockMissingValues: ICommandOptions = {
@@ -45,7 +47,15 @@ const mockMissingValues: ICommandOptions = {
   repoUrl: ""
 };
 
-const gitUrl = "https://github.com/CatalystCode/spk.git";
+const nullValues: ICommandOptions = {
+  buildScriptUrl: undefined,
+  devopsProject: undefined,
+  orgName: undefined,
+  personalAccessToken: undefined,
+  pipelineName: "pipelineName",
+  repoName: "repoName",
+  repoUrl: gitUrl
+};
 
 describe("test valid function", () => {
   it("negative test", async () => {
@@ -75,12 +85,18 @@ describe("test fetchValidateValues function", () => {
       });
     }).toThrow(`Repo url not defined`);
   });
-  it("SPK Config's azure_devops do not have value and command line does not have values", () => {
+  it("test repo type and whether it is supported", () => {
     expect(() => {
       fetchValidateValues(mockValues, gitUrl, { azure_devops: {} });
     }).toThrow(
       `Could not determine origin repository, or it is not a supported type.`
     );
+  });
+  it("SPK Config's azure_devops do not have value and command line does not have values", () => {
+    const values = fetchValidateValues(nullValues, gitUrl, {
+      azure_devops: {}
+    });
+    expect(values).toBeNull();
   });
 });
 
@@ -107,12 +123,6 @@ describe("installLifecyclePipeline and execute tests", () => {
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
   it("test execute function: missing repo url and pipeline name", async () => {
-    const exitFn = jest.fn();
-    await execute(mockMissingValues, "", exitFn);
-    expect(exitFn).toBeCalledTimes(1);
-    expect(exitFn.mock.calls).toEqual([[1]]);
-  });
-  it("test execute function: undefined PAT, project name, and org name", async () => {
     const exitFn = jest.fn();
     await execute(mockMissingValues, "", exitFn);
     expect(exitFn).toBeCalledTimes(1);
