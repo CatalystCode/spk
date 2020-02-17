@@ -5,7 +5,6 @@ import yaml from "js-yaml";
 import path from "path";
 import process from "process";
 import shelljs, { TestOptions } from "shelljs";
-import url from "url";
 import { Bedrock } from "../../config";
 import { assertIsStringWithContent } from "../../lib/assertions";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";

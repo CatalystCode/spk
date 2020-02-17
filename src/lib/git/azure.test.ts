@@ -114,7 +114,6 @@ describe("createPullRequest", () => {
 
   test("should throw an error when 0 repositories found ", async () => {
     // local mock
-    const originalRepos = gitApi.getRepositories;
     gitApi.getRepositories = async () => [];
 
     let err: Error | undefined;

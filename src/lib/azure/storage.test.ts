@@ -13,7 +13,6 @@ import {
 } from "../../logger";
 
 import { StorageAccount } from "@azure/arm-storage/esm/models";
-import { promisify } from "util";
 import { Config } from "../../config";
 import { IAzureAccessOpts } from "../../types";
 
