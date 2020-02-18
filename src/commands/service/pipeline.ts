@@ -14,7 +14,8 @@ import {
 import {
   getOriginUrl,
   getRepositoryName,
-  getRepositoryUrl
+  getRepositoryUrl,
+  isGitHubUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -62,6 +63,12 @@ export const execute = async (
   try {
     if (!opts.repoUrl) {
       throw Error(`Repo url not defined`);
+    }
+    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    if (gitUrlType) {
+      throw Error(
+        `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
+      );
     }
     await fetchValues(serviceName, opts);
     await installBuildUpdatePipeline(serviceName, opts);

@@ -88,8 +88,8 @@ describe("test populateValues function", () => {
       buildScriptUrl: "",
       devopsProject: "",
       hldName: "",
-      hldUrl: "",
-      manifestUrl: "",
+      hldUrl: "https://dev.azure.com/mocked/fabrikam/_git/hld",
+      manifestUrl: "https://dev.azure.com/mocked/fabrikam/_git/materialized",
       orgName: "",
       personalAccessToken: "",
       pipelineName: ""
