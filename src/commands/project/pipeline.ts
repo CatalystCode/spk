@@ -20,7 +20,8 @@ import {
 import {
   getOriginUrl,
   getRepositoryName,
-  getRepositoryUrl
+  getRepositoryUrl,
+  isGitHubUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -112,6 +113,14 @@ export const execute = async (
 ) => {
   if (!opts.repoUrl || !opts.pipelineName) {
     logger.error(`Values for repo url and/or pipeline name are missing`);
+    await exitFn(1);
+    return;
+  }
+  const gitUrlType = await isGitHubUrl(opts.repoUrl);
+  if (gitUrlType) {
+    logger.error(
+      `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
+    );
     await exitFn(1);
     return;
   }

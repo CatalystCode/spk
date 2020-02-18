@@ -10,7 +10,7 @@ import {
   BUILD_SCRIPT_URL,
   RENDER_HLD_PIPELINE_FILENAME
 } from "../../lib/constants";
-import { getRepositoryName } from "../../lib/gitutils";
+import { getRepositoryName, isGitHubUrl } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
@@ -42,6 +42,14 @@ export const populateValues = (opts: ICommandOptions) => {
   // exception will be thrown if spk's config.yaml is missing
   const { azure_devops } = Config();
 
+  if (!opts.hldUrl || !opts.manifestUrl) {
+    throw Error(`HLD repo url or manifest url not defined.`);
+  }
+  const hldGitUrlType = isGitHubUrl(opts.hldUrl);
+  const manifestGitUrlType = isGitHubUrl(opts.manifestUrl);
+  if (hldGitUrlType || manifestGitUrlType) {
+    throw Error(`GitHub repos are not supported`);
+  }
   opts.hldUrl =
     opts.hldUrl || emptyStringIfUndefined(azure_devops?.hld_repository);
 

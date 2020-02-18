@@ -301,3 +301,17 @@ export const checkoutCommitPushCreatePRLink = async (
     throw err;
   }
 };
+
+/**
+ * Validates whether a url is a github url
+ * TEMPORARY, UNTIL GITHUB REPOS ARE SUPPORTED
+ *
+ * @param url the url string
+ */
+export const isGitHubUrl = (url: string) => {
+  const gitUrl = url.includes("github");
+  if (gitUrl) {
+    return true;
+  }
+  return false;
+};

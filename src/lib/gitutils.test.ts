@@ -8,6 +8,7 @@ import {
   getPullRequestLink,
   getRepositoryName,
   getRepositoryUrl,
+  isGitHubUrl,
   pushBranch,
   safeGitUrlForLogging
 } from "../lib/gitutils";
@@ -500,5 +501,16 @@ describe("getPullRequestLink", () => {
     expect(pullRequestUrl).toEqual(
       "Could not determine origin repository, or it is not a supported provider. Please check for the newly pushed branch and open a PR manually."
     );
+  });
+});
+
+describe("test github urls", () => {
+  it("positive test", async () => {
+    expect(isGitHubUrl("https://github.com/microsoft/bedrock")).toBe(true);
+  });
+  it("negative test", async () => {
+    expect(
+      isGitHubUrl("https://dev.azure.com/test/fabrikam/_git/fabrikam")
+    ).toBe(false);
   });
 });
