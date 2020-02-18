@@ -54,7 +54,7 @@ const nullValues: ICommandOptions = {
   personalAccessToken: undefined,
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: gitUrl
+  repoUrl: "https://github.com"
 };
 
 describe("test valid function", () => {
@@ -125,6 +125,12 @@ describe("installLifecyclePipeline and execute tests", () => {
   it("test execute function: missing repo url and pipeline name", async () => {
     const exitFn = jest.fn();
     await execute(mockMissingValues, "", exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[1]]);
+  });
+  it("test execute function: github repos not supported", async () => {
+    const exitFn = jest.fn();
+    await execute(nullValues, "", exitFn);
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
   });

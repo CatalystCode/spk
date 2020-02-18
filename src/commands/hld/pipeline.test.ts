@@ -114,6 +114,20 @@ describe("test populateValues function", () => {
         getRepositoryName(MOCKED_CONFIG.azure_devops.manifest_repository)
     );
   });
+  it("negative tests: github repos not supported", () => {
+    expect(() =>
+      populateValues({
+        buildScriptUrl: "",
+        devopsProject: "",
+        hldName: "",
+        hldUrl: "https://github.com/fabrikam/hld",
+        manifestUrl: "https://github.com/fabrikam/materialized",
+        orgName: "",
+        personalAccessToken: "",
+        pipelineName: ""
+      })
+    ).toThrow(`GitHub repos are not supported`);
+  });
 });
 
 describe("test execute function", () => {
