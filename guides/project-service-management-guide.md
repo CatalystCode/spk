@@ -28,7 +28,7 @@ This document describes the workflow for deploying a set of services
 An overview of how these different pieces fit together from an automation
 perspective:
 
-![spk resources](/docs/images/spk-resource-diagram.png "Bedrock SPK Resources")
+![spk resources](/guides/images/spk-resource-diagram.png "Bedrock SPK Resources")
 
 ## Requirements
 
@@ -127,14 +127,14 @@ applied to the Kubernetes cluster by Flux.
 - Edit your SPK config to point to this repo (if you haven't already done this).
 - [Clone the repository.](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-new-repo?view=azure-devops#clone-the-repo-to-your-computer)
 - Initialize via `spk`, this will add the fabrikate
-  [cloud-native](https://github.com/microsoft/fabrikate-definitions/tree/master/definitions/fabrikate-cloud-native)
-  stack as a initial sample component.
+  [traefik2](https://github.com/microsoft/fabrikate-definitions/tree/master/definitions/traefik2)
+  as the initial sample component. This can be overridden via optional flags.
   ```
   spk hld init --git-push
   ```
 
 **NOTE** `spk hld` command documentation can be found
-[here](/docs/hld-management.md).
+[here](/guides/hld-management.md).
 
 ### Materialized Manifests Repository
 
@@ -225,7 +225,7 @@ application repositories
   run `install-lifecycle-pipeline` once for each repo.
 
 **NOTE** `spk project` command documentation can be found
-[here](/docs/project-management.md).
+[here](/guides/project-management.md).
 
 #### Adding a Service to a Application Repository
 
@@ -249,7 +249,7 @@ application repositories
   definition in Azure Devops.
 
 **NOTE** `spk service` command documentation can be found
-[here](/docs/service-management.md).
+[here](/guides/service-management.md).
 
 #### Creating a Service Revision
 
@@ -272,7 +272,7 @@ application repositories
   ```
 
 **NOTE** `spk service` command documentation can be found
-[here](/docs/service-management.md).
+[here](/guides/service-management.md).
 
 ## Helm Charts
 

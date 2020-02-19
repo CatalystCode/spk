@@ -9,6 +9,7 @@ import {
 import {
   IAzurePipelinesYaml,
   IBedrockFile,
+  IComponentYaml,
   IHelmConfig,
   IMaintainersFile
 } from "../types";
@@ -84,8 +85,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
         // Update HLD Stage
         stage: "hld_update",
         dependsOn: "build",
-        condition:
-          "and(succeeded('build'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/DEPLOY/'),eq(variables['Build.SourceBranchName'],'master')))",
+        condition: "succeeded('build')",
         jobs: [
           {
             job: "update_image_tag",
@@ -445,4 +445,23 @@ export const createTestHldAzurePipelinesYaml = (
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
     : data;
+};
+
+export const createTestComponentYaml = (
+  asString = true
+): IComponentYaml | string => {
+  const component: IComponentYaml = {
+    name: "default-component",
+    subcomponents: [
+      {
+        name: "traefik2",
+        // tslint:disable-next-line:object-literal-sort-keys
+        method: "git",
+        source: "https://github.com/microsoft/fabrikate-definitions.git",
+        path: "definitions/traefik2"
+      }
+    ]
+  };
+
+  return asString ? yaml.dump(component) : component;
 };
