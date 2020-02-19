@@ -11,6 +11,9 @@ interface ICommandElement extends ICommandBuildElements {
   markdown?: string;
 }
 
+// get all the *.json under commands folder recursively.
+// and get the content of its corresponding md file (if any).
+// add this content into the json file
 const getAllDecorators = (curDir: string): ICommandBuildElements[] => {
   const allFiles = fs.readdirSync(curDir);
   const jsonFiles = allFiles.filter(f => f.endsWith(".json"));
@@ -29,6 +32,7 @@ const getAllDecorators = (curDir: string): ICommandBuildElements[] => {
   return arrJson;
 };
 
+// get sub folders under commands folder.
 const getSubDirectories = (curDir: string) => {
   return fs
     .readdirSync(curDir)
@@ -36,6 +40,9 @@ const getSubDirectories = (curDir: string) => {
     .filter(p => fs.lstatSync(p).isDirectory());
 };
 
+// get the list of command from the array of
+// command object. e.g `spk infra generate` and
+// `spk deployment dashboard`
 const listCommands = (
   allCommands: ICommand[]
 ): { [key: string]: ICommandBuildElements } => {
@@ -57,7 +64,7 @@ const listCommands = (
 
 const dir = path.join(process.cwd(), "src", "commands");
 const commandDirs = getSubDirectories(dir);
-commandDirs.unshift(dir);
+commandDirs.unshift(dir); // this is needed because `spk init` is outside `commands` folder
 
 const commands: ICommand[] = commandDirs
   .map(d => {
@@ -70,4 +77,7 @@ const commands: ICommand[] = commandDirs
 
 const mapCommands = listCommands(commands);
 
-console.log(JSON.stringify(mapCommands, null, 2));
+fs.writeFileSync(
+  path.join(process.cwd(), "docs", "commands", "data.json"),
+  JSON.stringify(mapCommands, null, 2)
+);
