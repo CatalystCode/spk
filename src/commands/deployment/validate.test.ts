@@ -4,7 +4,7 @@ import uuid from "uuid/v4";
 import * as deploymenttable from "../../lib/azure/deploymenttable";
 import {
   IDeploymentTable,
-  IEntryACRPipeline,
+  IEntrySRCToACRPipeline,
   IRowACRToHLDPipeline,
   IRowHLDToManifestPipeline,
   IRowManifest,
@@ -92,7 +92,10 @@ jest
 jest
   .spyOn(deploymenttable, "deleteFromTable")
   .mockImplementation(
-    (tableInfo: deploymenttable.IDeploymentTable, entry: IEntryACRPipeline) => {
+    (
+      tableInfo: deploymenttable.IDeploymentTable,
+      entry: IEntrySRCToACRPipeline
+    ) => {
       return new Promise(resolve => {
         if (mockedDB.length === 1 && mockedDB[0].p1 === "500") {
           mockedDB = [];

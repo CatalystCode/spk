@@ -42,7 +42,7 @@ const mockedEnv = uuid();
 const mockedPr = uuid();
 const mockedManifestCommitId = uuid();
 
-const mockedEntryACRPipeline: deploymenttable.IEntryACRPipeline = {
+const mockedEntryACRPipeline: deploymenttable.IEntrySRCToACRPipeline = {
   PartitionKey: uuid(),
   RowKey: uuid(),
   commitId: mockedCommitId,
@@ -444,6 +444,7 @@ describe("test updateHLDtoManifestEntry function", () => {
     const res = await updateHLDtoManifestEntry(
       [mockedEntryHLDToManifestPipeline],
       mockedTableInfo,
+      mockedHldCommitId,
       mockedPipelineId3,
       mockedManifestCommitId,
       mockedPr
@@ -455,6 +456,7 @@ describe("test updateHLDtoManifestEntry function", () => {
     const res = await updateHLDtoManifestEntry(
       [mockedEntryHLDToManifestPipeline],
       mockedTableInfo,
+      mockedHldCommitId,
       mockedPipelineId2,
       mockedManifestCommitId,
       mockedPr
@@ -470,6 +472,7 @@ describe("test updateHLDtoManifestEntry function", () => {
       updateHLDtoManifestEntry(
         [mockedEntryHLDToManifestPipeline],
         mockedTableInfo,
+        mockedHldCommitId,
         mockedPipelineId3,
         mockedManifestCommitId,
         mockedPr
