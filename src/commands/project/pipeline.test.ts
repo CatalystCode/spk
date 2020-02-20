@@ -88,13 +88,6 @@ describe("test fetchValidateValues function", () => {
       });
     }).toThrow(`Repo url not defined`);
   });
-  fit("test repo type and whether it is supported", () => {
-    expect(() => {
-      fetchValidateValues(mockValues, gitUrl, { azure_devops: {} });
-    }).toThrow(
-      `Could not determine origin repository, or it is not a supported type.`
-    );
-  });
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
     const values = fetchValidateValues(nullValues, gitUrl, {
       azure_devops: {}
