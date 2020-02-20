@@ -5,6 +5,8 @@ import { RestClient } from "typed-rest-client";
 import { Config } from "../config";
 import { logger } from "../logger";
 import { IAzureDevOpsOpts } from "./git";
+import { GitAPI } from "./git/azure";
+import { access } from "fs";
 
 // Module state Variables
 let connection: WebApi | undefined;
@@ -96,4 +98,41 @@ export const getBuildApi = async (
   const webApi = await getWebApi(opts);
   buildApi = await webApi.getBuildApi();
   return buildApi;
+};
+
+/**
+ * Checks if the repository has a given file.
+ * @param fileName The name of the file
+ * @param absRepositoryPath The path to the repository
+ */
+export const repositoryHasFile = async (
+  fileName: string,
+  branch: string,
+  repoName: string,
+  accessOpts: IAzureDevOpsOpts
+): Promise<boolean> => {
+  try {
+    const gitApi = await GitAPI(accessOpts);
+    const versionDescriptor = { version: "master" }; // change to branch
+    const gitItem = await gitApi.getItem(
+      repoName,
+      fileName, // Add path to service
+      accessOpts.project,
+      "",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      versionDescriptor
+    );
+
+    if (gitItem === null) {
+      return false;
+    }
+    return true;
+  } catch (_) {
+    throw Error(
+      "Unable to check if file " + fileName + " exists in repository."
+    );
+  }
 };

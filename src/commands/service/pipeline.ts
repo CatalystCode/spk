@@ -11,11 +11,12 @@ import {
   BUILD_SCRIPT_URL,
   SERVICE_PIPELINE_FILENAME
 } from "../../lib/constants";
+import { IAzureDevOpsOpts } from "../../lib/git";
+import { GitAPI } from "../../lib/git/azure";
 import {
   getOriginUrl,
   getRepositoryName,
-  getRepositoryUrl,
-  repositoryHasFile
+  getRepositoryUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -25,6 +26,7 @@ import {
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
 import decorator from "./pipeline.decorator.json";
+import { repositoryHasFile } from "../../lib/azdoClient";
 
 export interface ICommandOptions {
   orgName: string;
@@ -62,17 +64,31 @@ export const execute = async (
 ) => {
   try {
     await fetchValues(serviceName, opts);
-    const pipelineFileName = serviceName + "/azure-pipelines.yaml";
-    const hasPipelineFile = await repositoryHasFile(pipelineFileName);
+    const accessOpts: IAzureDevOpsOpts = {
+      orgName: opts.orgName,
+      personalAccessToken: opts.personalAccessToken,
+      project: opts.devopsProject
+    };
+
+    // By default the version descriptor is for the master branch
+    const versionDescriptor = { version: "master" }; // change to branch
+
+    const hasPipelineFile = await repositoryHasFile(
+      SERVICE_PIPELINE_FILENAME,
+      "master",
+      opts.repoName,
+      accessOpts
+    );
 
     if (!hasPipelineFile) {
       logger.error(
         "Error installing build pipeline. Repository does not have a " +
-          pipelineFileName +
+          SERVICE_PIPELINE_FILENAME +
           " file."
       );
       await exitFn(1);
     }
+
     await installBuildUpdatePipeline(serviceName, opts);
     await exitFn(0);
   } catch (err) {
