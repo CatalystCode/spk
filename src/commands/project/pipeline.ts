@@ -5,6 +5,7 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
+import { repositoryHasFile } from "../../lib/azdoClient";
 import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
@@ -17,11 +18,11 @@ import {
   PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE,
   PROJECT_PIPELINE_FILENAME
 } from "../../lib/constants";
+import { IAzureDevOpsOpts } from "../../lib/git";
 import {
   getOriginUrl,
   getRepositoryName,
-  getRepositoryUrl,
-  repositoryHasFile
+  getRepositoryUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -123,18 +124,30 @@ export const execute = async (
     checkDependencies(projectPath);
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
-    const hasPipelineFile = await repositoryHasFile("hld-lifecycle.yaml");
-
-    if (!hasPipelineFile) {
-      logger.error(
-        "Error installing lifecycle pipeline. Repository does not have an hld-lifecycle.yaml file."
-      );
-      await exitFn(1);
-    }
 
     if (values === null) {
       await exitFn(1);
     } else {
+      const accessOpts: IAzureDevOpsOpts = {
+        orgName: values.orgName,
+        personalAccessToken: values.personalAccessToken,
+        project: values.devopsProject
+      };
+      const hasPipelineFile = await repositoryHasFile(
+        PROJECT_PIPELINE_FILENAME,
+        values.yamlFileBranch ? opts.yamlFileBranch : "master",
+        values.repoName!,
+        accessOpts
+      );
+
+      if (!hasPipelineFile) {
+        logger.error(
+          "Error installing build pipeline. Repository does not have a " +
+            PROJECT_PIPELINE_FILENAME +
+            " file."
+        );
+        await exitFn(1);
+      }
       await installLifecyclePipeline(values);
       await exitFn(0);
     }

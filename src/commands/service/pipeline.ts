@@ -6,6 +6,7 @@ import {
 import commander from "commander";
 import path from "path";
 import { Config } from "../../config";
+import { repositoryHasFile } from "../../lib/azdoClient";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
@@ -26,7 +27,6 @@ import {
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
 import decorator from "./pipeline.decorator.json";
-import { repositoryHasFile } from "../../lib/azdoClient";
 
 export interface ICommandOptions {
   orgName: string;
@@ -72,11 +72,9 @@ export const execute = async (
     };
 
     // By default the version descriptor is for the master branch
-    const versionDescriptor = { version: "master" }; // change to branch
-
     const hasPipelineFile = await repositoryHasFile(
       SERVICE_PIPELINE_FILENAME,
-      "master",
+      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
       opts.repoName,
       accessOpts
     );

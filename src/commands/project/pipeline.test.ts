@@ -1,3 +1,4 @@
+import * as azdo from "../../lib/azdoClient";
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
 import * as gitutils from "../../lib/gitutils";
 import { createTempDir } from "../../lib/ioUtil";
@@ -37,9 +38,7 @@ const mockValues: ICommandOptions = {
   yamlFileBranch: "master"
 };
 
-jest
-  .spyOn(gitutils, "repositoryHasFile")
-  .mockReturnValue(Promise.resolve(true));
+jest.spyOn(azdo, "repositoryHasFile").mockReturnValue(Promise.resolve(true));
 
 const mockMissingValues: ICommandOptions = {
   buildScriptUrl: undefined,

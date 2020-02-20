@@ -5,12 +5,14 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
+import { repositoryHasFile } from "../../lib/azdoClient";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
   RENDER_HLD_PIPELINE_FILENAME
 } from "../../lib/constants";
-import { getRepositoryName, repositoryHasFile } from "../../lib/gitutils";
+import { IAzureDevOpsOpts } from "../../lib/git";
+import { getRepositoryName } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
@@ -83,11 +85,25 @@ export const execute = async (
 ) => {
   try {
     populateValues(opts);
-    const hasPipelineFile = await repositoryHasFile("manifest-generation.yaml");
+    const accessOpts: IAzureDevOpsOpts = {
+      orgName: opts.orgName,
+      personalAccessToken: opts.personalAccessToken,
+      project: opts.devopsProject
+    };
+
+    // By default the version descriptor is for the master branch
+    const hasPipelineFile = await repositoryHasFile(
+      RENDER_HLD_PIPELINE_FILENAME,
+      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
+      opts.hldName,
+      accessOpts
+    );
 
     if (!hasPipelineFile) {
       logger.error(
-        "Error installing manifest generation pipeline. Repository does not have a manifest-generation.yaml file."
+        "Error installing build pipeline. Repository does not have a " +
+          RENDER_HLD_PIPELINE_FILENAME +
+          " file."
       );
       await exitFn(1);
     }

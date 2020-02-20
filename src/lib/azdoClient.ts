@@ -6,7 +6,6 @@ import { Config } from "../config";
 import { logger } from "../logger";
 import { IAzureDevOpsOpts } from "./git";
 import { GitAPI } from "./git/azure";
-import { access } from "fs";
 
 // Module state Variables
 let connection: WebApi | undefined;
@@ -130,9 +129,9 @@ export const repositoryHasFile = async (
       return false;
     }
     return true;
-  } catch (_) {
+  } catch (err) {
     throw Error(
-      "Unable to check if file " + fileName + " exists in repository."
+      "Unable to check if file " + fileName + " exists in repository. " + err
     );
   }
 };
