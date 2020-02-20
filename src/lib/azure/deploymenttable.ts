@@ -11,6 +11,9 @@ export interface IDeploymentTable {
   partitionKey: string;
 }
 
+/**
+ * Row interface to hold necessary information about SRC -> ACR entry
+ */
 export interface IRowSrcToACRPipeline {
   PartitionKey: string;
   RowKey: string;
@@ -19,6 +22,10 @@ export interface IRowSrcToACRPipeline {
   p1: string;
   service: string;
 }
+
+/**
+ * Row interface to add ACR -> HLD entry
+ */
 export interface IRowACRToHLDPipeline extends IRowSrcToACRPipeline {
   p2: string;
   hldCommitId: string;
@@ -26,7 +33,10 @@ export interface IRowACRToHLDPipeline extends IRowSrcToACRPipeline {
   pr?: string;
 }
 
-export interface IEntryACRPipeline {
+/**
+ * Row interface to hold necessary information about SRC -> ACR entry
+ */
+export interface IEntrySRCToACRPipeline {
   RowKey: string;
   PartitionKey: string;
   commitId: string;
@@ -40,6 +50,9 @@ export interface IEntryACRPipeline {
   };
 }
 
+/**
+ * Row interface to hold necessary information about ACR -> HLD entry
+ */
 export interface IEntryACRToHLDPipeline {
   RowKey: string;
   PartitionKey: string;
@@ -58,10 +71,17 @@ export interface IEntryACRToHLDPipeline {
   };
 }
 
+/**
+ * Row interface to hold necessary information about HLD -> Manifest entry
+ */
 export interface IRowHLDToManifestPipeline extends IRowACRToHLDPipeline {
   p3: string;
   manifestCommitId?: string;
 }
+
+/**
+ * Row interface to hold necessary information about HLD -> Manifest entry
+ */
 export interface IEntryHLDToManifestPipeline {
   RowKey: string;
   PartitionKey: string;
@@ -79,10 +99,18 @@ export interface IEntryHLDToManifestPipeline {
     _: string;
   };
 }
+
+/**
+ * Row interface to hold necessary information Manifest update entry
+ */
 export interface IRowManifest extends IRowHLDToManifestPipeline {
   manifestCommitId: string;
 }
 
+/**
+ * Gets the azure table service
+ * @param tableInfo tableInfo object containing necessary table info
+ */
 export const getTableService = (
   tableInfo: IDeploymentTable
 ): azure.TableService => {
@@ -118,6 +146,16 @@ export const addSrcToACRPipeline = async (
   return entry;
 };
 
+/**
+ * Updates an existing SRC -> ACR entry with its corresponding ACR -> HLD entry
+ * @param entries list of entries found
+ * @param tableInfo table info object
+ * @param pipelineId Id of the ACR -> HLD pipeline
+ * @param imageTag image tag name
+ * @param hldCommitId HLD commit Id
+ * @param env environment name
+ * @param pr Pull request Id (if available)
+ */
 export const updateMatchingArcToHLDPipelineEntry = async (
   entries: IEntryACRToHLDPipeline[],
   tableInfo: IDeploymentTable,
@@ -151,11 +189,26 @@ export const updateMatchingArcToHLDPipelineEntry = async (
       updateEntry.pr = pr.toLowerCase();
     }
     await updateEntryInTable(tableInfo, updateEntry);
+    logger.info(
+      `Added new p2 entry for imageTag ${imageTag} by finding corresponding entry`
+    );
     return updateEntry;
   }
   return null;
 };
 
+/**
+ * Creates a new copy of an existing SRC -> ACR entry when a release is created for a
+ * corresponding entry that already has an existing release
+ * For eg. when the user manually creates a ACR -> HLD release for an existing image tag.
+ * @param entries list of entries found
+ * @param tableInfo table info object
+ * @param pipelineId Id of the ACR -> HLD pipeline
+ * @param imageTag image tag name
+ * @param hldCommitId HLD commit Id
+ * @param env environment name
+ * @param pr Pull request Id (if available)
+ */
 export const updateLastRowOfArcToHLDPipelines = async (
   entries: IEntryACRToHLDPipeline[],
   tableInfo: IDeploymentTable,
@@ -168,7 +221,7 @@ export const updateLastRowOfArcToHLDPipelines = async (
   const lastEntry = entries[entries.length - 1];
   const last: IRowACRToHLDPipeline = {
     PartitionKey: lastEntry.PartitionKey,
-    RowKey: lastEntry.RowKey,
+    RowKey: getRowKey(),
     commitId: lastEntry.commitId,
     env: env.toLowerCase(),
     hldCommitId: hldCommitId.toLowerCase(),
@@ -187,6 +240,18 @@ export const updateLastRowOfArcToHLDPipelines = async (
   return last;
 };
 
+/**
+ * Adds a new entry for ACR -> HLD pipeline when no corresponding SRC -> ACR pipeline was found
+ * to be associated
+ * This should only be used in error scenarios or when the corresponding SRC -> ACR build is
+ * deleted from storage
+ * @param tableInfo table info object
+ * @param pipelineId Id of the ACR -> HLD pipeline
+ * @param imageTag image tag name
+ * @param hldCommitId HLD commit Id
+ * @param env environment name
+ * @param pr Pull request Id (if available)
+ */
 export const addNewRowToArcToHLDPipelines = async (
   tableInfo: IDeploymentTable,
   pipelineId: string,
@@ -326,9 +391,21 @@ export const updateHLDToManifestPipeline = async (
   );
 };
 
+/**
+ * Updates HLD -> Manifest build for its corresponding ACR -> HLD release
+ * @param entries list of matching entries based on PR / hld commit
+ * @param tableInfo table info interface containing information about
+ *        the deployment storage table
+ * @param hldCommitId commit identifier into the HLD repo, used as a
+ *        filter to find corresponding deployments
+ * @param pipelineId identifier of the HLD to manifest pipeline
+ * @param manifestCommitId manifest commit identifier
+ * @param pr pull request identifier
+ */
 export const updateHLDtoManifestEntry = async (
   entries: IEntryHLDToManifestPipeline[],
   tableInfo: IDeploymentTable,
+  hldCommitId: string,
   pipelineId: string,
   manifestCommitId?: string,
   pr?: string
@@ -347,7 +424,7 @@ export const updateHLDtoManifestEntry = async (
       RowKey: found.RowKey,
       commitId: found.commitId,
       env: found.env,
-      hldCommitId: found.hldCommitId,
+      hldCommitId,
       imageTag: found.imageTag,
       p1: found.p1,
       p2: found.p2,
@@ -369,6 +446,20 @@ export const updateHLDtoManifestEntry = async (
   return null;
 };
 
+/**
+ * Creates a new copy of an existing ACR -> HLD entry when a build is created for a
+ * corresponding entry that already has an existing build
+ * For eg. when the user manually triggers a HLD -> Manifest build for the last existing HLD
+ * commit.
+ * @param entries list of matching entries based on PR / hld commit
+ * @param tableInfo table info interface containing information about
+ *        the deployment storage table
+ * @param hldCommitId commit identifier into the HLD repo, used as a
+ *        filter to find corresponding deployments
+ * @param pipelineId identifier of the HLD to manifest pipeline
+ * @param manifestCommitId manifest commit identifier
+ * @param pr pull request identifier
+ */
 export const updateLastHLDtoManifestEntry = async (
   entries: IEntryHLDToManifestPipeline[],
   tableInfo: IDeploymentTable,
@@ -404,6 +495,17 @@ export const updateLastHLDtoManifestEntry = async (
   return newEntry;
 };
 
+/**
+ * Adds a new row to the table when the HLD -> Manifest pipeline is triggered by
+ * manually committing into the HLD
+ * @param tableInfo table info interface containing information about
+ *        the deployment storage table
+ * @param hldCommitId commit identifier into the HLD repo, used as a
+ *        filter to find corresponding deployments
+ * @param pipelineId identifier of the HLD to manifest pipeline
+ * @param manifestCommitId manifest commit identifier
+ * @param pr pull request identifier
+ */
 export const addNewRowToHLDtoManifestPipeline = async (
   tableInfo: IDeploymentTable,
   hldCommitId: string,
@@ -461,6 +563,7 @@ export const updateHLDtoManifestHelper = async (
     const updated = await updateHLDtoManifestEntry(
       entries,
       tableInfo,
+      hldCommitId,
       pipelineId,
       manifestCommitId,
       pr
@@ -586,9 +689,14 @@ export const insertToTable = (
   });
 };
 
+/**
+ * Deletes self test data from table
+ * @param tableInfo table info object
+ * @param entry entry to be deleted
+ */
 export const deleteFromTable = (
   tableInfo: IDeploymentTable,
-  entry: IEntryACRPipeline
+  entry: IEntrySRCToACRPipeline
 ) => {
   const tableService = getTableService(tableInfo);
 
