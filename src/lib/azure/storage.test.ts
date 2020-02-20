@@ -217,8 +217,11 @@ describe("storage account exists", () => {
         resourceGroup: string,
         accountName: string,
         opts: IAzureAccessOpts = {}
-      ): Promise<any> => {
-        return { enableHttpsTrafficOnly: true };
+      ): Promise<StorageAccount | undefined> => {
+        return {
+          enableHttpsTrafficOnly: true,
+          location: "uswest"
+        };
       }
     )
     .mockImplementationOnce(
@@ -226,7 +229,7 @@ describe("storage account exists", () => {
         resourceGroup: string,
         accountName: string,
         opts: IAzureAccessOpts = {}
-      ): Promise<any> => {
+      ): Promise<StorageAccount | undefined> => {
         return undefined;
       }
     );
