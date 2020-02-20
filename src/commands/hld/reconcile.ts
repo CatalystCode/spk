@@ -9,7 +9,7 @@ import { Bedrock } from "../../config";
 import { assertIsStringWithContent } from "../../lib/assertions";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { generateAccessYaml } from "../../lib/fileutils";
-import { getOriginUrl } from "../../lib/gitutils";
+import { tryGetGitOrigin } from "../../lib/gitutils";
 import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
 import {
   ITraefikMiddleware,
@@ -169,7 +169,7 @@ export const execute = async (
       createStaticComponent,
       exec: execAndLog,
       generateAccessYaml,
-      getGitOrigin: getOriginUrl,
+      getGitOrigin: tryGetGitOrigin,
       test: shelljs.test,
       writeFile: writeFileSync
     };
@@ -230,7 +230,7 @@ export const reconcileHld = async (
   // Repository in HLD ie /path/to/hld/repositoryName/
   const absRepositoryInHldPath = path.join(absHldPath, repositoryName);
 
-  // Create access.yaml containing the bedrock application repo's URL in access.yaml.
+  // Create access.yaml containing the bedrock application repo's URL in
   await dependencies.createAccessYaml(
     dependencies.getGitOrigin,
     dependencies.generateAccessYaml,
