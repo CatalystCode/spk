@@ -34,7 +34,8 @@ const mockValues: ICommandOptions = {
   personalAccessToken: "PAT",
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: "repoUrl"
+  repoUrl: "repoUrl",
+  yamlFileBranch: "master"
 };
 
 const mockMissingValues: ICommandOptions = {
@@ -44,7 +45,8 @@ const mockMissingValues: ICommandOptions = {
   personalAccessToken: undefined,
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: ""
+  repoUrl: "",
+  yamlFileBranch: ""
 };
 
 const nullValues: ICommandOptions = {
@@ -54,7 +56,8 @@ const nullValues: ICommandOptions = {
   personalAccessToken: undefined,
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: "https://github.com"
+  repoUrl: "https://github.com",
+  yamlFileBranch: ""
 };
 
 describe("test valid function", () => {
@@ -85,7 +88,7 @@ describe("test fetchValidateValues function", () => {
       });
     }).toThrow(`Repo url not defined`);
   });
-  it("test repo type and whether it is supported", () => {
+  fit("test repo type and whether it is supported", () => {
     expect(() => {
       fetchValidateValues(mockValues, gitUrl, { azure_devops: {} });
     }).toThrow(
@@ -120,7 +123,7 @@ describe("installLifecyclePipeline and execute tests", () => {
     await execute(mockValues, tmpDir, exitFn);
 
     expect(exitFn).toBeCalledTimes(1);
-    expect(exitFn.mock.calls).toEqual([[1]]);
+    expect(exitFn.mock.calls).toEqual([[0]]);
   });
   it("test execute function: missing repo url and pipeline name", async () => {
     const exitFn = jest.fn();

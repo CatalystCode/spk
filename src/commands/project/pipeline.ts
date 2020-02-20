@@ -41,6 +41,7 @@ export interface ICommandOptions {
   repoName: string;
   repoUrl: string;
   buildScriptUrl: string | undefined;
+  yamlFileBranch: string;
 }
 
 export const checkDependencies = (projectPath: string) => {
@@ -80,8 +81,9 @@ export const fetchValidateValues = (
     personalAccessToken: opts.personalAccessToken || azure_devops?.access_token,
     pipelineName:
       opts.pipelineName || getRepositoryName(gitOriginUrl) + "-lifecycle",
-    repoName: getRepositoryName(opts.repoUrl),
-    repoUrl: opts.repoUrl || getRepositoryUrl(gitOriginUrl)
+    repoName: getRepositoryName(gitOriginUrl),
+    repoUrl: opts.repoUrl || getRepositoryUrl(gitOriginUrl),
+    yamlFileBranch: opts.yamlFileBranch
   };
 
   const map: { [key: string]: string | undefined } = {};
@@ -162,7 +164,8 @@ export const commandDecorator = (command: commander.Command) => {
 
 const createPipeline = async (
   values: ICommandOptions,
-  devopsClient: IBuildApi
+  devopsClient: IBuildApi,
+  definitionBranch: string
 ): Promise<BuildDefinition> => {
   const definition = definitionForAzureRepoPipeline({
     branchFilters: ["master"], // hld reconcile pipeline is triggered only by merges into the master branch.
@@ -171,9 +174,13 @@ const createPipeline = async (
     repositoryName: values.repoName!,
     repositoryUrl: values.repoUrl!,
     variables: requiredPipelineVariables(values.buildScriptUrl!),
-    yamlFileBranch: "master", // Pipeline is defined in master
+    yamlFileBranch: definitionBranch, // Pipeline is defined in master
     yamlFilePath: PROJECT_PIPELINE_FILENAME // Pipeline definition lives in root directory.
   });
+
+  logger.info(
+    `Attempting to create new pipeline: ${values.pipelineName} defined in repository:${values.repoUrl}, branch: ${values.yamlFileBranch}, filePath: ${PROJECT_PIPELINE_FILENAME}`
+  );
 
   try {
     return await createPipelineForDefinition(
@@ -202,7 +209,11 @@ export const installLifecyclePipeline = async (values: ICommandOptions) => {
   );
   logger.info("Fetched DevOps Client");
 
-  const pipeline = await createPipeline(values, devopsClient);
+  const pipeline = await createPipeline(
+    values,
+    devopsClient,
+    values.yamlFileBranch
+  );
   if (typeof pipeline.id === "undefined") {
     const builtDefnString = JSON.stringify(pipeline);
     throw Error(
