@@ -112,7 +112,7 @@ export const repositoryHasFile = async (
 ): Promise<boolean> => {
   try {
     const gitApi = await GitAPI(accessOpts);
-    const versionDescriptor = { version: "master" }; // change to branch
+    const versionDescriptor = { version: branch }; // change to branch
     const gitItem = await gitApi.getItem(
       repoName,
       fileName, // Add path to service
