@@ -109,7 +109,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `export SERVICE_NAME_LOWER=$(echo ${serviceName} | tr '[:upper:]' '[:lower:]')`,
                   `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
                   `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-${IMAGE_TAG}`,
-                  `export FAB_SAFE_SERVICE_NAME=$(SERVICE_NAME_LOWER | tr . - | tr / -)`,
+                  `export FAB_SAFE_SERVICE_NAME=$(echo $SERVICE_NAME_LOWER | tr . - | tr / -)`,
                   `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
                   `. build.sh --source-only`,
                   ``,
@@ -344,6 +344,7 @@ export const createTestHldLifecyclePipelineYaml = (
           "Download Fabrikate and SPK, Update HLD, Push changes, Open PR",
         env: {
           ACCESS_TOKEN_SECRET: "$(PAT)",
+          APP_REPO_URL: "$(Build.Repository.Uri)",
           AZURE_DEVOPS_EXT_PAT: "$(PAT)",
           REPO: "$(HLD_REPO)"
         }

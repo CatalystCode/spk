@@ -19,7 +19,8 @@ import {
 } from "../types";
 
 /**
- * Create an access.yaml file for fabrikate authorization. Should only be used by spk hld reconcile, which is an idempotent operation.
+ * Create an access.yaml file for fabrikate authorization.
+ * Should only be used by spk hld reconcile, which is an idempotent operation, but will not overwrite existing access.yaml keys
  * @param accessYamlPath
  * @param gitRepoUrl
  */
@@ -27,11 +28,20 @@ export const generateAccessYaml = (
   accessYamlPath: string,
   gitRepoUrl: string
 ) => {
-  const accessYaml: IAccessYaml = {
-    [gitRepoUrl]: "ACCESS_TOKEN_SECRET"
-  };
-
   const filePath = path.resolve(path.join(accessYamlPath, ACCESS_FILENAME));
+  let accessYaml: IAccessYaml | undefined;
+
+  if (fs.existsSync(filePath)) {
+    logger.info(
+      `Existing ${ACCESS_FILENAME} found at ${filePath}, loading and updating, if needed.`
+    );
+    accessYaml = yaml.load(fs.readFileSync(filePath, "utf8")) as IAccessYaml;
+    accessYaml = { [gitRepoUrl]: "ACCESS_TOKEN_SECRET", ...accessYaml }; // Keep any existing configurations. Do not overwrite what's in `gitRepoUrl`.
+  } else {
+    accessYaml = {
+      [gitRepoUrl]: "ACCESS_TOKEN_SECRET"
+    };
+  }
 
   // Always overwrite what exists.
   fs.writeFileSync(
@@ -227,7 +237,7 @@ export const serviceBuildAndUpdatePipeline = (
                   `export SERVICE_NAME_LOWER=$(echo ${serviceName} | tr '[:upper:]' '[:lower:]')`,
                   `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
                   `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-${IMAGE_TAG}`,
-                  `export FAB_SAFE_SERVICE_NAME=$(SERVICE_NAME_LOWER | tr . - | tr / -)`,
+                  `export FAB_SAFE_SERVICE_NAME=$(echo $SERVICE_NAME_LOWER | tr . - | tr / -)`,
                   `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
                   `. build.sh --source-only`,
                   ``,
@@ -631,6 +641,7 @@ const hldLifecyclePipelineYaml = () => {
           "Download Fabrikate and SPK, Update HLD, Push changes, Open PR",
         env: {
           ACCESS_TOKEN_SECRET: "$(PAT)",
+          APP_REPO_URL: "$(Build.Repository.Uri)",
           AZURE_DEVOPS_EXT_PAT: "$(PAT)",
           REPO: "$(HLD_REPO)"
         }
