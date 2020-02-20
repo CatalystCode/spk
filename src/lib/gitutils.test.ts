@@ -3,14 +3,15 @@ import {
   checkoutBranch,
   commitPath,
   deleteBranch,
+  getAzdoOriginUrl,
   getCurrentBranch,
   getOriginUrl,
   getPullRequestLink,
   getRepositoryName,
   getRepositoryUrl,
   pushBranch,
-  repositoryHasFile,
-  safeGitUrlForLogging
+  safeGitUrlForLogging,
+  tryGetGitOrigin
 } from "../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../logger";
 import { exec } from "./shell";
@@ -231,6 +232,34 @@ describe("pushBranch", () => {
   });
 });
 
+describe("tryGetGitOrigin", () => {
+  afterEach(() => {
+    delete process.env.APP_REPO_URL;
+  });
+
+  it("attempts to retrieve azdo git origin", async () => {
+    const originUrl = "http://github.com/repo/url";
+    process.env.APP_REPO_URL = originUrl;
+
+    const originUrlResponse = await tryGetGitOrigin();
+    expect(originUrlResponse).toEqual(originUrl);
+  });
+
+  it("attempts to retrieve git origin from using git cli", async () => {
+    const originUrl = "http://github.com/repo/url";
+    // Echoing variable from AzDo should fail trying Git
+    delete process.env.APP_REPO_URL;
+
+    // Retrieving url from Git succeeds
+    when(exec as jest.Mock)
+      .calledWith("git", ["config", "--get", "remote.origin.url"])
+      .mockReturnValue(originUrl);
+
+    const originUrlResponse = await tryGetGitOrigin();
+    expect(originUrlResponse).toEqual(originUrl);
+  });
+});
+
 describe("getOriginUrl", () => {
   it("should call exec with the proper git arguments", async () => {
     const originUrl = "foo";
@@ -250,7 +279,7 @@ describe("getOriginUrl", () => {
     );
   });
 
-  it("should call exec with the proper git arguments", async () => {
+  it("should call exec with the proper git arguments with a repo path", async () => {
     const originUrl = "foo";
     const repoPath = "/repo/path";
 
@@ -279,6 +308,32 @@ describe("getOriginUrl", () => {
     let error: Error | undefined;
     try {
       await getOriginUrl();
+    } catch (_) {
+      error = _;
+    }
+
+    expect(error).not.toBeUndefined();
+  });
+});
+
+describe("getAzdoOriginUrl", () => {
+  afterEach(() => {
+    delete process.env.APP_REPO_URL;
+  });
+
+  it("should use the repo url from environment", async () => {
+    const originUrl = "foo";
+
+    process.env.APP_REPO_URL = originUrl;
+    const originUrlResponse = await getAzdoOriginUrl();
+
+    expect(originUrlResponse).toEqual(originUrl);
+  });
+
+  it("should return an error when repo url doesnt exist in env", async () => {
+    let error: Error | undefined;
+    try {
+      await getAzdoOriginUrl();
     } catch (_) {
       error = _;
     }

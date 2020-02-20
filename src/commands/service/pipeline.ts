@@ -37,6 +37,7 @@ export interface ICommandOptions {
   repoName: string;
   repoUrl: string;
   buildScriptUrl: string;
+  yamlFileBranch: string;
 }
 
 export const fetchValues = async (
@@ -143,7 +144,7 @@ export const installBuildUpdatePipeline = async (
       repositoryName: values.repoName,
       repositoryUrl: values.repoUrl,
       variables: requiredPipelineVariables(values.buildScriptUrl),
-      yamlFileBranch: "master",
+      yamlFileBranch: values.yamlFileBranch,
       yamlFilePath
     });
 
@@ -152,6 +153,11 @@ export const installBuildUpdatePipeline = async (
         values.devopsProject
       }' with definition '${JSON.stringify(definition)}'`
     );
+
+    logger.info(
+      `Attempting to create new pipeline: ${values.pipelineName} defined in repository:${values.repoUrl}, branch: ${values.yamlFileBranch}, filePath: ${yamlFilePath}`
+    );
+
     builtDefinition = await createPipelineForDefinition(
       devopsClient,
       values.devopsProject,

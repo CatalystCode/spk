@@ -30,6 +30,7 @@ export interface ICommandOptions {
   manifestUrl: string;
   devopsProject: string;
   buildScriptUrl: string;
+  yamlFileBranch: string;
 }
 
 export const emptyStringIfUndefined = (val: string | undefined) => {
@@ -141,9 +142,13 @@ export const installHldToManifestPipeline = async (values: ICommandOptions) => {
       values.buildScriptUrl,
       values.manifestUrl
     ),
-    yamlFileBranch: "master",
+    yamlFileBranch: values.yamlFileBranch,
     yamlFilePath: RENDER_HLD_PIPELINE_FILENAME
   } as IAzureRepoPipelineConfig);
+
+  logger.info(
+    `Attempting to create new pipeline: ${values.pipelineName} defined in repository:${values.hldUrl}, branch: ${values.yamlFileBranch}, filePath: ${RENDER_HLD_PIPELINE_FILENAME}`
+  );
 
   try {
     builtDefinition = await createPipelineForDefinition(
