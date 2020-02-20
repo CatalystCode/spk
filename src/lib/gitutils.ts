@@ -1,5 +1,6 @@
 import GitUrlParse from "git-url-parse";
 import path from "path";
+import url from "url";
 import { logger } from "../logger";
 import { exec } from "./shell";
 
@@ -306,12 +307,9 @@ export const checkoutCommitPushCreatePRLink = async (
  * Validates whether a url is a github url
  * TEMPORARY, UNTIL GITHUB REPOS ARE SUPPORTED
  *
- * @param url the url string
+ * @param sUrl the url string
  */
-export const isGitHubUrl = (url: string) => {
-  const gitUrl = url.includes("github");
-  if (gitUrl) {
-    return true;
-  }
-  return false;
+export const isGitHubUrl = (sUrl: string) => {
+  const oUrl = url.parse(sUrl);
+  return oUrl.hostname === "www.github.com" || oUrl.hostname === "github.com";
 };
