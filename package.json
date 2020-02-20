@@ -1,12 +1,13 @@
 {
   "name": "spk",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "The missing Bedrock CLI",
   "author": "Evan Louie <evan.louie@microsoft.com> (https://evanlouie.com)",
   "contributors": [],
   "license": "MIT",
   "scripts": {
     "build": "shx rm -rf dist && webpack && pkg -t node12-linux-x64,node12-macos-x64,node12-win-x64 dist/spk.js && shx mv spk-{linux,macos,win.exe} dist",
+    "build-cmd-docs": "ts-node tools/generateDoc.ts",
     "lint": "tslint 'src/**/*.ts{,x}'",
     "lint-fix": "tslint --fix 'src/**/*.ts{,x}'",
     "test": "jest --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",
@@ -44,6 +45,7 @@
     "tslint": "^5.20.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.7.4",
+    "url-loader": "^3.0.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9"
   },
