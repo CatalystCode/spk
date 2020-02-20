@@ -46,6 +46,10 @@ function showDetails(key) {
 
   if (cmd.markdown) {
     content =
+      '<p class="cmd-title1">@@main-cmd@@</p>'.replace(
+        "@@main-cmd@@",
+        "spk " + key
+      ) +
       '<div class="markdown">' +
       converter.makeHtml(cmd.markdown) +
       "</div><hr>" +
