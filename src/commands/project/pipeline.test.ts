@@ -1,10 +1,6 @@
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
 import { createTempDir } from "../../lib/ioUtil";
-import {
-  disableVerboseLogging,
-  enableVerboseLogging,
-  logger
-} from "../../logger";
+import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 jest.mock("../../lib/pipelines/pipelines");
 
 import {
@@ -36,7 +32,8 @@ const mockValues: ICommandOptions = {
   personalAccessToken: "PAT",
   pipelineName: "pipelineName",
   repoName: "repoName",
-  repoUrl: "repoUrl"
+  repoUrl: "repoUrl",
+  yamlFileBranch: "master"
 };
 
 const mockMissingValues: ICommandOptions = {
@@ -46,7 +43,8 @@ const mockMissingValues: ICommandOptions = {
   personalAccessToken: undefined,
   pipelineName: undefined,
   repoName: undefined,
-  repoUrl: undefined
+  repoUrl: undefined,
+  yamlFileBranch: ""
 };
 
 const gitUrl = "https://github.com/CatalystCode/spk.git";

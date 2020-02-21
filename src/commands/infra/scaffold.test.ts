@@ -2,19 +2,26 @@ jest.mock("./generate");
 
 import fs from "fs";
 import path from "path";
-import uuid = require("uuid");
+import uuid from "uuid";
 import {
   createTempDir,
   getMissingFilenames,
-  isDirEmpty,
-  removeDir
+  isDirEmpty
 } from "../../lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { validateRemoteSource } from "./generate";
+import * as generate from "./generate";
 import {
   BACKEND_TFVARS,
-  constructSource,
+  DEFAULT_VAR_VALUE,
   DEFINITION_YAML,
+  TERRAFORM_TFVARS,
+  VARIABLES_TF
+} from "./infra_common";
+import * as infraCommon from "./infra_common";
+import {
+  constructSource,
+  copyTfTemplate,
   execute,
   generateClusterDefinition,
   ICommandOptions,
@@ -22,9 +29,9 @@ import {
   removeTemplateFiles,
   validateBackendTfvars,
   validateValues,
-  validateVariablesTf,
-  VARIABLES_TF
+  validateVariablesTf
 } from "./scaffold";
+import * as scaffold from "./scaffold";
 
 const mockYaml = {
   azure_devops: {
@@ -70,6 +77,32 @@ describe("test validateBackendTfvars function", () => {
   it("negative test", () => {
     const dir = createTempDir();
     expect(validateBackendTfvars(dir)).toBe(false);
+  });
+});
+
+const testCopyTfTemplateFn = async (generation: boolean) => {
+  const source = createTempDir();
+  fs.writeFileSync(path.join(source, "hello"), "hello");
+  fs.writeFileSync(path.join(source, TERRAFORM_TFVARS), TERRAFORM_TFVARS);
+  fs.writeFileSync(path.join(source, BACKEND_TFVARS), BACKEND_TFVARS);
+  const target = createTempDir();
+  await copyTfTemplate(source, target, generation);
+  expect(fs.existsSync(path.join(target, "hello"))).toBe(true);
+
+  if (generation) {
+    expect(fs.existsSync(path.join(target, TERRAFORM_TFVARS))).toBe(false);
+    expect(fs.existsSync(path.join(target, BACKEND_TFVARS))).toBe(false);
+  } else {
+    expect(fs.existsSync(path.join(target, TERRAFORM_TFVARS))).toBe(false);
+  }
+};
+
+describe("test copyTfTemplate function", () => {
+  it("positive test: generation = true", async () => {
+    await testCopyTfTemplateFn(true);
+  });
+  it("positive test: generation = false", async () => {
+    await testCopyTfTemplateFn(false);
   });
 });
 
@@ -176,6 +209,12 @@ describe("test execute function", () => {
     template: "",
     version: ""
   };
+  const MOCKED_VALS: ICommandOptions = {
+    name: "name",
+    source: "source",
+    template: "template",
+    version: "0.1"
+  };
   it("missing config yaml", async () => {
     const exitFn = jest.fn();
     try {
@@ -187,7 +226,7 @@ describe("test execute function", () => {
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
   it("missing opt ", async () => {
-    (validateRemoteSource as jest.Mock).mockReturnValue(true);
+    (validateRemoteSource as jest.Mock).mockReturnValueOnce(true);
     const exitFn = jest.fn();
     try {
       await execute(mockYaml, EMPTY_VALS, exitFn);
@@ -197,6 +236,26 @@ describe("test execute function", () => {
     }
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
+  });
+  it("positive test", async () => {
+    (validateRemoteSource as jest.Mock).mockReturnValueOnce(true);
+    jest
+      .spyOn(infraCommon, "getSourceFolderNameFromURL")
+      .mockReturnValueOnce("sourceFolder");
+    jest
+      .spyOn(generate, "validateRemoteSource")
+      .mockReturnValueOnce(Promise.resolve());
+    jest
+      .spyOn(scaffold, "copyTfTemplate")
+      .mockReturnValueOnce(Promise.resolve());
+    jest.spyOn(scaffold, "validateVariablesTf").mockReturnValueOnce();
+    jest.spyOn(scaffold, "scaffold").mockReturnValueOnce(Promise.resolve());
+    jest.spyOn(scaffold, "removeTemplateFiles").mockReturnValueOnce();
+
+    const exitFn = jest.fn();
+    await execute(mockYaml, MOCKED_VALS, exitFn);
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[0]]);
   });
 });
 
@@ -257,7 +316,7 @@ describe("Validate generation of sample scaffold definition", () => {
     expect(def.name).toBe("test-scaffold");
 
     const variables = def.variables as { [key: string]: string };
-    expect(variables.resource_group_name).toBe("<insert value>");
+    expect(variables.resource_group_name).toBe(DEFAULT_VAR_VALUE);
 
     const backend = def.backend as { [key: string]: string };
     expect(backend.key).toBe("tfstate-azure-simple");

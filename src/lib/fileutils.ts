@@ -3,6 +3,7 @@ import yaml from "js-yaml";
 import path from "path";
 import {
   ACCESS_FILENAME,
+  HLD_COMPONENT_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
@@ -12,12 +13,14 @@ import { logger } from "../logger";
 import {
   IAccessYaml,
   IAzurePipelinesYaml,
+  IComponentYaml,
   IMaintainersFile,
   IUser
 } from "../types";
 
 /**
- * Create an access.yaml file for fabrikate authorization. Should only be used by spk hld reconcile, which is an idempotent operation.
+ * Create an access.yaml file for fabrikate authorization.
+ * Should only be used by spk hld reconcile, which is an idempotent operation, but will not overwrite existing access.yaml keys
  * @param accessYamlPath
  * @param gitRepoUrl
  */
@@ -25,11 +28,20 @@ export const generateAccessYaml = (
   accessYamlPath: string,
   gitRepoUrl: string
 ) => {
-  const accessYaml: IAccessYaml = {
-    [gitRepoUrl]: "ACCESS_TOKEN_SECRET"
-  };
-
   const filePath = path.resolve(path.join(accessYamlPath, ACCESS_FILENAME));
+  let accessYaml: IAccessYaml | undefined;
+
+  if (fs.existsSync(filePath)) {
+    logger.info(
+      `Existing ${ACCESS_FILENAME} found at ${filePath}, loading and updating, if needed.`
+    );
+    accessYaml = yaml.load(fs.readFileSync(filePath, "utf8")) as IAccessYaml;
+    accessYaml = { [gitRepoUrl]: "ACCESS_TOKEN_SECRET", ...accessYaml }; // Keep any existing configurations. Do not overwrite what's in `gitRepoUrl`.
+  } else {
+    accessYaml = {
+      [gitRepoUrl]: "ACCESS_TOKEN_SECRET"
+    };
+  }
 
   // Always overwrite what exists.
   fs.writeFileSync(
@@ -38,6 +50,27 @@ export const generateAccessYaml = (
     "utf8"
   );
 };
+
+/**
+ * Outputs a bash string for a _safe_ source branch string -- a string where all
+ * '/' and '.' in the string have been replaced with a '-'`
+ */
+
+export const SAFE_SOURCE_BRANCH = `$(echo $(Build.SourceBranchName) | tr / - | tr . -)`;
+
+/**
+ * Outputs a bash string for a _safe_ image tag -- a string where all
+ * '/' and '.' in the string have been replaced with a '-'`
+ */
+export const IMAGE_TAG = `${SAFE_SOURCE_BRANCH}-$(Build.BuildNumber)`;
+
+/**
+ * Outputs a bash string of `<repository>-<service-name>` in lowercase
+ *
+ * @param serviceName name of the service being built
+ */
+export const BUILD_REPO_NAME = (serviceName: string) =>
+  `$(echo $(Build.Repository.Name)-${serviceName} | tr '[:upper:]' '[:lower:]')`;
 
 /**
  * Concatenates all lines into a single string and injects `set -e` to the top
@@ -143,8 +176,8 @@ export const serviceBuildAndUpdatePipeline = (
               },
               {
                 script: generateYamlScript([
-                  `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${serviceName} | tr '[:upper:]' '[:lower:]')`,
-                  `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                  `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
+                  `tag_name="$BUILD_REPO_NAME:${IMAGE_TAG}"`,
                   `commitId=$(Build.SourceVersion)`,
                   `commitId=$(echo "\${commitId:0:7}")`,
                   `service=$(Build.Repository.Name)`,
@@ -166,11 +199,11 @@ export const serviceBuildAndUpdatePipeline = (
               },
               {
                 script: generateYamlScript([
-                  `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${serviceName} | tr '[:upper:]' '[:lower:]')`,
+                  `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
                   `echo "Image Name: $BUILD_REPO_NAME"`,
                   `cd ${relativeServicePathFormatted}`,
-                  `echo "az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber) ."`,
-                  `az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber) .`
+                  `echo "az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:${IMAGE_TAG} ."`,
+                  `az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:${IMAGE_TAG} .`
                 ]),
                 displayName: "ACR Build and Publish"
               }
@@ -182,8 +215,7 @@ export const serviceBuildAndUpdatePipeline = (
         // Update HLD Stage
         stage: "hld_update",
         dependsOn: "build",
-        condition:
-          "and(succeeded('build'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/DEPLOY/'),eq(variables['Build.SourceBranchName'],'master')))",
+        condition: "succeeded('build')",
         jobs: [
           {
             job: "update_image_tag",
@@ -205,15 +237,16 @@ export const serviceBuildAndUpdatePipeline = (
               {
                 script: generateYamlScript([
                   `export SERVICE_NAME_LOWER=$(echo ${serviceName} | tr '[:upper:]' '[:lower:]')`,
-                  `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-$SERVICE_NAME_LOWER | tr '[:upper:]' '[:lower:]')`,
-                  `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-$(Build.SourceBranchName)-$(Build.BuildNumber)`,
+                  `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
+                  `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-${IMAGE_TAG}`,
+                  `export FAB_SAFE_SERVICE_NAME=$(echo $SERVICE_NAME_LOWER | tr . - | tr / -)`,
                   `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
                   `. build.sh --source-only`,
                   ``,
                   `# Initialization`,
                   `verify_access_token`,
                   `init`,
-                  `helm init`,
+                  `helm_init`,
                   ``,
                   `# Fabrikate`,
                   `get_fab_version`,
@@ -225,7 +258,7 @@ export const serviceBuildAndUpdatePipeline = (
                   ``,
                   `# Update HLD`,
                   `git checkout -b "$BRANCH_NAME"`,
-                  `../fab/fab set --subcomponent $SERVICE_NAME_LOWER image.tag=$(Build.SourceBranchName)-$(Build.BuildNumber)`,
+                  `../fab/fab set --subcomponent $(Build.Repository.Name).$FAB_SAFE_SERVICE_NAME.${SAFE_SOURCE_BRANCH}.chart image.tag=${IMAGE_TAG}`,
                   `echo "GIT STATUS"`,
                   `git status`,
                   `echo "GIT ADD (git add -A)"`,
@@ -237,7 +270,7 @@ export const serviceBuildAndUpdatePipeline = (
                   ``,
                   `# Commit changes`,
                   `echo "GIT COMMIT"`,
-                  `git commit -m "Updating $SERVICE_NAME_LOWER image tag to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
+                  `git commit -m "Updating $SERVICE_NAME_LOWER image tag to ${IMAGE_TAG}."`,
                   ``,
                   `# Git Push`,
                   `git_push`,
@@ -246,8 +279,8 @@ export const serviceBuildAndUpdatePipeline = (
                   `echo 'az extension add --name azure-devops'`,
                   `az extension add --name azure-devops`,
                   ``,
-                  `echo 'az repos pr create --description "Updating $SERVICE_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
-                  `response=$(az repos pr create --description "Updating $SERVICE_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber).")`,
+                  `echo 'az repos pr create --description "Updating $SERVICE_NAME_LOWER to ${IMAGE_TAG}." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)"'`,
+                  `response=$(az repos pr create --description "Updating $SERVICE_NAME_LOWER to ${IMAGE_TAG}." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)")`,
                   `pr_id=$(echo $response | jq -r '.pullRequestId')`,
                   ``,
                   ``,
@@ -343,7 +376,12 @@ export const generateHldAzurePipelinesYaml = (targetDirectory: string) => {
 /**
  * Add a default component.yaml when running `hld init`.
  */
-export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
+export const generateDefaultHldComponentYaml = (
+  targetDirectory: string,
+  componentGit: string,
+  componentName: string,
+  componentPath: string
+) => {
   const absTargetPath = path.resolve(targetDirectory);
   logger.info(`Generating component.yaml in ${absTargetPath}`);
 
@@ -357,32 +395,45 @@ export const generateDefaultHldComponentYaml = (targetDirectory: string) => {
     return;
   }
 
-  const componentYaml = defaultComponentYaml();
-  logger.info(
-    `Writing ${RENDER_HLD_PIPELINE_FILENAME} file to ${fabrikateComponentPath}`
+  const componentYaml = defaultComponentYaml(
+    componentGit,
+    componentName,
+    componentPath
   );
 
-  fs.writeFileSync(fabrikateComponentPath, componentYaml, "utf8");
+  logger.info(
+    `Writing ${HLD_COMPONENT_FILENAME} file to ${fabrikateComponentPath}`
+  );
+
+  fs.writeFileSync(
+    fabrikateComponentPath,
+    yaml.safeDump(componentYaml, { lineWidth: Number.MAX_SAFE_INTEGER }),
+    "utf8"
+  );
 };
 
 /**
- * A default fabrikate component that includes the cloud native stack.
+ * Populate the hld's default component.yaml
  */
-const defaultComponentYaml = () => {
-  const componentYaml = {
+const defaultComponentYaml = (
+  componentGit: string,
+  componentName: string,
+  componentPath: string
+): IComponentYaml => {
+  const componentYaml: IComponentYaml = {
     name: "default-component",
     subcomponents: [
       {
-        name: "cloud-native",
+        name: componentName,
         // tslint:disable-next-line:object-literal-sort-keys
         method: "git",
-        source: "https://github.com/microsoft/fabrikate-definitions.git",
-        path: "definitions/fabrikate-cloud-native"
+        source: componentGit,
+        path: componentPath
       }
     ]
   };
 
-  return yaml.safeDump(componentYaml, { lineWidth: Number.MAX_SAFE_INTEGER });
+  return componentYaml;
 };
 
 /**
@@ -552,7 +603,7 @@ const hldLifecyclePipelineYaml = () => {
           `# Initialization`,
           `verify_access_token`,
           `init`,
-          `helm init`,
+          `helm_init`,
           ``,
           `# Fabrikate`,
           `get_fab_version`,
@@ -589,13 +640,14 @@ const hldLifecyclePipelineYaml = () => {
           `echo 'az extension add --name azure-devops'`,
           `az extension add --name azure-devops`,
           ``,
-          `echo 'az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)."'`,
-          `az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)."`
+          `echo 'az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)"'`,
+          `az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)"`
         ]),
         displayName:
           "Download Fabrikate and SPK, Update HLD, Push changes, Open PR",
         env: {
           ACCESS_TOKEN_SECRET: "$(PAT)",
+          APP_REPO_URL: "$(Build.Repository.Uri)",
           AZURE_DEVOPS_EXT_PAT: "$(PAT)",
           REPO: "$(HLD_REPO)"
         }

@@ -1,4 +1,5 @@
 import commander from "commander";
+import fs from "fs";
 import { Logger, transports } from "winston";
 import { logger } from "../logger";
 import { hasValue } from "./validator";
@@ -116,21 +117,40 @@ export const validateForRequiredValues = (
  * @param exitFn exit function
  * @param statusCode Exit status code
  */
-
 export const exit = (
   log: Logger,
   exitFn: (status: number) => void,
-  statusCode: number
+  statusCode: number,
+  timeout = 10000
 ): Promise<void> => {
   return new Promise(resolve => {
-    logger.transports.forEach(t => {
-      if (t instanceof transports.Console) {
-        t.silent = true;
+    const hasFileLogger = log.transports.some(t => {
+      if (t instanceof transports.File) {
+        // callback will be called once if spk.log
+        // already exist.
+        // it will be called twice if spk.log
+        // do not exist. the one call has size === 0
+        fs.watchFile(t.filename, curr => {
+          if (curr.size > 0) {
+            exitFn(statusCode);
+            resolve();
+          }
+        });
+        return true;
       }
     });
-    log.info(`--end log: ${statusCode} --`, () => {
+    // file logger may be not added to logger.
+    // then we end the command.
+    if (!hasFileLogger) {
       exitFn(statusCode);
       resolve();
-    });
+    } else {
+      // this is to handle the case when nothing to be written to spk.log
+      // handle fs.watchFile callback will not be execute.
+      setTimeout(() => {
+        exitFn(statusCode);
+        resolve();
+      }, timeout); // 10 seconds should be enough
+    }
   });
 };

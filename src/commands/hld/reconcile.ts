@@ -9,7 +9,7 @@ import { Bedrock } from "../../config";
 import { assertIsStringWithContent } from "../../lib/assertions";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { generateAccessYaml } from "../../lib/fileutils";
-import { getOriginUrl } from "../../lib/gitutils";
+import { tryGetGitOrigin } from "../../lib/gitutils";
 import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
 import {
   ITraefikMiddleware,
@@ -116,13 +116,15 @@ export interface IReconcileDependencies {
     serviceName: string,
     serviceConfig: IBedrockServiceConfig,
     middlewares: ITraefikMiddleware,
-    ring: string
+    ring: string,
+    ingressVersionAndPath: string
   ) => void;
 
   createMiddlewareForRing: (
     ringPathInHld: string,
     serviceName: string,
-    ring: string
+    ring: string,
+    ingressVersionAndPath: string
   ) => ITraefikMiddleware;
 }
 
@@ -167,7 +169,7 @@ export const execute = async (
       createStaticComponent,
       exec: execAndLog,
       generateAccessYaml,
-      getGitOrigin: getOriginUrl,
+      getGitOrigin: tryGetGitOrigin,
       test: shelljs.test,
       writeFile: writeFileSync
     };
@@ -228,7 +230,7 @@ export const reconcileHld = async (
   // Repository in HLD ie /path/to/hld/repositoryName/
   const absRepositoryInHldPath = path.join(absHldPath, repositoryName);
 
-  // Create access.yaml containing the bedrock application repo's URL in access.yaml.
+  // Create access.yaml containing the bedrock application repo's URL in
   await dependencies.createAccessYaml(
     dependencies.getGitOrigin,
     dependencies.generateAccessYaml,
@@ -309,23 +311,49 @@ export const reconcileHld = async (
         continue;
       }
 
+      // Calculate shared path for both IngressRoute and Middleware
+      const ingressVersionAndPath = getFullPathPrefix(
+        serviceConfig.pathPrefixMajorVersion || "",
+        serviceConfig.pathPrefix || "",
+        serviceName
+      );
+
       // Create middleware.
       const middlewares = dependencies.createMiddlewareForRing(
         ringPathInHld,
-        serviceName,
-        ring
+        serviceConfig.displayName || serviceName,
+        ring,
+        ingressVersionAndPath
       );
 
       // Create Ingress Route.
       dependencies.createIngressRouteForRing(
         ringPathInHld,
-        serviceName,
+        serviceConfig.displayName || serviceName,
         serviceConfig,
         middlewares,
-        ring
+        ring,
+        ingressVersionAndPath
       );
     }
   }
+};
+
+/**
+ * Build and return the full path prefix used for IngressRoutes and Middlewares
+ * @param majorVersion
+ * @param pathPrefix
+ * @param serviceName
+ */
+export const getFullPathPrefix = (
+  majorVersion: string,
+  pathPrefix: string,
+  serviceName: string
+): string => {
+  const versionPath = majorVersion ? `/${majorVersion}` : "";
+  const servicePath = pathPrefix || serviceName;
+
+  return `${versionPath}/${servicePath}`;
 };
 
 /**
@@ -372,7 +400,8 @@ const createIngressRouteForRing = (
   serviceName: string,
   serviceConfig: IBedrockServiceConfig,
   middlewares: ITraefikMiddleware,
-  ring: string
+  ring: string,
+  ingressVersionAndPath: string
 ) => {
   const staticComponentPathInRing = path.join(ringPathInHld, "static");
   const ingressRoutePathInStaticComponent = path.join(
@@ -383,14 +412,13 @@ const createIngressRouteForRing = (
     serviceName,
     ring,
     serviceConfig.k8sBackendPort,
+    ingressVersionAndPath,
     {
       k8sBackend: serviceConfig.k8sBackend,
       middlewares: [
         middlewares.metadata.name,
         ...(serviceConfig.middlewares ?? [])
-      ],
-      pathPrefix: serviceConfig.pathPrefix,
-      pathPrefixMajorVersion: serviceConfig.pathPrefixMajorVersion
+      ]
     }
   );
 
@@ -408,7 +436,8 @@ const createIngressRouteForRing = (
 const createMiddlewareForRing = (
   ringPathInHld: string,
   serviceName: string,
-  ring: string
+  ring: string,
+  ingressVersionAndPath: string
 ): ITraefikMiddleware => {
   // Create Middlewares
   const staticComponentPathInRing = path.join(ringPathInHld, "static");
@@ -417,8 +446,9 @@ const createMiddlewareForRing = (
     "middlewares.yaml"
   );
 
-  const servicePrefix = `/${serviceName}`;
-  const middlewares = TraefikMiddleware(serviceName, ring, [servicePrefix]);
+  const middlewares = TraefikMiddleware(serviceName, ring, [
+    ingressVersionAndPath
+  ]);
   const middlewareYaml = yaml.safeDump(middlewares, {
     lineWidth: Number.MAX_SAFE_INTEGER
   });

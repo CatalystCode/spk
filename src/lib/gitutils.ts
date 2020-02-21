@@ -34,7 +34,10 @@ export const getCurrentBranch = async (
     });
     return branch;
   } catch (err) {
-    throw Error("Unable to determine current branch: " + err);
+    logger.error(err);
+    throw Error(
+      `Unable to parse current branch from git client. Ensure 'git branch --show-current' returns a proper response`
+    );
   }
 };
 
@@ -108,6 +111,21 @@ export const pushBranch = async (branchName: string): Promise<void> => {
 };
 
 /**
+ * Tries to fetch the Git origin from an AzDo set environment variable, else falls back to fetching it from Git directly.
+ * @param absRepoPath The Absolute Path to the Repository to fetch the origin url.
+ */
+export const tryGetGitOrigin = async (
+  absRepoPath?: string
+): Promise<string> => {
+  return getAzdoOriginUrl().catch(_ => {
+    logger.warn(
+      "Could not get Git Origin for Azure DevOps - are you running 'spk' _not_ in a pipeline?"
+    );
+    return getOriginUrl(absRepoPath);
+  });
+};
+
+/**
  * Gets the origin url.
  * @param absRepositoryPath The Absolute Path to the Repository to fetch the origin
  */
@@ -124,8 +142,23 @@ export const getOriginUrl = async (
     const safeLoggingUrl = safeGitUrlForLogging(originUrl);
     logger.debug(`Got git origin url ${safeLoggingUrl}`);
     return originUrl;
-  } catch (_) {
-    throw Error(`Unable to get git origin URL.: ` + _);
+  } catch (error) {
+    throw Error(`Unable to get git origin URL: ${error}`);
+  }
+};
+
+export const getAzdoOriginUrl = async (): Promise<string> => {
+  try {
+    if (!process.env.APP_REPO_URL) {
+      throw new Error("Not running in a pipeline - no AzDO variables.");
+    }
+
+    const originUrl = process.env.APP_REPO_URL;
+    const safeLoggingUrl = safeGitUrlForLogging(originUrl);
+    logger.debug(`Got azdo git origin url ${safeLoggingUrl}`);
+    return originUrl;
+  } catch (error) {
+    throw Error(`Unable to get azdo origin URL: ${error}`);
   }
 };
 

@@ -8,12 +8,16 @@ import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
 import { IConfigYaml } from "../../types";
 import { ISourceInformation, validateRemoteSource } from "./generate";
-import * as infraCommon from "./infra_common";
+import {
+  BACKEND_TFVARS,
+  DEFAULT_VAR_VALUE,
+  DEFINITION_YAML,
+  getSourceFolderNameFromURL,
+  spkTemplatesPath,
+  TERRAFORM_TFVARS,
+  VARIABLES_TF
+} from "./infra_common";
 import decorator from "./scaffold.decorator.json";
-
-export const DEFINITION_YAML = "definition.yaml";
-export const VARIABLES_TF = "variables.tf";
-export const BACKEND_TFVARS = "backend.tfvars";
 
 export interface ICommandOptions {
   name: string;
@@ -76,15 +80,15 @@ export const execute = async (
       template: opts.template,
       version: opts.version
     };
-    const sourceFolder = await infraCommon.repoCloneRegex(opts.source);
-    const sourcePath = path.join(infraCommon.spkTemplatesPath, sourceFolder);
+    const sourceFolder = getSourceFolderNameFromURL(opts.source);
+    const sourcePath = path.join(spkTemplatesPath, sourceFolder);
     await validateRemoteSource(scaffoldDefinition);
     await copyTfTemplate(
       path.join(sourcePath, opts.template),
       opts.name,
       false
     );
-    validateVariablesTf(path.join(sourcePath, opts.template, "variables.tf"));
+    validateVariablesTf(path.join(sourcePath, opts.template, VARIABLES_TF));
     await scaffold(opts);
     removeTemplateFiles(opts.name);
     await exitFn(0);
@@ -159,25 +163,13 @@ export const copyTfTemplate = async (
   try {
     if (generation === true) {
       await fsextra.copy(templatePath, envName, {
-        filter: file => {
-          if (
-            file.indexOf("terraform.tfvars") !== -1 ||
-            file.indexOf(BACKEND_TFVARS) !== -1
-          ) {
-            return false;
-          }
-          return true;
-        }
+        filter: file =>
+          file.indexOf(TERRAFORM_TFVARS) === -1 &&
+          file.indexOf(BACKEND_TFVARS) === -1
       });
     } else {
       await fsextra.copy(templatePath, envName, {
-        filter: file => {
-          // return !(file.indexOf("terraform.tfvars") > -1);
-          if (file.indexOf("terraform.tfvars") !== -1) {
-            return false;
-          }
-          return true;
-        }
+        filter: file => file.indexOf(TERRAFORM_TFVARS) === -1
       });
     }
     logger.info(`Terraform template files copied from ${templatePath}`);
@@ -295,7 +287,6 @@ export const generateClusterDefinition = (
   vartfData: string
 ): { [key: string]: string | { [key: string]: string } } => {
   const fields = parseVariablesTf(vartfData);
-
   // map of string to string or map of string to string
   const def: { [key: string]: string | { [key: string]: string } } = {
     name: values.name,
@@ -310,7 +301,13 @@ export const generateClusterDefinition = (
   if (Object.keys(fields).length > 0) {
     const fieldDict: { [key: string]: string } = {};
     Object.keys(fields).forEach(key => {
-      fieldDict[key] = fields[key] || "<insert value>";
+      fieldDict[key] = fields[key] || DEFAULT_VAR_VALUE;
+    });
+    // If the value contains a default value, exclude from fieldDict
+    Object.keys(fieldDict).forEach(key => {
+      if (fieldDict[key] !== DEFAULT_VAR_VALUE) {
+        delete fieldDict[key];
+      }
     });
     def.variables = fieldDict;
   }

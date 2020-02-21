@@ -1,9 +1,7 @@
-import { Config, loadConfiguration } from "../../config";
 import * as config from "../../config";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { getRepositoryName } from "../../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-
 jest.mock("../../lib/pipelines/pipelines");
 
 import {
@@ -11,6 +9,7 @@ import {
   getBuildApiClient,
   queueBuild
 } from "../../lib/pipelines/pipelines";
+import { deepClone } from "../../lib/util";
 import { IConfigYaml } from "../../types";
 
 import {
@@ -31,7 +30,8 @@ const MOCKED_VALUES: ICommandOptions = {
   manifestUrl: "https://dev.azure.com/test/fabrikam/_git/materialized",
   orgName: "orgName",
   personalAccessToken: "personalAccessToken",
-  pipelineName: "pipelineName"
+  pipelineName: "pipelineName",
+  yamlFileBranch: "master"
 };
 
 const MOCKED_CONFIG = {
@@ -46,7 +46,7 @@ const MOCKED_CONFIG = {
 };
 
 const getMockObject = (): ICommandOptions => {
-  return JSON.parse(JSON.stringify(MOCKED_VALUES));
+  return deepClone(MOCKED_VALUES);
 };
 
 beforeAll(() => {
@@ -93,7 +93,8 @@ describe("test populateValues function", () => {
       manifestUrl: "",
       orgName: "",
       personalAccessToken: "",
-      pipelineName: ""
+      pipelineName: "",
+      yamlFileBranch: ""
     });
 
     expect(values.buildScriptUrl).toBe(BUILD_SCRIPT_URL);
@@ -114,6 +115,7 @@ describe("test populateValues function", () => {
         "-to-" +
         getRepositoryName(MOCKED_CONFIG.azure_devops.manifest_repository)
     );
+    expect(values.yamlFileBranch).toBe("");
   });
 });
 

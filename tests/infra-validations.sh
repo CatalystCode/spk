@@ -15,7 +15,7 @@ TEST_WORKSPACE="$(pwd)/spk-env"
 [ ! -z "$SP_APP_ID" ] || { echo "Provide SP_APP_ID"; exit 1;}
 [ ! -z "$SP_PASS" ] || { echo "Provide SP_PASS"; exit 1;}
 [ ! -z "$SP_TENANT" ] || { echo "Provide SP_TENANT"; exit 1;}
-[ ! -z "$SP_SUBSCRIPTION_ID" ] || { echo "Provide SP_SUBSCRITION_ID"; exit 1;}
+[ ! -z "$SP_SUBSCRIPTION_ID" ] || { echo "Provide SP_SUBSCRIPTION_ID"; exit 1;}
 AZDO_ORG_URL="${AZDO_ORG_URL:-"https://dev.azure.com/$AZDO_ORG"}"
 
 echo "TEST_WORKSPACE: $TEST_WORKSPACE"
@@ -35,12 +35,22 @@ infra_region=west/
 infra_generated_dir=fabrikam-generated-deploy
 vg_name="spk-infra-hld-vg"
 generate_pipeline_path="$(pwd)/infra-generation-pipeline.yml"
+generate_pipeline_path_local="$(pwd)/../azure-pipelines/templates/infra-generation-pipeline.yml"
 
 validation_test_yaml="rg_name: <insert value>"
 
 shopt -s expand_aliases
 alias spk=$SPK_LOCATION
 echo "SPK Version: $(spk --version)"
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if ! [ -x "$(command -v gsed)" ]; then
+    echo 'Error: gnu-sed is not installed.' >&2
+    exit 1
+  fi
+  alias sed='gsed'
+  echo 'macOS detected'
+fi
 
 echo "Running from $(pwd)"
 if [ -d "$TEST_WORKSPACE"  ]; then rm -Rf $TEST_WORKSPACE; fi
@@ -68,6 +78,9 @@ touch main.tf variables.tf backend.tfvars
 echo "$tfVars" >> variables.tf | echo "$backendTfVars" >> backend.tfvars | echo "$tfTemplate" >> main.tf
 file_we_expect=("variables.tf" "main.tf" "backend.tfvars")
 validate_directory "$TEST_WORKSPACE/$terraform_template_dir/template" "${file_we_expect[@]}" >> $TEST_WORKSPACE/log.txt
+
+# Format Terraform files for SPK
+terraform fmt
 
 # The TF Template requires a git release for a version to be targeted for spk scaffold
 git add -A
@@ -124,8 +137,9 @@ sed -ri 's/^(\s*)(storage_account_name\s*:\s*<storage account name>\s*$)/\1stora
 
 # Create remote repo for Infra HLD ------------------
 # Add pipeline yml fo generation verification
-echo "Copying generate pipeline validation yml to Infra HLD repo" 
-cp $generate_pipeline_path .
+echo "Copying generate pipeline validation yml to Infra HLD repo from $generate_pipeline_path" 
+# Copy from current directory (pipeline) otherwise copy from azure-pipelines/templates (local)
+cp $generate_pipeline_path . || cp $generate_pipeline_path_local .
 git init
 
 # The HLD Template requires a git release for a version to be targeted for spk scaffold
@@ -189,7 +203,12 @@ git push origin "$infra_generated_version"
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "delete"
 
 # Create variable group
-az pipelines variable-group create --name $vg_name --authorize true --variables "ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET" "ARM_CLIENT_ID=$SP_APP_ID" "ARM_CLIENT_SECRET=$SP_PASS" "ARM_SUBSCRIPTION_ID=Tentative" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID"
+variable_group_id=$(az pipelines variable-group create --name $vg_name --authorize true --variables "ARM_SUBSCRIPTION_ID=$SP_SUBSCRIPTION_ID" "ARM_TENANT_ID=$SP_TENANT" "CLUSTER=$infra_region" "GENERATED_REPO=https://$repo_url" "PROJECT_DIRECTORY=$infra_hld_project" "AZDO_ORG_NAME=$AZDO_ORG_URL" "AZDO_PROJECT_NAME=$AZDO_PROJECT" | jq '.id')
+
+# Update secret variables in variable group
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCESS_TOKEN_SECRET" $ACCESS_TOKEN_SECRET "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ARM_CLIENT_ID" $SP_APP_ID "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ARM_CLIENT_SECRET" $SP_PASS "secret"
 
 # Verify the variable group was created. Fail if not
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
@@ -222,5 +241,8 @@ git checkout $pr_id
 file_we_expect=("variables.tf" "main.tf" "backend.tfvars" "spk.tfvars")
 validate_directory "$TEST_WORKSPACE/$infra_generated_dir/$infra_hld_project-generated/$infra_region" "${file_we_expect[@]}" >> $TEST_WORKSPACE/log.txt
 echo "PR for generated repo validated."
-
+# Validate the contents of the definition.yaml
+spkVars_test=$'rg_name = "test-rg"\nrg_location = "west us2"\n'
+validate_file "$TEST_WORKSPACE/$infra_generated_dir/$infra_hld_project-generated/$infra_region/spk.tfvars" $spkVars_test >> $TEST_WORKSPACE/log.txt
+echo "SPK.tfvars file in the generated repo validated."
 echo "Successfully reached the end of the infrastructure validations script."

@@ -1,9 +1,15 @@
 import yaml from "js-yaml";
 import { VM_IMAGE } from "../lib/constants";
-import { generateYamlScript } from "../lib/fileutils";
+import {
+  BUILD_REPO_NAME,
+  generateYamlScript,
+  IMAGE_TAG,
+  SAFE_SOURCE_BRANCH
+} from "../lib/fileutils";
 import {
   IAzurePipelinesYaml,
   IBedrockFile,
+  IComponentYaml,
   IHelmConfig,
   IMaintainersFile
 } from "../types";
@@ -42,8 +48,8 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
               },
               {
                 script: generateYamlScript([
-                  `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${serviceName} | tr '[:upper:]' '[:lower:]')`,
-                  `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                  `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
+                  `tag_name="$BUILD_REPO_NAME:${IMAGE_TAG}"`,
                   `commitId=$(Build.SourceVersion)`,
                   `commitId=$(echo "\${commitId:0:7}")`,
                   `service=$(Build.Repository.Name)`,
@@ -66,8 +72,8 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${serviceName} | tr '[:upper:]' '[:lower:]')`,
                   `echo "Image Name: $BUILD_REPO_NAME"`,
                   `cd ${relativeServicePathFormatted}`,
-                  `echo "az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber) ."`,
-                  `az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber) .`
+                  `echo "az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:${IMAGE_TAG} ."`,
+                  `az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:${IMAGE_TAG} .`
                 ]),
                 displayName: "ACR Build and Publish"
               }
@@ -79,8 +85,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
         // Update HLD Stage
         stage: "hld_update",
         dependsOn: "build",
-        condition:
-          "and(succeeded('build'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/DEPLOY/'),eq(variables['Build.SourceBranchName'],'master')))",
+        condition: "succeeded('build')",
         jobs: [
           {
             job: "update_image_tag",
@@ -102,15 +107,16 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
               {
                 script: generateYamlScript([
                   `export SERVICE_NAME_LOWER=$(echo ${serviceName} | tr '[:upper:]' '[:lower:]')`,
-                  `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-$SERVICE_NAME_LOWER | tr '[:upper:]' '[:lower:]')`,
-                  `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-$(Build.SourceBranchName)-$(Build.BuildNumber)`,
+                  `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
+                  `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-${IMAGE_TAG}`,
+                  `export FAB_SAFE_SERVICE_NAME=$(echo $SERVICE_NAME_LOWER | tr . - | tr / -)`,
                   `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
                   `. build.sh --source-only`,
                   ``,
                   `# Initialization`,
                   `verify_access_token`,
                   `init`,
-                  `helm init`,
+                  `helm_init`,
                   ``,
                   `# Fabrikate`,
                   `get_fab_version`,
@@ -122,7 +128,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   ``,
                   `# Update HLD`,
                   `git checkout -b "$BRANCH_NAME"`,
-                  `../fab/fab set --subcomponent $SERVICE_NAME_LOWER image.tag=$(Build.SourceBranchName)-$(Build.BuildNumber)`,
+                  `../fab/fab set --subcomponent $(Build.Repository.Name).$FAB_SAFE_SERVICE_NAME.${SAFE_SOURCE_BRANCH}.chart image.tag=${IMAGE_TAG}`,
                   `echo "GIT STATUS"`,
                   `git status`,
                   `echo "GIT ADD (git add -A)"`,
@@ -134,7 +140,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   ``,
                   `# Commit changes`,
                   `echo "GIT COMMIT"`,
-                  `git commit -m "Updating $SERVICE_NAME_LOWER image tag to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
+                  `git commit -m "Updating $SERVICE_NAME_LOWER image tag to ${IMAGE_TAG}."`,
                   ``,
                   `# Git Push`,
                   `git_push`,
@@ -143,8 +149,8 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `echo 'az extension add --name azure-devops'`,
                   `az extension add --name azure-devops`,
                   ``,
-                  `echo 'az repos pr create --description "Updating $SERVICE_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
-                  `response=$(az repos pr create --description "Updating $SERVICE_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber).")`,
+                  `echo 'az repos pr create --description "Updating $SERVICE_NAME_LOWER to ${IMAGE_TAG}." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)"'`,
+                  `response=$(az repos pr create --description "Updating $SERVICE_NAME_LOWER to ${IMAGE_TAG}." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)")`,
                   `pr_id=$(echo $response | jq -r '.pullRequestId')`,
                   ``,
                   ``,
@@ -153,7 +159,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `echo "Introspection variables are not defined. Skipping..."`,
                   `else`,
                   `latest_commit=$(git rev-parse --short HEAD)`,
-                  `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                  `tag_name="$BUILD_REPO_NAME:${IMAGE_TAG}"`,
                   `echo "Downloading SPK"`,
                   `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
                   `chmod +x build.sh`,
@@ -293,7 +299,7 @@ export const createTestHldLifecyclePipelineYaml = (
           `# Initialization`,
           `verify_access_token`,
           `init`,
-          `helm init`,
+          `helm_init`,
           ``,
           `# Fabrikate`,
           `get_fab_version`,
@@ -331,13 +337,14 @@ export const createTestHldLifecyclePipelineYaml = (
           `az extension add --name azure-devops`,
 
           ``,
-          `echo 'az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)."'`,
-          `az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)."`
+          `echo 'az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)"'`,
+          `az repos pr create --description "Reconciling HLD with $(Build.Repository.Name)-$(Build.BuildNumber)." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)"`
         ]),
         displayName:
           "Download Fabrikate and SPK, Update HLD, Push changes, Open PR",
         env: {
           ACCESS_TOKEN_SECRET: "$(PAT)",
+          APP_REPO_URL: "$(Build.Repository.Uri)",
           AZURE_DEVOPS_EXT_PAT: "$(PAT)",
           REPO: "$(HLD_REPO)"
         }
@@ -439,4 +446,23 @@ export const createTestHldAzurePipelinesYaml = (
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
     : data;
+};
+
+export const createTestComponentYaml = (
+  asString = true
+): IComponentYaml | string => {
+  const component: IComponentYaml = {
+    name: "default-component",
+    subcomponents: [
+      {
+        name: "traefik2",
+        // tslint:disable-next-line:object-literal-sort-keys
+        method: "git",
+        source: "https://github.com/microsoft/fabrikate-definitions.git",
+        path: "definitions/traefik2"
+      }
+    ]
+  };
+
+  return asString ? yaml.dump(component) : component;
 };

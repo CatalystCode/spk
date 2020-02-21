@@ -53,19 +53,39 @@ azure_devops:
 
 ### init
 
-Initialize the HLD repository by creating an `manifest-generation.yaml` file, if
-one does not already exist.
+Initialize the HLD repository by creating the pipeline
+`manifest-generation.yaml` file, and the default `component.yaml` for
+[fabrikate](https://github.com/microsoft/fabrikate) to consume, if each does not
+already exist.
 
 ```
-Usage: spk hld init|i [options]
+Usage: hld init|i [options]
 
-Initialize your hld repository. Will add the manifest-generation.yaml file to your working directory/repository if it does not already exist.
+Initialize High Level Definition repository. Add manifest-generation.yaml file to working directory/repository if it does not already exist.
 
 Options:
-  --git-push  SPK CLI will try to commit and push these changes to a new origin/branch. (default: false)
-  -h, --help  output usage information
+  --git-push                                          SPK CLI will try to commit and push these changes to a new origin/branch. (default: false)
+  --default-component-git <component-repository-url>  The default hld repository's component's git repository url. (default: "https://github.com/microsoft/fabrikate-definitions.git")
+  --default-component-name <component-name>           The default hld repository's component's name. (default: "traefik2")
+  --default-component-path <component-path>           The default hld repository's component's path. (default: "definitions/traefik2")
+  -h, --help                                          output usage information
 
 ```
+
+The created `component.yaml` will be populated with a traefik2 definition by
+default:
+
+```
+name: default-component
+subcomponents:
+  - name: traefik2
+    method: git
+    source: 'https://github.com/microsoft/fabrikate-definitions.git'
+    path: definitions/traefik2
+```
+
+However, you can set a another fabrikate definition to be added instead via the
+`--default-component-*` flags.
 
 ### install-manifest-pipeline
 
@@ -82,14 +102,15 @@ Usage: hld install-manifest-pipeline|p [options]
 Install the manifest generation pipeline to your Azure DevOps instance. Default values are set in spk-config.yaml and can be loaded via spk init or overriden via option flags.
 
 Options:
-  -n, --pipeline-name <pipeline-name>                  Name of the pipeline to be created
-  -p, --personal-access-token <personal-access-token>  Personal Access Token
-  -o, --org-name <org-name>                            Organization Name for Azure DevOps
-  -r, --hld-name <hld-name>                            HLD Repository Name in Azure DevOps
-  -u, --hld-url <hld-url>                              HLD Repository URL
-  -m, --manifest-url <manifest-url>                    Manifest Repository URL
-  -d, --devops-project <devops-project>                Azure DevOps Project
-  -b, --build-script-url <build-script-url>            Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.
+  -n, --pipeline-name <pipeline-name>                  Name of the pipeline to be created (default: "")
+  -p, --personal-access-token <personal-access-token>  Personal Access Token (default: "")
+  -o, --org-name <org-name>                            Organization Name for Azure DevOps (default: "")
+  -r, --hld-name <hld-name>                            HLD Repository Name in Azure DevOps (default: "")
+  -u, --hld-url <hld-url>                              HLD Repository URL (default: "")
+  -m, --manifest-url <manifest-url>                    Manifest Repository URL (default: "")
+  -d, --devops-project <devops-project>                Azure DevOps Project (default: "")
+  -b, --build-script-url <build-script-url>            Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'. (default: "https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh")
+  --yaml-file-branch <yaml-file-branch>                The git branch where the pipeline definition yaml file is located. (default: "master")
   -h, --help                                           output usage information
 ```
 

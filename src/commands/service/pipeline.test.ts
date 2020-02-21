@@ -8,7 +8,7 @@ import {
   getBuildApiClient,
   queueBuild
 } from "../../lib/pipelines/pipelines";
-
+import { deepClone } from "../../lib/util";
 import {
   execute,
   fetchValues,
@@ -26,7 +26,8 @@ const MOCKED_VALUES: ICommandOptions = {
   personalAccessToken: "personalAccessToken",
   pipelineName: "pipelineName",
   repoName: "repositoryName",
-  repoUrl: "https://dev.azure.com/test/fabrikam/_git/app"
+  repoUrl: "https://dev.azure.com/test/fabrikam/_git/app",
+  yamlFileBranch: "master"
 };
 
 beforeAll(() => {
@@ -42,7 +43,7 @@ beforeEach(() => {
 });
 
 const getMockedValues = () => {
-  return JSON.parse(JSON.stringify(MOCKED_VALUES));
+  return deepClone(MOCKED_VALUES);
 };
 
 describe("test fetchValues function", () => {

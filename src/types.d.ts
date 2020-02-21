@@ -115,6 +115,7 @@ export interface IAzurePipelinesYaml {
     displayName?: string;
     env?: {
       ACCESS_TOKEN_SECRET?: string;
+      APP_REPO_URL?: string;
       AZURE_DEVOPS_EXT_PAT?: string;
       BEDROCK_BUILD_SCRIPT?: string;
       BRANCH_NAME?: string;
@@ -223,4 +224,16 @@ interface IBedrockFileInfo {
 
 export interface IAccessYaml {
   [gitRepositoryUrl: string]: string;
+}
+
+export interface IComponentYaml {
+  name: string;
+  subcomponents?: [
+    {
+      name: string;
+      method: string;
+      source: string;
+      path: string;
+    }
+  ];
 }

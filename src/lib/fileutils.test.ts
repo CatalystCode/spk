@@ -17,6 +17,7 @@ import shelljs from "shelljs";
 import uuid from "uuid/v4";
 import {
   ACCESS_FILENAME,
+  HLD_COMPONENT_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   RENDER_HLD_PIPELINE_FILENAME,
   SERVICE_PIPELINE_FILENAME,
@@ -24,6 +25,7 @@ import {
 } from "../lib/constants";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
 import {
+  createTestComponentYaml,
   createTestHldAzurePipelinesYaml,
   createTestHldLifecyclePipelineYaml,
   createTestMaintainersYaml,
@@ -72,7 +74,7 @@ describe("generateAccessYaml", () => {
     mockFs.restore();
   });
 
-  it("should generate the access.yaml in the filepath.", async () => {
+  it("if no access.yaml exists, it should generate the access.yaml in the filepath.", async () => {
     const absTargetPath = path.resolve(
       path.join(targetDirectory, serviceDirectory)
     );
@@ -82,6 +84,61 @@ describe("generateAccessYaml", () => {
 
     const accessYaml: IAccessYaml = {};
     accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
+
+    generateAccessYaml(absTargetPath, gitRepoUrl);
+
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      yaml.safeDump(accessYaml),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
+
+  it("if an access.yaml already exists, it should update access.yaml in the filepath", async () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/${serviceDirectory}/${ACCESS_FILENAME}`]: "'https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019': ACCESS_TOKEN_SECRET"
+    };
+    mockFs(mockFsOptions);
+
+    const absTargetPath = path.resolve(
+      path.join(targetDirectory, serviceDirectory)
+    );
+    const expectedFilePath = path.join(absTargetPath, ACCESS_FILENAME);
+    const gitRepoUrl =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
+
+    const gitRepoUrl2 =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/private-helm-repo";
+    const accessYaml: IAccessYaml = {};
+    accessYaml[gitRepoUrl2] = "ACCESS_TOKEN_SECRET";
+    accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
+
+    generateAccessYaml(absTargetPath, gitRepoUrl2);
+
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      yaml.safeDump(accessYaml),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
+
+  it("if an access.yaml already exists, it should update access.yaml in the filepath, but not overwrite anything that exists.", async () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/${serviceDirectory}/${ACCESS_FILENAME}`]: "'https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019': MY_CUSTOM_SECRET"
+    };
+    mockFs(mockFsOptions);
+
+    const absTargetPath = path.resolve(
+      path.join(targetDirectory, serviceDirectory)
+    );
+    const expectedFilePath = path.join(absTargetPath, ACCESS_FILENAME);
+    const gitRepoUrl =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
+
+    const accessYaml: IAccessYaml = {};
+    accessYaml[gitRepoUrl] = "MY_CUSTOM_SECRET";
 
     generateAccessYaml(absTargetPath, gitRepoUrl);
 
@@ -229,6 +286,11 @@ describe("generateHldAzurePipelinesYaml", () => {
 describe("generateDefaultHldComponentYaml", () => {
   const targetDirectory = "hld-repository";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+
+  const componentRepo =
+    "https://github.com/microsoft/fabrikate-definitions.git";
+  const componentName = "traefik2";
+  const componentPath = "definitions/traefik2";
   beforeEach(() => {
     mockFs({
       "hld-repository": {}
@@ -244,13 +306,30 @@ describe("generateDefaultHldComponentYaml", () => {
     };
     mockFs(mockFsOptions);
 
-    generateDefaultHldComponentYaml(targetDirectory);
+    generateDefaultHldComponentYaml(
+      targetDirectory,
+      componentRepo,
+      componentName,
+      componentPath
+    );
     expect(writeSpy).not.toBeCalled();
   });
 
   it("should generate the file if one does not exist", async () => {
-    generateDefaultHldComponentYaml(targetDirectory);
-    expect(writeSpy).toBeCalled();
+    const absTargetPath = path.resolve(targetDirectory);
+    const expectedFilePath = `${absTargetPath}/${HLD_COMPONENT_FILENAME}`;
+    generateDefaultHldComponentYaml(
+      targetDirectory,
+      componentRepo,
+      componentName,
+      componentPath
+    );
+
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      createTestComponentYaml(),
+      "utf8"
+    );
   });
 });
 
