@@ -198,7 +198,8 @@ export const updateMatchingArcToHLDPipelineEntry = async (
       imageTag: found.imageTag,
       p1: found.p1,
       p2: pipelineId.toLowerCase(),
-      service: found.service
+      service: found.service,
+      sourceRepo: found.sourceRepo
     };
     if (pr) {
       updateEntry.pr = pr.toLowerCase();
@@ -247,7 +248,8 @@ export const updateLastRowOfArcToHLDPipelines = async (
     imageTag: lastEntry.imageTag,
     p1: lastEntry.p1,
     p2: pipelineId.toLowerCase(),
-    service: lastEntry.service
+    service: lastEntry.service,
+    sourceRepo: lastEntry.sourceRepo
   };
   if (pr) {
     last.pr = pr.toLowerCase();
@@ -458,11 +460,13 @@ export const updateHLDtoManifestEntry = async (
       commitId: found.commitId,
       env: found.env,
       hldCommitId,
+      hldRepo: found.hldRepo,
       imageTag: found.imageTag,
       p1: found.p1,
       p2: found.p2,
       p3: pipelineId.toLowerCase(),
-      service: found.service
+      service: found.service,
+      sourceRepo: found.sourceRepo
     };
     if (manifestCommitId) {
       entry.manifestCommitId = manifestCommitId.toLowerCase();
@@ -512,11 +516,13 @@ export const updateLastHLDtoManifestEntry = async (
     commitId: lastEntry.commitId,
     env: lastEntry.env,
     hldCommitId: hldCommitId.toLowerCase(),
+    hldRepo: lastEntry.hldRepo,
     imageTag: lastEntry.imageTag,
     p1: lastEntry.p1,
     p2: lastEntry.p2,
     p3: pipelineId.toLowerCase(),
-    service: lastEntry.service
+    service: lastEntry.service,
+    sourceRepo: lastEntry.sourceRepo
   };
   if (manifestCommitId) {
     newEntry.manifestCommitId = manifestCommitId.toLowerCase();
