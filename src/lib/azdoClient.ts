@@ -133,8 +133,6 @@ export const repositoryHasFile = async (
       );
     }
   } catch (err) {
-    throw Error(
-      "Unable to check if file " + fileName + " exists in repository. " + err
-    );
+    throw Error(err);
   }
 };
