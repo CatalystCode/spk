@@ -72,22 +72,12 @@ export const execute = async (
     };
 
     // By default the version descriptor is for the master branch
-    const hasPipelineFile = await repositoryHasFile(
+    await repositoryHasFile(
       SERVICE_PIPELINE_FILENAME,
       opts.yamlFileBranch ? opts.yamlFileBranch : "master",
       opts.repoName,
       accessOpts
     );
-
-    if (!hasPipelineFile) {
-      logger.error(
-        "Error installing build pipeline. Repository does not have a " +
-          SERVICE_PIPELINE_FILENAME +
-          " file."
-      );
-      await exitFn(1);
-    }
-
     await installBuildUpdatePipeline(serviceName, opts);
     await exitFn(0);
   } catch (err) {

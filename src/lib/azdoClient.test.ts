@@ -8,7 +8,13 @@ import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { RestClient } from "typed-rest-client";
 import uuid from "uuid/v4";
 import { Config } from "../config";
-import { azdoUrl, getBuildApi, getRestClient, getWebApi } from "./azdoClient";
+import {
+  azdoUrl,
+  getBuildApi,
+  getRestClient,
+  getWebApi,
+  repositoryHasFile
+} from "./azdoClient";
 
 // Tests
 describe("AzDo Pipeline utility functions", () => {

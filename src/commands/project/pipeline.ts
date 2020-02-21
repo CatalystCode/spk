@@ -133,21 +133,12 @@ export const execute = async (
         personalAccessToken: values.personalAccessToken,
         project: values.devopsProject
       };
-      const hasPipelineFile = await repositoryHasFile(
+      await repositoryHasFile(
         PROJECT_PIPELINE_FILENAME,
         values.yamlFileBranch ? opts.yamlFileBranch : "master",
         values.repoName!,
         accessOpts
       );
-
-      if (!hasPipelineFile) {
-        logger.error(
-          "Error installing build pipeline. Repository does not have a " +
-            PROJECT_PIPELINE_FILENAME +
-            " file."
-        );
-        await exitFn(1);
-      }
       await installLifecyclePipeline(values);
       await exitFn(0);
     }

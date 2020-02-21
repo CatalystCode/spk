@@ -47,7 +47,7 @@ const getMockedValues = () => {
   return deepClone(MOCKED_VALUES);
 };
 
-jest.spyOn(azdo, "repositoryHasFile").mockReturnValue(Promise.resolve(true));
+jest.spyOn(azdo, "repositoryHasFile").mockReturnValue(Promise.resolve());
 
 describe("test fetchValues function", () => {
   it("with all values set", async () => {

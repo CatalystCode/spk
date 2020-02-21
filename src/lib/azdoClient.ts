@@ -109,7 +109,7 @@ export const repositoryHasFile = async (
   branch: string,
   repoName: string,
   accessOpts: IAzureDevOpsOpts
-): Promise<boolean> => {
+): Promise<void> => {
   try {
     const gitApi = await GitAPI(accessOpts);
     const versionDescriptor = { version: branch }; // change to branch
@@ -126,9 +126,12 @@ export const repositoryHasFile = async (
     );
 
     if (gitItem === null) {
-      return false;
+      throw Error(
+        "Error installing build pipeline. Repository does not have a " +
+          fileName +
+          " file."
+      );
     }
-    return true;
   } catch (err) {
     throw Error(
       "Unable to check if file " + fileName + " exists in repository. " + err
