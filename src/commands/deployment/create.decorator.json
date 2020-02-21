@@ -62,7 +62,7 @@
     },
     {
       "arg": "--repository <repository>",
-      "description": "Name of the repository (for github username/repo, for AzDO repo-name)"
+      "description": "URL of the repository (SRC, HLD, Manifest)"
     }
   ]
 }
