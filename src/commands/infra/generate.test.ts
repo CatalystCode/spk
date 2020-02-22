@@ -142,15 +142,11 @@ describe("test gitClone function", () => {
   });
   it("negative Test", async () => {
     const git = simpleGit();
-    git.clone = async () => {
+    git.clone = () => {
       throw new Error("Error");
     };
-    try {
-      await gitClone(git, "source", "path");
-      expect(true).toBe(false);
-    } catch (e) {
-      expect(e.message).toBe("Error");
-    }
+
+    await expect(gitClone(git, "source", "path")).rejects.toThrow();
   });
 });
 
@@ -545,7 +541,7 @@ describe("Validate sources in definition.yaml files", () => {
       outputPath
     );
   });
-  test("without parent's definition.yaml", async () => {
+  test("without parent's definition.yaml", () => {
     const mockParentPath = "src/commands/infra/mocks/missing-parent-defn";
     const mockProjectPath = "src/commands/infra/mocks/missing-parent-defn/west";
     try {
@@ -613,7 +609,7 @@ describe("Validate sources in definition.yaml files", () => {
       outputPath
     );
   });
-  test("without parent's and project's definition.yaml", async () => {
+  test("without parent's and project's definition.yaml", () => {
     const mockParentPath = "src/commands/infra/mocks";
     try {
       validateDefinition(mockParentPath, mockParentPath);
@@ -656,7 +652,7 @@ const getMockedDataForGitTests = async (
 };
 
 describe("Validate replacement of variables between parent and leaf definitions", () => {
-  test("Validating that leaf definitions take precedence when generating multi-cluster definitions", async () => {
+  test("Validating that leaf definitions take precedence when generating multi-cluster definitions", () => {
     const mockParentPath = "src/commands/infra/mocks/discovery-service";
     const mockProjectPath = "src/commands/infra/mocks/discovery-service/west";
     const finalArray = [
@@ -711,7 +707,7 @@ describe("Validate replacement of variables between parent and leaf definitions"
 });
 
 describe("Validate spk.tfvars file", () => {
-  test("Validating that a spk.tfvars is generated and has appropriate format", async () => {
+  test("Validating that a spk.tfvars is generated and has appropriate format", () => {
     const mockProjectPath = "src/commands/infra/mocks/discovery-service";
     const data = readYaml<IInfraConfigYaml>(
       path.join(mockProjectPath, DEFINITION_YAML)
@@ -723,7 +719,7 @@ describe("Validate spk.tfvars file", () => {
 });
 
 describe("Validate backend.tfvars file", () => {
-  test("Validating that a backend.tfvars is generated and has appropriate format", async () => {
+  test("Validating that a backend.tfvars is generated and has appropriate format", () => {
     const mockProjectPath = "src/commands/infra/mocks/discovery-service";
     const data = readYaml<IInfraConfigYaml>(
       path.join(mockProjectPath, DEFINITION_YAML)

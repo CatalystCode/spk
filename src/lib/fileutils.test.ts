@@ -74,7 +74,7 @@ describe("generateAccessYaml", () => {
     mockFs.restore();
   });
 
-  it("if no access.yaml exists, it should generate the access.yaml in the filepath.", async () => {
+  it("if no access.yaml exists, it should generate the access.yaml in the filepath.", () => {
     const absTargetPath = path.resolve(
       path.join(targetDirectory, serviceDirectory)
     );
@@ -95,7 +95,7 @@ describe("generateAccessYaml", () => {
     expect(writeSpy).toBeCalled();
   });
 
-  it("if an access.yaml already exists, it should update access.yaml in the filepath", async () => {
+  it("if an access.yaml already exists, it should update access.yaml in the filepath", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${serviceDirectory}/${ACCESS_FILENAME}`]: "'https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019': ACCESS_TOKEN_SECRET"
     };
@@ -124,7 +124,7 @@ describe("generateAccessYaml", () => {
     expect(writeSpy).toBeCalled();
   });
 
-  it("if an access.yaml already exists, it should update access.yaml in the filepath, but not overwrite anything that exists.", async () => {
+  it("if an access.yaml already exists, it should update access.yaml in the filepath, but not overwrite anything that exists.", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${serviceDirectory}/${ACCESS_FILENAME}`]: "'https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019': MY_CUSTOM_SECRET"
     };
@@ -168,7 +168,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if build-update-hld.yaml exists", async () => {
+  it("should not do anything if build-update-hld.yaml exists", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`]: "existing pipeline"
     };
@@ -184,7 +184,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the build-update-hld.yaml if one does not exist", async () => {
+  it("should generate the build-update-hld.yaml if one does not exist", () => {
     const absTargetPath = path.resolve(targetDirectory);
     const expectedFilePath = `${absTargetPath}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`;
 
@@ -224,7 +224,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if hld-lifecycle.yaml exists", async () => {
+  it("should not do anything if hld-lifecycle.yaml exists", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${PROJECT_PIPELINE_FILENAME}`]: "existing pipeline"
     };
@@ -234,7 +234,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the hld-lifecycle.yaml if one does not exist", async () => {
+  it("should generate the hld-lifecycle.yaml if one does not exist", () => {
     const expectedFilePath = `${targetDirectory}/${PROJECT_PIPELINE_FILENAME}`;
 
     generateHldLifecyclePipelineYaml(targetDirectory);
@@ -259,7 +259,7 @@ describe("generateHldAzurePipelinesYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${RENDER_HLD_PIPELINE_FILENAME}`]: "existing pipeline"
     };
@@ -269,7 +269,7 @@ describe("generateHldAzurePipelinesYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const absTargetPath = path.resolve(targetDirectory);
     const expectedFilePath = `${absTargetPath}/${RENDER_HLD_PIPELINE_FILENAME}`;
 
@@ -300,7 +300,7 @@ describe("generateDefaultHldComponentYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/component.yaml`]: "existing component"
     };
@@ -315,7 +315,7 @@ describe("generateDefaultHldComponentYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const absTargetPath = path.resolve(targetDirectory);
     const expectedFilePath = `${absTargetPath}/${HLD_COMPONENT_FILENAME}`;
     generateDefaultHldComponentYaml(
@@ -348,7 +348,7 @@ describe("Adding a new service to a Maintainer file", () => {
     jest.clearAllMocks();
   });
 
-  it("should update existing maintainers.yml with new service maintainers", async () => {
+  it("should update existing maintainers.yml with new service maintainers", () => {
     const maintainersFilePath = "maintainers.yaml";
 
     const servicePath = "packages/my-new-service";
@@ -393,7 +393,7 @@ describe("generating service gitignore file", () => {
 
   const content = "hello world";
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/.gitignore`]: "foobar"
     };
@@ -404,7 +404,7 @@ describe("generating service gitignore file", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const writeSpy = jest.spyOn(fs, "writeFileSync");
     generateGitIgnoreFile(targetDirectory, content);
 
@@ -427,7 +427,7 @@ describe("generating service Dockerfile", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/Dockerfile`]: "hello!!!!"
     };
@@ -438,7 +438,7 @@ describe("generating service Dockerfile", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const writeSpy = jest.spyOn(fs, "writeFileSync");
     generateDockerfile(targetDirectory);
 
@@ -461,12 +461,12 @@ describe("serviceBuildUpdatePipeline", () => {
     shelljs.mkdir("-p", randomDirPath);
   });
 
-  test("that the value of the file is the same after (de)serialization", async () => {
+  test("that the value of the file is the same after (de)serialization", () => {
     const serviceName = "mycoolservice";
     const servicePath = "./mycoolservice";
     const ringBranches = ["master", "qa", "test"];
     const variableGroups = ["foo", "bar"];
-    const buildPipelineYaml = await serviceBuildAndUpdatePipeline(
+    const buildPipelineYaml = serviceBuildAndUpdatePipeline(
       serviceName,
       servicePath,
       ringBranches,
@@ -568,7 +568,7 @@ describe("serviceBuildUpdatePipeline", () => {
 });
 
 describe("generateYamlScript", () => {
-  test("'set -e' is injected as the first line", async () => {
+  test("'set -e' is injected as the first line", () => {
     const generated = generateYamlScript(["foo", "bar", "baz"]);
     expect(generated.startsWith("set -e\n")).toBe(true);
   });
