@@ -1,4 +1,8 @@
-## NOTE
+## Descripton
+
+Add a new service into this initialized spk project repository.
+
+## Note
 
 - `--helm-chart-*` and `--helm-config-*` settings are exclusive. **You may only
   use one.**
