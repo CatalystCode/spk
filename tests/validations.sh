@@ -154,16 +154,17 @@ pipeline_created=$(az pipelines show --name $hld_to_manifest_pipeline_name --org
 verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15
 
 ##################################
-# Helm Chart Repo Setup START
+# External Helm Chart Repo Setup START
+# uncomment when we can handle private helm chart repos seamlessly in SPK
 ##################################
-cd $TEST_WORKSPACE
-create_helm_chart_repo $helm_charts_dir $FrontEnd $TEST_WORKSPACE $ACR_NAME
-cd "$TEST_WORKSPACE/$helm_charts_dir"
-git add -A
+# cd $TEST_WORKSPACE
+# create_helm_chart_repo $helm_charts_dir $FrontEnd $TEST_WORKSPACE $ACR_NAME
+# cd "$TEST_WORKSPACE/$helm_charts_dir"
+# git add -A
 
-# See if the remote repo exists
-repo_exists $AZDO_ORG_URL $AZDO_PROJECT $helm_charts_dir
-push_remote_git_repo $AZDO_ORG_URL $AZDO_PROJECT $helm_charts_dir
+# # See if the remote repo exists
+# repo_exists $AZDO_ORG_URL $AZDO_PROJECT $helm_charts_dir
+# push_remote_git_repo $AZDO_ORG_URL $AZDO_PROJECT $helm_charts_dir
 # --------------------------------
 
 ##################################
@@ -203,8 +204,18 @@ variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "I
 variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "INTROSPECTION_PARTITION_KEY" $sa_partition_key
 variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "INTROSPECTION_TABLE_NAME" $sat_name
 
-helm_repo_url="$AZDO_ORG_URL/$AZDO_PROJECT/_git/$helm_charts_dir"
-spk service create $FrontEnd -d $services_dir -p "$FrontEnd/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
+# Set up internal helm chart
+chart_app_name=$FrontEnd
+acr_name=$ACR_NAME
+create_helm_chart_v2 $TEST_WORKSPACE
+cd "$TEST_WORKSPACE/$mono_repo_dir"
+
+# Commented code below is for external repo helm charts. Currently doesn't work.
+
+# helm_repo_url="$AZDO_ORG_URL/$AZDO_PROJECT/_git/$helm_charts_dir"
+local_repo_url="$AZDO_ORG_URL/$AZDO_PROJECT/_git/$mono_repo_dir"
+spk service create $FrontEnd -d $services_dir -p "chart" -g $local_repo_url -b master >> $TEST_WORKSPACE/log.txt
+# spk service create $FrontEnd -d $services_dir -p "$FrontEnd/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
 file_we_expect=(".gitignore" "build-update-hld.yaml" "Dockerfile" )
 validate_directory $directory_to_check "${file_we_expect[@]}"
@@ -307,6 +318,7 @@ approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
 
 # ##################################
 # TODO 
+# Fix issues where image tag update not reflected in manifest yaml
 # Verify the lifecycle pipeline runs after above PR is approved. 
 # LifeCycle generates a PR on the HLD.
 # Approve that PR too. That in turn with kick off the manifest pipeline. 
@@ -320,7 +332,6 @@ echo "Successfully reached the end of the service validations scripts."
 # # SPK Introspection Validation START
 # ##################################
 
-# spk deployment get
 cd $TEST_WORKSPACE
 cd ..
 if [ -d "tests" ]; then
