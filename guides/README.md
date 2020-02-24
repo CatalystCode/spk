@@ -1,8 +1,8 @@
 # SPK Guides
 
 SPK automates Bedrock principles in several areas: cluster infrastructure,
-service management, service introspection. Below you will find several guides to
-help you use SPK to adopt the Bedrock principles that you choose.
+service management, service introspection. Below you will find guides to help
+you use SPK to adopt the Bedrock principles that you choose.
 
 [Bedrock Developer and Operations Experience](bedrock-end-to-end-dx.md): A
 scenario based description of how all the tools and components in Bedrock fit
@@ -18,7 +18,7 @@ walkthrough for managing and deploying services.
 [Service Introspection](service-introspection.md): A walkthrough on how to setup
 service introspection.
 
-## Contributing to SPK
+### Contributing to SPK
 
 If you would like to contribute to the codebase, below you will find guidelines
 about the project.
@@ -27,4 +27,4 @@ about the project.
 to setup a development environment.
 
 [Command Implementation](command-implementation.md): Style guideline for spk
-commands
+commands.
