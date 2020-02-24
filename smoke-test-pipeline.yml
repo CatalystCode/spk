@@ -7,6 +7,9 @@ schedules:
     displayName: M-F 7:00PM (UTC - 8:00) Pacific daily build
     always: true
 
+variables:
+  skipComponentGovernanceDetection: "true" 
+
 stages:
   - stage: integration_tests
     jobs:
@@ -74,7 +77,7 @@ stages:
 
               # Include dependent scripts
               . ./functions.sh
-
+              
               # Run the test
               bash ./introspection-validations.sh
 
@@ -147,7 +150,9 @@ stages:
 
               # Include dependent scripts
               . ./functions.sh
-
+              mkdir helm-artifacts
+              cp ./tests/helm-artifacts/* helm-artifacts
+              
               # Run the test
               bash ./validations.sh
 

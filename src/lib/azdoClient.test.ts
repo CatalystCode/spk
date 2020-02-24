@@ -3,7 +3,6 @@ jest.mock("azure-devops-node-api");
 jest.mock("../config");
 
 // Imports
-import { WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { RestClient } from "typed-rest-client";
 import uuid from "uuid/v4";
@@ -63,11 +62,10 @@ describe("getWebApi", () => {
       }
     });
 
-    let api: WebApi | undefined;
     let error: Error | undefined;
 
     try {
-      api = await getWebApi();
+      await getWebApi();
     } catch (err) {
       error = err;
     }
@@ -81,12 +79,11 @@ describe("getRestClient", () => {
       azure_devops: {}
     });
 
-    let error: Error | undefined;
     let api: RestClient | undefined;
     try {
       api = await getRestClient();
-    } catch (err) {
-      error = err;
+    } catch (_) {
+      // ignore
     }
     expect(api).toBeUndefined();
   });
@@ -98,12 +95,11 @@ describe("getRestClient", () => {
       }
     });
 
-    let error: Error | undefined;
     let api: RestClient | undefined;
     try {
       api = await getRestClient();
-    } catch (err) {
-      error = err;
+    } catch (_) {
+      // ignore
     }
     expect(api).toBeUndefined();
   });
@@ -117,12 +113,11 @@ describe("getRestClient", () => {
     });
 
     let api: RestClient | undefined;
-    let error: Error | undefined;
 
     try {
       api = await getRestClient();
-    } catch (err) {
-      error = err;
+    } catch (_) {
+      // ignore
     }
     expect(api).toBeUndefined();
   });
@@ -135,13 +130,13 @@ describe("getBuildApi", () => {
     });
 
     let error: Error | undefined;
-    let api: IBuildApi | undefined;
     try {
-      api = await getBuildApi();
+      await getBuildApi();
+      expect(true).toBe(false);
     } catch (err) {
       error = err;
     }
-    expect(error).toBeUndefined();
+    expect(error).toBeDefined();
   });
 
   test("should fail when org is not set", async () => {
@@ -151,13 +146,12 @@ describe("getBuildApi", () => {
       }
     });
 
-    let error: Error | undefined;
     let api: IBuildApi | undefined;
 
     try {
       api = await getBuildApi();
-    } catch (err) {
-      error = err;
+    } catch (_) {
+      // ignore
     }
     expect(api).toBeUndefined();
   });
@@ -171,12 +165,11 @@ describe("getBuildApi", () => {
     });
 
     let api: IBuildApi | undefined;
-    let error: Error | undefined;
 
     try {
       api = await getBuildApi();
-    } catch (err) {
-      error = err;
+    } catch (_) {
+      // ignored
     }
     expect(api).toBeUndefined();
   });
