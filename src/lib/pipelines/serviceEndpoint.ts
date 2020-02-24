@@ -41,7 +41,7 @@ export const createServiceEndpointIfNotExists = async (
     }
 
     // addServiceEndpoint always return a value of type, IServiceEndpoint
-    // it will never eturn null or undefined.
+    // it will never return null or undefined.
     // it does throw exception
     return serviceEndpoint;
   } catch (err) {
