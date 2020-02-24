@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 
 describe("safeGitUrlForLogging", () => {
-  it("should return a git url without access tokens when given a url with access tokens", async () => {
+  it("should return a git url without access tokens when given a url with access tokens", () => {
     const testUrl =
       "https://service_account:token@github.com/microsoft/spk.git";
     const expected = "https://github.com/microsoft/spk.git";
@@ -40,7 +40,7 @@ describe("safeGitUrlForLogging", () => {
     expect(safeGitUrlForLogging(testUrl)).toEqual(expected);
   });
 
-  it("should return the same git url when given a url without access tokens", async () => {
+  it("should return the same git url when given a url without access tokens", () => {
     const testUrl = "https://github.com/microsoft/spk.git";
     const expected = "https://github.com/microsoft/spk.git";
 
@@ -324,7 +324,7 @@ describe("getAzdoOriginUrl", () => {
 });
 
 describe("getRepositoryName", () => {
-  it("returns the repository name for a visualstudio.com HTTPS origin url.", async () => {
+  it("returns the repository name for a visualstudio.com HTTPS origin url.", () => {
     const originUrl =
       "https://some-org.visualstudio.com/some-project/_git/some-repo";
     const repositoryName = getRepositoryName(originUrl);
@@ -332,7 +332,7 @@ describe("getRepositoryName", () => {
     expect(repositoryName).toEqual(`some-repo`);
   });
 
-  it("returns the repository name for a visualstudio.com SSH origin url.", async () => {
+  it("returns the repository name for a visualstudio.com SSH origin url.", () => {
     const originUrl =
       "foobar@vs-ssh.visualstudio.com:v3/some-org/some-project/some-repo";
     const repositoryName = getRepositoryName(originUrl);
@@ -340,7 +340,7 @@ describe("getRepositoryName", () => {
     expect(repositoryName).toEqual(`some-repo`);
   });
 
-  it("returns the repository name for an AzDo HTTPS origin url.", async () => {
+  it("returns the repository name for an AzDo HTTPS origin url.", () => {
     const originUrl =
       "https://user@dev.azure.com/myorg/spk-test-project/_git/new-repo";
     const repositoryName = getRepositoryName(originUrl);
@@ -348,7 +348,7 @@ describe("getRepositoryName", () => {
     expect(repositoryName).toEqual(`new-repo`);
   });
 
-  it("returns the repository name for an AzDo SSH origin url.", async () => {
+  it("returns the repository name for an AzDo SSH origin url.", () => {
     const originUrl =
       "git@ssh.dev.azure.com:v3/mitarng/spk-test-project/new-repo";
     const repositoryName = getRepositoryName(originUrl);
@@ -356,21 +356,21 @@ describe("getRepositoryName", () => {
     expect(repositoryName).toEqual(`new-repo`);
   });
 
-  it("returns the repository name for a GitHub HTTPS origin url.", async () => {
+  it("returns the repository name for a GitHub HTTPS origin url.", () => {
     const originUrl = "https://github.com/CatalystCode/spk.git";
     const repositoryName = getRepositoryName(originUrl);
 
     expect(repositoryName).toEqual(`spk`);
   });
 
-  it("returns the repository name for a GitHub SSH origin url.", async () => {
+  it("returns the repository name for a GitHub SSH origin url.", () => {
     const originUrl = "git@github.com:CatalystCode/spk.git";
     const repositoryName = getRepositoryName(originUrl);
 
     expect(repositoryName).toEqual(`spk`);
   });
 
-  it("Returns a help message for unknown or unsupported git providers.", async () => {
+  it("Returns a help message for unknown or unsupported git providers.", () => {
     const originUrl = "git@bitbucket.com:org/spk.git";
     let threwError = false;
     try {
@@ -383,7 +383,7 @@ describe("getRepositoryName", () => {
 });
 
 describe("getRepositoryUrl", () => {
-  it("return a proper repo url for a visualstudio.com HTTP origin url.", async () => {
+  it("return a proper repo url for a visualstudio.com HTTP origin url.", () => {
     const originUrl =
       "https://some-org.visualstudio.com/some-project/_git/some-repo";
     const repositoryUrl = getRepositoryUrl(originUrl);
@@ -393,7 +393,7 @@ describe("getRepositoryUrl", () => {
     );
   });
 
-  it("return a proper repo url for a visualstudio.com SSH origin url.", async () => {
+  it("return a proper repo url for a visualstudio.com SSH origin url.", () => {
     const originUrl =
       "foobar@vs-ssh.visualstudio.com:v3/some-org/some-project/some-repo";
     const repositoryUrl = getRepositoryUrl(originUrl);
@@ -403,7 +403,7 @@ describe("getRepositoryUrl", () => {
     );
   });
 
-  it("return a proper repo url for an AzDo HTTP origin url.", async () => {
+  it("return a proper repo url for an AzDo HTTP origin url.", () => {
     const originUrl =
       "https://user@dev.azure.com/myorg/spk-test-project/_git/new-repo";
     const repositoryUrl = getRepositoryUrl(originUrl);
@@ -413,7 +413,7 @@ describe("getRepositoryUrl", () => {
     );
   });
 
-  it("return a proper repo url for an AzDo SSH origin url.", async () => {
+  it("return a proper repo url for an AzDo SSH origin url.", () => {
     const originUrl =
       "git@ssh.dev.azure.com:v3/mitarng/spk-test-project/new-repo";
     const repositoryUrl = getRepositoryUrl(originUrl);
@@ -423,21 +423,21 @@ describe("getRepositoryUrl", () => {
     );
   });
 
-  it("return a proper repo url for a GitHub HTTP origin url.", async () => {
+  it("return a proper repo url for a GitHub HTTP origin url.", () => {
     const originUrl = "https://github.com/CatalystCode/spk.git";
     const repositoryUrl = getRepositoryUrl(originUrl);
 
     expect(repositoryUrl).toEqual(`https://github.com/CatalystCode/spk`);
   });
 
-  it("return a proper repo url for a GitHub SSH origin url.", async () => {
+  it("return a proper repo url for a GitHub SSH origin url.", () => {
     const originUrl = "git@github.com:CatalystCode/spk.git";
     const repositoryUrl = getRepositoryUrl(originUrl);
 
     expect(repositoryUrl).toEqual(`https://github.com/CatalystCode/spk`);
   });
 
-  it("Returns a help message for unknown or unsupported git providers.", async () => {
+  it("Returns a help message for unknown or unsupported git providers.", () => {
     const originUrl = "git@bitbucket.com:org/spk.git";
     let threwError = false;
     try {
