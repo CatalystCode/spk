@@ -17,14 +17,3 @@ walkthrough for managing and deploying services.
 
 [Service Introspection](service-introspection.md): A walkthrough on how to setup
 service introspection.
-
-# Contributing to SPK
-
-If you would like to contribute to the codebase, below you will find guidelines
-about the project.
-
-[Contributing](contributing.md): Information about project prerequisits and how
-to setup a development environment.
-
-[Command Implementation](command-implementation.md): Style guideline for spk
-commands.
