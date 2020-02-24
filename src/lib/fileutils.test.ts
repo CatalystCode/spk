@@ -209,7 +209,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     expect(writeSpy).toBeCalled();
   });
 
-  test("no path trigger injected when the path is the project root (is: ./)", async () => {
+  test("no path trigger injected when the path is the project root (is: ./)", () => {
     const serviceYaml = serviceBuildAndUpdatePipeline("my-service", "./", [
       "master"
     ]);
@@ -219,7 +219,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     });
   });
 
-  test("path trigger is injected when the path is not the root of the project (not: ./)", async () => {
+  test("path trigger is injected when the path is not the root of the project (not: ./)", () => {
     for (const p of ["./my-service", "./foo/bar/baz"]) {
       const serviceYaml = serviceBuildAndUpdatePipeline("my-service", p, [
         "master"
