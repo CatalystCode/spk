@@ -68,9 +68,9 @@ describe("getCurrentBranch", () => {
 
     let error: Error | undefined;
     try {
-      const currentBranch = await getCurrentBranch();
-    } catch (_) {
-      error = _;
+      await getCurrentBranch();
+    } catch (err) {
+      error = err;
     }
 
     expect(error).not.toBeUndefined();
