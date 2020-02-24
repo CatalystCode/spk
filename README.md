@@ -22,7 +22,7 @@ refer to:
 ## Guides
 
 You will find several guides to help you get started on each of the areas at
-[SPK guides](./guides/README.md)
+[SPK guides](./guides/README.md).
 
 ## Installation
 
