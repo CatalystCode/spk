@@ -18,7 +18,7 @@ walkthrough for managing and deploying services.
 [Service Introspection](service-introspection.md): A walkthrough on how to setup
 service introspection.
 
-### Contributing to SPK
+# Contributing to SPK
 
 If you would like to contribute to the codebase, below you will find guidelines
 about the project.
