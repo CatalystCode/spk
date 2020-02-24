@@ -23,7 +23,7 @@ import {
   SERVICE_PIPELINE_FILENAME,
   VM_IMAGE
 } from "../lib/constants";
-import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
+import { disableVerboseLogging, enableVerboseLogging } from "../logger";
 import {
   createTestComponentYaml,
   createTestHldAzurePipelinesYaml,
@@ -74,7 +74,7 @@ describe("generateAccessYaml", () => {
     mockFs.restore();
   });
 
-  it("should generate the access.yaml in the filepath.", async () => {
+  it("if no access.yaml exists, it should generate the access.yaml in the filepath.", () => {
     const absTargetPath = path.resolve(
       path.join(targetDirectory, serviceDirectory)
     );
@@ -84,6 +84,61 @@ describe("generateAccessYaml", () => {
 
     const accessYaml: IAccessYaml = {};
     accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
+
+    generateAccessYaml(absTargetPath, gitRepoUrl);
+
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      yaml.safeDump(accessYaml),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
+
+  it("if an access.yaml already exists, it should update access.yaml in the filepath", () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/${serviceDirectory}/${ACCESS_FILENAME}`]: "'https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019': ACCESS_TOKEN_SECRET"
+    };
+    mockFs(mockFsOptions);
+
+    const absTargetPath = path.resolve(
+      path.join(targetDirectory, serviceDirectory)
+    );
+    const expectedFilePath = path.join(absTargetPath, ACCESS_FILENAME);
+    const gitRepoUrl =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
+
+    const gitRepoUrl2 =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/private-helm-repo";
+    const accessYaml: IAccessYaml = {};
+    accessYaml[gitRepoUrl2] = "ACCESS_TOKEN_SECRET";
+    accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
+
+    generateAccessYaml(absTargetPath, gitRepoUrl2);
+
+    expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      yaml.safeDump(accessYaml),
+      "utf8"
+    );
+    expect(writeSpy).toBeCalled();
+  });
+
+  it("if an access.yaml already exists, it should update access.yaml in the filepath, but not overwrite anything that exists.", () => {
+    const mockFsOptions = {
+      [`${targetDirectory}/${serviceDirectory}/${ACCESS_FILENAME}`]: "'https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019': MY_CUSTOM_SECRET"
+    };
+    mockFs(mockFsOptions);
+
+    const absTargetPath = path.resolve(
+      path.join(targetDirectory, serviceDirectory)
+    );
+    const expectedFilePath = path.join(absTargetPath, ACCESS_FILENAME);
+    const gitRepoUrl =
+      "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
+
+    const accessYaml: IAccessYaml = {};
+    accessYaml[gitRepoUrl] = "MY_CUSTOM_SECRET";
 
     generateAccessYaml(absTargetPath, gitRepoUrl);
 
@@ -113,7 +168,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if build-update-hld.yaml exists", async () => {
+  it("should not do anything if build-update-hld.yaml exists", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`]: "existing pipeline"
     };
@@ -129,7 +184,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the build-update-hld.yaml if one does not exist", async () => {
+  it("should generate the build-update-hld.yaml if one does not exist", () => {
     const absTargetPath = path.resolve(targetDirectory);
     const expectedFilePath = `${absTargetPath}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`;
 
@@ -153,6 +208,35 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
     );
     expect(writeSpy).toBeCalled();
   });
+
+  test("no path trigger injected when the path is the project root (is: ./)", () => {
+    const serviceYaml = serviceBuildAndUpdatePipeline("my-service", "./", [
+      "master"
+    ]);
+    expect(serviceYaml?.trigger?.paths).toBeUndefined();
+    expect(serviceYaml.trigger).toStrictEqual({
+      branches: { include: ["master"] }
+    });
+  });
+
+  test("path trigger is injected when the path is not the root of the project (not: ./)", () => {
+    for (const p of ["./my-service", "./foo/bar/baz"]) {
+      const serviceYaml = serviceBuildAndUpdatePipeline("my-service", p, [
+        "master"
+      ]);
+      expect(serviceYaml?.trigger?.paths).toStrictEqual({
+        include: [p]
+      });
+    }
+    const yamlWithNoDot = serviceBuildAndUpdatePipeline(
+      "my-service",
+      "another-service",
+      ["master"]
+    );
+    expect(yamlWithNoDot?.trigger?.paths).toStrictEqual({
+      include: ["./another-service"]
+    });
+  });
 });
 
 describe("generateHldLifecyclePipelineYaml", () => {
@@ -169,7 +253,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if hld-lifecycle.yaml exists", async () => {
+  it("should not do anything if hld-lifecycle.yaml exists", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${PROJECT_PIPELINE_FILENAME}`]: "existing pipeline"
     };
@@ -179,7 +263,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the hld-lifecycle.yaml if one does not exist", async () => {
+  it("should generate the hld-lifecycle.yaml if one does not exist", () => {
     const expectedFilePath = `${targetDirectory}/${PROJECT_PIPELINE_FILENAME}`;
 
     generateHldLifecyclePipelineYaml(targetDirectory);
@@ -204,7 +288,7 @@ describe("generateHldAzurePipelinesYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/${RENDER_HLD_PIPELINE_FILENAME}`]: "existing pipeline"
     };
@@ -214,7 +298,7 @@ describe("generateHldAzurePipelinesYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const absTargetPath = path.resolve(targetDirectory);
     const expectedFilePath = `${absTargetPath}/${RENDER_HLD_PIPELINE_FILENAME}`;
 
@@ -245,7 +329,7 @@ describe("generateDefaultHldComponentYaml", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/component.yaml`]: "existing component"
     };
@@ -260,7 +344,7 @@ describe("generateDefaultHldComponentYaml", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const absTargetPath = path.resolve(targetDirectory);
     const expectedFilePath = `${absTargetPath}/${HLD_COMPONENT_FILENAME}`;
     generateDefaultHldComponentYaml(
@@ -293,7 +377,7 @@ describe("Adding a new service to a Maintainer file", () => {
     jest.clearAllMocks();
   });
 
-  it("should update existing maintainers.yml with new service maintainers", async () => {
+  it("should update existing maintainers.yml with new service maintainers", () => {
     const maintainersFilePath = "maintainers.yaml";
 
     const servicePath = "packages/my-new-service";
@@ -338,7 +422,7 @@ describe("generating service gitignore file", () => {
 
   const content = "hello world";
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/.gitignore`]: "foobar"
     };
@@ -349,7 +433,7 @@ describe("generating service gitignore file", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const writeSpy = jest.spyOn(fs, "writeFileSync");
     generateGitIgnoreFile(targetDirectory, content);
 
@@ -372,7 +456,7 @@ describe("generating service Dockerfile", () => {
     mockFs.restore();
   });
 
-  it("should not do anything if file exist", async () => {
+  it("should not do anything if file exist", () => {
     const mockFsOptions = {
       [`${targetDirectory}/Dockerfile`]: "hello!!!!"
     };
@@ -383,7 +467,7 @@ describe("generating service Dockerfile", () => {
     expect(writeSpy).not.toBeCalled();
   });
 
-  it("should generate the file if one does not exist", async () => {
+  it("should generate the file if one does not exist", () => {
     const writeSpy = jest.spyOn(fs, "writeFileSync");
     generateDockerfile(targetDirectory);
 
@@ -406,12 +490,12 @@ describe("serviceBuildUpdatePipeline", () => {
     shelljs.mkdir("-p", randomDirPath);
   });
 
-  test("that the value of the file is the same after (de)serialization", async () => {
+  test("that the value of the file is the same after (de)serialization", () => {
     const serviceName = "mycoolservice";
     const servicePath = "./mycoolservice";
     const ringBranches = ["master", "qa", "test"];
     const variableGroups = ["foo", "bar"];
-    const buildPipelineYaml = await serviceBuildAndUpdatePipeline(
+    const buildPipelineYaml = serviceBuildAndUpdatePipeline(
       serviceName,
       servicePath,
       ringBranches,
@@ -493,8 +577,8 @@ describe("serviceBuildUpdatePipeline", () => {
 
       let hasCorrectVariableGroup1: boolean = false;
       let hasCorrectVariableGroup2: boolean = false;
-      for (const [key, value] of Object.entries(azureYaml.variables!)) {
-        const item: { group: string } = value as { group: string };
+      for (const value of Object.values(azureYaml.variables!)) {
+        const item = value as { group: string };
 
         if (item.group === variableGroups[0]) {
           hasCorrectVariableGroup1 = true;
@@ -513,7 +597,7 @@ describe("serviceBuildUpdatePipeline", () => {
 });
 
 describe("generateYamlScript", () => {
-  test("'set -e' is injected as the first line", async () => {
+  test("'set -e' is injected as the first line", () => {
     const generated = generateYamlScript(["foo", "bar", "baz"]);
     expect(generated.startsWith("set -e\n")).toBe(true);
   });

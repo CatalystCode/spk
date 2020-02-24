@@ -4,7 +4,6 @@ jest.mock("../../lib/pipelines/pipelines");
 
 import {
   createPipelineForDefinition,
-  definitionForAzureRepoPipeline,
   getBuildApiClient,
   queueBuild
 } from "../../lib/pipelines/pipelines";
@@ -26,7 +25,8 @@ const MOCKED_VALUES: ICommandOptions = {
   personalAccessToken: "personalAccessToken",
   pipelineName: "pipelineName",
   repoName: "repositoryName",
-  repoUrl: "https://dev.azure.com/test/fabrikam/_git/app"
+  repoUrl: "https://dev.azure.com/test/fabrikam/_git/app",
+  yamlFileBranch: "master"
 };
 
 beforeAll(() => {

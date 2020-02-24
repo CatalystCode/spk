@@ -13,12 +13,9 @@ spk service [command] [options]
 
 Commands:
 
-- [Service Management](#service-management)
-  - [Prerequisites](#prerequisites)
-  - [Commands](#commands)
-    - [create](#create)
-    - [install-build-pipeline](#install-build-pipeline)
-    - [create-revision](#create-revision)
+- [create](https://catalystcode.github.io/spk/commands/index.html#service_create)
+- [install-build-pipeline](https://catalystcode.github.io/spk/commands/index.html#service_install-build-pipeline)
+- [create-revision](https://catalystcode.github.io/spk/commands/index.html#service_create-revision)
 
 Global options:
 
@@ -26,6 +23,8 @@ Global options:
   -v, --verbose        Enable verbose logging
   -h, --help           Usage information
 ```
+
+<<<<<<< HEAD
 
 ## Prerequisites
 
@@ -127,3 +126,7 @@ Options:
   --target-branch                  Target branch/ring to create a PR against; overwrites the default rings specified in bedrock.yaml
   -h, --help                       output usage information
 ```
+
+=======
+
+> > > > > > > 103a06d32be7cbf22238d34bc2924f984dbdc3e1

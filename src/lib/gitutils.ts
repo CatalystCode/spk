@@ -1,5 +1,6 @@
 import GitUrlParse from "git-url-parse";
 import path from "path";
+import url from "url";
 import { logger } from "../logger";
 import { exec } from "./shell";
 
@@ -111,6 +112,21 @@ export const pushBranch = async (branchName: string): Promise<void> => {
 };
 
 /**
+ * Tries to fetch the Git origin from an AzDo set environment variable, else falls back to fetching it from Git directly.
+ * @param absRepoPath The Absolute Path to the Repository to fetch the origin url.
+ */
+export const tryGetGitOrigin = async (
+  absRepoPath?: string
+): Promise<string> => {
+  return getAzdoOriginUrl().catch(_ => {
+    logger.warn(
+      "Could not get Git Origin for Azure DevOps - are you running 'spk' _not_ in a pipeline?"
+    );
+    return getOriginUrl(absRepoPath);
+  });
+};
+
+/**
  * Gets the origin url.
  * @param absRepositoryPath The Absolute Path to the Repository to fetch the origin
  */
@@ -127,14 +143,29 @@ export const getOriginUrl = async (
     const safeLoggingUrl = safeGitUrlForLogging(originUrl);
     logger.debug(`Got git origin url ${safeLoggingUrl}`);
     return originUrl;
-  } catch (_) {
-    throw Error(`Unable to get git origin URL.: ` + _);
+  } catch (error) {
+    throw Error(`Unable to get git origin URL: ${error}`);
+  }
+};
+
+export const getAzdoOriginUrl = async (): Promise<string> => {
+  try {
+    if (!process.env.APP_REPO_URL) {
+      throw new Error("Not running in a pipeline - no AzDO variables.");
+    }
+
+    const originUrl = process.env.APP_REPO_URL;
+    const safeLoggingUrl = safeGitUrlForLogging(originUrl);
+    logger.debug(`Got azdo git origin url ${safeLoggingUrl}`);
+    return originUrl;
+  } catch (error) {
+    throw Error(`Unable to get azdo origin URL: ${error}`);
   }
 };
 
 /**
  * Will return the name of the repository
- * Currently only AzDo
+ * Currently only AzDo repos are supported
  * @param originUrl
  */
 export const getRepositoryName = (originUrl: string) => {
@@ -306,12 +337,9 @@ export const checkoutCommitPushCreatePRLink = async (
  * Validates whether a url is a github url
  * TEMPORARY, UNTIL GITHUB REPOS ARE SUPPORTED
  *
- * @param url the url string
+ * @param sUrl the url string
  */
-export const isGitHubUrl = (url: string) => {
-  const gitUrl = url.includes("github");
-  if (gitUrl) {
-    return true;
-  }
-  return false;
+export const isGitHubUrl = (sUrl: string) => {
+  const oUrl = url.parse(sUrl);
+  return oUrl.hostname === "www.github.com" || oUrl.hostname === "github.com";
 };
