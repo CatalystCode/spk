@@ -102,7 +102,9 @@ export const getBuildApi = async (
 /**
  * Checks if the repository has a given file.
  * @param fileName The name of the file
- * @param absRepositoryPath The path to the repository
+ * @param branch The branch name
+ * @param repoName The name of the repository
+ * @accessOpts The Azure DevOps access options to the repository
  */
 export const repositoryHasFile = async (
   fileName: string,
@@ -110,29 +112,25 @@ export const repositoryHasFile = async (
   repoName: string,
   accessOpts: IAzureDevOpsOpts
 ): Promise<void> => {
-  try {
-    const gitApi = await GitAPI(accessOpts);
-    const versionDescriptor = { version: branch }; // change to branch
-    const gitItem = await gitApi.getItem(
-      repoName,
-      fileName, // Add path to service
-      accessOpts.project,
-      "",
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      versionDescriptor
-    );
+  const gitApi = await GitAPI(accessOpts);
+  const versionDescriptor = { version: branch }; // change to branch
+  const gitItem = await gitApi.getItem(
+    repoName,
+    fileName, // Add path to service
+    accessOpts.project,
+    "",
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    versionDescriptor
+  );
 
-    if (gitItem === null) {
-      throw Error(
-        "Error installing build pipeline. Repository does not have a " +
-          fileName +
-          " file."
-      );
-    }
-  } catch (err) {
-    throw Error(err);
+  if (gitItem === null) {
+    throw Error(
+      "Error installing build pipeline. Repository does not have a " +
+        fileName +
+        " file."
+    );
   }
 };
