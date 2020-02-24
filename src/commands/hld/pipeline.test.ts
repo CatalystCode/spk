@@ -142,7 +142,8 @@ describe("test populateValues function", () => {
         manifestUrl: "https://github.com/fabrikam/materialized",
         orgName: "",
         personalAccessToken: "",
-        pipelineName: ""
+        pipelineName: "",
+        yamlFileBranch: ""
       })
     ).toThrow(`GitHub repos are not supported`);
   });

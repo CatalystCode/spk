@@ -116,7 +116,7 @@ describe("installLifecyclePipeline and execute tests", () => {
     await execute(mockValues, tmpDir, exitFn);
 
     expect(exitFn).toBeCalledTimes(1);
-    expect(exitFn.mock.calls).toEqual([[1]]);
+    expect(exitFn.mock.calls).toEqual([[0]]);
   });
   it("test execute function: missing repo url and pipeline name", async () => {
     const exitFn = jest.fn();
