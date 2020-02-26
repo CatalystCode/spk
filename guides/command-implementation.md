@@ -32,10 +32,11 @@ have
 1. Consistent verb and option naming conventions. For example, we standardize on
    `-o, --org-name` where `-o` is the alias and `--org-name` is the full option
    name for organization option. We do not use another aliases other than `-o`
-   and other name other name like `--organization-name`. See
+   and other name like `--organization-name`. See
    [Option Name Section](#option-name)
-2. Consistent command syntax. We use `commander` open source library to enforce
-   this.
+2. Consistent command syntax. We use
+   [commander open source library](https://www.npmjs.com/package/commander) to
+   enforce this.
 3. Common behaviors
    1. Consistent error messages. See [Error Messages Section](#error-messages)
    2. Command terminates with either 0 or 1 status code for successful or failed
