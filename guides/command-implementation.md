@@ -29,10 +29,10 @@ have
 
 ## Guidelines
 
-1. Consistent verb and parameter naming conventions. For example, we standardize
-   on `-o, --org-name` where `-o` is the alias and `--org-name` is the full
-   option name for organization option. We do not use another aliases other than
-   `-o` and other name other name like `--organization-name`. See
+1. Consistent verb and option naming conventions. For example, we standardize on
+   `-o, --org-name` where `-o` is the alias and `--org-name` is the full option
+   name for organization option. We do not use another aliases other than `-o`
+   and other name other name like `--organization-name`. See
    [Option Name Section](#option-name)
 2. Consistent command syntax. We use `commander` open source library to enforce
    this.
@@ -47,14 +47,14 @@ have
 
 ## Option Name
 
-We want to have a consistent way for naming option and its alias. So that user
-will not be confused and can use the command line in a consistent manner.
+We want to have a consistent way for naming option and its alias for better user
+experience.
 
 ### Choosing an option name.
 
 Use a noun or a well known abbreviation. E.g. do not use `--pr` as an option
-name for pull request. Use `--pull-request`. And it is ok to use `--url` because
-URL is a well known abbreviation.
+name for pull request. Use `--pull-request`. `--pr` can mean many different
+things. And it is ok to use `--url` because URL is a well known abbreviation.
 
 Reuse the same option name in existing commands. E.g. use `--org-name` because
 it is already used in several commands; and do not create a new one like
