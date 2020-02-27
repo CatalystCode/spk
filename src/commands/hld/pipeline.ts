@@ -12,7 +12,7 @@ import {
   RENDER_HLD_PIPELINE_FILENAME
 } from "../../lib/constants";
 import { IAzureDevOpsOpts } from "../../lib/git";
-import { getRepositoryName } from "../../lib/gitutils";
+import { getRepositoryName, isGitHubUrl } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
   definitionForAzureRepoPipeline,
@@ -52,7 +52,7 @@ export const populateValues = (opts: ICommandOptions) => {
     opts.manifestUrl ||
     emptyStringIfUndefined(azure_devops?.manifest_repository);
 
-  opts.hldName = opts.hldName || getRepositoryName(opts.hldUrl);
+  opts.hldName = getRepositoryName(opts.hldUrl);
 
   opts.orgName = opts.orgName || emptyStringIfUndefined(azure_devops?.org);
 
@@ -68,6 +68,8 @@ export const populateValues = (opts: ICommandOptions) => {
 
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
 
+  validateRepos(opts.hldUrl, opts.manifestUrl);
+
   logger.debug(`orgName: ${opts.orgName}`);
   logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
   logger.debug(`devopsProject: ${opts.devopsProject}`);
@@ -77,6 +79,14 @@ export const populateValues = (opts: ICommandOptions) => {
   logger.debug(`hldUrl: ${opts.hldUrl}`);
   logger.debug(`buildScriptUrl: ${opts.buildScriptUrl}`);
   return opts;
+};
+
+const validateRepos = (hldRepoUrl: string, manifestRepoUrl: string) => {
+  const hldGitUrlType = isGitHubUrl(hldRepoUrl);
+  const manifestGitUrlType = isGitHubUrl(manifestRepoUrl);
+  if (hldGitUrlType || manifestGitUrlType) {
+    throw Error(`GitHub repos are not supported`);
+  }
 };
 
 export const execute = async (

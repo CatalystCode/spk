@@ -59,6 +59,12 @@ export const generateAccessYaml = (
 export const SAFE_SOURCE_BRANCH = `$(echo $(Build.SourceBranchName) | tr / - | tr . -)`;
 
 /**
+ * Outputs a bash script to generate a _safe_ azure container registry url where it's all lowercase.
+ * This will require ACR_NAME as an environment variable.
+ */
+export const IMAGE_REPO = `$(echo $(ACR_NAME).azurecr.io | tr '[:upper:]' '[:lower:]')`;
+
+/**
  * Outputs a bash string for a _safe_ image tag -- a string where all
  * '/' and '.' in the string have been replaced with a '-'`
  */
@@ -192,7 +198,7 @@ export const serviceBuildAndUpdatePipeline = (
                   `. ./build.sh --source-only`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service --repository $repourl`
+                  `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
                 ]),
                 displayName:
                   "If configured, update Spektate storage with build pipeline",
@@ -202,10 +208,12 @@ export const serviceBuildAndUpdatePipeline = (
               {
                 script: generateYamlScript([
                   `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
-                  `echo "Image Name: $BUILD_REPO_NAME"`,
+                  `export IMAGE_TAG=${IMAGE_TAG}`,
+                  `export IMAGE_NAME=$BUILD_REPO_NAME:$IMAGE_TAG`,
+                  `echo "Image Name: $IMAGE_NAME"`,
                   `cd ${relativeServicePathFormatted}`,
-                  `echo "az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:${IMAGE_TAG} ."`,
-                  `az acr build -r $(ACR_NAME) --image $BUILD_REPO_NAME:${IMAGE_TAG} .`
+                  `echo "az acr build -r $(ACR_NAME) --image $IMAGE_NAME ."`,
+                  `az acr build -r $(ACR_NAME) --image $IMAGE_NAME .`
                 ]),
                 displayName: "ACR Build and Publish"
               }
@@ -260,7 +268,13 @@ export const serviceBuildAndUpdatePipeline = (
                   ``,
                   `# Update HLD`,
                   `git checkout -b "$BRANCH_NAME"`,
-                  `../fab/fab set --subcomponent $(Build.Repository.Name).$FAB_SAFE_SERVICE_NAME.${SAFE_SOURCE_BRANCH}.chart image.tag=${IMAGE_TAG}`,
+                  `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
+                  `export IMAGE_TAG=${IMAGE_TAG}`,
+                  `export IMAGE_NAME=$BUILD_REPO_NAME:$IMAGE_TAG`,
+                  `echo "Image Name: $IMAGE_NAME"`,
+                  `export IMAGE_REPO=${IMAGE_REPO}`,
+                  `echo "Image Repository: $IMAGE_REPO"`,
+                  `../fab/fab set --subcomponent $(Build.Repository.Name).$FAB_SAFE_SERVICE_NAME.${SAFE_SOURCE_BRANCH}.chart image.tag=$IMAGE_TAG image.repository=$IMAGE_REPO/$BUILD_REPO_NAME`,
                   `echo "GIT STATUS"`,
                   `git status`,
                   `echo "GIT ADD (git add -A)"`,
@@ -300,7 +314,7 @@ export const serviceBuildAndUpdatePipeline = (
                   `. ./build.sh --source-only`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id --repository $repourl`,
+                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id`,
                   `fi`
                 ]),
                 displayName:
@@ -514,9 +528,9 @@ const manifestGenerationPipelineYaml = () => {
           `message="$(Build.SourceVersionMessage)"`,
           `if [[ $message == *"Merged PR"* ]]; then`,
           `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\+//')`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr pr_id --repository $repourl`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr pr_id`,
           `else`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --repository $repourl`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
           `fi`
         ]),
         displayName:
