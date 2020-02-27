@@ -89,10 +89,10 @@ export const execute = async (
     logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
 
     const errors = validateForRequiredValues(decorator, {
+      devopsProject,
       hldRepoUrl,
       orgName,
       personalAccessToken,
-      project: devopsProject,
       registryName,
       servicePrincipalId,
       servicePrincipalPassword,
