@@ -43,14 +43,6 @@ export const populateValues = (opts: ICommandOptions) => {
   // exception will be thrown if spk's config.yaml is missing
   const { azure_devops } = Config();
 
-  if (!opts.hldUrl || !opts.manifestUrl) {
-    throw Error(`HLD repo url or manifest url not defined.`);
-  }
-  const hldGitUrlType = isGitHubUrl(opts.hldUrl);
-  const manifestGitUrlType = isGitHubUrl(opts.manifestUrl);
-  if (hldGitUrlType || manifestGitUrlType) {
-    throw Error(`GitHub repos are not supported`);
-  }
   opts.hldUrl =
     opts.hldUrl || emptyStringIfUndefined(azure_devops?.hld_repository);
 
@@ -74,6 +66,8 @@ export const populateValues = (opts: ICommandOptions) => {
 
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
 
+  validateRepos(opts.hldUrl, opts.manifestUrl);
+
   logger.debug(`orgName: ${opts.orgName}`);
   logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
   logger.debug(`devopsProject: ${opts.devopsProject}`);
@@ -83,6 +77,14 @@ export const populateValues = (opts: ICommandOptions) => {
   logger.debug(`hldUrl: ${opts.hldUrl}`);
   logger.debug(`buildScriptUrl: ${opts.buildScriptUrl}`);
   return opts;
+};
+
+const validateRepos = (hldRepoUrl: string, manifestRepoUrl: string) => {
+  const hldGitUrlType = isGitHubUrl(hldRepoUrl);
+  const manifestGitUrlType = isGitHubUrl(manifestRepoUrl);
+  if (hldGitUrlType || manifestGitUrlType) {
+    throw Error(`GitHub repos are not supported`);
+  }
 };
 
 export const execute = async (
