@@ -1,0 +1,5 @@
+{
+  "command": "add <ring-name>",
+  "alias": "a",
+  "description": "Add a new ring into the current working directory project repository. This will affect all services within the project repository."
+}

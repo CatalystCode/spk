@@ -24,6 +24,7 @@ const commandModules = [
   "hld",
   "infra",
   "project",
+  "ring",
   "service",
   "variable-group"
 ];
