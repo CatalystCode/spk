@@ -34,7 +34,7 @@
       "required": true
     },
     {
-      "arg": "--yaml-file-branch <yaml-file-branch>",
+      "arg": "-y, --yaml-file-branch <yaml-file-branch>",
       "description": "The git branch where the pipeline definition yaml file is located.",
       "required": false,
       "defaultValue": "master"
