@@ -2,6 +2,7 @@
   "command": "setup",
   "alias": "s",
   "description": "An interactive command to setup resources in azure and azure dev-ops",
+  "disabled": true,
   "options": [
     {
       "arg": "-f, --file <config-file-path>",
