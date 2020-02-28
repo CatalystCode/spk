@@ -17,7 +17,7 @@
       "description": "Description of the pull request; not required"
     },
     {
-      "arg": "--remote-url <remote-url>",
+      "arg": "-U, --remote-url <remote-url>",
       "description": "The remote host to create the pull request in; defaults to the URL for 'origin'",
       "required": true
     },

@@ -145,7 +145,7 @@ pipeline_exists $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name
 echo "hld_dir $hld_dir"
 echo "hld_repo_url $hld_repo_url"
 echo "manifest_repo_url $manifest_repo_url"
-spk hld install-manifest-pipeline --org-name $AZDO_ORG -d $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET -u https://$hld_repo_url -m https://$manifest_repo_url >> $TEST_WORKSPACE/log.txt
+spk hld install-manifest-pipeline --org-name $AZDO_ORG -d $AZDO_PROJECT --personal-access-token $ACCESS_TOKEN_SECRET -U https://$hld_repo_url -M https://$manifest_repo_url >> $TEST_WORKSPACE/log.txt
 
 # Verify hld to manifest pipeline was created
 pipeline_created=$(az pipelines show --name $hld_to_manifest_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)

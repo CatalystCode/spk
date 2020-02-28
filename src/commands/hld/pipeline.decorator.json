@@ -19,12 +19,12 @@
       "defaultValue": ""
     },
     {
-      "arg": "-u, --hld-url <hld-url>",
+      "arg": "-U, --hld-url <hld-url>",
       "description": "HLD Repository URL",
       "defaultValue": ""
     },
     {
-      "arg": "-m, --manifest-url <manifest-url>",
+      "arg": "-M, --manifest-url <manifest-url>",
       "description": "Manifest Repository URL",
       "defaultValue": ""
     },
@@ -34,7 +34,7 @@
       "defaultValue": ""
     },
     {
-      "arg": "-b, --build-script-url <build-script-url>",
+      "arg": "-B, --build-script-url <build-script-url>",
       "description": "Build Script URL. By default it is 'https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh'.",
       "defaultValue": "https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh"
     },

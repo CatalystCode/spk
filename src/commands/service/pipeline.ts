@@ -13,7 +13,6 @@ import {
   SERVICE_PIPELINE_FILENAME
 } from "../../lib/constants";
 import { IAzureDevOpsOpts } from "../../lib/git";
-import { GitAPI } from "../../lib/git/azure";
 import {
   getOriginUrl,
   getRepositoryName,
