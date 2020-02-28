@@ -5,7 +5,6 @@ import path from "path";
 import uuid from "uuid/v4";
 import { createTempDir } from "../../lib/ioUtil";
 import { DEFAULT_PROJECT_NAME, getAnswerFromFile, prompt } from "./prompt";
-import * as promptService from "./prompt";
 
 describe("test prompt function", () => {
   it("positive test", async () => {

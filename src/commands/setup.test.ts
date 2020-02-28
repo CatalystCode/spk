@@ -1,4 +1,3 @@
-import inquirer from "inquirer";
 import path from "path";
 import { readYaml } from "../config";
 import * as config from "../config";
