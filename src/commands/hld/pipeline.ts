@@ -5,11 +5,13 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
+import { repositoryHasFile } from "../../lib/azdoClient";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
   RENDER_HLD_PIPELINE_FILENAME
 } from "../../lib/constants";
+import { IAzureDevOpsOpts } from "../../lib/git";
 import { getRepositoryName, isGitHubUrl } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -43,14 +45,6 @@ export const populateValues = (opts: ICommandOptions) => {
   // exception will be thrown if spk's config.yaml is missing
   const { azure_devops } = Config();
 
-  if (!opts.hldUrl || !opts.manifestUrl) {
-    throw Error(`HLD repo url or manifest url not defined.`);
-  }
-  const hldGitUrlType = isGitHubUrl(opts.hldUrl);
-  const manifestGitUrlType = isGitHubUrl(opts.manifestUrl);
-  if (hldGitUrlType || manifestGitUrlType) {
-    throw Error(`GitHub repos are not supported`);
-  }
   opts.hldUrl =
     opts.hldUrl || emptyStringIfUndefined(azure_devops?.hld_repository);
 
@@ -74,6 +68,8 @@ export const populateValues = (opts: ICommandOptions) => {
 
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
 
+  validateRepos(opts.hldUrl, opts.manifestUrl);
+
   logger.debug(`orgName: ${opts.orgName}`);
   logger.debug(`personalAccessToken: XXXXXXXXXXXXXXXXX`);
   logger.debug(`devopsProject: ${opts.devopsProject}`);
@@ -85,12 +81,33 @@ export const populateValues = (opts: ICommandOptions) => {
   return opts;
 };
 
+const validateRepos = (hldRepoUrl: string, manifestRepoUrl: string) => {
+  const hldGitUrlType = isGitHubUrl(hldRepoUrl);
+  const manifestGitUrlType = isGitHubUrl(manifestRepoUrl);
+  if (hldGitUrlType || manifestGitUrlType) {
+    throw Error(`GitHub repos are not supported`);
+  }
+};
+
 export const execute = async (
   opts: ICommandOptions,
   exitFn: (status: number) => Promise<void>
 ) => {
   try {
     populateValues(opts);
+    const accessOpts: IAzureDevOpsOpts = {
+      orgName: opts.orgName,
+      personalAccessToken: opts.personalAccessToken,
+      project: opts.devopsProject
+    };
+
+    // By default the version descriptor is for the master branch
+    await repositoryHasFile(
+      RENDER_HLD_PIPELINE_FILENAME,
+      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
+      opts.hldName,
+      accessOpts
+    );
     await installHldToManifestPipeline(opts);
     await exitFn(0);
   } catch (err) {
