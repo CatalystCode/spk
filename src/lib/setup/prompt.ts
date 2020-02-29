@@ -12,7 +12,7 @@ export interface IAnswer {
   azdo_project_name: string;
 }
 
-export const DEFAULT_PROJECT_NAME = "BedrockRocks1";
+export const DEFAULT_PROJECT_NAME = "BedrockRocks";
 
 /**
  * Prompts for questions
