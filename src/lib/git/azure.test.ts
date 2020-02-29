@@ -18,7 +18,6 @@ import {
   getGitOrigin,
   GitAPI
 } from "./azure";
-import * as azure from "./azure";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tests
@@ -170,6 +169,18 @@ describe("createPullRequest", () => {
   it("negative test", async () => {
     gitApi.createPullRequest = async () => {
       throw new Error("fake");
+    };
+
+    await expect(
+      createPullRequest("random title", "sourceRef", "targetRef", {
+        description: uuid(),
+        originPushUrl: "my-git-url"
+      })
+    ).rejects.toThrow();
+  });
+  it("negative test: TF401179 error", async () => {
+    gitApi.createPullRequest = async () => {
+      throw new Error("TF401179");
     };
 
     await expect(

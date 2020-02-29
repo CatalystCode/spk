@@ -199,6 +199,38 @@ export const getMatchingBranch = async (
   return reposWithMatchingBranches[0];
 };
 
+const handleErrorForCreatePullRequest = async (
+  gitAPI: IGitApi,
+  sourceRef: string,
+  targetRef: string,
+  repoToPRAgainst: GitRepository,
+  err: Error
+) => {
+  if (err instanceof Error && err.message.match(/TF401179/)) {
+    // PR already exists targeting source and target refs
+    // Search for the existing PR
+    logger.warn(
+      `Existing pull requests found in repository '${repoToPRAgainst.name}' matching target refs; Searching for matching pull requests`
+    );
+    const searchCriteria: GitPullRequestSearchCriteria = {
+      sourceRefName: `refs/heads/${sourceRef}`,
+      targetRefName: `refs/heads/${targetRef}`
+    };
+    const existingPRs = await gitAPI.getPullRequests(
+      repoToPRAgainst.id!,
+      searchCriteria
+    );
+    for (const pr of existingPRs) {
+      logger.info(
+        `Existing pull request found targeting source '${sourceRef}' and target '${targetRef}': '${await generatePRUrl(
+          pr
+        )}'`
+      );
+    }
+  }
+  throw err;
+};
+
 /**
  * Creates a pull request in the DevOps organization associated with the
  * personal access token in global config; Refer to GitAPI() on how that is
@@ -254,28 +286,12 @@ export const createPullRequest = async (
     );
     return createdPR;
   } catch (err) {
-    if (err instanceof Error && err.message.match(/TF401179/)) {
-      // PR already exists targeting source and target refs
-      // Search for the existing PR
-      logger.warn(
-        `Existing pull requests found in repository '${repoToPRAgainst.name}' matching target refs; Searching for matching pull requests`
-      );
-      const searchCriteria: GitPullRequestSearchCriteria = {
-        sourceRefName: `refs/heads/${sourceRef}`,
-        targetRefName: `refs/heads/${targetRef}`
-      };
-      const existingPRs = await gitAPI.getPullRequests(
-        repoToPRAgainst.id!,
-        searchCriteria
-      );
-      for (const pr of existingPRs) {
-        logger.info(
-          `Existing pull request found targeting source '${sourceRef}' and target '${targetRef}': '${await generatePRUrl(
-            pr
-          )}'`
-        );
-      }
-    }
-    throw err;
+    await handleErrorForCreatePullRequest(
+      gitAPI,
+      sourceRef,
+      targetRef,
+      repoToPRAgainst,
+      err
+    );
   }
 };
