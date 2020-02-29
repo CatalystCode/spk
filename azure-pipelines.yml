@@ -1,5 +1,4 @@
 trigger:
-  - master
   - build-pipeline-path-1077
 
 pr:
