@@ -32,7 +32,7 @@ azdo_pat=<Azure DevOps Personal Access Token>
 
 The followings shall be created
 
-1. a working directory, `quick-start-env`
+1. A working directory, `quick-start-env`
 2. Project shall not be created if it already exists.
 3. A Git Repo, `quick-start-hld`, it shall be deleted and recreated if it
    already exists.
