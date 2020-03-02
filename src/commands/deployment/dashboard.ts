@@ -140,10 +140,11 @@ export const launchDashboard = async (
     const containerId = await exec("docker", [
       "run",
       "-d",
+      "-it",
       "--rm",
       ...(await getEnvVars(config)),
       "-p",
-      port + ":80",
+      port + ":5000",
       dockerRepository
     ]);
     return containerId;
@@ -192,6 +193,10 @@ export const getEnvVars = async (config: IConfigYaml): Promise<string[]> => {
         "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=" +
           config.azure_devops!.access_token
       );
+      envVars.push("-e");
+      envVars.push(
+        "REACT_APP_MANIFEST_ACCESS_TOKEN=" + config.azure_devops!.access_token
+      );
     }
   } else {
     logger.warn(
@@ -202,6 +207,11 @@ export const getEnvVars = async (config: IConfigYaml): Promise<string[]> => {
     envVars.push("-e");
     envVars.push(
       "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=" +
+        config.introspection!.azure!.source_repo_access_token
+    );
+    envVars.push("-e");
+    envVars.push(
+      "REACT_APP_MANIFEST_ACCESS_TOKEN=" +
         config.introspection!.azure!.source_repo_access_token
     );
   }
