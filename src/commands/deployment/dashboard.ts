@@ -140,7 +140,6 @@ export const launchDashboard = async (
     const containerId = await exec("docker", [
       "run",
       "-d",
-      "-it",
       "--rm",
       ...(await getEnvVars(config)),
       "-p",
