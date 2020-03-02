@@ -1,10 +1,7 @@
 import { ICoreApi } from "azure-devops-node-api/CoreApi";
-import {
-  ProjectVisibility,
-  SourceControlTypes
-} from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { ProjectVisibility } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { logger } from "../../logger";
-import { DEFAULT_PROJECT_NAME, IAnswer } from "./prompt";
+import { IRequestContext } from "./constants";
 
 /**
  * Returns Azure DevOps Project if it exists.
@@ -36,10 +33,10 @@ export const createProject = async (coreAPI: ICoreApi, name: string) => {
     await coreAPI.queueCreateProject({
       capabilities: {
         processTemplate: {
-          templateTypeId: "27450541-8e31-4150-9947-dc59f998fc01" // TOFIX: do not know what this GUID is about
+          templateTypeId: "6b724908-ef14-45cf-84f8-768b5384da45" // TOFIX: do not know what this GUID is about (https://docs.microsoft.com/en-us/rest/api/azure/devops/processes/processes/list?view=azure-devops-rest-5.1)
         },
         versioncontrol: {
-          sourceControlType: SourceControlTypes.Git.toString()
+          sourceControlType: "Git"
         }
       },
       description: "Created by automated tool",
@@ -56,15 +53,23 @@ export const createProject = async (coreAPI: ICoreApi, name: string) => {
   }
 };
 
+/**
+ * Creates project if it does not exist.
+ *
+ * @param coreAPI Core API client
+ * @param rc request context
+ */
 export const createProjectIfNotExist = async (
   coreAPI: ICoreApi,
-  answers: IAnswer
+  rc: IRequestContext
 ) => {
-  const project = await getProject(coreAPI, answers!.azdo_project_name);
+  const projectName = rc.projectName;
+  const project = await getProject(coreAPI, projectName);
   if (!project) {
-    await createProject(coreAPI, answers!.azdo_project_name);
-    logger.info(`Project, ${DEFAULT_PROJECT_NAME} is created.`);
+    await createProject(coreAPI, projectName);
+    rc.createdProject = true;
+    logger.info(`Project, ${projectName} is created.`);
   } else {
-    logger.info(`Project, ${DEFAULT_PROJECT_NAME} already exists.`);
+    logger.info(`Project, ${projectName} already exists.`);
   }
 };
