@@ -200,6 +200,32 @@ describe("test execute function", () => {
     expect(exitFn).toBeCalledTimes(1);
     expect(exitFn.mock.calls).toEqual([[1]]);
   });
+  it("negative test: other error", async () => {
+    const exitFn = jest.fn();
+
+    jest
+      .spyOn(promptInstance, "prompt")
+      .mockReturnValueOnce(Promise.resolve(mockRequestContext));
+    jest.spyOn(setup, "createSPKConfig").mockReturnValueOnce();
+    jest.spyOn(azdoClient, "getWebApi").mockReturnValueOnce(
+      Promise.resolve({
+        getCoreApi: () => {
+          throw {
+            message: "other error"
+          };
+        }
+      } as any)
+    );
+    await execute(
+      {
+        file: undefined
+      },
+      exitFn
+    );
+
+    expect(exitFn).toBeCalledTimes(1);
+    expect(exitFn.mock.calls).toEqual([[1]]);
+  });
 });
 
 describe("test getErrorMessage function", () => {
