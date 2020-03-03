@@ -12,9 +12,9 @@ export const create = (rc: IRequestContext | undefined, file?: string) => {
       fs.unlinkSync(file);
     }
     const buff = [
-      `organization name: ${rc.orgName}`,
-      `project name: ${rc.projectName}`,
-      "access token': *********",
+      `azdo_org_name=${rc.orgName}`,
+      `azdo_project_name=${rc.projectName}`,
+      `azdo_pat=*********`,
       `workspace: ${rc.workspace}`,
       `Project Created: ${getBooleanVal(rc.createdProject)}`,
       `High Level Definition Repo Scaffolded: ${getBooleanVal(rc.scaffoldHLD)}`,
