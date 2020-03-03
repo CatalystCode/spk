@@ -25,6 +25,16 @@ describe("test getGitApi function", () => {
       getGitApi: jest.fn()
     } as any);
   });
+  it("mocked webAPI: cached", async () => {
+    await getGitApi({
+      getGitApi: () => {
+        return {};
+      }
+    } as any);
+    await getGitApi({
+      // without getGitApi function works because the client is cached in the first call
+    } as any);
+  });
 });
 
 describe("test getRepoURL function", () => {
