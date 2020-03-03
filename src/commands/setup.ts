@@ -47,7 +47,7 @@ export const getErrorMessage = (
     if (err.message && err.message.indexOf("VS402392") !== -1) {
       return `Project, ${
         rc!.projectName
-      } might be deleted less than 28 days ago. Choose a different project name.`;
+      } might have been deleted less than 28 days ago. Choose a different project name.`;
     }
     if (!(err instanceof Error) && err.statusCode && err.statusCode === 401) {
       return `Authentication Failed. Make sure that the organization name and access token are correct; or your access token may have expired.`;

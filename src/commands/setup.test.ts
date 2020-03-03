@@ -247,7 +247,7 @@ describe("test getErrorMessage function", () => {
       }
     );
     expect(res).toBe(
-      "Project, projectName might be deleted less than 28 days ago. Choose a different project name."
+      "Project, projectName might have been deleted less than 28 days ago. Choose a different project name."
     );
   });
 });
