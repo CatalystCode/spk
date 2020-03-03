@@ -1,9 +1,11 @@
+import path from "path";
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-
+import { IBedrockFile, IBedrockServiceConfig } from "../../types";
 import {
   addChartToRing,
   checkForFabrikate,
+  configureChartForRing,
   createAccessYaml,
   createRepositoryComponent,
   createRingComponent,
@@ -13,13 +15,12 @@ import {
   execute,
   getFullPathPrefix,
   IReconcileDependencies,
+  normalizedName,
   reconcileHld,
   testAndGetAbsPath,
   validateInputs
 } from "./reconcile";
 import * as reconcile from "./reconcile";
-
-import { IBedrockFile, IBedrockServiceConfig } from "../../types";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -125,16 +126,31 @@ describe("testAndGetAbsPath", () => {
 });
 
 describe("createServiceComponent", () => {
-  it("should invoke the correct command for adding service to hld", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
-    const repoInHldPath = "myMonoRepo";
-    const pathBase = "myService";
+  let exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  const repoInHldPath = "myMonoRepo";
+  const pathBase = "myService";
 
-    const expectedInvocation = `cd ${repoInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --path ./${pathBase} --method local --type component && touch ./config/common.yaml`;
+  const expectedInvocation = `cd ${repoInHldPath} && mkdir -p ${pathBase} config && fab add ${pathBase} --path ./${pathBase} --method local --type component && touch ./config/common.yaml`;
 
-    createServiceComponent(exec, repoInHldPath, pathBase);
+  it("should invoke the correct command for adding service to hld", async () => {
+    await createServiceComponent(exec, repoInHldPath, pathBase);
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
+  });
+
+  it("should throw an error if exec fails", async () => {
+    exec = jest
+      .fn()
+      .mockImplementation(async () => Promise.reject(new Error()));
+
+    let error: any;
+    try {
+      await createServiceComponent(exec, repoInHldPath, pathBase);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
   });
 });
 
@@ -159,93 +175,136 @@ describe("createAccessYaml", () => {
 });
 
 describe("createRepositoryComponent", () => {
-  it("should invoke the correct command for adding repository to hld", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
-    const hldPath = `myMonoRepo`;
-    const repositoryName = `myRepo`;
+  let exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  const hldPath = `myMonoRepo`;
+  const repositoryName = `myRepo`;
 
-    const expectedInvocation = `cd ${hldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`;
+  const expectedInvocation = `cd ${hldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`;
 
-    createRepositoryComponent(exec, hldPath, repositoryName);
+  it("should invoke the correct command for adding repository to hld", async () => {
+    await createRepositoryComponent(exec, hldPath, repositoryName);
 
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
+  });
+
+  it("should throw an error if exec fails", async () => {
+    exec = jest
+      .fn()
+      .mockImplementation(async () => Promise.reject(new Error()));
+
+    let error: any;
+    try {
+      await createRepositoryComponent(exec, hldPath, repositoryName);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
   });
 });
 
 describe("createRingComponent", () => {
-  it("should invoke the correct command for adding rings to hld", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
-    const svcPathInHld = `/path/to/service`;
-    const ring = `dev`;
+  let exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  const svcPathInHld = `/path/to/service`;
+  const ring = `dev`;
+  const expectedInvocation = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --path ./${ring} --method local --type component && touch ./config/common.yaml`;
 
-    const expectedInvocation = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --path ./${ring} --method local --type component && touch ./config/common.yaml`;
-
-    createRingComponent(exec, svcPathInHld, ring);
+  it("should invoke the correct command for adding rings to hld", async () => {
+    await createRingComponent(exec, svcPathInHld, ring);
 
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
+  });
+
+  it("should throw an error if exec fails", async () => {
+    exec = jest
+      .fn()
+      .mockImplementation(async () => Promise.reject(new Error()));
+
+    let error: any;
+    try {
+      await createRingComponent(exec, svcPathInHld, ring);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
   });
 });
 
 describe("createStaticComponent", () => {
-  it("should invoke the correct command for creating static components", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
-    const ringPathInHld = `/ring/path/in/hld`;
+  let exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  const ringPathInHld = `/ring/path/in/hld`;
+  const expectedInvocation = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
 
-    const expectedInvocation = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
-
-    createStaticComponent(exec, ringPathInHld);
+  it("should invoke the correct command for creating static components", async () => {
+    await createStaticComponent(exec, ringPathInHld);
 
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
   });
+
+  it("should throw an error if exec fails", async () => {
+    exec = jest
+      .fn()
+      .mockImplementation(async () => Promise.reject(new Error()));
+
+    let error: any;
+    try {
+      await createStaticComponent(exec, ringPathInHld);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
+  });
 });
 
 describe("addChartToRing", () => {
-  it("should invoke the correct command for adding a helm chart with a branch version", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  let exec = jest.fn().mockReturnValue(Promise.resolve({}));
+
+  it("should invoke the correct command for adding a helm chart with a branch version", async () => {
     const ringPath = "/path/to/ring";
 
     const branch = "v1";
     const git = "github.com/company/service";
-    const path = "/charts/service";
+    const chartPath = "/charts/service";
 
     const serviceConfig: IBedrockServiceConfig = {
       helm: {
         chart: {
           branch,
           git,
-          path
+          path: chartPath
         }
       },
       k8sBackendPort: 1337
     };
 
     /* tslint:disable-next-line: no-string-literal */
-    const addHelmChartCommand = `fab add chart --source ${git} --path ${path} --branch ${branch} --type helm`;
+    const addHelmChartCommand = `fab add chart --source ${git} --path ${chartPath} --branch ${branch} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
-    addChartToRing(exec, ringPath, serviceConfig);
+    await addChartToRing(exec, ringPath, serviceConfig);
 
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
   });
 
-  it("should invoke the correct command for adding a helm chart with a git-sha", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  it("should invoke the correct command for adding a helm chart with a git-sha", async () => {
     const ringPath = "/path/to/ring";
 
     const sha = "f8a33e1d";
     const git = "github.com/company/service";
-    const path = "/charts/service";
+    const chartPath = "/charts/service";
 
     const serviceConfig: IBedrockServiceConfig = {
       helm: {
         chart: {
           git,
-          path,
+          path: chartPath,
           sha
         }
       },
@@ -253,18 +312,17 @@ describe("addChartToRing", () => {
     };
 
     /* tslint:disable-next-line: no-string-literal */
-    const addHelmChartCommand = `fab add chart --source ${git} --path ${path} --version ${sha} --type helm`;
+    const addHelmChartCommand = `fab add chart --source ${git} --path ${chartPath} --version ${sha} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
-    addChartToRing(exec, ringPath, serviceConfig);
+    await addChartToRing(exec, ringPath, serviceConfig);
 
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
   });
 
-  it("should invoke the correct command for adding a helm chart with a helm repository", () => {
-    const exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  it("should invoke the correct command for adding a helm chart with a helm repository", async () => {
     const ringPath = "/path/to/ring";
 
     const repository = "github.com/company/service";
@@ -282,13 +340,84 @@ describe("addChartToRing", () => {
 
     /* tslint:disable-next-line: no-string-literal */
     const addHelmChartCommand = `fab add chart --source ${repository} --path ${chart} --type helm`;
-
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
-    addChartToRing(exec, ringPath, serviceConfig);
+    await addChartToRing(exec, ringPath, serviceConfig);
 
     expect(exec).toBeCalled();
     expect(exec).toBeCalledWith(expectedInvocation);
+  });
+
+  it("should should throw an error if exec fails", async () => {
+    exec = jest
+      .fn()
+      .mockImplementation(async () => Promise.reject(new Error()));
+
+    const ringPath = "/path/to/ring";
+    const repository = "github.com/company/service";
+    const chart = "/charts/service";
+
+    const serviceConfig: IBedrockServiceConfig = {
+      helm: {
+        chart: {
+          chart,
+          repository
+        }
+      },
+      k8sBackendPort: 1337
+    };
+
+    let error: any;
+    try {
+      await addChartToRing(exec, ringPath, serviceConfig);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
+  });
+});
+
+describe("configureChartForRing", () => {
+  let exec = jest.fn().mockReturnValue(Promise.resolve({}));
+  const ringPath = "/path/to/ring";
+  const ringName = "myringname";
+
+  const serviceConfig: IBedrockServiceConfig = {
+    helm: {
+      chart: {
+        git: "foo",
+        path: "bar",
+        sha: "baz"
+      }
+    },
+    k8sBackend: "k8s-svc",
+    k8sBackendPort: 80
+  };
+
+  const k8sSvcBackendAndName = [serviceConfig.k8sBackend, ringName].join("-");
+  const expectedInvocation = `cd ${ringPath} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
+
+  it("should invoke the correct command for configuring a chart for a ring", async () => {
+    await configureChartForRing(exec, ringPath, ringName, serviceConfig);
+
+    expect(exec).toBeCalled();
+    expect(exec).toBeCalledWith(expectedInvocation);
+  });
+
+  it("should throw an error if exec fails", async () => {
+    exec = jest
+      .fn()
+      .mockImplementation(async () => Promise.reject(new Error()));
+
+    let error: any;
+    try {
+      await configureChartForRing(exec, ringPath, ringName, serviceConfig);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
   });
 });
 
@@ -297,11 +426,12 @@ describe("reconcile tests", () => {
   let bedrockYaml: IBedrockFile;
   const sha = "f8a33e1d";
   const git = "github.com/company/service";
-  const path = "/charts/service";
-
+  const pathToChart = "/charts/service";
+  const accessTokenVariable = "SECRET_TOKEN";
   beforeEach(() => {
     dependencies = {
       addChartToRing: jest.fn().mockReturnValue(Promise.resolve({})),
+      configureChartForRing: jest.fn().mockReturnValue(Promise.resolve({})),
       createAccessYaml: jest.fn(),
       createIngressRouteForRing: jest.fn().mockReturnValue(Promise.resolve({})),
       createMiddlewareForRing: jest.fn().mockReturnValue(Promise.resolve({})),
@@ -323,15 +453,17 @@ describe("reconcile tests", () => {
         prod: {}
       },
       services: {
-        "./path/to/svc/": {
+        "./path/to/a/svc/": {
           disableRouteScaffold: false,
           helm: {
             chart: {
+              accessTokenVariable,
               git,
-              path,
+              path: pathToChart,
               sha
             }
           },
+          k8sBackend: "cool-service",
           k8sBackendPort: 1337
         }
       }
@@ -351,10 +483,17 @@ describe("reconcile tests", () => {
     expect(dependencies.createAccessYaml).toHaveBeenCalled();
     expect(dependencies.createServiceComponent).toHaveBeenCalledTimes(1);
     expect(dependencies.createRingComponent).toHaveBeenCalledTimes(2);
+    expect(dependencies.configureChartForRing).toHaveBeenCalledTimes(2);
     expect(dependencies.addChartToRing).toHaveBeenCalledTimes(2);
     expect(dependencies.createStaticComponent).toHaveBeenCalledTimes(2);
     expect(dependencies.createMiddlewareForRing).toHaveBeenCalledTimes(2);
     expect(dependencies.createIngressRouteForRing).toHaveBeenCalledTimes(2);
+    expect(dependencies.generateAccessYaml).toHaveBeenCalledTimes(1);
+    expect(dependencies.generateAccessYaml).toBeCalledWith(
+      "path/to/hld/service",
+      git,
+      accessTokenVariable
+    );
   });
 
   it("should be able to create a HLD without rings, when no rings are provided", async () => {
@@ -388,7 +527,7 @@ describe("reconcile tests", () => {
           helm: {
             chart: {
               git,
-              path,
+              path: pathToChart,
               sha
             }
           },
@@ -466,7 +605,7 @@ describe("reconcile tests", () => {
         helm: {
           chart: {
             git,
-            path,
+            path: pathToChart,
             sha
           }
         },
@@ -495,7 +634,7 @@ describe("reconcile tests", () => {
         helm: {
           chart: {
             git,
-            path,
+            path: pathToChart,
             sha
           }
         },
@@ -528,7 +667,7 @@ describe("reconcile tests", () => {
         helm: {
           chart: {
             git,
-            path,
+            path: pathToChart,
             sha
           }
         },
@@ -550,10 +689,67 @@ describe("reconcile tests", () => {
       (dependencies.createServiceComponent as jest.Mock).mock.calls[0][2]
     ).toBe(displayName);
   });
+
+  it("properly updates access.yaml", async () => {
+    const anotherGit = "github.com/foobar/baz";
+    const anotherToken = "MY_FANCY_ENV_VAR";
+    bedrockYaml.services["another/service"] = {
+      disableRouteScaffold: false,
+      helm: {
+        chart: {
+          accessTokenVariable: anotherToken,
+          git: anotherGit,
+          path: "path/to/chart",
+          sha: "12345"
+        }
+      },
+      k8sBackendPort: 8888
+    };
+    const pathToHLD = "./the/path/to/hld";
+    const service = "service";
+    await reconcileHld(
+      dependencies,
+      bedrockYaml,
+      service,
+      pathToHLD,
+      "./path/to/app"
+    );
+    expect(dependencies.generateAccessYaml).toHaveBeenCalledTimes(2);
+    expect(dependencies.generateAccessYaml).toHaveBeenCalledWith(
+      path.join(pathToHLD, service),
+      git,
+      accessTokenVariable
+    );
+    expect(dependencies.generateAccessYaml).toHaveBeenCalledWith(
+      path.join(pathToHLD, service),
+      anotherGit,
+      anotherToken
+    );
+  });
+});
+
+describe("normalizedName", () => {
+  it("lower cases a name", () => {
+    expect(normalizedName("Fabrikam")).toBe("fabrikam");
+  });
+
+  it("removes slashes from a name", () => {
+    expect(normalizedName("fabrikam/frontend")).toBe("fabrikam-frontend");
+  });
+
+  it("removes periods from a name", () => {
+    expect(normalizedName("fabrikam.frontend")).toBe("fabrikam-frontend");
+  });
+
+  it("can handle combinations of slashes and periods and caps in a name", () => {
+    expect(normalizedName("Fabrikam.frontend/CartService")).toBe(
+      "fabrikam-frontend-cartservice"
+    );
+  });
 });
 
 describe("execAndLog", () => {
-  test("working command", async done => {
+  test("working command", async () => {
     let error: Error | undefined;
     try {
       const result = await execAndLog("ls");
@@ -564,7 +760,6 @@ describe("execAndLog", () => {
       error = err;
     }
     expect(error).toBeUndefined();
-    done();
   });
 
   test("broken command", async () => {

@@ -59,72 +59,27 @@ const exec = async (
 };
 
 export interface IReconcileDependencies {
-  exec: (commandToRun: string) => Promise<IExecResult>;
-
-  writeFile: (path: string, contents: string) => void;
-
-  getGitOrigin: (path?: string) => Promise<string>;
-
-  generateAccessYaml: (
-    absRepositoryPathInHldPath: string,
-    originUrl: string
-  ) => void;
-
-  createAccessYaml: (
-    getGitOrigin: (path?: string) => Promise<string>,
-    writeAccessYaml: (
-      absRepositoryPathInHldPath: string,
-      originUrl: string
-    ) => void,
-    absBedrockApplicationPath: string,
-    absRepositoryPathInHldPath: string
-  ) => void;
-
-  createRepositoryComponent: (
-    execCmd: (commandToRun: string) => Promise<IExecResult>,
-    absHldPath: string,
-    repositoryName: string
-  ) => Promise<IExecResult>;
-
-  createServiceComponent: (
-    execCmd: (commandToRun: string) => Promise<IExecResult>,
-    absRepositoryInHldPath: string,
-    pathBase: string
-  ) => Promise<IExecResult>;
-
-  createRingComponent: (
-    execCmd: (commandToRun: string) => Promise<IExecResult>,
-    svcPathInHld: string,
-    ring: string
-  ) => Promise<IExecResult>;
-
-  addChartToRing: (
-    execCmd: (commandToRun: string) => Promise<IExecResult>,
-    ringPathInHld: string,
-    serviceConfig: IBedrockServiceConfig
-  ) => Promise<IExecResult>;
-
-  createStaticComponent: (
-    execCmd: (commandToRun: string) => Promise<IExecResult>,
-    ringPathInHld: string
-  ) => Promise<IExecResult>;
-
-  createIngressRouteForRing: (
-    ringPathInHld: string,
-    serviceName: string,
-    serviceConfig: IBedrockServiceConfig,
-    middlewares: ITraefikMiddleware,
-    ring: string,
-    ingressVersionAndPath: string
-  ) => void;
-
-  createMiddlewareForRing: (
-    ringPathInHld: string,
-    serviceName: string,
-    ring: string,
-    ingressVersionAndPath: string
-  ) => ITraefikMiddleware;
+  exec: typeof execAndLog;
+  writeFile: typeof writeFileSync;
+  getGitOrigin: typeof tryGetGitOrigin;
+  generateAccessYaml: typeof generateAccessYaml;
+  createAccessYaml: typeof createAccessYaml;
+  createRepositoryComponent: typeof createRepositoryComponent;
+  configureChartForRing: typeof configureChartForRing;
+  createServiceComponent: typeof createServiceComponent;
+  createRingComponent: typeof createRingComponent;
+  addChartToRing: typeof addChartToRing;
+  createStaticComponent: typeof createStaticComponent;
+  createIngressRouteForRing: typeof createIngressRouteForRing;
+  createMiddlewareForRing: typeof createMiddlewareForRing;
 }
+
+export const normalizedName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace("/", "-")
+    .replace(".", "-");
+};
 
 export const execute = async (
   repositoryName: string,
@@ -158,6 +113,7 @@ export const execute = async (
 
     const reconcileDependencies: IReconcileDependencies = {
       addChartToRing,
+      configureChartForRing,
       createAccessYaml,
       createIngressRouteForRing,
       createMiddlewareForRing,
@@ -221,18 +177,21 @@ export const reconcileHld = async (
   await dependencies.createRepositoryComponent(
     dependencies.exec,
     absHldPath,
-    repositoryName
+    normalizedName(repositoryName)
   );
 
   // Repository in HLD ie /path/to/hld/repositoryName/
-  const absRepositoryInHldPath = path.join(absHldPath, repositoryName);
+  const normalizedAbsRepositoryInHldPath = path.join(
+    absHldPath,
+    normalizedName(repositoryName)
+  );
 
   // Create access.yaml containing the bedrock application repo's URL in
   await dependencies.createAccessYaml(
     dependencies.getGitOrigin,
     dependencies.generateAccessYaml,
     absBedrockPath,
-    absRepositoryInHldPath
+    normalizedAbsRepositoryInHldPath
   );
 
   for (const [serviceRelPath, serviceConfig] of Object.entries(
@@ -249,41 +208,79 @@ export const reconcileHld = async (
       continue;
     }
 
-    logger.info(`Reconciling service: ${serviceName}`);
+    const normalizedSvcName = normalizedName(serviceName);
+    logger.info(`Reconciling service: ${normalizedSvcName}`);
+
+    // If the service utilizes `git` for its helm-chart, add to access.yaml
+    const helmChartConfig = serviceConfig.helm.chart;
+    if ("git" in helmChartConfig && helmChartConfig.git !== "") {
+      // Ensure accessToken is a non-zero length string or undefined
+      const accessToken = helmChartConfig.accessTokenVariable || undefined;
+      logger.info(
+        `Git repository found in helm configuration of ${serviceName} -- adding to access.yaml`
+      );
+      dependencies.generateAccessYaml(
+        normalizedAbsRepositoryInHldPath,
+        helmChartConfig.git,
+        accessToken
+      );
+    }
 
     // Utilizes fab add, which is idempotent.
     await dependencies.createServiceComponent(
       dependencies.exec,
-      absRepositoryInHldPath,
-      serviceName
+      normalizedAbsRepositoryInHldPath,
+      normalizedSvcName
     );
 
     // Create ring components.
-    const svcPathInHld = path.join(absRepositoryInHldPath, serviceName);
+    const normalizedSvcPathInHld = path.join(
+      normalizedAbsRepositoryInHldPath,
+      normalizedSvcName
+    );
+
     const ringsToCreate = Object.keys(managedRings).map(ring => {
-      return { ring, ringPathInHld: path.join(svcPathInHld, ring) };
+      const normalizedRingName = normalizedName(ring);
+      return {
+        normalizedRingName,
+        normalizedRingPathInHld: path.join(
+          normalizedSvcPathInHld,
+          normalizedRingName
+        )
+      };
     });
 
     // Will only loop over _existing_ rings in bedrock.yaml - does not cover the deletion case, ie: i remove a ring from bedrock.yaml
-    for (const { ring, ringPathInHld } of ringsToCreate) {
+    for (const {
+      normalizedRingName,
+      normalizedRingPathInHld
+    } of ringsToCreate) {
       // Create the ring in the service.
       await dependencies.createRingComponent(
         dependencies.exec,
-        svcPathInHld,
-        ring
+        normalizedSvcPathInHld,
+        normalizedRingName
       );
 
       // Add the helm chart to the ring.
       await dependencies.addChartToRing(
         dependencies.exec,
-        ringPathInHld,
+        normalizedRingPathInHld,
+        serviceConfig
+      );
+
+      // Add configuration for the service and ring name.
+      await dependencies.configureChartForRing(
+        dependencies.exec,
+        normalizedRingPathInHld,
+        normalizedRingName,
         serviceConfig
       );
 
       // Create config directory, create static manifest directory.
       await dependencies.createStaticComponent(
         dependencies.exec,
-        ringPathInHld
+        normalizedRingPathInHld
       );
 
       // Service explicitly requests no ingress-routes to be generated.
@@ -298,24 +295,24 @@ export const reconcileHld = async (
       const ingressVersionAndPath = getFullPathPrefix(
         serviceConfig.pathPrefixMajorVersion || "",
         serviceConfig.pathPrefix || "",
-        serviceName
+        normalizedSvcName
       );
 
-      // Create middleware.
+      // Create Strip Prefix Middleware.
       const middlewares = dependencies.createMiddlewareForRing(
-        ringPathInHld,
-        serviceConfig.displayName || serviceName,
-        ring,
+        normalizedRingPathInHld,
+        normalizedSvcName,
+        normalizedRingName,
         ingressVersionAndPath
       );
 
       // Create Ingress Route.
       dependencies.createIngressRouteForRing(
-        ringPathInHld,
-        serviceConfig.displayName || serviceName,
+        normalizedRingPathInHld,
+        normalizedSvcName,
         serviceConfig,
         middlewares,
-        ring,
+        normalizedRingName,
         ingressVersionAndPath
       );
     }
@@ -361,11 +358,8 @@ export const execAndLog = async (
 };
 
 export const createAccessYaml = async (
-  getGitOrigin: (path?: string) => Promise<string>,
-  writeAccessYaml: (
-    absRepositoryPathInHldPath: string,
-    originUrl: string
-  ) => void,
+  getGitOrigin: typeof tryGetGitOrigin,
+  writeAccessYaml: typeof generateAccessYaml,
   absBedrockApplicationPath: string,
   absRepositoryPathInHldPath: string
 ) => {
@@ -445,7 +439,7 @@ const createMiddlewareForRing = (
 };
 
 export const createRepositoryComponent = async (
-  execCmd: (commandToRun: string) => Promise<IExecResult>,
+  execCmd: typeof execAndLog,
   absHldPath: string,
   repositoryName: string
 ) => {
@@ -463,7 +457,7 @@ export const createRepositoryComponent = async (
 };
 
 export const createServiceComponent = async (
-  execCmd: (commandToRun: string) => Promise<IExecResult>,
+  execCmd: typeof execAndLog,
   absRepositoryInHldPath: string,
   serviceName: string
 ) => {
@@ -483,27 +477,27 @@ export const createServiceComponent = async (
 };
 
 export const createRingComponent = async (
-  execCmd: (commandToRun: string) => Promise<IExecResult>,
+  execCmd: typeof execAndLog,
   svcPathInHld: string,
-  ring: string
+  normalizedRingName: string
 ) => {
   assertIsStringWithContent(svcPathInHld, "service-path");
-  assertIsStringWithContent(ring, "ring-name");
-  const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${ring} config && fab add ${ring} --path ./${ring} --method local --type component && touch ./config/common.yaml`;
+  assertIsStringWithContent(normalizedRingName, "ring-name");
+  const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${normalizedRingName} config && fab add ${normalizedRingName} --path ./${normalizedRingName} --method local --type component && touch ./config/common.yaml`;
 
   return execCmd(createRingInSvcCommand).catch(err => {
     logger.error(
-      `error creating ring component '${ring}' in path '${svcPathInHld}'`
+      `error creating ring component '${normalizedRingName}' in path '${svcPathInHld}'`
     );
     throw err;
   });
 };
 
 export const addChartToRing = async (
-  execCmd: (commandToRun: string) => Promise<IExecResult>,
+  execCmd: typeof execAndLog,
   ringPathInHld: string,
   serviceConfig: IBedrockServiceConfig
-) => {
+): Promise<IExecResult> => {
   let addHelmChartCommand = "";
   const { chart } = serviceConfig.helm;
   if ("git" in chart) {
@@ -534,8 +528,29 @@ export const addChartToRing = async (
   });
 };
 
-export const createStaticComponent = async (
+export const configureChartForRing = async (
   execCmd: (commandToRun: string) => Promise<IExecResult>,
+  normalizedRingPathInHld: string,
+  normalizedRingName: string,
+  serviceConfig: IBedrockServiceConfig
+): Promise<IExecResult> => {
+  // Configue the k8s backend svc here along with master
+  const k8sBackendName = serviceConfig.k8sBackend || "";
+  const k8sSvcBackendAndName = [
+    normalizedName(k8sBackendName),
+    normalizedRingName
+  ].join("-");
+
+  const fabConfigureCommand = `cd ${normalizedRingPathInHld} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
+
+  return execCmd(fabConfigureCommand).catch(err => {
+    logger.error(`error configuring helm chart for service `);
+    throw err;
+  });
+};
+
+export const createStaticComponent = async (
+  execCmd: typeof execAndLog,
   ringPathInHld: string
 ) => {
   assertIsStringWithContent(ringPathInHld, "ring-path");
