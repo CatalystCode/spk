@@ -1,3 +1,0 @@
-azdo_org_name=veseah
-azdo_project_name=SPK7
-azdo_pat=doegx7fx26zj5gwgzlbz4rphh5h5dzwqelxaucibyvgxp45vhlna
