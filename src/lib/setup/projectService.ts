@@ -1,5 +1,6 @@
 import { ICoreApi } from "azure-devops-node-api/CoreApi";
 import { ProjectVisibility } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { sleep } from "../../lib/util";
 import { logger } from "../../logger";
 import { IRequestContext } from "./constants";
 
@@ -27,8 +28,16 @@ export const getProject = async (coreAPI: ICoreApi, name: string) => {
  *
  * @param coreAPI Core API service
  * @param name Name of Project
+ * @param tries Number of tries to poll after project creation. Default is 10
+ * @param sleepDuration duration (in milliseconds) between polls
  */
-export const createProject = async (coreAPI: ICoreApi, name: string) => {
+export const createProject = async (
+  coreAPI: ICoreApi,
+  name: string,
+  tries = 10,
+  sleepDuration = 12000
+) => {
+  logger.info(`creating Project, ${name}.`);
   try {
     await coreAPI.queueCreateProject({
       capabilities: {
@@ -43,6 +52,18 @@ export const createProject = async (coreAPI: ICoreApi, name: string) => {
       name,
       visibility: ProjectVisibility.Organization
     });
+    // poll to check if project is checked.
+    let created = false;
+    while (tries > 0 && !created) {
+      created = !!(await getProject(coreAPI, name));
+      if (!created) {
+        await sleep(sleepDuration);
+        tries--;
+      }
+    }
+    if (!created) {
+      throw new Error(`Project, ${name} was not created within 2 minutes.`);
+    }
   } catch (err) {
     if (err.statusCode === 401) {
       throw new Error(

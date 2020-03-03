@@ -72,7 +72,6 @@ export const execute = async (
 
   try {
     requestContext = opts.file ? getAnswerFromFile(opts.file) : await prompt();
-
     createDirectory(WORKSPACE, true);
 
     createSPKConfig(requestContext!);
