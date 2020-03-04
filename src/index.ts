@@ -46,8 +46,8 @@ const commandModules = [
       c => {
         c.version(require("../package.json").version);
       },
-      initCommandDecorator
-      // setupCommandDecorator
+      initCommandDecorator,
+      setupCommandDecorator
     ],
     cmds
   );
