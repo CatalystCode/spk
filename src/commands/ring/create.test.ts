@@ -1,6 +1,10 @@
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
 import { createTempDir } from "../../lib/ioUtil";
-import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
+import {
+  disableVerboseLogging,
+  enableVerboseLogging,
+  logger
+} from "../../logger";
 
 import { checkDependencies, execute } from "./create";
 
@@ -12,12 +16,48 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-describe("test valid function", () => {
-  it("negative test", async () => {
+describe("checkDependencies", () => {
+  it("Project not initialized, it should fail.", async () => {
     try {
       const tmpDir = createBedrockYaml();
-      checkDependencies(tmpDir);
-      expect(true).toBe(false);
+      checkDependencies(tmpDir, "");
+      expect(true).toBe(false); // Should not reach here
+    } catch (e) {
+      expect(e).not.toBeNull();
+    }
+  });
+  it("Project initialized, it should pass.", async () => {
+    try {
+      const tmpDir = createBedrockYaml();
+      createBedrockYaml(tmpDir, {
+        rings: {
+          master: {
+            isDefault: true
+          }
+        },
+        services: {},
+        variableGroups: ["testvg"]
+      });
+      checkDependencies(tmpDir, "not-master");
+      expect(true).toBe(true);
+    } catch (e) {
+      expect(true).toBe(false); // Should not reach here
+    }
+  });
+  it("Project initialized, but ring already exists, it should fail.", async () => {
+    try {
+      const tmpDir = createBedrockYaml();
+      createBedrockYaml(tmpDir, {
+        rings: {
+          master: {
+            isDefault: true
+          }
+        },
+        services: {},
+        variableGroups: ["testvg"]
+      });
+      checkDependencies(tmpDir, "master");
+      expect(true).toBe(false); // Should not reach here
     } catch (e) {
       expect(e).not.toBeNull();
     }

@@ -1,11 +1,15 @@
 import commander from "commander";
-import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
+import {
+  addNewRing,
+  fileInfo as bedrockFileInfo,
+  read as loadBedrockFile
+} from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE } from "../../lib/constants";
+import { updateTriggerBranchesForServiceBuildAndUpdatePipeline } from "../../lib/fileutils";
 import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
-import { IBedrockFileInfo } from "../../types";
-
+import { IBedrockFile, IBedrockFileInfo } from "../../types";
 import decorator from "./create.decorator.json";
 
 /**
@@ -25,13 +29,25 @@ export const execute = async (
   }
 
   try {
-    logger.info(`project path: ${projectPath}`);
+    logger.info(`Project path: ${projectPath}`);
 
-    checkDependencies(projectPath);
+    checkDependencies(projectPath, ringName);
 
-    // Check if ring already exists, if it does, warn and exit
     // Add ring to bedrock.yaml
+    addNewRing(projectPath, ringName);
     // Add ring to all linked service build pipelines' branch triggers
+    const bedrockFile: IBedrockFile = loadBedrockFile(projectPath);
+
+    const newRings = Object.entries(bedrockFile.rings).map(([ring]) => ring);
+    logger.info(`Updated project rings: ${newRings}`);
+
+    const servicePathDirectories = Object.entries(bedrockFile.services).map(
+      ([serviceRelativeDir]) => serviceRelativeDir
+    );
+
+    servicePathDirectories.forEach(s => {
+      updateTriggerBranchesForServiceBuildAndUpdatePipeline(newRings, s);
+    });
 
     logger.info(`Successfully created ring: ${ringName} for this project!`);
     await exitFn(0);
@@ -54,9 +70,17 @@ export const commandDecorator = (command: commander.Command): void => {
  * Check for bedrock.yaml
  * @param projectPath
  */
-export const checkDependencies = (projectPath: string) => {
+export const checkDependencies = (projectPath: string, ringName: string) => {
   const fileInfo: IBedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
     throw new Error(PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE);
+  }
+
+  // Check if ring already exists, if it does, warn and exit
+  const bedrockFile: IBedrockFile = loadBedrockFile(projectPath);
+  if (ringName in bedrockFile.rings) {
+    throw new Error(
+      `ring: ${ringName} already exists in project bedrock.yaml.`
+    );
   }
 };
