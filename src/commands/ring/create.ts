@@ -6,7 +6,7 @@ import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
 import { IBedrockFileInfo } from "../../types";
 
-import decorator from "./add.decorator.json";
+import decorator from "./create.decorator.json";
 
 /**
  * Executes the command.
@@ -33,10 +33,10 @@ export const execute = async (
     // Add ring to bedrock.yaml
     // Add ring to all linked service build pipelines' branch triggers
 
-    logger.info(`Successfully added ring: ${ringName} to this project!`);
+    logger.info(`Successfully created ring: ${ringName} for this project!`);
     await exitFn(0);
   } catch (err) {
-    logger.error(`Error occurred while adding ring: ${ringName}`);
+    logger.error(`Error occurred while creating ring: ${ringName}`);
     logger.error(err);
     await exitFn(1);
   }
