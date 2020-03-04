@@ -38,7 +38,7 @@ export const createRepo = async (
   } catch (err) {
     if (err.statusCode === 401) {
       throw new Error(
-        `Did not have permissions to vreate git repo. Add git repo write permission to the personal access token`
+        `Did not have permissions to create git repo. Add code write permission to the personal access token`
       );
     }
     throw err;
@@ -86,7 +86,7 @@ export const getRepoInAzureOrg = async (
   } catch (err) {
     if (err.statusCode === 401) {
       throw new Error(
-        `Did not have permissions to get git repo. Add git repo read permission to the personal access token`
+        `Did not have permissions to get git repo. Add code read permission to the personal access token`
       );
     }
     throw err;

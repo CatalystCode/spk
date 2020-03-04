@@ -12,6 +12,7 @@ for a few questions
 2. Azure DevOps Project Name, the project to be created.
 3. Azure DevOps Personal Access Token. The token needs to have these permissions
    1. Read and write projects.
+   2. Read and write codes.
 
 It can also run in a non interactive mode by providing a file that contains
 answers to the above questions.
@@ -46,9 +47,3 @@ The followings shall be created
 A `setup.log` file is created after running this command. This file contains
 information about what are created and the execution status (completed or
 incomplete). This file will not be created if input validation failed.
-
-## Notes
-
-1. Personal Access Token. It needs to have the permissions to
-   1. read and write on project
-   1. read and write on Git Repo
