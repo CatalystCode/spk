@@ -120,6 +120,39 @@ export const save = (dir: string, data: IBedrockFile) => {
 };
 
 /**
+ * Sets the default ring in bedrock.yaml
+ * @param bedrockFile The bedrock.yaml file
+ * @param ringName The name of the ring
+ */
+export const setDefaultRing = (
+  bedrockFile: IBedrockFile,
+  ringName: string,
+  path: string
+): void => {
+  const rings = Object.keys(bedrockFile.rings);
+  if (!rings.includes(ringName)) {
+    throw new Error("The ring '" + ringName + "' is not defined bedrock.yaml");
+  }
+
+  for (let [name, value] of Object.entries(bedrockFile.rings)) {
+    if (value === null) {
+      bedrockFile.rings[name] = {};
+    }
+    let ring = bedrockFile.rings[name];
+
+    if (name === ringName) {
+      ring.isDefault = true;
+    } else {
+      if (typeof ring.isDefault !== "undefined") {
+        ring.isDefault = false;
+      }
+    }
+  }
+
+  save(path, bedrockFile);
+};
+
+/**
  * Returns bedrock file information
  *
  * @param rootProjectPath Path to read the bedrock.yaml file

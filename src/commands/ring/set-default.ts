@@ -1,14 +1,16 @@
 import commander from "commander";
 import {
   fileInfo as bedrockFileInfo,
-  save as saveBedrockFile
+  read as loadBedrockFile,
+  save as saveBedrockFile,
+  setDefaultRing
 } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE } from "../../lib/constants";
 import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
 import { IBedrockFileInfo, IBedrockFile } from "../../types";
-import { Bedrock, Config, readYaml, write } from "../../config";
+import { Bedrock } from "../../config";
 import decorator from "./set-default.decorator.json";
 
 /**
@@ -28,19 +30,14 @@ export const execute = async (
   }
 
   try {
-    logger.info(`project path: ${projectPath}`);
-
     checkDependencies(projectPath);
 
     // Load bedrock.yaml
     let bedrockFile: IBedrockFile | undefined;
 
     // Get bedrock.yaml
-    bedrockFile = Bedrock(projectPath);
-
+    bedrockFile = loadBedrockFile(projectPath);
     setDefaultRing(bedrockFile, ringName, projectPath);
-    // Check if ring is already default, if so, warn and exit.
-    // Set ring as default in bedrock.yaml
 
     logger.info(`Successfully set default ring: ${ringName} for this project!`);
     await exitFn(0);
@@ -57,39 +54,6 @@ export const commandDecorator = (command: commander.Command): void => {
       await exitCmd(logger, process.exit, status);
     });
   });
-};
-
-/**
- * Sets the default ring
- * @param bedrockFile The bedrock.yaml file
- * @param ringName The name of the ring
- */
-export const setDefaultRing = (
-  bedrockFile: IBedrockFile,
-  ringName: string,
-  path: string
-): void => {
-  const rings = Object.keys(bedrockFile.rings);
-  if (!rings.includes(ringName)) {
-    throw new Error("The ring '" + ringName + "' is not defined bedrock.yaml");
-  }
-
-  for (let [name, value] of Object.entries(bedrockFile.rings)) {
-    if (value === null) {
-      bedrockFile.rings[name] = { isDefault: false };
-    }
-    let ring = bedrockFile.rings[name];
-
-    if (name === ringName) {
-      ring.isDefault = true;
-    } else {
-      if (typeof ring.isDefault !== "undefined") {
-        ring.isDefault = false;
-      }
-    }
-  }
-
-  saveBedrockFile(path, bedrockFile);
 };
 
 /**
