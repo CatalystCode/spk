@@ -190,9 +190,22 @@ function loadCommands() {
   });
 }
 
+function showReleaseSelector(bShow) {
+  $("#ulReleases").css("display", bShow ? "block" : "none");
+}
+
 $(function() {
-  $("#btnSelectRelease").on("click", function() {
-    $("#ulReleases").css("display", "block");
+  $("#btnSelectRelease").on("click", function(evt) {
+    evt.stopPropagation();
+    showReleaseSelector(true);
+  });
+  $(document.body).on("click", function() {
+    showReleaseSelector(false);
+  });
+  $(document).keyup(function(evt) {
+    if (evt.keyCode === 27) {
+      showReleaseSelector(false);
+    }
   });
   getExistingVersions();
   getVersion();
