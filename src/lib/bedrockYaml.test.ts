@@ -156,6 +156,6 @@ describe("Set default ring", () => {
     setDefaultRing(data, "master", dir);
     const result = read(dir);
     expect(result.rings.master.isDefault).toBe(true);
-    expect(result.rings.prod.isDefault).toBe(false);
+    expect(result.rings.prod.isDefault).toBe(undefined);
   });
 });

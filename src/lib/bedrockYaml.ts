@@ -130,7 +130,7 @@ export const setDefaultRing = (
       ring.isDefault = true;
     } else {
       if (typeof ring.isDefault !== "undefined") {
-        ring.isDefault = false;
+        delete ring.isDefault;
       }
     }
   }
