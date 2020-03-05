@@ -117,7 +117,7 @@ export const setDefaultRing = (
 ): void => {
   const rings = Object.keys(bedrockFile.rings);
   if (!rings.includes(ringName)) {
-    throw new Error("The ring '" + ringName + "' is not defined bedrock.yaml");
+    throw new Error(`The ring '${ringName}' is not defined in ${YAML_NAME}`);
   }
 
   for (const [name, value] of Object.entries(bedrockFile.rings)) {

@@ -30,11 +30,8 @@ export const execute = async (
   try {
     checkDependencies(projectPath);
 
-    // Load bedrock.yaml
-    let bedrockFile: IBedrockFile | undefined;
-
     // Get bedrock.yaml
-    bedrockFile = loadBedrockFile(projectPath);
+    const bedrockFile = loadBedrockFile(projectPath);
     setDefaultRing(bedrockFile, ringName, projectPath);
 
     logger.info(`Successfully set default ring: ${ringName} for this project!`);
