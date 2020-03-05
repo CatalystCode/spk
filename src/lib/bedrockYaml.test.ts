@@ -9,7 +9,6 @@ import {
   fileInfo,
   isExists,
   read,
-  save,
   setDefaultRing
 } from "./bedrockYaml";
 
@@ -37,23 +36,6 @@ describe("Creation and Existence test on bedrock.yaml", () => {
   });
   it("isExist call without a folder", () => {
     expect(isExists("")).toBe(false);
-  });
-});
-
-describe("Save a bedrock file", () => {
-  it("Updates and saves a file", () => {
-    const dir = createTempDir();
-    const data = {
-      rings: {},
-      services: {}
-    };
-    create(dir, data);
-    expect(isExists(dir)).toBe(true);
-    expect(read(dir)).toEqual(data);
-
-    data.rings = { master: { isDefault: true } };
-    save(dir, data);
-    expect(read(dir)).toEqual(data);
   });
 });
 
@@ -157,8 +139,8 @@ describe("Set default ring", () => {
     create(dir, data);
     setDefaultRing(data, "master", dir);
     const result = read(dir);
-    expect(result.rings["master"].isDefault).toBe(true);
-    expect(result.rings["prod"].isDefault).toBe(undefined);
+    expect(result.rings.master.isDefault).toBe(true);
+    expect(result.rings.prod.isDefault).toBe(undefined);
   });
   it("Should change the default ring", () => {
     const dir = createTempDir();
@@ -173,7 +155,7 @@ describe("Set default ring", () => {
     create(dir, data);
     setDefaultRing(data, "master", dir);
     const result = read(dir);
-    expect(result.rings["master"].isDefault).toBe(true);
-    expect(result.rings["prod"].isDefault).toBe(false);
+    expect(result.rings.master.isDefault).toBe(true);
+    expect(result.rings.prod.isDefault).toBe(false);
   });
 });

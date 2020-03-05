@@ -2,15 +2,13 @@ import commander from "commander";
 import {
   fileInfo as bedrockFileInfo,
   read as loadBedrockFile,
-  save as saveBedrockFile,
   setDefaultRing
 } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE } from "../../lib/constants";
 import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
-import { IBedrockFileInfo, IBedrockFile } from "../../types";
-import { Bedrock } from "../../config";
+import { IBedrockFile, IBedrockFileInfo } from "../../types";
 import decorator from "./set-default.decorator.json";
 
 /**

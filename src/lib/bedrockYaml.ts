@@ -106,20 +106,6 @@ export const addNewService = (
 };
 
 /**
- * Saves the bedrock.yaml file
- * @param dir @param dir Directory where <code>bedrock.yaml</code> file resides.
- * @param data The data for bedrock.yaml
- */
-export const save = (dir: string, data: IBedrockFile) => {
-  const absPath = path.resolve(dir);
-  const asYaml = yaml.safeDump(data, {
-    lineWidth: Number.MAX_SAFE_INTEGER
-  });
-
-  fs.writeFileSync(path.join(absPath, YAML_NAME), asYaml);
-};
-
-/**
  * Sets the default ring in bedrock.yaml
  * @param bedrockFile The bedrock.yaml file
  * @param ringName The name of the ring
@@ -127,18 +113,18 @@ export const save = (dir: string, data: IBedrockFile) => {
 export const setDefaultRing = (
   bedrockFile: IBedrockFile,
   ringName: string,
-  path: string
+  dir: string
 ): void => {
   const rings = Object.keys(bedrockFile.rings);
   if (!rings.includes(ringName)) {
     throw new Error("The ring '" + ringName + "' is not defined bedrock.yaml");
   }
 
-  for (let [name, value] of Object.entries(bedrockFile.rings)) {
+  for (const [name, value] of Object.entries(bedrockFile.rings)) {
     if (value === null) {
       bedrockFile.rings[name] = {};
     }
-    let ring = bedrockFile.rings[name];
+    const ring = bedrockFile.rings[name];
 
     if (name === ringName) {
       ring.isDefault = true;
@@ -149,7 +135,7 @@ export const setDefaultRing = (
     }
   }
 
-  save(path, bedrockFile);
+  create(dir, bedrockFile);
 };
 
 /**
