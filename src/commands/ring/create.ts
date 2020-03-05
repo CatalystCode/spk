@@ -24,6 +24,7 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ) => {
   if (!hasValue(ringName)) {
+    logger.error(`No ring name given.`);
     await exitFn(1);
     return;
   }
