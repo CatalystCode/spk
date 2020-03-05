@@ -12,6 +12,7 @@ variables:
   skipComponentGovernanceDetection: "true" 
 
 stages:
+  # CURRENTLY DISABLED INTROSPECTION TESTS
   - stage: integration_tests
     jobs:
       - job: introspection_onboard_integration_test
@@ -19,6 +20,7 @@ stages:
           - group: "spk-vg"
         pool:
           vmImage: "Ubuntu 16.04"
+        condition: eq(1,2) # disabling the test for the time being
         steps:
           - task: DownloadPipelineArtifact@2
             inputs:
