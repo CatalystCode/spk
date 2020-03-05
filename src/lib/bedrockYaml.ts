@@ -106,6 +106,20 @@ export const addNewService = (
 };
 
 /**
+ * Saves the bedrock.yaml file
+ * @param dir @param dir Directory where <code>bedrock.yaml</code> file resides.
+ * @param data The data for bedrock.yaml
+ */
+export const save = (dir: string, data: IBedrockFile) => {
+  const absPath = path.resolve(dir);
+  const asYaml = yaml.safeDump(data, {
+    lineWidth: Number.MAX_SAFE_INTEGER
+  });
+
+  fs.writeFileSync(path.join(absPath, YAML_NAME), asYaml);
+};
+
+/**
  * Returns bedrock file information
  *
  * @param rootProjectPath Path to read the bedrock.yaml file
