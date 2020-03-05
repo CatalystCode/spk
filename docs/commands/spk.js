@@ -191,13 +191,25 @@ function loadCommands() {
 }
 
 function showReleaseSelector(bShow) {
+  var selector = $("#ulReleases");
+  if (bShow === undefined) {
+    bShow = selector.css("display") === "none";
+  }
   $("#ulReleases").css("display", bShow ? "block" : "none");
+  var indicator = $("#btnSelectRelease").find(".expanded-indicator");
+  if (bShow) {
+    indicator.removeClass("docon-chevron-down-light");
+    indicator.addClass("docon-chevron-up-light");
+  } else {
+    indicator.removeClass("docon-chevron-up-light");
+    indicator.addClass("docon-chevron-down-light");
+  }
 }
 
 $(function() {
   $("#btnSelectRelease").on("click", function(evt) {
     evt.stopPropagation();
-    showReleaseSelector(true);
+    showReleaseSelector();
   });
   $(document.body).on("click", function() {
     showReleaseSelector(false);
