@@ -296,7 +296,11 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
     }
 
     const absTargetPath = path.resolve(targetDirectory);
-    const expectedFilePath = `${absTargetPath}/${serviceDirectory}/${SERVICE_PIPELINE_FILENAME}`;
+    const expectedFilePath = path.join(
+      absTargetPath,
+      serviceDirectory,
+      SERVICE_PIPELINE_FILENAME
+    );
 
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,

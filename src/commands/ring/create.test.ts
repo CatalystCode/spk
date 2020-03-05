@@ -18,49 +18,38 @@ afterAll(() => {
 
 describe("checkDependencies", () => {
   it("Project not initialized, it should fail.", async () => {
-    try {
-      const tmpDir = createBedrockYaml();
+    const tmpDir = createTempDir();
+    expect(() => {
       checkDependencies(tmpDir, "");
-      expect(true).toBe(false); // Should not reach here
-    } catch (e) {
-      expect(e).not.toBeNull();
-    }
+    }).toThrow();
   });
   it("Project initialized, it should pass.", async () => {
-    try {
-      const tmpDir = createBedrockYaml();
-      createBedrockYaml(tmpDir, {
-        rings: {
-          master: {
-            isDefault: true
-          }
-        },
-        services: {},
-        variableGroups: ["testvg"]
-      });
-      checkDependencies(tmpDir, "not-master");
-      expect(true).toBe(true);
-    } catch (e) {
-      expect(true).toBe(false); // Should not reach here
-    }
+    const tmpDir = createBedrockYaml();
+    createBedrockYaml(tmpDir, {
+      rings: {
+        master: {
+          isDefault: true
+        }
+      },
+      services: {},
+      variableGroups: ["testvg"]
+    });
+    checkDependencies(tmpDir, "not-master");
+    // No errors thrown, this is a pass for the function.
   });
   it("Project initialized, but ring already exists, it should fail.", async () => {
-    try {
-      const tmpDir = createBedrockYaml();
-      createBedrockYaml(tmpDir, {
-        rings: {
-          master: {
-            isDefault: true
-          }
-        },
-        services: {},
-        variableGroups: ["testvg"]
-      });
+    const tmpDir = createBedrockYaml(undefined, {
+      rings: {
+        master: {
+          isDefault: true
+        }
+      },
+      services: {},
+      variableGroups: ["testvg"]
+    });
+    expect(() => {
       checkDependencies(tmpDir, "master");
-      expect(true).toBe(false); // Should not reach here
-    } catch (e) {
-      expect(e).not.toBeNull();
-    }
+    }).toThrow();
   });
 });
 

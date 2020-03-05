@@ -5,7 +5,10 @@ import {
   read as loadBedrockFile
 } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
-import { PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE } from "../../lib/constants";
+import {
+  BEDROCK_FILENAME,
+  PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE
+} from "../../lib/constants";
 import { updateTriggerBranchesForServiceBuildAndUpdatePipeline } from "../../lib/fileutils";
 import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
@@ -81,7 +84,7 @@ export const checkDependencies = (projectPath: string, ringName: string) => {
   const bedrockFile: IBedrockFile = loadBedrockFile(projectPath);
   if (ringName in bedrockFile.rings) {
     throw new Error(
-      `ring: ${ringName} already exists in project bedrock.yaml.`
+      `ring: ${ringName} already exists in project ${BEDROCK_FILENAME}.`
     );
   }
 };
