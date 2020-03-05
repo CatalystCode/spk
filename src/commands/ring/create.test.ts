@@ -1,11 +1,7 @@
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
 import { read as loadBedrockFile } from "../../lib/bedrockYaml";
 import { createTempDir } from "../../lib/ioUtil";
-import {
-  disableVerboseLogging,
-  enableVerboseLogging,
-  logger
-} from "../../logger";
+import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 
 import * as fileUtils from "../../lib/fileutils";
 
@@ -90,7 +86,6 @@ describe("test execute function and logic", () => {
     mockPipelineUpdate.mockImplementation();
     const tmpDir = createTempDir();
 
-    logger.info("tempDir: " + tmpDir);
     createBedrockYaml(tmpDir, {
       rings: {
         master: {
