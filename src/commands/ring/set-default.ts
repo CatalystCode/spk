@@ -28,6 +28,8 @@ export const execute = async (
   }
 
   try {
+    logger.info(`Project path: ${projectPath}`);
+
     checkDependencies(projectPath);
 
     // Get bedrock.yaml
