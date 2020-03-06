@@ -86,6 +86,13 @@ export const deletePipeline = async (
   }
 };
 
+/**
+ * Returns latest build ststus of pipeline.
+ *
+ * @param buildApi Build API client
+ * @param projectName Project name
+ * @param pipelineName pipeline name
+ */
 export const getPipelineBuild = async (
   buildApi: IBuildApi,
   projectName: string,
@@ -100,6 +107,14 @@ export const getPipelineBuild = async (
   }
 };
 
+/**
+ * Polls build ststus of pipeline.
+ *
+ * @param buildApi Build API client
+ * @param projectName Project name
+ * @param pipelineName pipeline name
+ * @param waitDuration duration (in millisecond) before each poll
+ */
 export const pollForPipelineStatus = async (
   buildApi: IBuildApi,
   projectName: string,
@@ -125,6 +140,12 @@ export const pollForPipelineStatus = async (
   } while (!build || build.result === 0);
 };
 
+/**
+ * Creates HLD to Manifest pipeline
+ *
+ * @param buildApi Build API client
+ * @param rc Request context
+ */
 export const createHLDtoManifestPipeline = async (
   buildApi: IBuildApi,
   rc: IRequestContext
