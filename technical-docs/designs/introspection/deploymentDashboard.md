@@ -7,6 +7,7 @@ Authors: Samiya Akhtar, Andre Briggs, Dennis Seah
 | -------: | ------------ | ----------- | -------------------------------------- |
 |      0.1 | Mar-02, 2020 | Dennis Seah | Initial Draft                          |
 |      0.2 | Mar-05, 2020 | Dennis Seah | Incorporate comments from Andre Briggs |
+|      1.0 | Mar-06, 2020 | Dennis Seah | Void Document section because tasks are taken care of |
 
 ## 1. Overview
 
@@ -111,9 +112,7 @@ access to the IP address and port is able to see the content of the dashboard.
 None
 
 ## 7. Documentation
-
-1. Where is the docker image?
-2. What are the environment parameters to export?
+All documentation are covered as sprint tasks
 
 ## A. Appendix
 
