@@ -30,8 +30,7 @@ two flavors:
 
 ### 2. Add Azure Pipeline Build YAML
 
-The SPK repository has an `azure-pipelines.yml`
-[template](../../infra-generation-pipeline.yml) that you may use as reference.
+The SPK repository has a [template](../../azure-pipelines/templates/infra-generation-pipeline.yml) Azure DevOps pipeline that you may use as reference.
 Add the `infra-generation-pipeline.yml` file to the root of the Infra HLD repo.
 
 ### 3. Create Pipeline
@@ -70,7 +69,7 @@ AZDO_PROJECT_NAME: The name of the project in your Azure DevOps organization whe
 
 You can use `spk` to create the Azure DevOps Variable Groups by executing
 `spk variable-group create` described in this
-[doc](https://github.com/CatalystCode/spk/blob/master/docs/variable-group.md).
+[doc](../../guides/variable-group.md).
 This will require you to create a variable group manifest similar to the
 following:
 
