@@ -59,3 +59,11 @@ The followings shall be created
 A `setup.log` file is created after running this command. This file contains
 information about what are created and the execution status (completed or
 incomplete). This file will not be created if input validation failed.
+
+## Note
+
+To remove the service principal that it is created by the tool, you can do the
+followings:
+
+1. Get the identifier from `setup.log` (look for `az_sp_id`)
+2. run on terminal `az ad sp delete --id <the sp id>`
