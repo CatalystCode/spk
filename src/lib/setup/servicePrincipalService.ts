@@ -2,6 +2,11 @@ import { logger } from "../../logger";
 import { exec } from "../shell";
 import { IRequestContext } from "./constants";
 
+/**
+ * Login to az command line tool. This is done by
+ * doing a shell exec with `az login`; then browser opens
+ * prompting user to select the identity.
+ */
 export const azCLILogin = async () => {
   try {
     logger.info("attempting to login to az command line");
@@ -14,6 +19,14 @@ export const azCLILogin = async () => {
   }
 };
 
+/**
+ * Create a service principal with az command line tool.
+ * this service principal should have contributor privileges.
+ * Request context will have the service principal information
+ * when service principal is successfully created.
+ *
+ * @param rc Request Context
+ */
 export const createWithAzCLI = async (rc: IRequestContext) => {
   await azCLILogin();
   try {

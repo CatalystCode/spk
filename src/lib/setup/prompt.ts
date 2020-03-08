@@ -11,6 +11,13 @@ import {
 import { DEFAULT_PROJECT_NAME, IRequestContext, WORKSPACE } from "./constants";
 import { createWithAzCLI } from "./servicePrincipalService";
 
+/**
+ * Prompts for service principal identifer, password and tenant identifer.
+ * Request context will have the service principal information
+ * when this function is completed successfully.
+ *
+ * @param rc Request Context
+ */
 export const promptForServicePrincipal = async (rc: IRequestContext) => {
   const questions = [
     {
@@ -39,6 +46,12 @@ export const promptForServicePrincipal = async (rc: IRequestContext) => {
   rc.servicePrincipalTenantId = answers.az_sp_tenant as string;
 };
 
+/**
+ * Prompts for creating service principal. User can choose
+ * Yes or No.
+ *
+ * @param rc Request Context
+ */
 export const promptForServicePrincipalCreation = async (
   rc: IRequestContext
 ) => {
@@ -109,12 +122,33 @@ export const prompt = async (): Promise<IRequestContext> => {
   return rc;
 };
 
-/**
- * Returns answers that are provided in a file.
- *
- * @param file file name
- */
-export const getAnswerFromFile = (file: string): IRequestContext => {
+const validationServicePrincipalInfoFromFile = (
+  rc: IRequestContext,
+  map: { [key: string]: string }
+) => {
+  if (rc.toCreateAppRepo) {
+    rc.toCreateSP = map.az_create_sp === "true";
+
+    // file needs to contain sp information if user
+    // choose not to create SP
+    if (!rc.toCreateSP) {
+      const vSPId = validateServicePrincipalId(map.az_sp_id);
+      if (typeof vSPId === "string") {
+        throw new Error(vSPId);
+      }
+      const vSPPassword = validateServicePrincipalPassword(map.az_sp_password);
+      if (typeof vSPPassword === "string") {
+        throw new Error(vSPPassword);
+      }
+      const vSPTenantId = validateServicePrincipalTenantId(map.az_sp_tenant);
+      if (typeof vSPTenantId === "string") {
+        throw new Error(vSPTenantId);
+      }
+    }
+  }
+};
+
+const parseInformationFromFile = (file: string): { [key: string]: string } => {
   let content = "";
   try {
     content = fs.readFileSync(file, "utf-8");
@@ -132,6 +166,16 @@ export const getAnswerFromFile = (file: string): IRequestContext => {
       map[s.substring(0, idx).trim()] = s.substring(idx + 1).trim();
     }
   });
+  return map;
+};
+
+/**
+ * Returns answers that are provided in a file.
+ *
+ * @param file file name
+ */
+export const getAnswerFromFile = (file: string): IRequestContext => {
+  const map = parseInformationFromFile(file);
   map.azdo_project_name = map.azdo_project_name || DEFAULT_PROJECT_NAME;
 
   const vOrgName = validateOrgName(map.azdo_org_name);
@@ -160,26 +204,6 @@ export const getAnswerFromFile = (file: string): IRequestContext => {
   };
 
   rc.toCreateAppRepo = map.az_create_app === "true";
-
-  if (rc.toCreateAppRepo) {
-    rc.toCreateSP = map.az_create_sp === "true";
-
-    // file needs to contain sp information if user
-    // choose not to create SP
-    if (!rc.toCreateSP) {
-      const vSPId = validateServicePrincipalId(map.az_sp_id);
-      if (typeof vSPId === "string") {
-        throw new Error(vSPId);
-      }
-      const vSPPassword = validateServicePrincipalPassword(map.az_sp_password);
-      if (typeof vSPPassword === "string") {
-        throw new Error(vSPPassword);
-      }
-      const vSPTenantId = validateServicePrincipalTenantId(map.az_sp_tenant);
-      if (typeof vSPTenantId === "string") {
-        throw new Error(vSPTenantId);
-      }
-    }
-  }
+  validationServicePrincipalInfoFromFile(rc, map);
   return rc;
 };
