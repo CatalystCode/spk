@@ -20,9 +20,10 @@ export const promptForServicePrincipal = async (rc: IRequestContext) => {
       validate: validateServicePrincipalId
     },
     {
+      mask: "*",
       message: "Enter Service Principal Password\n",
       name: "az_sp_password",
-      type: "input",
+      type: "password",
       validate: validateServicePrincipalPassword
     },
     {
