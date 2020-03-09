@@ -73,10 +73,10 @@ export const generateAccessYaml = (
 
 /**
  * Outputs a bash string for a _safe_ source branch string -- a string where all
- * '/' and '.' in the string have been replaced with a '-'`
+ * '/', '.', and '_' in the string have been replaced with a '-'`
  */
 
-export const SAFE_SOURCE_BRANCH = `$(echo $(Build.SourceBranchName) | tr / - | tr . -)`;
+export const SAFE_SOURCE_BRANCH = `$(echo $(Build.SourceBranchName) | tr / - | tr . - | tr _ - )`;
 
 /**
  * Outputs a bash script to generate a _safe_ azure container registry url where it's all lowercase.
