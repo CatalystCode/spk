@@ -33,6 +33,8 @@ data, set up a Logic App to delete it. You can use the template
 for this. Edit the values in `parameters` and fill in your `<subscription id>`
 and `resource group` where the storage account is.
 
+To check existing Logic Apps in your subscription, go to the [portal.azure.com](http://portal.azure.com) and search for Logic Apps.
+
 # Scenarios Exercised So Far
 
 - As a developer create a mono-repo and add services
