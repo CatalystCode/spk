@@ -35,7 +35,7 @@ export const getSubscriptions = (
             name: s.displayName!
           };
         });
-        logger.info("Successfully acquored subscription list");
+        logger.info("Successfully acquired subscription list");
         resolve(result);
       })
       .catch(err => {
