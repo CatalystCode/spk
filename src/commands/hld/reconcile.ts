@@ -10,6 +10,7 @@ import { assertIsStringWithContent } from "../../lib/assertions";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { generateAccessYaml } from "../../lib/fileutils";
 import { tryGetGitOrigin } from "../../lib/gitutils";
+import * as dns from "../../lib/net/dns";
 import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
 import {
   ITraefikMiddleware,
@@ -74,11 +75,13 @@ export interface IReconcileDependencies {
   createMiddlewareForRing: typeof createMiddlewareForRing;
 }
 
+/**
+ * Normalizes the provided service name to a DNS-1123 and Fabrikate command safe
+ * name.
+ * All non-alphanumerics and non-dashes are converted to dashes
+ */
 export const normalizedName = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/\//g, "-")
-    .replace(/\./g, "-");
+  return dns.replaceIllegalCharacters(name).replace(/\./g, "-");
 };
 
 export const execute = async (
@@ -277,12 +280,6 @@ export const reconcileHld = async (
         serviceConfig
       );
 
-      // Create config directory, create static manifest directory.
-      await dependencies.createStaticComponent(
-        dependencies.exec,
-        normalizedRingPathInHld
-      );
-
       // Service explicitly requests no ingress-routes to be generated.
       if (serviceConfig.disableRouteScaffold) {
         logger.info(
@@ -290,6 +287,12 @@ export const reconcileHld = async (
         );
         continue;
       }
+
+      // Create config directory, create static manifest directory.
+      await dependencies.createStaticComponent(
+        dependencies.exec,
+        normalizedRingPathInHld
+      );
 
       // Calculate shared path for both IngressRoute and Middleware
       const ingressVersionAndPath = getFullPathPrefix(

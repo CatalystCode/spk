@@ -549,9 +549,9 @@ describe("reconcile tests", () => {
     expect(dependencies.createServiceComponent).toHaveBeenCalledTimes(1);
     expect(dependencies.createRingComponent).toHaveBeenCalledTimes(1);
     expect(dependencies.addChartToRing).toHaveBeenCalledTimes(1);
-    expect(dependencies.createStaticComponent).toHaveBeenCalledTimes(1);
 
     // Skipping route generation.
+    expect(dependencies.createStaticComponent).toHaveBeenCalledTimes(0);
     expect(dependencies.createMiddlewareForRing).not.toHaveBeenCalled();
     expect(dependencies.createIngressRouteForRing).not.toHaveBeenCalled();
   });
@@ -754,6 +754,10 @@ describe("normalizedName", () => {
     expect(normalizedName("Fabrikam.frontend/CartService")).toBe(
       "fabrikam-frontend-cartservice"
     );
+  });
+
+  it("replaces non-(alphanumeric|dash) with dashes", () => {
+    expect(normalizedName("foo-!@#.#$%")).toBe("foo--------");
   });
 });
 
