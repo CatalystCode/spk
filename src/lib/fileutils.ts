@@ -73,10 +73,10 @@ export const generateAccessYaml = (
 
 /**
  * Outputs a bash string for a _safe_ source branch string -- a string where all
- * '/' and '.' in the string have been replaced with a '-'`
+ * '/', '.', and '_' in the string have been replaced with a '-'`
  */
 
-export const SAFE_SOURCE_BRANCH = `$(echo $(Build.SourceBranchName) | tr / - | tr . -)`;
+export const SAFE_SOURCE_BRANCH = `$(echo $(Build.SourceBranchName) | tr / - | tr . - | tr _ - )`;
 
 /**
  * Outputs a bash script to generate a _safe_ azure container registry url where it's all lowercase.
@@ -298,7 +298,9 @@ export const serviceBuildAndUpdatePipeline = (
                   `echo "Image Name: $IMAGE_NAME"`,
                   `export IMAGE_REPO=${IMAGE_REPO}`,
                   `echo "Image Repository: $IMAGE_REPO"`,
-                  `../fab/fab set --subcomponent $(Build.Repository.Name).$FAB_SAFE_SERVICE_NAME.${SAFE_SOURCE_BRANCH}.chart image.tag=$IMAGE_TAG image.repository=$IMAGE_REPO/$BUILD_REPO_NAME`,
+                  `cd $(Build.Repository.Name)/$FAB_SAFE_SERVICE_NAME/${SAFE_SOURCE_BRANCH}`,
+                  `echo "FAB SET"`,
+                  `fab set --subcomponent chart image.tag=$IMAGE_TAG image.repository=$IMAGE_REPO/$BUILD_REPO_NAME`,
                   `echo "GIT STATUS"`,
                   `git status`,
                   `echo "GIT ADD (git add -A)"`,
@@ -594,7 +596,7 @@ const manifestGenerationPipelineYaml = () => {
           `message="$(Build.SourceVersionMessage)"`,
           `if [[ $message == *"Merged PR"* ]]; then`,
           `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\+//')`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr pr_id`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr $pr_id`,
           `else`,
           `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
           `fi`
