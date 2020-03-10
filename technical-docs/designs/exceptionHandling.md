@@ -2,9 +2,10 @@
 
 Reference: Exception Handling<br> Authors: Andre Briggs, Dennis Seah
 
-| Revision | Date         | Author      | Remarks       |
-| -------: | ------------ | ----------- | ------------- |
-|      0.1 | Mar-04, 2020 | Dennis Seah | Initial Draft |
+| Revision | Date         | Author      | Remarks                          |
+| -------: | ------------ | ----------- | -------------------------------- |
+|      0.1 | Mar-04, 2020 | Dennis Seah | Initial Draft                    |
+|      1.0 | Mar-10, 2020 | Dennis Seah | Incorporate comments from Yvonne |
 
 ## 1. Overview
 
@@ -39,11 +40,11 @@ try {
 }
 ```
 
-Reader of the code has a hard time understand why error is ignored.
+Reader of the code has a hard time understanding why error is ignored.
 
 ## 2. Out of Scope
 
-This document shall not cover exceptions/errors that are thrown by third parties
+This document shall not cover exceptions/errors that are thrown by third party
 software and/or from Microsoft's client API (e.g. from Azure DevOps).
 
 ## 3. Proposal
@@ -66,7 +67,7 @@ There are cases when we intentional ignore exceptions. For instance
 
 The proposal is to have adequate comments in the code to explain why exception
 is caught and ignored. Typically, we do not advise people to do this unless we
-are sure about it. Taking the example above, we can authentication and
+are sure about it. Taking the example above, we may have authentication and
 authorization failures too.
 
 ### 3.2 Maintain Exception Chain.
@@ -80,9 +81,9 @@ exception chain. For instance
      o Azdo pipeline API via web client
 ```
 
-The proposal is to have a way to maintain this exception chain; and preserving
-the statusCode. Taking the above example and presuming that authentication
-failed in web client call. We would like to have a JSON object like this
+The proposal is to have a way to maintain this exception chain; and preserve the
+statusCode. Taking the above example and presuming that authentication failed in
+web client call. We would like to have a JSON object like this
 
 ```
 {
@@ -98,7 +99,7 @@ failed in web client call. We would like to have a JSON object like this
 }
 ```
 
-And this JSON shall be `stringified` and logged as `error` in the finally output
+And this JSON shall be `stringified` and logged as `error` in the final output
 of the log.
 
 The typescript interface of this ErrorChain is
