@@ -266,7 +266,7 @@ spk project install-lifecycle-pipeline --org-name $AZDO_ORG --devops-project $AZ
 pipeline_created=$(az pipelines show --name $lifecycle_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify lifecycle pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15 1 1
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15 1
 
 # Approve pull request from lifecycle pipeline
 echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
