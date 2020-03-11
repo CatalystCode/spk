@@ -22,7 +22,7 @@ jest.mock("@azure/arm-resources", () => {
           createOrUpdate: async (
             resourceGroupName: string,
             parameters: ResourceGroup,
-            options?: RequestOptionsBase
+            opts?: RequestOptionsBase
           ): Promise<ResourceGroupsCreateOrUpdateResponse> => {
             return {} as any;
           },
