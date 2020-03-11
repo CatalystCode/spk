@@ -278,7 +278,7 @@ variables:
 
 **Note:** Deleting a `ring` presently does not remove the service and `ring`
 from a cluster as the project lifecycle pipeline does not yet remove rings or
-services from the HLD repository.\_ The work to support the automated removal of
+services from the HLD repository. The work to support the automated removal of
 rings and services is being
 [tracked here.](https://github.com/microsoft/bedrock/issues/858) The following
 instructions will detail how to remove a ring from a cluster by removing all

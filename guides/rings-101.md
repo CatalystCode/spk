@@ -114,7 +114,7 @@ ring to be the default ring via `spk ring set-default <new-default-ring-name>`.
 
 **Note:** Deleting a `ring` presently does not remove the service and `ring`
 from a cluster as the project lifecycle pipeline does not yet remove rings or
-services from the HLD repository.\_ The work to support the automated removal of
+services from the HLD repository. The work to support the automated removal of
 rings and services is being
 [tracked here.](https://github.com/microsoft/bedrock/issues/858) To manually
 remove the `ring` from the HLD repository and subsequently, the cluster, follow
