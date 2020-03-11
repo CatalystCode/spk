@@ -28,7 +28,7 @@ jest.mock("@azure/arm-containerregistry", () => {
             resourceGroupName: string,
             registryName: string,
             registry: Registry,
-            options?: RequestOptionsBase
+            opts?: RequestOptionsBase
           ): Promise<RegistriesCreateResponse> => {
             return {} as any;
           },
