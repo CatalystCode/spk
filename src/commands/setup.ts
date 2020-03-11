@@ -4,12 +4,14 @@ import yaml from "js-yaml";
 import { defaultConfigFile } from "../config";
 import { getBuildApi, getWebApi } from "../lib/azdoClient";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
+import { create as createACR } from "../lib/setup/azureContainerRegistryService";
 import { IRequestContext, WORKSPACE } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
 import { getGitApi } from "../lib/setup/gitService";
 import { createHLDtoManifestPipeline } from "../lib/setup/pipelineService";
 import { createProjectIfNotExist } from "../lib/setup/projectService";
 import { getAnswerFromFile, prompt } from "../lib/setup/prompt";
+import { create as createResourceGroup } from "../lib/setup/resourceService";
 import { hldRepo, manifestRepo } from "../lib/setup/scaffold";
 import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
@@ -101,6 +103,11 @@ export const execute = async (
     await hldRepo(gitAPI, requestContext);
     await manifestRepo(gitAPI, requestContext);
     await createHLDtoManifestPipeline(buildAPI, requestContext);
+
+    if (requestContext.toCreateAppRepo) {
+      await createResourceGroup(requestContext);
+      await createACR(requestContext);
+    }
 
     createSetupLog(requestContext);
     await exitFn(0);
