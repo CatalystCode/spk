@@ -334,6 +334,8 @@ echo "Successfully created a ring."
 ##################################
 # App Mono Repo Service Revision START
 ##################################
+cd $TEST_WORKSPACE
+cd $mono_repo_dir
 
 echo "Creating service revision"
 git branch $branchName
