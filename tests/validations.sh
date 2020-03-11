@@ -321,8 +321,7 @@ cd $TEST_WORKSPACE
 cd $manifests_dir
 
 git pull origin master
-#/prod/fabrikam2019/fabrikam-acme-front-end/test/*.yaml
-#prod/fabrikam2019/fabrikam-acme-frontend/
+
 ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/test"
 if [ ! -d "$ring_dir" ]; then
   echo "Directory '$ring_dir' does not exist"
