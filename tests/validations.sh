@@ -151,7 +151,7 @@ spk hld install-manifest-pipeline --org-name $AZDO_ORG -d $AZDO_PROJECT --person
 pipeline_created=$(az pipelines show --name $hld_to_manifest_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify hld to manifest pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 1
 
 ##################################
 # External Helm Chart Repo Setup START
@@ -265,7 +265,7 @@ spk project install-lifecycle-pipeline --org-name $AZDO_ORG --devops-project $AZ
 pipeline_created=$(az pipelines show --name $lifecycle_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify lifecycle pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15 1 1
 
 # Approve pull request from lifecycle pipeline
 echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
@@ -287,10 +287,48 @@ spk service install-build-pipeline --org-name $AZDO_ORG -u $remote_repo_url -d $
 pipeline_created=$(az pipelines show --name $frontend_pipeline_name --org $AZDO_ORG_URL --p $AZDO_PROJECT)
 
 # Verify frontend service pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15 1
 
 echo "Finding pull request that $frontend_pipeline_name pipeline created..."
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Updating $FrontEnd image tag to master"
+# --------------------------------
+
+##################################
+# App Mono Repo create ring
+##################################
+ring_name=test
+
+cd $TEST_WORKSPACE
+cd $mono_repo_dir
+
+echo "Create ring"
+spk ring create $ring_name
+git add -A
+git commit -m "Adding test ring"
+git push -u origin --all
+
+# Wait for the lifecycle pipeline to finish and approve the pull request
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15 2
+echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
+approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+
+# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 4
+
+# Verify the file was added in the manifest repository
+cd $TEST_WORKSPACE
+cd $manifests_dir
+
+git pull origin master
+#/prod/fabrikam2019/fabrikam-acme-front-end/test/*.yaml
+#prod/fabrikam2019/fabrikam-acme-frontend/
+ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/test"
+if [ ! -d "$ring_dir" ]; then
+  echo "Directory '$ring_dir' does not exist"
+  exit 1
+fi
+
+echo "Successfully created a ring."
 # --------------------------------
 
 ##################################
