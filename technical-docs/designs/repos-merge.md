@@ -216,37 +216,45 @@ Moving SPK repo to Bedrock involves following changes.
 The combined `bedrock` repo would look like below after implementing the above
 changes.
 
+#### Legend
+
+```diff
+# - no change from the merge process
++ - came from `spk` repo
+! - organized in `bedrock` repo changes before merge
+```
+
 ```diff
 # ├── .github
 # ├── gitops
 ! ├── cluster
 + ├── build
-      ├── pipelines
-        ├── templates
-        ├── azure-pipelines.yml
-        ├── release-pipeline.yml
-        ├── smoke-test-pipeline.yml
-     ├── patches
-        ├── 001-azure-devops-node.patch
-     ├── tools
-        ├── generateDoc.ts
-        ├── locateAliases.ts
-        ├── release-version-bump.sh
-        ├── tag-release.sh
-        ├── update_introspection.sh
+    + ├── pipelines
+        + ├── templates
+        + ├── azure-pipelines.yml
+        + ├── release-pipeline.yml
+        + ├── smoke-test-pipeline.yml
+    + ├── patches
+        + ├── 001-azure-devops-node.patch
+    + ├── tools
+       +  ├── generateDoc.ts
+       +  ├── locateAliases.ts
+       +  ├── release-version-bump.sh
+       +  ├── tag-release.sh
+       +  ├── update_introspection.sh
 + ├── docs
-      ├── commands
-      ├── contribution
-          ├── contributing.md
-          ├── designs
-      ├── guides
-# ├── src
-    ├── lib
-    ├── commands
-    ├── logger
+    + ├── commands
+    + ├── contribution
+        + ├── contributing.md
+        + ├── designs
+    + ├── guides
++ ├── src
+    + ├── lib
+    + ├── commands
+    + ├── logger
 + ├── tests
 + ├── typings
-    ├── ssh-url
+    + ├── ssh-url
 + ├── .editorconfig
 + ├── .gitignore
 + ├── jest.config.js
