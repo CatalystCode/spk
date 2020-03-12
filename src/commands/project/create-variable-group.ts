@@ -115,10 +115,10 @@ export const execute = async (
     );
 
     // set the variable group name
-    await setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
+    setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
 
     // update hld-lifecycle.yaml with variable groups in bedrock.yaml
-    await updateLifeCyclePipeline(projectPath);
+    updateLifeCyclePipeline(projectPath);
 
     // print newly created variable group
     echo(JSON.stringify(variableGroup, null, 2));
@@ -225,13 +225,10 @@ export const setVariableGroupInBedrockFile = (
   const absProjectRoot = path.resolve(rootProjectPath);
   logger.info(`Setting variable group ${variableGroupName}`);
 
-  let bedrockFile: IBedrockFile | undefined;
-
-  // Get bedrock.yaml
-  bedrockFile = Bedrock(rootProjectPath);
+  const bedrockFile = Bedrock(rootProjectPath);
 
   if (typeof bedrockFile === "undefined") {
-    throw new Error(`Bedrock file does not exist.`);
+    throw Error(`Bedrock file does not exist.`);
   }
 
   logger.verbose(
@@ -257,10 +254,10 @@ export const setVariableGroupInBedrockFile = (
  */
 export const updateLifeCyclePipeline = (rootProjectPath: string) => {
   if (!hasValue(rootProjectPath)) {
-    throw new Error("Project root path is not valid");
+    throw Error("Project root path is not valid");
   }
 
-  const fileName: string = PROJECT_PIPELINE_FILENAME;
+  const fileName = PROJECT_PIPELINE_FILENAME;
   const absProjectRoot = path.resolve(rootProjectPath);
 
   // Get bedrock.yaml

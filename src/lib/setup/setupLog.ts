@@ -24,6 +24,8 @@ export const create = (rc: IRequestContext | undefined, file?: string) => {
       `workspace: ${rc.workspace}`,
       `Project Created: ${getBooleanVal(rc.createdProject)}`,
       `High Level Definition Repo Scaffolded: ${getBooleanVal(rc.scaffoldHLD)}`,
+      `Helm Repo Scaffolded: ${getBooleanVal(rc.scaffoldHelm)}`,
+      `Sample App Repo Scaffolded: ${getBooleanVal(rc.scaffoldAppService)}`,
       `Manifest Repo Scaffolded: ${getBooleanVal(rc.scaffoldManifest)}`,
       `HLD to Manifest Pipeline Created: ${getBooleanVal(
         rc.createdHLDtoManifestPipeline

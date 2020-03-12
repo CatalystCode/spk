@@ -16,11 +16,13 @@ import {
   logger
 } from "../../logger";
 import { IVariableGroupData, IVariableGroupDataVariable } from "../../types";
+import * as azdoClient from "../azdoClient";
 import {
   addVariableGroup,
   addVariableGroupWithKeyVaultMap,
   authorizeAccessToAllPipelines,
   buildVariablesMap,
+  deleteVariableGroup,
   doAddVariableGroup
 } from "./variableGroup";
 
@@ -416,5 +418,32 @@ describe("buildVariablesMap", () => {
     const variables: IVariableGroupDataVariable = {};
     const secretsMap = await buildVariablesMap(variables);
     expect(Object.keys(secretsMap).length).toBe(0);
+  });
+});
+
+describe("test deleteVariableGroup function", () => {
+  it("positive test: group found", async () => {
+    const delFn = jest.fn();
+    jest.spyOn(azdoClient, "getTaskAgentApi").mockResolvedValue({
+      deleteVariableGroup: delFn,
+      getVariableGroups: () => [
+        {
+          id: "test"
+        }
+      ]
+    } as any);
+    const deleted = await deleteVariableGroup({}, "test");
+    expect(delFn).toBeCalledTimes(1);
+    expect(deleted).toBeTruthy();
+  });
+  it("positive test: no matching groups found", async () => {
+    const delFn = jest.fn();
+    jest.spyOn(azdoClient, "getTaskAgentApi").mockResolvedValue({
+      deleteVariableGroup: delFn,
+      getVariableGroups: () => []
+    } as any);
+    const deleted = await deleteVariableGroup({}, "test");
+    expect(delFn).toBeCalledTimes(0);
+    expect(deleted).toBeFalsy();
   });
 });

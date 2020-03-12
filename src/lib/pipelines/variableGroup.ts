@@ -243,3 +243,23 @@ export const buildVariablesMap = async (
   logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
   return variablesMap;
 };
+
+/**
+ * Deletes variable group
+ *
+ * @param opts optionally override spk config with Azure DevOps access options
+ * @param name Name of group to be deleted.
+ * @returns true if group exists and deleted.
+ */
+export const deleteVariableGroup = async (
+  opts: IAzureDevOpsOpts,
+  name: string
+) => {
+  const taskClient = await getTaskAgentApi(opts);
+  const groups = await taskClient.getVariableGroups(opts.project!, name);
+  if (groups && groups.length > 0 && groups[0].id) {
+    await taskClient.deleteVariableGroup(opts.project!, groups[0].id);
+    return true;
+  }
+  return false;
+};
