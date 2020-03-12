@@ -216,12 +216,12 @@ Moving SPK repo to Bedrock involves following changes.
 The combined `bedrock` repo would look like below after implementing the above
 changes.
 
-```
-├── .github
-<span style="color:blue">├── gitops</span>
-├── cluster
-├── build
-    ├── pipelines
+```diff
+# ├── .github
+# ├── gitops
+! ├── cluster
++ ├── build
+      ├── pipelines
         ├── templates
         ├── azure-pipelines.yml
         ├── release-pipeline.yml
@@ -234,29 +234,29 @@ changes.
         ├── release-version-bump.sh
         ├── tag-release.sh
         ├── update_introspection.sh
-├── docs
-    ├── commands
-    ├── contribution
-        ├── contributing.md
-        ├── designs
-    ├── guides
-├── src
++ ├── docs
+      ├── commands
+      ├── contribution
+          ├── contributing.md
+          ├── designs
+      ├── guides
+# ├── src
     ├── lib
     ├── commands
     ├── logger
-├── tests
-├── typings
++ ├── tests
++ ├── typings
     ├── ssh-url
-├── .editorconfig
-├── .gitignore
-├── jest.config.js
-├── tsconfig.json
-├── tslint.json
-├── CHANGELOG.md
-├── README.md
-├── package.json
-├── webpack.config.js
-├── .yarn.lock
++ ├── .editorconfig
++ ├── .gitignore
++ ├── jest.config.js
++ ├── tsconfig.json
++ ├── tslint.json
++ ├── CHANGELOG.md
++ ├── README.md
++ ├── package.json
++ ├── webpack.config.js
++ ├── .yarn.lock
 ```
 
 ### Next Steps
