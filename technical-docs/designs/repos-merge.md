@@ -220,41 +220,41 @@ _color legend:_
 
 ```diff
 # - no change from the merge process
-+ - came from `spk` repo
++ - all files and folders including sub folders came from `spk` repo
 ! - changed before merge in `bedrock` repo
 ```
 
-````diff
+```diff
 # ├── .github
 # ├── gitops
 ! ├── cluster
 + ├── build
-    + ├── pipelines
-        + ├── templates
-        + ├── azure-pipelines.yml
-        + ├── release-pipeline.yml
-        + ├── smoke-test-pipeline.yml
-    + ├── patches
-        + ├── 001-azure-devops-node.patch
-    + ├── tools
-       +  ├── generateDoc.ts
-       +  ├── locateAliases.ts
-       +  ├── release-version-bump.sh
-       +  ├── tag-release.sh
-       +  ├── update_introspection.sh
+      ├── pipelines
+          ├── templates
+          ├── azure-pipelines.yml
+          ├── release-pipeline.yml
+          ├── smoke-test-pipeline.yml
+      ├── patches
+          ├── 001-azure-devops-node.patch
+      ├── tools
+          ├── generateDoc.ts
+          ├── locateAliases.ts
+          ├── release-version-bump.sh
+          ├── tag-release.sh
+          ├── update_introspection.sh
 + ├── docs
-    + ├── commands
-    + ├── contribution
-        + ├── contributing.md
-        + ├── designs
-    + ├── guides
+      ├── commands
+      ├── contribution
+          ├── contributing.md
+          ├── designs
+      ├── guides
 + ├── src
-    + ├── lib
-    + ├── commands
-    + ├── logger
+      ├── lib
+      ├── commands
+      ├── logger
 + ├── tests
 + ├── typings
-    ```diff + ├── ssh-url```
+      ├── ssh-url
 + ├── .editorconfig
 + ├── .gitignore
 + ├── jest.config.js
@@ -265,7 +265,7 @@ _color legend:_
 + ├── package.json
 + ├── webpack.config.js
 + ├── .yarn.lock
-````
+```
 
 ### Next Steps
 
