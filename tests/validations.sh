@@ -317,6 +317,12 @@ spk service create-revision -t "$pr_title" -d "Adding my new file" --org-name $A
 echo "Attempting to approve pull request: '$pr_title'"
 # Get the id of the pr created and set the PR to be approved
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
+echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
+approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+
+# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 4
 # --------------------------------
 
 ##################################
@@ -361,12 +367,12 @@ git commit -m "Adding test ring"
 git push -u origin --all
 
 # Wait for the lifecycle pipeline to finish and approve the pull request
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 180 15 3
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 3
 echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
 
 # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 4
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 5
 
 # Verify the file was added in the manifest repository
 cd $TEST_WORKSPACE
