@@ -88,7 +88,7 @@ variables:
   ARM_SUBSCRIPTION_ID:
     value: "<SUBSCRIPTION-ID>"
   ARM_TENANT_ID:
-    value: "<SP-TENANT-ID>
+    value: "<SP-TENANT-ID>"
   CLUSTER:
     value: "<CLUSTER-NAME>"
   GENERATED_REPO:
