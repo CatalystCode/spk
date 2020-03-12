@@ -268,9 +268,8 @@ changes
 
 - Evaluate the contents of `gitops` folder and move contents to appropriate
   folders
-- Move all `*.md` in `gitops` folder to `docs\gitops` folder
-- Move all `*.sh` and other script files in `gitops` folder to `build\tools`
-  folder
+- Move all `*.md` files from `gitops` folder to `docs\gitops` folder
+- Move all `*.sh` script files from `gitops` folder to `build\tools` folder
 
 ## Phase 5: Create a side by side new repo for Bedrock Infra Terraform
 
