@@ -157,6 +157,9 @@ key_vault_provider:
     # AAD Tenant Id for the above Service Principal
 ```
 
+> Be sure not to commit your variable group manifest to a remote repository
+> unless environment variables were used.
+
 Alternatively you can create a variable group through the Azure DevOps UI and
 connect it to the pre-existing Key Vault you created. Navigate to your pipeline
 library and create a new variable group. Identify the key vault that was
@@ -168,6 +171,14 @@ Additionally, be sure to select the respective Key secrets you wish to map to
 your variable group.
 
 ![](../images/secrets-kv-vg.png)
+
+> When using a variable group, you may be prompted to grant access permission to
+> all pipelines in order for your newly created pipeline to have access to an
+> agent pool and specific service connections. Be sure to navigate to the
+> Pipeline UI to permit permission to use the agent pool and the service
+> connection to authenticate against your key vault.
+
+![](../images/permit_access.jpg)
 
 #### 3.2. Create a new pipeline.
 
