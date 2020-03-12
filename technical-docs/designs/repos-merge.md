@@ -216,15 +216,15 @@ Moving SPK repo to Bedrock involves following changes.
 The combined `bedrock` repo would look like below after implementing the above
 changes.
 
-#### Legend
+_color legend:_
 
 ```diff
 # - no change from the merge process
 + - came from `spk` repo
-! - organized in `bedrock` repo changes before merge
+! - changed before merge in `bedrock` repo
 ```
 
-```diff
+````diff
 # ├── .github
 # ├── gitops
 ! ├── cluster
@@ -254,7 +254,7 @@ changes.
     + ├── logger
 + ├── tests
 + ├── typings
-    + ├── ssh-url
+    ```diff + ├── ssh-url```
 + ├── .editorconfig
 + ├── .gitignore
 + ├── jest.config.js
@@ -265,7 +265,7 @@ changes.
 + ├── package.json
 + ├── webpack.config.js
 + ├── .yarn.lock
-```
+````
 
 ### Next Steps
 
