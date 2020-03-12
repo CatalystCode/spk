@@ -1,0 +1,267 @@
+# Moving SPK to Bedrock Repo: A Phased Approach
+
+## Phase 1: Make Changes to Bedrock Repo
+
+Making following changes in existing Bedrock repo minimizes the number of
+changes after the merge and limits the testing scope.
+
+### Current Bedrock Repo
+
+```
+├── .github
+├── cluster
+├── docs
+├── gitops
+├── pipelines
+├── test
+├── tools
+├── LICESNE
+├── README.md
+├── .gitignore
+├── azure-pipelines.yml
+```
+
+### Proposed Changes
+
+- Create `src` folder in `cluster` folder
+- Move all files and folders except `src` from `cluster` to `cluster\src`
+- Move `azure-pipelines.yml` file from the root to `cluster\build\pipelines`
+  directory and make sure all pipelines still works.
+- Move `docs` folder to `cluster` folder and make sure all doc links works.
+- Move `test` folder to `cluster` folder and make sure all tests and pipelines
+  still works.
+- Move `tools` directory to `cluster\build` folder and make sure existing
+  Bedrock release process still works.
+- [ ] Move following files form the `root` directory to `cluster` and make sure
+      `cluster` project can be opened in VS Code.
+  - LICESNE
+  - README.md
+  - .gitignore
+
+### Test
+
+After making the above changes, need to make sure that the follwing tests pass.
+
+- Verify the environments integration tests continue to work in `azdo`
+- Verify all `docs` links work
+- Verify `bedrock` release provess work
+- Verify the project can be opened in VS Code from the `cluster` folder
+
+### Bedrock repo after changes
+
+`Bedrock` repo would look like below after implementing the above changes.
+
+```
+├── .github
+├── gitops
+├── cluster
+    ├── build
+        ├── pipelines
+            ├── azure-pipelines.yml
+        ├── tools
+    ├── docs
+    ├── src
+    ├── test
+    ├── LICESNE
+    ├── README.md
+    ├── .gitignore
+
+```
+
+## Phase 2: Make Changes to SPK Repo
+
+Making following changes in existing SPK repo minimizes the number of changes
+after the merge and limits the testing scope to SPK functioanlity.
+
+### Current SPK repo
+
+```
+├── .github
+├── azure-pipelines
+    ├── templates
+├── docs
+    ├── commands
+├── guides
+├── patches
+├── scripts
+├── src
+├── technical-docs
+    ├── designs
+├── tests
+├── tools
+├── typings
+    ├── ssh-url
+├── .editorconfig
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+├── README.md
+├── azure-pipelines.yml
+├── jest.config.js
+├── package.json
+├── release-pipeline.yml
+├── smoke-test-pipeline.yml
+├── spk-config.yaml
+├── tsconfig.json
+├── tslint.json
+├── typings
+├── webpack.config.js
+├── .yarn.lock
+```
+
+### Themes
+
+The main themes are related to organizing `docs` and `build` related artifacts
+in `spk` from the root to appropriate directories.
+
+1. Oragnize all pipeline yaml files, scripts, and tools that are related to
+   building and releasing binaries under `build` directory.
+
+2. Organize all docs that are related to using and contributing bedrock under
+   `docs` directory.
+
+### Proposed Changes
+
+The majority of the proposed changes in `spk` repo are related to organizing
+`docs` and `build` folders.
+
+- Move following files from the `root` to `build\pipelines` folder and make sure
+  all pipelines continue to work.
+  - azure-pipelines.yml
+  - release-pipeline.yml
+  - smoke-test-pipeline.yml
+- Move following files from the `scripts` to `build\tools` folder and verify the
+  scripts generate `command` docs.
+  - generateDoc.ts
+  - locateAliases.ts
+- Move `patches` directory to `build\patches` folder and make sure `yarn build`
+  and `yarn test` continue to work.
+- Move `azure-pipelines\templates` folder to `build\pipelines\templates` folder
+  and verify all pipelines continue to work.
+- Move `guides\contributing.md` file to `docs\contribution` folder
+- Move `guides` folder to `docs` folder
+- Move `technical-docs\designs` to `docs\contribution\designs` folder
+
+### SPK repo after changes
+
+`spk` repo would look like below after implementing the above changes.
+
+```
+├── .github
+├── build
+    ├── pipelines
+        ├── templates
+        ├── azure-pipelines.yml
+        ├── release-pipeline.yml
+        ├── smoke-test-pipeline.yml
+     ├── patches
+        ├── 001-azure-devops-node.patch
+     ├── tools
+        ├── generateDoc.ts
+        ├── locateAliases.ts
+        ├── release-version-bump.sh
+        ├── tag-release.sh
+        ├── update_introspection.sh
+├── docs
+    ├── commands
+    ├── contribution
+        ├── contributing.md
+        ├── designs
+    ├── guides
+├── src
+    ├── lib
+    ├── commands
+    ├── logger
+├── tests
+├── typings
+    ├── ssh-url
+├── .editorconfig
+├── .gitignore
+├── jest.config.js
+├── tsconfig.json
+├── tslint.json
+├── CHANGELOG.md
+├── README.md
+├── package.json
+├── webpack.config.js
+├── .yarn.lock
+```
+
+## Phase 3: Move SPK to Bedrock Repo
+
+Moving SPK repo to Bedrock involves following changes.
+
+### Activities
+
+- Move `.github\workflows` to `.github` folder in `bedrock` repo
+- Update `.readme.md` in `bedrock` repo with contents from `spk` repo as
+  appropriate. Please note this is not a complete merge since it is a new
+  landing page of combined repos.
+- Create or update `changelog.md` file. (_TBD_)
+- Move all files and folder from the root of `spk` to `bedrock` root
+
+### Combined repo
+
+The combined `bedrock` repo would look like below after implementing the above
+changes.
+
+```
+├── .github
+├── gitops
+├── cluster
+├── build
+    ├── pipelines
+        ├── templates
+        ├── azure-pipelines.yml
+        ├── release-pipeline.yml
+        ├── smoke-test-pipeline.yml
+     ├── patches
+        ├── 001-azure-devops-node.patch
+     ├── tools
+        ├── generateDoc.ts
+        ├── locateAliases.ts
+        ├── release-version-bump.sh
+        ├── tag-release.sh
+        ├── update_introspection.sh
+├── docs
+    ├── commands
+    ├── contribution
+        ├── contributing.md
+        ├── designs
+    ├── guides
+├── src
+    ├── lib
+    ├── commands
+    ├── logger
+├── tests
+├── typings
+    ├── ssh-url
+├── .editorconfig
+├── .gitignore
+├── jest.config.js
+├── tsconfig.json
+├── tslint.json
+├── CHANGELOG.md
+├── README.md
+├── package.json
+├── webpack.config.js
+├── .yarn.lock
+```
+
+### Next Steps
+
+At this point we can allow the codebase to stabilize for a while. Once we are
+confident that things are working we can enter the 4th phase of post merge
+changes
+
+## Phase 4: Post merge organization
+
+- Evaluate the contents of `gitops` folder and move contents to appropriate
+  folders
+- Move all `*.md` in `gitops` folder to `docs\gitops` folder
+- Move all `*.sh` and other script files in `gitops` folder to `build\tools`
+  folder
+
+## Phase 5: Create a side by side new repo for Bedrock Infra Terraform
+
+TODO
