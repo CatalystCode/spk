@@ -297,7 +297,7 @@ approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Updating $FrontEnd image tag t
 ##################################
 # App Mono Repo create ring
 ##################################
-ring_name=test
+ring_name=qa-ring
 
 cd $TEST_WORKSPACE
 cd $mono_repo_dir
@@ -322,11 +322,15 @@ cd $manifests_dir
 
 git pull origin master
 
-ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/test"
+ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/$ring_name"
 if [ ! -d "$ring_dir" ]; then
   echo "Directory '$ring_dir' does not exist"
   exit 1
 fi
+
+echo "Validating ingress routes"
+
+validate_file "$ring_dir/static.yaml" "'PathPrefix(\`/fabrikam-acme-frontend\`) && Headers(\`Ring\`, \`qa-ring\`)'"
 
 echo "Successfully created a ring."
 # --------------------------------
