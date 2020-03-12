@@ -1,6 +1,7 @@
 # Moving SPK to Bedrock Repo: A Phased Approach
 
-## Phase 1: Make Changes to Bedrock Repo
+## Phase 1: Make Changes to Bedrock and SPK Repos
+**Make Changes to Bedrock Repo**
 
 By making following changes in existing Bedrock repo minimizes the number of
 changes after the merge and limits the testing scope.
@@ -15,7 +16,7 @@ changes after the merge and limits the testing scope.
 ├── pipelines
 ├── test
 ├── tools
-├── LICESNE
+├── LICENSE
 ├── README.md
 ├── .gitignore
 ├── azure-pipelines.yml
@@ -34,7 +35,7 @@ changes after the merge and limits the testing scope.
   Bedrock release process still works.
 - [ ] Move following files form the `root` directory to `cluster` and make sure
       `cluster` project can be opened in VS Code.
-  - LICESNE
+  - LICENSE
   - README.md
   - .gitignore
 
@@ -62,13 +63,13 @@ After making the above changes, need to make sure that the follwing tests pass.
     ├── docs
     ├── src
     ├── test
-    ├── LICESNE
+    ├── LICENSE
     ├── README.md
     ├── .gitignore
 
 ```
 
-## Phase 2: Make Changes to SPK Repo
+**Make Changes to SPK Repo**
 
 Making following changes in existing SPK repo minimizes the number of changes
 after the merge and limits the testing scope to SPK functioanlity.
@@ -197,7 +198,7 @@ After making the above changes, need to make sure that the follwing tests pass.
 ├── .yarn.lock
 ```
 
-## Phase 3: Move SPK to Bedrock Repo
+## Phase 2: Move SPK to Bedrock Repo
 
 Moving SPK repo to Bedrock involves following changes.
 
@@ -264,13 +265,13 @@ At this point we can allow the codebase to stabilize for a while. Once we are
 confident that things are working we can enter the 4th phase of post merge
 changes
 
-## Phase 4: Post merge organization
+## Phase 3: Post merge organization
 
 - Evaluate the contents of `gitops` folder and move contents to appropriate
   folders
 - Move all `*.md` files from `gitops` folder to `docs\gitops` folder
 - Move all `*.sh` script files from `gitops` folder to `build\tools` folder
 
-## Phase 5: Create a side by side new repo for Bedrock Infra Terraform
+## Phase 4: Create a side by side new repo for Bedrock Infra Terraform
 
 TODO
