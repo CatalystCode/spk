@@ -317,12 +317,6 @@ spk service create-revision -t "$pr_title" -d "Adding my new file" --org-name $A
 echo "Attempting to approve pull request: '$pr_title'"
 # Get the id of the pr created and set the PR to be approved
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "$pr_title"
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
-echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
-approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
-
-# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 4
 # --------------------------------
 
 ##################################
@@ -350,9 +344,18 @@ validate_file "$TEST_WORKSPACE/$manifests_dir/prod/$mono_repo_dir/$FrontEndCompl
 # Eventually add rings as some stage....
 # --------------------------------
 
+# Get the current pipeline/build id at this stage. This will be used by the introspection integration test.
+pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organization $AZDO_ORG_URL --project $AZDO_PROJECT | jq '.[0].id')
+
 ##################################
 # App Mono Repo create ring
 ##################################
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
+echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
+approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+
+# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 4
 ring_name=qa-ring
 
 cd $TEST_WORKSPACE
@@ -416,7 +419,7 @@ else
 fi
 
 # Compare $pipeline_id with the data returned by get.
-pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organization $AZDO_ORG_URL --project $AZDO_PROJECT | jq '.[0].id')
+
 listofIds=$(cat file.json | jq '.[].srcToDockerBuild.id')
 
 if [[ $listofIds == *"$pipeline1id"* ]]; then
