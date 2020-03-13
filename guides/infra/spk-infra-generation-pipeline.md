@@ -120,25 +120,25 @@ name: "spk-infra-hld-vg-kv"
 description: "key vault variable group for infra hld"
 type: "AzureKeyVault"
 variables:
-  ACCESS-TOKEN-SECRET:
+  ACCESSTOKENSECRET:
     enabled: true
-  ARM-CLIENT-ID:
+  ARMCLIENTID:
     enabled: true
-  ARM-CLIENT-SECRET:
+  ARMCLIENTSECRET:
     enabled: true
-  ARM-SUBSCRIPTION-ID:
+  ARMSUBSCRIPTIONID:
     enabled: true
-  ARM-TENANT-ID:
+  ARMTENANTID:
     enabled: true
   CLUSTER:
     enabled: true
-  GENERATED-REPO:
+  GENERATEDREPO:
     enabled: true
-  PROJECT-DIRECTORY:
+  PROJECTDIRECTORY:
     enabled: true
-  AZDO-ORG-NAME: (optional)
+  AZDOORGNAME: (optional)
     enabled: true
-  AZDO-PROJECT-NAME: (optional)
+  AZDOPROJECTNAME: (optional)
     enabled: true
 key_vault_provider:
   name: "myvault"                                                # name of the Azure Key Vaukt with Secrets
