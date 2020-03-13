@@ -1,5 +1,4 @@
 // imports
-import { StorageManagementClient } from "@azure/arm-storage";
 import uuid from "uuid/v4";
 import * as deploymenttable from "../../lib/azure/deploymenttable";
 import {

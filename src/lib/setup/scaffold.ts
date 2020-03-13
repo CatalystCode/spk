@@ -19,15 +19,17 @@ import {
   HELM_REPO,
   HLD_DEFAULT_COMPONENT_NAME,
   HLD_DEFAULT_DEF_PATH,
-  HLD_DEFAULT_GIT_URL,
   HLD_REPO,
   IRequestContext,
   MANIFEST_REPO,
   VARIABLE_GROUP
 } from "./constants";
 import { createDirectory, moveToAbsPath, moveToRelativePath } from "./fsUtil";
-import { createRepoInAzureOrg } from "./gitService";
-import { commitAndPushToRemote } from "./gitService";
+import {
+  commitAndPushToRemote,
+  createRepoInAzureOrg,
+  getAzureRepoUrl
+} from "./gitService";
 import { chartTemplate, mainTemplate, valuesTemplate } from "./helmTemplates";
 
 export const createRepo = async (
@@ -101,7 +103,7 @@ export const hldRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
     await hldInitialize(
       process.cwd(),
       false,
-      HLD_DEFAULT_GIT_URL,
+      "https://github.com/microsoft/fabrikate-definitions.git",
       HLD_DEFAULT_COMPONENT_NAME,
       HLD_DEFAULT_DEF_PATH
     );
@@ -178,7 +180,7 @@ export const setupVariableGroup = async (rc: IRequestContext) => {
   await createVariableGroup(
     VARIABLE_GROUP,
     ACR,
-    HLD_DEFAULT_GIT_URL,
+    getAzureRepoUrl(rc.orgName, rc.projectName, HLD_REPO),
     rc.servicePrincipalId,
     rc.servicePrincipalPassword,
     rc.servicePrincipalTenantId,
@@ -190,7 +192,7 @@ export const setupVariableGroup = async (rc: IRequestContext) => {
   updateLifeCyclePipeline(".");
 };
 
-export const initService = async (repoName: string) => {
+export const initService = async (rc: IRequestContext, repoName: string) => {
   await createService(".", repoName, {
     displayName: repoName,
     gitPush: false,
@@ -198,7 +200,7 @@ export const initService = async (repoName: string) => {
     helmChartRepository: "",
     helmConfigAccessTokenVariable: "ACCESS_TOKEN_SECRET",
     helmConfigBranch: "master",
-    helmConfigGit: HLD_DEFAULT_GIT_URL,
+    helmConfigGit: getAzureRepoUrl(rc.orgName, rc.projectName, HELM_REPO),
     helmConfigPath: `${repoName}/chart`,
     k8sBackend: "",
     k8sBackendPort: "80",
@@ -230,11 +232,11 @@ export const appRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
     );
 
     await projectInitialize(".");
-    await git.add("./*");
-    await commitAndPushToRemote(git, rc, repoName);
-
     await setupVariableGroup(rc);
-    await initService(repoName);
+    await initService(rc, repoName);
+    await git.add("./*");
+
+    await commitAndPushToRemote(git, rc, repoName);
 
     rc.scaffoldAppService = true;
     logger.info("Completed scaffold app Repo");

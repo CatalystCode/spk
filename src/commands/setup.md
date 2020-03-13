@@ -64,6 +64,7 @@ The followings shall be created
       already exists.
    5. A Git Repo, `quick-start-app`, it shall be deleted and recreated if is
       already exists.
+   6. A Life Cycle pipeline.
 
 ## Setup log
 

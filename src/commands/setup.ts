@@ -1,3 +1,5 @@
+import { IBuildApi } from "azure-devops-node-api/BuildApi";
+import { IGitApi } from "azure-devops-node-api/GitApi";
 import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
@@ -15,9 +17,17 @@ import {
 } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
 import { getGitApi } from "../lib/setup/gitService";
-import { createHLDtoManifestPipeline } from "../lib/setup/pipelineService";
+import {
+  createBuildPipeline,
+  createHLDtoManifestPipeline,
+  createLifecyclePipeline
+} from "../lib/setup/pipelineService";
 import { createProjectIfNotExist } from "../lib/setup/projectService";
-import { getAnswerFromFile, prompt } from "../lib/setup/prompt";
+import {
+  getAnswerFromFile,
+  prompt,
+  promptForApprovingHLDPullRequest
+} from "../lib/setup/prompt";
 import {
   appRepo,
   helmRepo,
@@ -86,7 +96,11 @@ export const getErrorMessage = (
   return err.toString();
 };
 
-export const createAppRepoTasks = async (rc: IRequestContext) => {
+export const createAppRepoTasks = async (
+  gitAPI: IGitApi,
+  buildAPI: IBuildApi,
+  rc: IRequestContext
+) => {
   if (rc.toCreateAppRepo) {
     rc.createdResourceGroup = await createResourceGroup(
       rc.servicePrincipalId!,
@@ -105,6 +119,16 @@ export const createAppRepoTasks = async (rc: IRequestContext) => {
       ACR,
       RESOURCE_GROUP_LOCATION
     );
+    await helmRepo(gitAPI, rc);
+    await appRepo(gitAPI, rc);
+    await createLifecyclePipeline(buildAPI, rc);
+    const approved = await promptForApprovingHLDPullRequest(rc);
+
+    if (approved) {
+      await createBuildPipeline(buildAPI, rc);
+    } else {
+      logger.warning("HLD Pull Request is not approved.");
+    }
   }
 };
 
@@ -136,9 +160,7 @@ export const execute = async (
     await hldRepo(gitAPI, requestContext);
     await manifestRepo(gitAPI, requestContext);
     await createHLDtoManifestPipeline(buildAPI, requestContext);
-    await createAppRepoTasks(requestContext);
-    await helmRepo(gitAPI, requestContext);
-    await appRepo(gitAPI, requestContext);
+    await createAppRepoTasks(gitAPI, buildAPI, requestContext);
 
     createSetupLog(requestContext);
     await exitFn(0);

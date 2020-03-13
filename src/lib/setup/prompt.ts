@@ -10,7 +10,13 @@ import {
   validateServicePrincipalTenantId,
   validateSubscriptionId
 } from "../validator";
-import { DEFAULT_PROJECT_NAME, IRequestContext, WORKSPACE } from "./constants";
+import {
+  DEFAULT_PROJECT_NAME,
+  HLD_REPO,
+  IRequestContext,
+  WORKSPACE
+} from "./constants";
+import { getAzureRepoUrl } from "./gitService";
 import { createWithAzCLI } from "./servicePrincipalService";
 import { getSubscriptions } from "./subscriptionService";
 
@@ -240,4 +246,22 @@ export const getAnswerFromFile = (file: string): IRequestContext => {
   validationServicePrincipalInfoFromFile(rc, map);
 
   return rc;
+};
+
+export const promptForApprovingHLDPullRequest = async (rc: IRequestContext) => {
+  const urlPR = `${getAzureRepoUrl(
+    rc.orgName,
+    rc.projectName,
+    HLD_REPO
+  )}/pullrequest`;
+  const questions = [
+    {
+      default: true,
+      message: `Please approve and merge a PR at ${urlPR}? Refresh the page after a while if you do not see active PR.`,
+      name: "approve_hld_pr",
+      type: "confirm"
+    }
+  ];
+  const answers = await inquirer.prompt(questions);
+  return !!answers.approve_hld_pr;
 };

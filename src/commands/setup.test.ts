@@ -82,7 +82,11 @@ const testExecuteFunc = async (usePrompt = true, hasProject = true) => {
   jest.spyOn(scaffold, "appRepo").mockResolvedValueOnce();
   jest
     .spyOn(pipelineService, "createHLDtoManifestPipeline")
-    .mockReturnValueOnce(Promise.resolve());
+    .mockResolvedValueOnce();
+  jest
+    .spyOn(pipelineService, "createLifecyclePipeline")
+    .mockResolvedValueOnce();
+  jest.spyOn(pipelineService, "createBuildPipeline").mockResolvedValueOnce();
   jest.spyOn(resourceService, "create").mockResolvedValue(true);
   jest.spyOn(azureContainerRegistryService, "create").mockResolvedValue(true);
   jest.spyOn(setupLog, "create").mockReturnValueOnce();

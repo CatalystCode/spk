@@ -10,6 +10,7 @@ import * as restAuth from "@azure/ms-rest-nodeauth";
 import {
   create,
   getContainerRegistries,
+  getContainerRegistry,
   isExist
 } from "./containerRegistryService";
 import * as containerRegistryService from "./containerRegistryService";
@@ -189,5 +190,42 @@ describe("test container registries function", () => {
       RESOURCE_GROUP_LOCATION
     );
     expect(created).toBeTruthy();
+  });
+});
+
+describe("test getContainerRegistry function", () => {
+  it("match", async () => {
+    const entry = {
+      id:
+        "/subscriptions/dd831253-787f-4dc8-8eb0-ac9d052177d9/resourceGroups/quick-start-rg/providers/Microsoft.ContainerRegistry/registries/quickStartACR",
+      name: "quickStartACR",
+      resourceGroup: "quick-start-rg"
+    };
+    jest
+      .spyOn(containerRegistryService, "getContainerRegistries")
+      .mockResolvedValueOnce([entry]);
+    const reg = await getContainerRegistry(
+      servicePrincipalId,
+      servicePrincipalPassword,
+      servicePrincipalTenantId,
+      subscriptionId,
+      RESOURCE_GROUP,
+      "quickStartACR"
+    );
+    expect(reg).toStrictEqual(entry);
+  });
+  it("no matches", async () => {
+    jest
+      .spyOn(containerRegistryService, "getContainerRegistries")
+      .mockResolvedValueOnce([]);
+    const reg = await getContainerRegistry(
+      servicePrincipalId,
+      servicePrincipalPassword,
+      servicePrincipalTenantId,
+      subscriptionId,
+      RESOURCE_GROUP,
+      "quickStartACR"
+    );
+    expect(reg).toBeUndefined();
   });
 });

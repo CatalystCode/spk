@@ -32,6 +32,10 @@ export const create = (rc: IRequestContext | undefined, file?: string) => {
       )}`,
       `Service Principal Created: ${getBooleanVal(rc.createServicePrincipal)}`,
       `Resource Group Created: ${getBooleanVal(rc.createdResourceGroup)}`,
+      `Lifecycle Pipeline Created: ${getBooleanVal(
+        rc.createdLifecyclePipeline
+      )}`,
+      `Build Pipeline Created: ${getBooleanVal(rc.createdBuildPipeline)}`,
       `ACR Created: ${getBooleanVal(rc.createdACR)}`
     ];
     if (rc.error) {
