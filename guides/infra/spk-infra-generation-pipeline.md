@@ -168,7 +168,10 @@ previously provisioned.
 ![](../images/kvsetupvg.png)
 
 Additionally, be sure to select the respective Key secrets you wish to map to
-your variable group.
+your variable group. Only the secret _names_ are mapped to the variable group,
+not the secret values. The latest version of the value of each secret is fetched
+from the vault and used in the pipeline linked to the variable group during the
+run.
 
 ![](../images/secrets-kv-vg.png)
 
