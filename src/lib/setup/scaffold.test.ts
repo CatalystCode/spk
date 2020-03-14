@@ -1,19 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as fs from "fs-extra";
 import * as path from "path";
 import simpleGit from "simple-git/promise";
-
 import * as cmdCreateVariableGroup from "../../commands/project/create-variable-group";
 import * as projectInit from "../../commands/project/init";
 import * as createService from "../../commands/service/create";
-
 import * as variableGroup from "../../lib/pipelines/variableGroup";
 import { createTempDir } from "../ioUtil";
 import {
   APP_REPO,
   HELM_REPO,
   HLD_REPO,
-  IRequestContext,
-  MANIFEST_REPO
+  MANIFEST_REPO,
+  RequestContext
 } from "./constants";
 import * as gitService from "./gitService";
 import {
@@ -26,7 +25,7 @@ import {
 } from "./scaffold";
 import * as scaffold from "./scaffold";
 
-const createRequestContext = (workspace: string): IRequestContext => {
+const createRequestContext = (workspace: string): RequestContext => {
   return {
     accessToken: "accessToken",
     orgName: "orgName",

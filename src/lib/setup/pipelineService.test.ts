@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import * as hldPipeline from "../../commands/hld/pipeline";
 import * as projectPipeline from "../../commands/project/pipeline";
 import * as servicePipeline from "../../commands/service/pipeline";
 import { deepClone } from "../util";
-import { IRequestContext, WORKSPACE } from "./constants";
+import { RequestContext, WORKSPACE } from "./constants";
 import {
   createBuildPipeline,
   createHLDtoManifestPipeline,
@@ -16,14 +18,14 @@ import {
 } from "./pipelineService";
 import * as pipelineService from "./pipelineService";
 
-const mockRequestContext: IRequestContext = {
+const mockRequestContext: RequestContext = {
   accessToken: "pat",
   orgName: "orgname",
   projectName: "project",
   workspace: WORKSPACE
 };
 
-const getMockRequestContext = (): IRequestContext => {
+const getMockRequestContext = (): RequestContext => {
   return deepClone(mockRequestContext);
 };
 

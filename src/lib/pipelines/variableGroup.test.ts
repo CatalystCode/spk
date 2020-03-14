@@ -1,9 +1,5 @@
-// Mocks
-jest.mock("azure-devops-node-api");
-jest.mock("../../config");
-jest.mock("../azdoClient");
-
-// Imports
+/* eslint-disable @typescript-eslint/camelcase */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   VariableGroup,
   VariableGroupParameters
@@ -15,7 +11,7 @@ import {
   enableVerboseLogging,
   logger
 } from "../../logger";
-import { IVariableGroupData, IVariableGroupDataVariable } from "../../types";
+import { VariableGroupData, VariableGroupDataVariable } from "../../types";
 import * as azdoClient from "../azdoClient";
 import {
   addVariableGroup,
@@ -25,6 +21,11 @@ import {
   deleteVariableGroup,
   doAddVariableGroup
 } from "./variableGroup";
+
+// Mocks
+jest.mock("azure-devops-node-api");
+jest.mock("../../config");
+jest.mock("../azdoClient");
 
 // Tests
 beforeAll(() => {
@@ -39,7 +40,7 @@ describe("addVariableGroup", () => {
   test("should fail when variable group config is not set", async () => {
     (readYaml as jest.Mock).mockReturnValue({});
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let invalidGroupError: Error | undefined;
     try {
       logger.info("calling add variable group");
@@ -65,7 +66,7 @@ describe("addVariableGroup", () => {
       ]
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let group: VariableGroup | undefined;
     try {
       logger.info("calling add variable group with mock config");
@@ -80,7 +81,7 @@ describe("addVariableGroup", () => {
 describe("addVariableGroupWithKeyVaultMap", () => {
   test("should fail when variable group data is not set", async () => {
     (readYaml as jest.Mock).mockReturnValue({});
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let invalidGroupError: Error | undefined;
     try {
       logger.info("calling add variable group with Key Vault map");
@@ -105,7 +106,7 @@ describe("addVariableGroupWithKeyVaultMap", () => {
       ]
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let group: VariableGroup | undefined;
     try {
       logger.info("calling addVariableGroupWithKeyVaultMap with mock config");
@@ -140,7 +141,7 @@ describe("addVariableGroupWithKeyVaultMap", () => {
       ]
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let group: VariableGroup | undefined;
     try {
       group = await addVariableGroupWithKeyVaultMap(data);
@@ -167,7 +168,7 @@ describe("addVariableGroupWithKeyVaultMap", () => {
       ]
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let group: VariableGroup | undefined;
     try {
       group = await addVariableGroupWithKeyVaultMap(data);
@@ -201,7 +202,7 @@ describe("addVariableGroupWithKeyVaultMap", () => {
       ]
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     let group: VariableGroup | undefined;
     try {
       logger.info("calling add variable group with mock config");
@@ -231,7 +232,7 @@ describe("doAddVariableGroup", () => {
       }
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     const variablesMap = await buildVariablesMap(data.variables);
 
     // create variable group parameterts
@@ -280,7 +281,7 @@ describe("doAddVariableGroup", () => {
       }
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     const variablesMap = await buildVariablesMap(data.variables);
 
     // create variable group parameterts
@@ -319,7 +320,7 @@ describe("authorizeAccessToAllPipelines", () => {
       }
     });
 
-    const data = readYaml<IVariableGroupData>("");
+    const data = readYaml<VariableGroupData>("");
     const variablesMap = await buildVariablesMap(data.variables);
 
     // create variable group parameterts
@@ -355,7 +356,7 @@ describe("authorizeAccessToAllPipelines", () => {
 
 describe("buildVariablesMap", () => {
   test("should create variable map with two variables", async () => {
-    const variables: IVariableGroupDataVariable = {
+    const variables: VariableGroupDataVariable = {
       var1: {
         isSecret: false,
         value: "val1"
@@ -372,7 +373,7 @@ describe("buildVariablesMap", () => {
   });
 
   test("should create variable map with one variable", async () => {
-    const variables: IVariableGroupDataVariable = {
+    const variables: VariableGroupDataVariable = {
       var1: {
         isSecret: false,
         value: "val1"
@@ -384,13 +385,13 @@ describe("buildVariablesMap", () => {
   });
 
   test("should create empty variable map with no variables", async () => {
-    const variables: IVariableGroupDataVariable = {};
+    const variables: VariableGroupDataVariable = {};
     const map = await buildVariablesMap(variables);
     expect(Object.keys(map).length).toBe(0);
   });
 
   test("should create variable map with two secrets", async () => {
-    const variables: IVariableGroupDataVariable = {
+    const variables: VariableGroupDataVariable = {
       secret1: {
         enabled: false
       },
@@ -404,7 +405,7 @@ describe("buildVariablesMap", () => {
   });
 
   test("should create variable map with one secret", async () => {
-    const variables: IVariableGroupDataVariable = {
+    const variables: VariableGroupDataVariable = {
       secret1: {
         enabled: true
       }
@@ -415,7 +416,7 @@ describe("buildVariablesMap", () => {
   });
 
   test("should create empty variable map with no secrets", async () => {
-    const variables: IVariableGroupDataVariable = {};
+    const variables: VariableGroupDataVariable = {};
     const secretsMap = await buildVariablesMap(variables);
     expect(Object.keys(secretsMap).length).toBe(0);
   });
@@ -431,6 +432,7 @@ describe("test deleteVariableGroup function", () => {
           id: "test"
         }
       ]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const deleted = await deleteVariableGroup({}, "test");
     expect(delFn).toBeCalledTimes(1);
@@ -441,6 +443,7 @@ describe("test deleteVariableGroup function", () => {
     jest.spyOn(azdoClient, "getTaskAgentApi").mockResolvedValue({
       deleteVariableGroup: delFn,
       getVariableGroups: () => []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const deleted = await deleteVariableGroup({}, "test");
     expect(delFn).toBeCalledTimes(0);

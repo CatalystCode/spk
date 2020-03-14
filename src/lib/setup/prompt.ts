@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import fs from "fs";
 import inquirer from "inquirer";
-
 import {
   validateAccessToken,
   validateOrgName,
@@ -13,14 +13,16 @@ import {
 import {
   DEFAULT_PROJECT_NAME,
   HLD_REPO,
-  IRequestContext,
+  RequestContext,
   WORKSPACE
 } from "./constants";
 import { getAzureRepoUrl } from "./gitService";
 import { createWithAzCLI } from "./servicePrincipalService";
 import { getSubscriptions } from "./subscriptionService";
 
-export const promptForSubscriptionId = async (rc: IRequestContext) => {
+export const promptForSubscriptionId = async (
+  rc: RequestContext
+): Promise<void> => {
   const subscriptions = await getSubscriptions(rc);
   if (subscriptions.length === 0) {
     throw Error("no subscriptions found");
@@ -37,6 +39,7 @@ export const promptForSubscriptionId = async (rc: IRequestContext) => {
       }
     ];
     const ans = await inquirer.prompt(questions);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     rc.subscriptionId = subscriptions.find(
       s => s.name === (ans.az_subscription as string)
     )!.id;
@@ -50,7 +53,9 @@ export const promptForSubscriptionId = async (rc: IRequestContext) => {
  *
  * @param rc Request Context
  */
-export const promptForServicePrincipal = async (rc: IRequestContext) => {
+export const promptForServicePrincipal = async (
+  rc: RequestContext
+): Promise<void> => {
   const questions = [
     {
       message: "Enter Service Principal Id\n",
@@ -85,8 +90,8 @@ export const promptForServicePrincipal = async (rc: IRequestContext) => {
  * @param rc Request Context
  */
 export const promptForServicePrincipalCreation = async (
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   const questions = [
     {
       default: true,
@@ -111,7 +116,7 @@ export const promptForServicePrincipalCreation = async (
  *
  * @return answers to the questions
  */
-export const prompt = async (): Promise<IRequestContext> => {
+export const prompt = async (): Promise<RequestContext> => {
   const questions = [
     {
       message: "Enter organization name\n",
@@ -141,7 +146,7 @@ export const prompt = async (): Promise<IRequestContext> => {
     }
   ];
   const answers = await inquirer.prompt(questions);
-  const rc: IRequestContext = {
+  const rc: RequestContext = {
     accessToken: answers.azdo_pat as string,
     orgName: answers.azdo_org_name as string,
     projectName: answers.azdo_project_name as string,
@@ -156,9 +161,9 @@ export const prompt = async (): Promise<IRequestContext> => {
 };
 
 const validationServicePrincipalInfoFromFile = (
-  rc: IRequestContext,
+  rc: RequestContext,
   map: { [key: string]: string }
-) => {
+): void => {
   if (rc.toCreateAppRepo) {
     rc.toCreateSP = map.az_create_sp === "true";
 
@@ -213,7 +218,7 @@ const parseInformationFromFile = (file: string): { [key: string]: string } => {
  *
  * @param file file name
  */
-export const getAnswerFromFile = (file: string): IRequestContext => {
+export const getAnswerFromFile = (file: string): RequestContext => {
   const map = parseInformationFromFile(file);
   map.azdo_project_name = map.azdo_project_name || DEFAULT_PROJECT_NAME;
 
@@ -232,7 +237,7 @@ export const getAnswerFromFile = (file: string): IRequestContext => {
     throw new Error(vToken);
   }
 
-  const rc: IRequestContext = {
+  const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
     projectName: map.azdo_project_name,
@@ -248,7 +253,9 @@ export const getAnswerFromFile = (file: string): IRequestContext => {
   return rc;
 };
 
-export const promptForApprovingHLDPullRequest = async (rc: IRequestContext) => {
+export const promptForApprovingHLDPullRequest = async (
+  rc: RequestContext
+): Promise<boolean> => {
   const urlPR = `${getAzureRepoUrl(
     rc.orgName,
     rc.projectName,

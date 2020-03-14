@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   Build,
@@ -19,7 +20,7 @@ import {
   APP_REPO_BUILD,
   APP_REPO_LIFECYCLE,
   HLD_REPO,
-  IRequestContext,
+  RequestContext,
   MANIFEST_REPO
 } from "./constants";
 import { getAzureRepoUrl } from "./gitService";
@@ -29,7 +30,16 @@ import { getAzureRepoUrl } from "./gitService";
  *
  * @param status build status
  */
-export const getBuildStatusString = (status: number | undefined) => {
+export const getBuildStatusString = (
+  status: number | undefined
+):
+  | "Unknown"
+  | "None"
+  | "In Progress"
+  | "Completed"
+  | "Cancelling"
+  | "Postponed"
+  | "Not Started" => {
   if (status === undefined) {
     return "Unknown";
   }
@@ -89,7 +99,7 @@ export const deletePipeline = async (
   projectName: string,
   pipelineName: string,
   pipelineId: number
-) => {
+): Promise<void> => {
   try {
     logger.info(`Deleting pipeline ${pipelineName}`);
     await buildApi.deleteDefinition(projectName, pipelineId);
@@ -133,7 +143,7 @@ export const pollForPipelineStatus = async (
   projectName: string,
   pipelineName: string,
   waitDuration = 15000
-) => {
+): Promise<void> => {
   const oPipeline = await getPipelineByName(
     buildApi,
     projectName,
@@ -155,9 +165,9 @@ export const pollForPipelineStatus = async (
 
 const deletePipleLineIfExist = async (
   buildApi: IBuildApi,
-  rc: IRequestContext,
+  rc: RequestContext,
   pipelineName: string
-) => {
+): Promise<void> => {
   const pipeline = await getPipelineByName(
     buildApi,
     rc.projectName,
@@ -177,8 +187,8 @@ const deletePipleLineIfExist = async (
  */
 export const createHLDtoManifestPipeline = async (
   buildApi: IBuildApi,
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   const manifestUrl = getAzureRepoUrl(
     rc.orgName,
     rc.projectName,
@@ -203,7 +213,7 @@ export const createHLDtoManifestPipeline = async (
     await pollForPipelineStatus(buildApi, rc.projectName, pipelineName);
     rc.createdHLDtoManifestPipeline = true;
   } catch (err) {
-    logger.error(`An error occured in create HLD to Manifest Pipeline`);
+    logger.error(`An error occurred in create HLD to Manifest Pipeline`);
     throw err;
   }
 };
@@ -216,8 +226,8 @@ export const createHLDtoManifestPipeline = async (
  */
 export const createLifecyclePipeline = async (
   buildApi: IBuildApi,
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   const pipelineName = APP_REPO_LIFECYCLE;
 
   try {
@@ -249,8 +259,8 @@ export const createLifecyclePipeline = async (
  */
 export const createBuildPipeline = async (
   buildApi: IBuildApi,
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   const pipelineName = APP_REPO_BUILD;
 
   try {

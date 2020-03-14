@@ -1,5 +1,7 @@
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { IGitApi } from "azure-devops-node-api/GitApi";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/camelcase */
 import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
@@ -10,7 +12,7 @@ import { create as createResourceGroup } from "../lib/azure/resourceService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
 import {
   ACR,
-  IRequestContext,
+  RequestContext,
   RESOURCE_GROUP,
   RESOURCE_GROUP_LOCATION,
   WORKSPACE
@@ -38,11 +40,11 @@ import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
 import decorator from "./setup.decorator.json";
 
-interface ICommandOptions {
+interface CommandOptions {
   file: string | undefined;
 }
 
-interface IAPIError {
+interface APIError {
   message: string;
   statusCode: number;
 }
@@ -52,7 +54,7 @@ interface IAPIError {
  *
  * @param answers Answers provided to the commander
  */
-export const createSPKConfig = (rc: IRequestContext) => {
+export const createSPKConfig = (rc: RequestContext): void => {
   const data = rc.toCreateAppRepo
     ? {
         azure_devops: {
@@ -80,9 +82,9 @@ export const createSPKConfig = (rc: IRequestContext) => {
 };
 
 export const getErrorMessage = (
-  rc: IRequestContext | undefined,
-  err: Error | IAPIError
-) => {
+  rc: RequestContext | undefined,
+  err: Error | APIError
+): string => {
   if (rc) {
     if (err.message && err.message.indexOf("VS402392") !== -1) {
       return `Project, ${
@@ -99,8 +101,8 @@ export const getErrorMessage = (
 export const createAppRepoTasks = async (
   gitAPI: IGitApi,
   buildAPI: IBuildApi,
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   if (rc.toCreateAppRepo) {
     rc.createdResourceGroup = await createResourceGroup(
       rc.servicePrincipalId!,
@@ -140,29 +142,30 @@ export const createAppRepoTasks = async (
  * @param exitFn exit function
  */
 export const execute = async (
-  opts: ICommandOptions,
+  opts: CommandOptions,
   exitFn: (status: number) => Promise<void>
-) => {
+): Promise<void> => {
   // tslint:disable-next-line: no-unnecessary-initializer
-  let requestContext: IRequestContext | undefined = undefined;
+  let requestContext: RequestContext | undefined = undefined;
 
   try {
     requestContext = opts.file ? getAnswerFromFile(opts.file) : await prompt();
+    const rc = requestContext!;
     createDirectory(WORKSPACE, true);
-    createSPKConfig(requestContext);
+    createSPKConfig(rc);
 
     const webAPI = await getWebApi();
     const coreAPI = await webAPI.getCoreApi();
     const gitAPI = await getGitApi(webAPI);
     const buildAPI = await getBuildApi();
 
-    await createProjectIfNotExist(coreAPI, requestContext);
-    await hldRepo(gitAPI, requestContext);
-    await manifestRepo(gitAPI, requestContext);
-    await createHLDtoManifestPipeline(buildAPI, requestContext);
-    await createAppRepoTasks(gitAPI, buildAPI, requestContext);
+    await createProjectIfNotExist(coreAPI, rc);
+    await hldRepo(gitAPI, rc);
+    await manifestRepo(gitAPI, rc);
+    await createHLDtoManifestPipeline(buildAPI, rc);
+    await createAppRepoTasks(gitAPI, buildAPI, rc);
 
-    createSetupLog(requestContext);
+    createSetupLog(rc);
     await exitFn(0);
   } catch (err) {
     const msg = getErrorMessage(requestContext, err);
@@ -183,7 +186,7 @@ export const execute = async (
  * @param command Commander command object to decorate
  */
 export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
     await execute(opts, async (status: number) => {
       await exitCmd(logger, process.exit, status);
     });
