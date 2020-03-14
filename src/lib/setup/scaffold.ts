@@ -10,7 +10,7 @@ import {
 } from "../../commands/project/create-variable-group";
 import { initialize as projectInitialize } from "../../commands/project/init";
 import { createService } from "../../commands/service/create";
-import { IAzureDevOpsOpts } from "../../lib/git";
+import { AzureDevOpsOpts } from "../../lib/git";
 import { deleteVariableGroup } from "../../lib/pipelines/variableGroup";
 import { logger } from "../../logger";
 import {
@@ -21,13 +21,12 @@ import {
   HLD_DEFAULT_DEF_PATH,
   HLD_DEFAULT_GIT_URL,
   HLD_REPO,
-  IRequestContext,
   MANIFEST_REPO,
+  RequestContext,
   VARIABLE_GROUP
 } from "./constants";
 import { createDirectory, moveToAbsPath, moveToRelativePath } from "./fsUtil";
-import { createRepoInAzureOrg } from "./gitService";
-import { commitAndPushToRemote } from "./gitService";
+import { commitAndPushToRemote, createRepoInAzureOrg } from "./gitService";
 import { chartTemplate, mainTemplate, valuesTemplate } from "./helmTemplates";
 
 export const createRepo = async (
@@ -52,7 +51,10 @@ export const createRepo = async (
  * @param gitApi Git API client
  * @param rc request Context
  */
-export const manifestRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
+export const manifestRepo = async (
+  gitApi: IGitApi,
+  rc: RequestContext
+): Promise<void> => {
   logger.info("Scaffolding Manifest Repo");
   const repoName = MANIFEST_REPO;
   const curFolder = process.cwd();
@@ -84,7 +86,10 @@ export const manifestRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
  * @param gitApi Git API client
  * @param rc request Context
  */
-export const hldRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
+export const hldRepo = async (
+  gitApi: IGitApi,
+  rc: RequestContext
+): Promise<void> => {
   logger.info("Scaffolding HLD Repo");
   const repoName = HLD_REPO;
   const curFolder = process.cwd();
@@ -119,7 +124,7 @@ export const hldRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
 /**
  * Create chart directory and add helm chart files
  */
-export const createChartArtifacts = () => {
+export const createChartArtifacts = (): void => {
   createDirectory(APP_REPO);
   moveToRelativePath(APP_REPO);
   createDirectory("chart");
@@ -139,7 +144,10 @@ export const createChartArtifacts = () => {
   fs.writeFileSync(path.join(process.cwd(), "all-in-one.yaml"), mainTemplate);
 };
 
-export const helmRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
+export const helmRepo = async (
+  gitApi: IGitApi,
+  rc: RequestContext
+): Promise<void> => {
   logger.info("Scaffolding helm Repo");
   const repoName = HELM_REPO;
   const curFolder = process.cwd();
@@ -167,8 +175,8 @@ export const helmRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
   }
 };
 
-export const setupVariableGroup = async (rc: IRequestContext) => {
-  const accessOpts: IAzureDevOpsOpts = {
+export const setupVariableGroup = async (rc: RequestContext): Promise<void> => {
+  const accessOpts: AzureDevOpsOpts = {
     orgName: rc.orgName,
     personalAccessToken: rc.accessToken,
     project: rc.projectName
@@ -190,7 +198,7 @@ export const setupVariableGroup = async (rc: IRequestContext) => {
   updateLifeCyclePipeline(".");
 };
 
-export const initService = async (repoName: string) => {
+export const initService = async (repoName: string): Promise<void> => {
   await createService(".", repoName, {
     displayName: repoName,
     gitPush: false,
@@ -215,7 +223,10 @@ export const initService = async (repoName: string) => {
   });
 };
 
-export const appRepo = async (gitApi: IGitApi, rc: IRequestContext) => {
+export const appRepo = async (
+  gitApi: IGitApi,
+  rc: RequestContext
+): Promise<void> => {
   logger.info("Scaffolding app Repo");
   const repoName = APP_REPO;
   const curFolder = process.cwd();
