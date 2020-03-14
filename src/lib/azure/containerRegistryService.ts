@@ -41,33 +41,6 @@ const getClient = async (
 };
 
 /**
- * Returns container registry with matching name
- *
- * @param servicePrincipalId Service Principal Id
- * @param servicePrincipalPassword Service Principal Password
- * @param servicePrincipalTenantId Service Principal Tenant Id
- * @param subscriptionId Subscription Id
- */
-export const getContainerRegistry = async (
-  servicePrincipalId: string,
-  servicePrincipalPassword: string,
-  servicePrincipalTenantId: string,
-  subscriptionId: string,
-  resourceGroup: string,
-  name: string
-): Promise<IRegistryItem | undefined> => {
-  const registries = await getContainerRegistries(
-    servicePrincipalId,
-    servicePrincipalPassword,
-    servicePrincipalTenantId,
-    subscriptionId
-  );
-  return registries.find(
-    r => r.resourceGroup === resourceGroup && r.name === name
-  );
-};
-
-/**
  * Returns a list of container registries based on the service principal credentials.
  *
  * @param servicePrincipalId Service Principal Id
@@ -99,6 +72,33 @@ export const getContainerRegistries = async (
       resourceGroup: match ? match[1] : ""
     };
   });
+};
+
+/**
+ * Returns container registry with matching name
+ *
+ * @param servicePrincipalId Service Principal Id
+ * @param servicePrincipalPassword Service Principal Password
+ * @param servicePrincipalTenantId Service Principal Tenant Id
+ * @param subscriptionId Subscription Id
+ */
+export const getContainerRegistry = async (
+  servicePrincipalId: string,
+  servicePrincipalPassword: string,
+  servicePrincipalTenantId: string,
+  subscriptionId: string,
+  resourceGroup: string,
+  name: string
+): Promise<RegistryItem | undefined> => {
+  const registries = await getContainerRegistries(
+    servicePrincipalId,
+    servicePrincipalPassword,
+    servicePrincipalTenantId,
+    subscriptionId
+  );
+  return registries.find(
+    r => r.resourceGroup === resourceGroup && r.name === name
+  );
 };
 
 /**

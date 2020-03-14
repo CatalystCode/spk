@@ -130,6 +130,9 @@ const testExecuteFunc = async (
   const fncreateProject = jest
     .spyOn(projectService, "createProject")
     .mockReturnValueOnce(Promise.resolve());
+  jest
+    .spyOn(promptInstance, "promptForApprovingHLDPullRequest")
+    .mockResolvedValueOnce(true);
 
   if (usePrompt) {
     await execute(
