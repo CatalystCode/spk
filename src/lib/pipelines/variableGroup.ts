@@ -252,9 +252,9 @@ export const buildVariablesMap = async (
  * @returns true if group exists and deleted.
  */
 export const deleteVariableGroup = async (
-  opts: IAzureDevOpsOpts,
+  opts: AzureDevOpsOpts,
   name: string
-) => {
+): Promise<boolean> => {
   const taskClient = await getTaskAgentApi(opts);
   const groups = await taskClient.getVariableGroups(opts.project!, name);
   if (groups && groups.length > 0 && groups[0].id) {

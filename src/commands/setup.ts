@@ -88,7 +88,7 @@ export const getErrorMessage = (
   return err.toString();
 };
 
-export const createAppRepoTasks = async (rc: IRequestContext) => {
+export const createAppRepoTasks = async (rc: RequestContext): Promise<void> => {
   if (rc.toCreateAppRepo) {
     rc.createdResourceGroup = await createResourceGroup(
       rc.servicePrincipalId!,
