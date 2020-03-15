@@ -11,7 +11,6 @@ import { create as createACR } from "../lib/azure/containerRegistryService";
 import { create as createResourceGroup } from "../lib/azure/resourceService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
 import {
-  ACR,
   RequestContext,
   RESOURCE_GROUP,
   RESOURCE_GROUP_LOCATION,
@@ -118,7 +117,7 @@ export const createAppRepoTasks = async (
       rc.servicePrincipalTenantId!,
       rc.subscriptionId!,
       RESOURCE_GROUP,
-      ACR,
+      rc.acrName!,
       RESOURCE_GROUP_LOCATION
     );
     await helmRepo(gitAPI, rc);

@@ -14,7 +14,6 @@ import { AzureDevOpsOpts } from "../../lib/git";
 import { deleteVariableGroup } from "../../lib/pipelines/variableGroup";
 import { logger } from "../../logger";
 import {
-  ACR,
   APP_REPO,
   HELM_REPO,
   HLD_DEFAULT_COMPONENT_NAME,
@@ -126,8 +125,10 @@ export const hldRepo = async (
 
 /**
  * Create chart directory and add helm chart files
+ *
+ * @param acrName Azure Container Registry Name.
  */
-export const createChartArtifacts = (): void => {
+export const createChartArtifacts = (acrName: string): void => {
   createDirectory(APP_REPO);
   moveToRelativePath(APP_REPO);
   createDirectory("chart");
@@ -138,7 +139,7 @@ export const createChartArtifacts = (): void => {
 
   const values = valuesTemplate
     .replace("@@CHART_APP_NAME@@", APP_REPO)
-    .replace("@@ACR_NAME@@", ACR);
+    .replace("@@ACR_NAME@@", acrName);
   fs.writeFileSync(path.join(process.cwd(), "values.yaml"), values);
 
   createDirectory("templates");
@@ -163,7 +164,8 @@ export const helmRepo = async (
       rc.projectName,
       rc.workspace
     );
-    createChartArtifacts();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    createChartArtifacts(rc.acrName!);
     moveToAbsPath(curFolder);
     moveToRelativePath(rc.workspace);
     moveToRelativePath(repoName);
@@ -188,7 +190,8 @@ export const setupVariableGroup = async (rc: RequestContext): Promise<void> => {
   await deleteVariableGroup(accessOpts, VARIABLE_GROUP);
   await createVariableGroup(
     VARIABLE_GROUP,
-    ACR,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    rc.acrName!,
     getAzureRepoUrl(rc.orgName, rc.projectName, HLD_REPO),
     rc.servicePrincipalId,
     rc.servicePrincipalPassword,
