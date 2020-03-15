@@ -7,14 +7,20 @@ import path from "path";
 import uuid from "uuid";
 import { saveConfiguration } from "../config";
 import * as config from "../config";
+import * as servicePrincipalService from "../lib/azure/servicePrincipalService";
+import * as subscriptionService from "../lib/azure/subscriptionService";
 import { createTempDir } from "../lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "../logger";
 import { ConfigYaml } from "../types";
 import {
   execute,
   getConfig,
+  getSubscriptionId,
   handleInteractiveMode,
+  handleIntrospectionInteractive,
+  isIntrospectionAzureDefined,
   prompt,
+  promptCreateSP,
   validatePersonalAccessToken
 } from "./init";
 import * as init from "./init";
@@ -30,6 +36,9 @@ afterAll(() => {
 });
 
 const mockFileName = "src/commands/mocks/spk-config.yaml";
+const principalId = uuid();
+const principalPassword = uuid();
+const principalTenantId = uuid();
 
 describe("Test execute function", () => {
   it("negative test: missing file value", async () => {
@@ -177,7 +186,8 @@ const testHandleInteractiveModeFunc = async (
     Promise.resolve({
       azdo_org_name: "org_name",
       azdo_pat: "pat",
-      azdo_project_name: "project"
+      azdo_project_name: "project",
+      toSetupIntrospectionConfig: true
     })
   );
   jest
@@ -185,6 +195,7 @@ const testHandleInteractiveModeFunc = async (
     .mockReturnValueOnce(Promise.resolve(verified));
   const tmpFile = path.join(createTempDir(), "config.yaml");
   jest.spyOn(config, "defaultConfigFile").mockReturnValueOnce(tmpFile);
+  jest.spyOn(init, "handleIntrospectionInteractive").mockResolvedValueOnce();
   await handleInteractiveMode();
   const content = fs.readFileSync(tmpFile, "utf8");
   const data = yaml.safeLoad(content) as ConfigYaml;
@@ -209,11 +220,183 @@ describe("test prompt function", () => {
     const answers = {
       azdo_org_name: "org",
       azdo_pat: "pat",
-      azdo_project_name: "project"
+      azdo_project_name: "project",
+      toSetupIntrospectionConfig: false
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     const ans = await prompt({});
     expect(ans).toStrictEqual(answers);
     done();
+  });
+});
+
+const testPromptCreateSP = async (answer: boolean): Promise<void> => {
+  jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+    create_service_principal: answer
+  });
+  const ans = await promptCreateSP();
+  expect(ans).toBe(answer);
+};
+
+describe("test promptCreateSP function", () => {
+  it("positive test: true", async () => {
+    testPromptCreateSP(true);
+  });
+  it("positive test: false", async () => {
+    testPromptCreateSP(false);
+  });
+  it("negative test: exception thrown", async () => {
+    jest.spyOn(inquirer, "prompt").mockRejectedValueOnce(Error("fake"));
+    await expect(promptCreateSP()).rejects.toThrow();
+  });
+});
+
+describe("test isIntrospectionAzureDefined function", () => {
+  it("positive test: true", () => {
+    const ans = isIntrospectionAzureDefined({
+      introspection: {
+        azure: {
+          key: new Promise(resolve => {
+            resolve(undefined);
+          })
+        }
+      }
+    });
+    expect(ans).toBe(true);
+  });
+  it("positive test: false", () => {
+    const ans = isIntrospectionAzureDefined({
+      introspection: {}
+    });
+    expect(ans).toBe(false);
+    const ans1 = isIntrospectionAzureDefined({});
+    expect(ans1).toBe(false);
+  });
+});
+
+describe("test getSubscriptionId function", () => {
+  it("positive test, single value", async () => {
+    jest.spyOn(subscriptionService, "getSubscriptions").mockResolvedValueOnce([
+      {
+        id: "test",
+        name: "test"
+      }
+    ]);
+    const config: ConfigYaml = {
+      introspection: {
+        azure: {
+          key: new Promise(resolve => {
+            resolve(undefined);
+          }),
+          service_principal_id: principalId,
+          service_principal_secret: principalPassword,
+          tenant_id: principalTenantId
+        }
+      }
+    };
+    await getSubscriptionId(config);
+    expect(config.introspection?.azure?.subscription_id).toBe("test");
+  });
+  it("positive test, multiple values", async () => {
+    jest.spyOn(subscriptionService, "getSubscriptions").mockResolvedValueOnce([
+      {
+        id: "test",
+        name: "test"
+      },
+      {
+        id: "test1",
+        name: "test1"
+      }
+    ]);
+    jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+      az_subscription: "test1"
+    });
+    const config: ConfigYaml = {
+      introspection: {
+        azure: {
+          key: new Promise(resolve => {
+            resolve(undefined);
+          }),
+          service_principal_id: principalId,
+          service_principal_secret: principalPassword,
+          tenant_id: principalTenantId
+        }
+      }
+    };
+    await getSubscriptionId(config);
+    expect(config.introspection?.azure?.subscription_id).toBe("test1");
+  });
+  it("negative test, no subscription found", async () => {
+    jest
+      .spyOn(subscriptionService, "getSubscriptions")
+      .mockResolvedValueOnce([]);
+    const config: ConfigYaml = {
+      introspection: {
+        azure: {
+          key: new Promise(resolve => {
+            resolve(undefined);
+          }),
+          service_principal_id: principalId,
+          service_principal_secret: principalPassword,
+          tenant_id: principalTenantId
+        }
+      }
+    };
+    await expect(getSubscriptionId(config)).rejects.toThrow();
+  });
+});
+
+const testHandleIntrospectionInteractive = async (
+  withIntrosepection = false,
+  promptCreateSP = true
+): Promise<void> => {
+  const config: ConfigYaml = {};
+  if (!withIntrosepection) {
+    config["introspection"] = {
+      azure: {
+        key: new Promise(resolve => {
+          resolve(undefined);
+        })
+      }
+    };
+  }
+  jest.spyOn(init, "promptCreateSP").mockResolvedValueOnce(promptCreateSP);
+  if (promptCreateSP) {
+    jest
+      .spyOn(servicePrincipalService, "createWithAzCLI")
+      .mockResolvedValueOnce({
+        id: "id",
+        password: "password",
+        tenantId: "tenantId"
+      });
+  } else {
+    jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+      az_sp_id: "id",
+      az_sp_password: "password",
+      az_sp_tenant: "tenantId"
+    });
+  }
+  jest.spyOn(init, "getSubscriptionId").mockImplementationOnce(
+    async (curConfig: ConfigYaml): Promise<void> => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const azure = curConfig.introspection!.azure!;
+      azure.subscription_id = "subscriptionId";
+    }
+  );
+  await handleIntrospectionInteractive(config);
+  expect(config.introspection?.azure?.subscription_id).toBe("subscriptionId");
+  expect(config.introspection?.azure?.service_principal_id).toBe("id");
+  expect(config.introspection?.azure?.service_principal_secret).toBe(
+    "password"
+  );
+  expect(config.introspection?.azure?.tenant_id).toBe("tenantId");
+};
+
+describe("test handleIntrospectionInteractive function", () => {
+  it("positive test", async () => {
+    await testHandleIntrospectionInteractive(false, true);
+    await testHandleIntrospectionInteractive(true, false);
+    await testHandleIntrospectionInteractive(false, true);
+    await testHandleIntrospectionInteractive(false, false);
   });
 });

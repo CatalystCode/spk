@@ -1,5 +1,10 @@
+import uuid = require("uuid");
 import * as restAuth from "@azure/ms-rest-nodeauth";
 import { getSubscriptions } from "./subscriptionService";
+
+const principalId = uuid();
+const principalPassword = uuid();
+const principalTenantId = uuid();
 
 jest.mock("@azure/arm-subscriptions", () => {
   class MockClient {
@@ -32,12 +37,11 @@ describe("test getSubscriptions function", () => {
       .mockImplementationOnce(async () => {
         return {};
       });
-    const result = await getSubscriptions({
-      accessToken: "pat",
-      orgName: "org",
-      projectName: "project",
-      workspace: "test"
-    });
+    const result = await getSubscriptions(
+      principalId,
+      principalPassword,
+      principalTenantId
+    );
     expect(result).toStrictEqual([
       {
         id: "1234567890-abcdef",
@@ -52,12 +56,7 @@ describe("test getSubscriptions function", () => {
         throw Error("fake");
       });
     await expect(
-      getSubscriptions({
-        accessToken: "pat",
-        orgName: "org",
-        projectName: "project",
-        workspace: "test"
-      })
+      getSubscriptions(principalId, principalPassword, principalTenantId)
     ).rejects.toThrow();
   });
 });

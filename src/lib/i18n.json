@@ -1,0 +1,13 @@
+{
+  "prompt": {
+    "orgName": "Enter organization name",
+    "projectName": "Enter project name",
+    "personalAccessToken": "Enter your AzDO personal access token",
+    "setupIntrospectionConfig": "Do you want to setup introspection configuration?",
+    "createServicePrincipal": "Do you want to create a service principal?",
+    "servicePrincipalId": "Enter Service Principal Id",
+    "servicePrincipalPassword": "Enter Service Principal Password",
+    "servicePrincipalTenantId": "Enter Service Principal Tenant Id",
+    "selectSubscriptionId": "Select one of the subscription"
+  }
+}

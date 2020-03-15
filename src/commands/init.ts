@@ -11,14 +11,22 @@ import {
   loadConfiguration,
   saveConfiguration
 } from "../config";
+import { createWithAzCLI } from "../lib/azure/servicePrincipalService";
+import { getSubscriptions } from "../lib/azure/subscriptionService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
-import { deepClone } from "../lib/util";
 import {
-  hasValue,
-  validateAccessToken,
-  validateOrgName,
-  validateProjectName
-} from "../lib/validator";
+  askToCreateServicePrincipal,
+  askToSetupIntrospectionConfig,
+  azureAccessToken,
+  azureOrgName,
+  azureProjectName,
+  chooseSubscriptionId,
+  servicePrincipalId,
+  servicePrincipalPassword,
+  servicePrincipalTenantId
+} from "../lib/promptBuilder";
+import { deepClone } from "../lib/util";
+import { hasValue } from "../lib/validator";
 import { logger } from "../logger";
 import { ConfigYaml } from "../types";
 import decorator from "./init.decorator.json";
@@ -32,6 +40,7 @@ interface Answer {
   azdo_org_name: string;
   azdo_project_name: string;
   azdo_pat: string;
+  toSetupIntrospectionConfig: boolean;
 }
 
 /**
@@ -53,34 +62,17 @@ export const handleFileConfig = (file: string): void => {
  */
 export const prompt = async (curConfig: ConfigYaml): Promise<Answer> => {
   const questions = [
-    {
-      default: curConfig.azure_devops?.org || undefined,
-      message: "Enter organization name\n",
-      name: "azdo_org_name",
-      type: "input",
-      validate: validateOrgName
-    },
-    {
-      default: curConfig.azure_devops?.project || undefined,
-      message: "Enter project name\n",
-      name: "azdo_project_name",
-      type: "input",
-      validate: validateProjectName
-    },
-    {
-      default: curConfig.azure_devops?.access_token || undefined,
-      mask: "*",
-      message: "Enter your AzDO personal access token\n",
-      name: "azdo_pat",
-      type: "password",
-      validate: validateAccessToken
-    }
+    azureOrgName(curConfig.azure_devops?.org),
+    azureProjectName(curConfig.azure_devops?.project),
+    azureAccessToken(curConfig.azure_devops?.access_token),
+    askToSetupIntrospectionConfig(false)
   ];
   const answers = await inquirer.prompt(questions);
   return {
     azdo_org_name: answers.azdo_org_name as string,
     azdo_pat: answers.azdo_pat as string,
-    azdo_project_name: answers.azdo_project_name as string
+    azdo_project_name: answers.azdo_project_name as string,
+    toSetupIntrospectionConfig: answers.toSetupIntrospectionConfig
   };
 };
 
@@ -93,7 +85,7 @@ export const getConfig = (): ConfigYaml => {
     loadConfiguration();
     return Config();
   } catch (_) {
-    // current config is not found.
+    logger.info("current config is not found.");
     return {
       azure_devops: {
         access_token: "",
@@ -130,6 +122,84 @@ export const validatePersonalAccessToken = async (
   }
 };
 
+export const promptCreateSP = async (): Promise<boolean> => {
+  const questions = [askToCreateServicePrincipal(false)];
+  const answers = await inquirer.prompt(questions);
+  return !!answers.create_service_principal;
+};
+
+export const isIntrospectionAzureDefined = (curConfig: ConfigYaml): boolean => {
+  if (curConfig.introspection === undefined) {
+    return false;
+  }
+  const intro = curConfig.introspection!;
+  return intro.azure !== undefined;
+};
+
+export const getSubscriptionId = async (
+  curConfig: ConfigYaml
+): Promise<void> => {
+  const azure = curConfig.introspection!.azure!;
+
+  const subscriptions = await getSubscriptions(
+    azure.service_principal_id!,
+    azure.service_principal_secret!,
+    azure.tenant_id!
+  );
+  if (subscriptions.length === 0) {
+    throw Error("no subscriptions found");
+  }
+  if (subscriptions.length === 1) {
+    azure.subscription_id = subscriptions[0].id;
+  } else {
+    const ans = await inquirer.prompt([
+      chooseSubscriptionId(subscriptions.map(s => s.name))
+    ]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    azure.subscription_id = subscriptions.find(
+      s => s.name === (ans.az_subscription as string)
+    )!.id;
+  }
+};
+
+export const handleIntrospectionInteractive = async (
+  curConfig: ConfigYaml
+): Promise<void> => {
+  if (!isIntrospectionAzureDefined(curConfig)) {
+    curConfig.introspection = {
+      azure: {
+        key: new Promise(resolve => {
+          resolve(undefined);
+        })
+      }
+    };
+    // key is needed to create the azure object in
+    // introspction object however it causes
+    // problem when we do `yaml.safeDump` because
+    // key is a function.
+    delete curConfig.introspection.azure?.key;
+  }
+  const azure = curConfig.introspection!.azure!;
+
+  if (await promptCreateSP()) {
+    const sp = await createWithAzCLI();
+    azure.service_principal_id = sp.id;
+    azure.service_principal_secret = sp.password;
+    azure.tenant_id = sp.tenantId;
+  } else {
+    const answers = await inquirer.prompt([
+      servicePrincipalId(azure.service_principal_id),
+      servicePrincipalPassword(azure.service_principal_secret),
+      servicePrincipalTenantId(azure.tenant_id)
+    ]);
+    azure.service_principal_id = answers.az_sp_id;
+    azure.service_principal_secret = answers.az_sp_password;
+    azure.tenant_id = answers.az_sp_tenant;
+  }
+
+  await getSubscriptionId(curConfig);
+};
+
 /**
  * Handles the interactive mode of the command.
  */
@@ -139,6 +209,11 @@ export const handleInteractiveMode = async (): Promise<void> => {
   curConfig.azure_devops!.org = answer.azdo_org_name;
   curConfig.azure_devops!.project = answer.azdo_project_name;
   curConfig.azure_devops!.access_token = answer.azdo_pat;
+
+  if (answer.toSetupIntrospectionConfig) {
+    await handleIntrospectionInteractive(curConfig);
+  }
+
   const data = yaml.safeDump(curConfig);
   fs.writeFileSync(defaultConfigFile(), data);
   logger.info("Successfully constructed SPK configuration file.");
