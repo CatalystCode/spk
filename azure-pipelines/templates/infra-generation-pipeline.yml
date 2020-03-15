@@ -81,7 +81,6 @@ steps:
     # Clone Generated Repo and copy generated components over
     echo "Cloning Generated Repo: $GENERATED_REPO"
     git clone $GENERATED_REPO
-    repo_url=$GENERATED_REPO
 
     # Extract repo name from url
     repo_url=$GENERATED_REPO
