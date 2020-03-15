@@ -9,6 +9,7 @@ import {
   isPortNumberString,
   ORG_NAME_VIOLATION,
   validateAccessToken,
+  validateACRName,
   validateForNonEmptyValue,
   validateOrgName,
   validatePrereqs,
@@ -233,5 +234,17 @@ describe("test validateSubscriptionId function", () => {
       "The value for Subscription Id is invalid."
     );
     expect(validateSubscriptionId("abc123-456")).toBeTruthy();
+  });
+});
+
+describe("test validateACRName function", () => {
+  it("sanity test", () => {
+    expect(validateACRName("")).toBe(
+      "Must enter an Azure Container Registry Name."
+    );
+    expect(validateACRName("xyz-")).toBe(
+      "The value for Azure Container Registry Name is invalid."
+    );
+    expect(validateACRName("abc12356")).toBeTruthy();
   });
 });

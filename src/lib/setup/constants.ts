@@ -3,6 +3,7 @@ export interface RequestContext {
   projectName: string;
   accessToken: string;
   workspace: string;
+  acrName?: string;
   toCreateAppRepo?: boolean;
   toCreateSP?: boolean;
   createdProject?: boolean;
@@ -31,7 +32,7 @@ export const WORKSPACE = "quick-start-env";
 export const SP_USER_NAME = "service_account";
 export const RESOURCE_GROUP = "quick-start-rg";
 export const RESOURCE_GROUP_LOCATION = "westus2";
-export const ACR = "quickStartACR";
+export const ACR_NAME = "quickStartACR";
 export const VARIABLE_GROUP = "quick-start-vg";
 export const SETUP_LOG = "setup.log";
 
