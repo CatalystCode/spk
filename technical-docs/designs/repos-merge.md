@@ -165,6 +165,7 @@ After making the above changes, need to make sure that the follwing tests pass.
         ├── smoke-test-pipeline.yml
      ├── patches
         ├── 001-azure-devops-node.patch
+     ├── publishing
      ├── tools
         ├── generateDoc.ts
         ├── locateAliases.ts
