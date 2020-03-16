@@ -208,7 +208,7 @@ export const initService = async (
   rc: RequestContext,
   repoName: string
 ): Promise<void> => {
-  await createService(".", repoName, {
+  await createService(".", ".", {
     displayName: repoName,
     gitPush: false,
     helmChartChart: "",
@@ -217,9 +217,9 @@ export const initService = async (
     helmConfigBranch: "master",
     helmConfigGit: getAzureRepoUrl(rc.orgName, rc.projectName, HELM_REPO),
     helmConfigPath: `${repoName}/chart`,
-    k8sBackend: "",
+    k8sBackend: `${repoName}-svc`,
     k8sBackendPort: "80",
-    k8sPort: 0,
+    k8sPort: 80,
     maintainerEmail: "",
     maintainerName: "",
     middlewares: "",
@@ -249,7 +249,7 @@ export const appRepo = async (
       rc.workspace
     );
 
-    await projectInitialize(".");
+    await projectInitialize(".", { defaultRing: "master" }); //How is master set normally?
     await setupVariableGroup(rc);
     await initService(rc, repoName);
     await git.add("./*");

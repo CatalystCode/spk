@@ -163,7 +163,7 @@ export const pollForPipelineStatus = async (
   } while (!build || build.result === 0);
 };
 
-const deletePipleLineIfExist = async (
+const deletePipelineIfExist = async (
   buildApi: IBuildApi,
   rc: RequestContext,
   pipelineName: string
@@ -198,7 +198,7 @@ export const createHLDtoManifestPipeline = async (
   const pipelineName = `${HLD_REPO}-to-${MANIFEST_REPO}`;
 
   try {
-    await deletePipleLineIfExist(buildApi, rc, pipelineName);
+    await deletePipelineIfExist(buildApi, rc, pipelineName);
     await installHldToManifestPipeline({
       buildScriptUrl: BUILD_SCRIPT_URL,
       devopsProject: rc.projectName,
@@ -231,7 +231,7 @@ export const createLifecyclePipeline = async (
   const pipelineName = APP_REPO_LIFECYCLE;
 
   try {
-    await deletePipleLineIfExist(buildApi, rc, pipelineName);
+    await deletePipelineIfExist(buildApi, rc, pipelineName);
 
     await installLifecyclePipeline({
       buildScriptUrl: BUILD_SCRIPT_URL,
@@ -264,11 +264,11 @@ export const createBuildPipeline = async (
   const pipelineName = APP_REPO_BUILD;
 
   try {
-    await deletePipleLineIfExist(buildApi, rc, pipelineName);
+    await deletePipelineIfExist(buildApi, rc, pipelineName);
 
     await installBuildUpdatePipeline(
       APP_REPO,
-      path.join(APP_REPO, SERVICE_PIPELINE_FILENAME),
+      path.join(".", SERVICE_PIPELINE_FILENAME),
       {
         buildScriptUrl: BUILD_SCRIPT_URL,
         devopsProject: rc.projectName,
