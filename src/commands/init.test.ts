@@ -360,6 +360,10 @@ const testHandleIntrospectionInteractive = async (
       }
     };
   }
+  jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+    azdo_storage_account_name: "storagetest",
+    azdo_storage_table_name: "storagetabletest"
+  });
   jest.spyOn(init, "promptCreateSP").mockResolvedValueOnce(promptCreateSP);
   if (promptCreateSP) {
     jest

@@ -163,13 +163,15 @@ export const handleIntrospectionInteractive = async (
         })
       }
     };
-    // key is needed to create the azure object in
-    // introspction object however it causes
-    // problem when we do `yaml.safeDump` because
-    // key is a function.
-    delete curConfig.introspection.azure?.key;
   }
   const azure = curConfig.introspection!.azure!;
+
+  const ans = await inquirer.prompt([
+    promptBuilder.azureStorageAccountName(azure.account_name),
+    promptBuilder.azureStorageTableName(azure.table_name)
+  ]);
+  azure.account_name = ans.azdo_storage_account_name;
+  azure.table_name = ans.azdo_storage_table_name;
 
   if (await promptCreateSP()) {
     const sp = await createWithAzCLI();
@@ -206,7 +208,15 @@ export const handleInteractiveMode = async (): Promise<void> => {
     await handleIntrospectionInteractive(curConfig);
   }
 
+  if (curConfig.introspection && curConfig.introspection.azure) {
+    // key is needed to create the azure object in
+    // introspction object however it causes
+    // problem when we do `yaml.safeDump` because
+    // key is a function.
+    delete curConfig.introspection.azure.key;
+  }
   const data = yaml.safeDump(curConfig);
+
   fs.writeFileSync(defaultConfigFile(), data);
   logger.info("Successfully constructed SPK configuration file.");
   const ok = await validatePersonalAccessToken(curConfig.azure_devops);

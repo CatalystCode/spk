@@ -1,13 +1,15 @@
 {
   "prompt": {
-    "orgName": "Enter organization name",
-    "projectName": "Enter project name",
-    "personalAccessToken": "Enter your AzDO personal access token",
-    "setupIntrospectionConfig": "Do you want to setup introspection configuration?",
     "createServicePrincipal": "Do you want to create a service principal?",
+    "orgName": "Enter organization name",
+    "personalAccessToken": "Enter your AzDO personal access token",
+    "projectName": "Enter project name",
+    "selectSubscriptionId": "Select one of the subscription",
     "servicePrincipalId": "Enter Service Principal Id",
     "servicePrincipalPassword": "Enter Service Principal Password",
     "servicePrincipalTenantId": "Enter Service Principal Tenant Id",
-    "selectSubscriptionId": "Select one of the subscription"
+    "setupIntrospectionConfig": "Do you want to setup introspection configuration?",
+    "storageAccountName": "Enter storage account name",
+    "storageTableName": "Enter storage table name"
   }
 }

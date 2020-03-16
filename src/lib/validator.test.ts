@@ -16,6 +16,8 @@ import {
   validateServicePrincipalId,
   validateServicePrincipalPassword,
   validateServicePrincipalTenantId,
+  validateStorageAccountName,
+  validateStorageTableName,
   validateSubscriptionId
 } from "./validator";
 
@@ -228,10 +230,51 @@ describe("test validateServicePrincipal functions", () => {
 
 describe("test validateSubscriptionId function", () => {
   it("sanity test", () => {
-    expect(validateSubscriptionId("")).toBe("Must enter a Subscription Id.");
+    expect(validateSubscriptionId("")).toBe(
+      "Must enter a subscription identifier."
+    );
     expect(validateSubscriptionId("xyz")).toBe(
-      "The value for Subscription Id is invalid."
+      "The value for subscription identifier is invalid."
     );
     expect(validateSubscriptionId("abc123-456")).toBeTruthy();
+  });
+});
+
+describe("test validateStorageAccountName test", () => {
+  it("sanity test", () => {
+    expect(validateStorageAccountName("")).toBe(
+      "Must enter a storage account name."
+    );
+    expect(validateStorageAccountName("XYZ123")).toBe(
+      "The value for storage account name is invalid. Lowercase letters and numbers are allowed."
+    );
+    expect(validateStorageAccountName("ab")).toBe(
+      "The value for storage account name is invalid. It has to be between 3 and 24 characters long"
+    );
+    expect(validateStorageAccountName("12345678a".repeat(3))).toBe(
+      "The value for storage account name is invalid. It has to be between 3 and 24 characters long"
+    );
+    expect(validateStorageAccountName("abc123456")).toBeTruthy();
+  });
+});
+
+describe("test validateStorageTableName test", () => {
+  it("sanity test", () => {
+    expect(validateStorageTableName("")).toBe(
+      "Must enter a storage table name."
+    );
+    expect(validateStorageTableName("XYZ123*")).toBe(
+      "The value for storage table name is invalid. It has to be alphanumeric and start with an alphabet."
+    );
+    expect(validateStorageTableName("1XYZ123")).toBe(
+      "The value for storage table name is invalid. It has to be alphanumeric and start with an alphabet."
+    );
+    expect(validateStorageTableName("ab")).toBe(
+      "The value for storage table name is invalid. It has to be between 3 and 63 characters long"
+    );
+    expect(validateStorageTableName("a123456789".repeat(7))).toBe(
+      "The value for storage table name is invalid. It has to be between 3 and 63 characters long"
+    );
+    expect(validateStorageTableName("abc123456")).toBeTruthy();
   });
 });

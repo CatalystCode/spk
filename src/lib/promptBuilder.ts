@@ -1,13 +1,6 @@
 import { QuestionCollection } from "inquirer";
 import i18n from "./i18n.json";
-import {
-  validateAccessToken,
-  validateOrgName,
-  validateProjectName,
-  validateServicePrincipalId,
-  validateServicePrincipalPassword,
-  validateServicePrincipalTenantId
-} from "../lib/validator";
+import * as validator from "../lib/validator";
 
 export const azureOrgName = (
   defaultValue?: string | undefined
@@ -17,7 +10,7 @@ export const azureOrgName = (
     message: `${i18n.prompt.orgName}\n`,
     name: "azdo_org_name",
     type: "input",
-    validate: validateOrgName
+    validate: validator.validateOrgName
   };
 };
 
@@ -29,7 +22,7 @@ export const azureProjectName = (
     message: `${i18n.prompt.projectName}\n`,
     name: "azdo_project_name",
     type: "input",
-    validate: validateProjectName
+    validate: validator.validateProjectName
   };
 };
 
@@ -42,7 +35,7 @@ export const azureAccessToken = (
     message: `${i18n.prompt.personalAccessToken}\n`,
     name: "azdo_pat",
     type: "password",
-    validate: validateAccessToken
+    validate: validator.validateAccessToken
   };
 };
 
@@ -76,7 +69,7 @@ export const servicePrincipalId = (
     message: `${i18n.prompt.servicePrincipalId}\n`,
     name: "az_sp_id",
     type: "input",
-    validate: validateServicePrincipalId
+    validate: validator.validateServicePrincipalId
   };
 };
 
@@ -89,7 +82,7 @@ export const servicePrincipalPassword = (
     message: `${i18n.prompt.servicePrincipalPassword}\n`,
     name: "az_sp_password",
     type: "password",
-    validate: validateServicePrincipalPassword
+    validate: validator.validateServicePrincipalPassword
   };
 };
 
@@ -101,7 +94,7 @@ export const servicePrincipalTenantId = (
     message: `${i18n.prompt.servicePrincipalTenantId}\n`,
     name: "az_sp_tenant",
     type: "input",
-    validate: validateServicePrincipalTenantId
+    validate: validator.validateServicePrincipalTenantId
   };
 };
 
@@ -123,5 +116,29 @@ export const chooseSubscriptionId = (names: string[]): QuestionCollection => {
     message: `${i18n.prompt.selectSubscriptionId}\n`,
     name: "az_subscription",
     type: "list"
+  };
+};
+
+export const azureStorageAccountName = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    message: `${i18n.prompt.storageAccountName}\n`,
+    name: "azdo_storage_account_name",
+    type: "input",
+    validate: validator.validateStorageAccountName
+  };
+};
+
+export const azureStorageTableName = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    message: `${i18n.prompt.storageTableName}\n`,
+    name: "azdo_storage_table_name",
+    type: "input",
+    validate: validator.validateStorageTableName
   };
 };

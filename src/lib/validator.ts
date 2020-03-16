@@ -234,10 +234,46 @@ export const validateServicePrincipalTenantId = (
  */
 export const validateSubscriptionId = (value: string): string | boolean => {
   if (!hasValue(value)) {
-    return "Must enter a Subscription Id.";
+    return "Must enter a subscription identifier.";
   }
   if (!isDashHex(value)) {
-    return "The value for Subscription Id is invalid.";
+    return "The value for subscription identifier is invalid.";
+  }
+  return true;
+};
+
+/**
+ * Returns true if storage account name is valid.
+ *
+ * @param value storage account name .
+ */
+export const validateStorageAccountName = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter a storage account name.";
+  }
+  if (!value.match(/^[a-z0-9]+$/)) {
+    return "The value for storage account name is invalid. Lowercase letters and numbers are allowed.";
+  }
+  if (value.length < 3 || value.length > 24) {
+    return "The value for storage account name is invalid. It has to be between 3 and 24 characters long";
+  }
+  return true;
+};
+
+/**
+ * Returns true if storage table name is valid.
+ *
+ * @param value storage table name .
+ */
+export const validateStorageTableName = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter a storage table name.";
+  }
+  if (!value.match(/^[A-Za-z][A-Za-z0-9]*$/)) {
+    return "The value for storage table name is invalid. It has to be alphanumeric and start with an alphabet.";
+  }
+  if (value.length < 3 || value.length > 63) {
+    return "The value for storage table name is invalid. It has to be between 3 and 63 characters long";
   }
   return true;
 };
