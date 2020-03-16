@@ -29,15 +29,13 @@ changes after the merge and limits the testing scope.
 - Move all files and folders except `src` from `cluster` to `cluster\src`
 - Move `azure-pipelines.yml` file from the root to `cluster\build\pipelines`
   directory and make sure all pipelines still works.
-- Move `docs` folder to `cluster` folder and make sure all doc links works.
 - Move `test` folder to `cluster` folder and make sure all tests and pipelines
   still works.
-- Move `tools` directory to `cluster\build` folder and make sure existing
-  Bedrock release process still works.
+- Move `bedrock` related files from `tools` directory to `cluster\build` folder
+  and make sure existing Bedrock release process still works.
 - [ ] Move following files form the `root` directory to `cluster` and make sure
       `cluster` project can be opened in VS Code.
   - LICENSE
-  - README.md
   - .gitignore
 
 #### Testing Changes
@@ -45,7 +43,6 @@ changes after the merge and limits the testing scope.
 After making the above changes, need to make sure that the follwing tests pass.
 
 - Verify the environments integration tests continue to work in `azdo`
-- Verify all `docs` links work
 - Verify `bedrock` release provess work
 - Verify the project can be opened in VS Code from the `cluster` folder
 
@@ -116,7 +113,7 @@ after the merge and limits the testing scope to SPK functioanlity.
 The main themes are related to organizing `docs` and `build` related artifacts
 in `spk` from the root to appropriate directories.
 
-1. Oragnize all pipeline yaml files, scripts, and tools that are related to
+1. Organize all pipeline yaml files, scripts, and tools that are related to
    building and releasing binaries under `build` directory.
 
 2. Organize all docs that are related to using and contributing bedrock under
@@ -132,8 +129,8 @@ The majority of the proposed changes in `spk` repo are related to organizing
   - azure-pipelines.yml
   - release-pipeline.yml
   - smoke-test-pipeline.yml
-- Move following files from the `scripts` to `build\tools` folder and verify the
-  scripts generate `command` docs.
+- Move following files from the `scripts` to `build\publishing` folder and
+  verify the scripts generate `command` docs.
   - generateDoc.ts
   - locateAliases.ts
 - Move `patches` directory to `build\patches` folder and make sure `yarn build`
@@ -199,7 +196,7 @@ After making the above changes, need to make sure that the follwing tests pass.
 ├── .yarn.lock
 ```
 
-## Phase 2: Move SPK to Bedrock Repo
+## Phase 2: Move SPK to Bedrock Repo (under review)
 
 Moving SPK repo to Bedrock involves following changes.
 
@@ -229,32 +226,32 @@ _color legend:_
 # ├── gitops
 ! ├── cluster
 + ├── build
-      ├── pipelines
-          ├── templates
-          ├── azure-pipelines.yml
-          ├── release-pipeline.yml
-          ├── smoke-test-pipeline.yml
-      ├── patches
-          ├── 001-azure-devops-node.patch
-      ├── tools
-          ├── generateDoc.ts
-          ├── locateAliases.ts
-          ├── release-version-bump.sh
-          ├── tag-release.sh
-          ├── update_introspection.sh
++     ├── pipelines
++          ├── templates
++          ├── azure-pipelines.yml
++          ├── release-pipeline.yml
++          ├── smoke-test-pipeline.yml
++      ├── patches
++          ├── 001-azure-devops-node.patch
++      ├── tools
++          ├── generateDoc.ts
++          ├── locateAliases.ts
++          ├── release-version-bump.sh
++          ├── tag-release.sh
++          ├── update_introspection.sh
 + ├── docs
-      ├── commands
-      ├── contribution
-          ├── contributing.md
-          ├── designs
-      ├── guides
++      ├── commands
++      ├── contribution
++          ├── contributing.md
++          ├── designs
++      ├── guides
 + ├── src
-      ├── lib
-      ├── commands
-      ├── logger
++      ├── lib
++      ├── commands
++      ├── logger
 + ├── tests
 + ├── typings
-      ├── ssh-url
++     ├── ssh-url
 + ├── .editorconfig
 + ├── .gitignore
 + ├── jest.config.js
