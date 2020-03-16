@@ -394,6 +394,13 @@ echo "Validating ingress routes"
 validate_file "$ring_dir/static.yaml" "'PathPrefix(\`/fabrikam-acme-frontend\`) && Headers(\`Ring\`, \`qa-ring\`)'"
 
 echo "Successfully created a ring."
+
+# --------------------------------
+# Push the ring branch
+# git branch $ring_name
+# git checkout $ring_name
+
+
 # --------------------------------
 
 echo "Successfully reached the end of the service validations scripts."
