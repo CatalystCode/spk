@@ -142,3 +142,16 @@ export const azureStorageTableName = (
     validate: validator.validateStorageTableName
   };
 };
+
+export const azureStorageKey = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    mask: "*",
+    message: `${i18n.prompt.storageKey}\n`,
+    name: "azdo_storage_key",
+    type: "password",
+    validate: validator.validatePassword
+  };
+};

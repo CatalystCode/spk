@@ -117,6 +117,21 @@ export const isDashHex = (value: string): boolean => {
 };
 
 /**
+ * Returns true if password is proper. Typical password validation
+ *
+ * @param value password
+ */
+export const validatePassword = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter a value.";
+  }
+  if (value.length < 8) {
+    return "Must be more than 8 characters long.";
+  }
+  return true;
+};
+
+/**
  * Returns true if project name is proper.
  *
  * @param value Project Name

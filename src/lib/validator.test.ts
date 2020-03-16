@@ -11,6 +11,7 @@ import {
   validateAccessToken,
   validateForNonEmptyValue,
   validateOrgName,
+  validatePassword,
   validatePrereqs,
   validateProjectName,
   validateServicePrincipalId,
@@ -276,5 +277,16 @@ describe("test validateStorageTableName test", () => {
       "The value for storage table name is invalid. It has to be between 3 and 63 characters long"
     );
     expect(validateStorageTableName("abc123456")).toBeTruthy();
+  });
+});
+
+describe("test validatePassword test", () => {
+  it("sanity test", () => {
+    expect(validatePassword("")).toBe("Must enter a value.");
+    expect(validatePassword("1234567")).toBe(
+      "Must be more than 8 characters long."
+    );
+    expect(validatePassword("abcd1234")).toBeTruthy();
+    expect(validatePassword("abcdefg123456678")).toBeTruthy();
   });
 });

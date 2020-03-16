@@ -11,8 +11,6 @@ import {
   loadConfiguration,
   saveConfiguration
 } from "../config";
-import { createWithAzCLI } from "../lib/azure/servicePrincipalService";
-import { getSubscriptions } from "../lib/azure/subscriptionService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
 import * as promptBuilder from "../lib/promptBuilder";
 import { deepClone } from "../lib/util";
@@ -112,44 +110,12 @@ export const validatePersonalAccessToken = async (
   }
 };
 
-export const promptCreateSP = async (): Promise<boolean> => {
-  const questions = [promptBuilder.askToCreateServicePrincipal(false)];
-  const answers = await inquirer.prompt(questions);
-  return !!answers.create_service_principal;
-};
-
 export const isIntrospectionAzureDefined = (curConfig: ConfigYaml): boolean => {
   if (curConfig.introspection === undefined) {
     return false;
   }
   const intro = curConfig.introspection!;
   return intro.azure !== undefined;
-};
-
-export const getSubscriptionId = async (
-  curConfig: ConfigYaml
-): Promise<void> => {
-  const azure = curConfig.introspection!.azure!;
-
-  const subscriptions = await getSubscriptions(
-    azure.service_principal_id!,
-    azure.service_principal_secret!,
-    azure.tenant_id!
-  );
-  if (subscriptions.length === 0) {
-    throw Error("no subscriptions found");
-  }
-  if (subscriptions.length === 1) {
-    azure.subscription_id = subscriptions[0].id;
-  } else {
-    const ans = await inquirer.prompt([
-      promptBuilder.chooseSubscriptionId(subscriptions.map(s => s.name))
-    ]);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    azure.subscription_id = subscriptions.find(
-      s => s.name === (ans.az_subscription as string)
-    )!.id;
-  }
 };
 
 export const handleIntrospectionInteractive = async (
@@ -164,41 +130,40 @@ export const handleIntrospectionInteractive = async (
       }
     };
   }
-  const azure = curConfig.introspection!.azure!;
 
+  const azure = curConfig.introspection!.azure!;
+  console.log(JSON.stringify(azure));
   const ans = await inquirer.prompt([
     promptBuilder.azureStorageAccountName(azure.account_name),
-    promptBuilder.azureStorageTableName(azure.table_name)
+    promptBuilder.azureStorageTableName(azure.table_name),
+    promptBuilder.azureStorageKey(undefined)
   ]);
   azure.account_name = ans.azdo_storage_account_name;
   azure.table_name = ans.azdo_storage_table_name;
+};
 
-  if (await promptCreateSP()) {
-    const sp = await createWithAzCLI();
-    azure.service_principal_id = sp.id;
-    azure.service_principal_secret = sp.password;
-    azure.tenant_id = sp.tenantId;
-  } else {
-    const answers = await inquirer.prompt(
-      promptBuilder.servicePrincipal(
-        azure.service_principal_id,
-        azure.service_principal_secret,
-        azure.tenant_id
-      )
-    );
-    azure.service_principal_id = answers.az_sp_id;
-    azure.service_principal_secret = answers.az_sp_password;
-    azure.tenant_id = answers.az_sp_tenant;
+export const cloneConfig = (): ConfigYaml => {
+  const config = getConfig();
+  const introspection = config.introspection;
+  const azure = introspection?.azure;
+  const storageKey = azure ? azure.key : undefined;
+
+  const curConfig = deepClone(config);
+  if (storageKey) {
+    const introspectionCloned = curConfig.introspection;
+    const azureCloned = introspectionCloned?.azure;
+    if (azureCloned) {
+      azureCloned.key = storageKey;
+    }
   }
-
-  await getSubscriptionId(curConfig);
+  return curConfig;
 };
 
 /**
  * Handles the interactive mode of the command.
  */
 export const handleInteractiveMode = async (): Promise<void> => {
-  const curConfig = deepClone(getConfig());
+  const curConfig = cloneConfig();
   const answer = await prompt(curConfig);
   curConfig.azure_devops!.org = answer.azdo_org_name;
   curConfig.azure_devops!.project = answer.azdo_project_name;

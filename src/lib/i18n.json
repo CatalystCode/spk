@@ -10,6 +10,7 @@
     "servicePrincipalTenantId": "Enter Service Principal Tenant Id",
     "setupIntrospectionConfig": "Do you want to setup introspection configuration?",
     "storageAccountName": "Enter storage account name",
-    "storageTableName": "Enter storage table name"
+    "storageTableName": "Enter storage table name",
+    "storageKey": "Enter storage key"
   }
 }
