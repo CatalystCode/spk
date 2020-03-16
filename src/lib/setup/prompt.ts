@@ -1,15 +1,6 @@
 import fs from "fs";
 import inquirer from "inquirer";
-import {
-  askToCreateServicePrincipal,
-  azureAccessToken,
-  azureOrgName,
-  azureProjectName,
-  chooseSubscriptionId,
-  servicePrincipalId,
-  servicePrincipalPassword,
-  servicePrincipalTenantId
-} from "../promptBuilder";
+import * as promptBuilder from "../promptBuilder";
 import {
   validateAccessToken,
   validateOrgName,
@@ -38,7 +29,7 @@ export const promptForSubscriptionId = async (
     rc.subscriptionId = subscriptions[0].id;
   } else {
     const ans = await inquirer.prompt([
-      chooseSubscriptionId(subscriptions.map(s => s.name))
+      promptBuilder.chooseSubscriptionId(subscriptions.map(s => s.name))
     ]);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     rc.subscriptionId = subscriptions.find(
@@ -57,12 +48,7 @@ export const promptForSubscriptionId = async (
 export const promptForServicePrincipal = async (
   rc: RequestContext
 ): Promise<void> => {
-  const questions = [
-    servicePrincipalId(),
-    servicePrincipalPassword(),
-    servicePrincipalTenantId()
-  ];
-  const answers = await inquirer.prompt(questions);
+  const answers = await inquirer.prompt(promptBuilder.servicePrincipal());
   rc.servicePrincipalId = answers.az_sp_id;
   rc.servicePrincipalPassword = answers.az_sp_password;
   rc.servicePrincipalTenantId = answers.az_sp_tenant;
@@ -77,7 +63,7 @@ export const promptForServicePrincipal = async (
 export const promptForServicePrincipalCreation = async (
   rc: RequestContext
 ): Promise<void> => {
-  const questions = [askToCreateServicePrincipal(true)];
+  const questions = [promptBuilder.askToCreateServicePrincipal(true)];
   const answers = await inquirer.prompt(questions);
   if (answers.create_service_principal) {
     rc.toCreateSP = true;
@@ -100,9 +86,9 @@ export const promptForServicePrincipalCreation = async (
  */
 export const prompt = async (): Promise<RequestContext> => {
   const questions = [
-    azureOrgName(),
-    azureProjectName(),
-    azureAccessToken(),
+    promptBuilder.azureOrgName(),
+    promptBuilder.azureProjectName(),
+    promptBuilder.azureAccessToken(),
     {
       default: true,
       message: `Do you like create a sample application repository?`,

@@ -14,17 +14,7 @@ import {
 import { createWithAzCLI } from "../lib/azure/servicePrincipalService";
 import { getSubscriptions } from "../lib/azure/subscriptionService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
-import {
-  askToCreateServicePrincipal,
-  askToSetupIntrospectionConfig,
-  azureAccessToken,
-  azureOrgName,
-  azureProjectName,
-  chooseSubscriptionId,
-  servicePrincipalId,
-  servicePrincipalPassword,
-  servicePrincipalTenantId
-} from "../lib/promptBuilder";
+import * as promptBuilder from "../lib/promptBuilder";
 import { deepClone } from "../lib/util";
 import { hasValue } from "../lib/validator";
 import { logger } from "../logger";
@@ -62,10 +52,10 @@ export const handleFileConfig = (file: string): void => {
  */
 export const prompt = async (curConfig: ConfigYaml): Promise<Answer> => {
   const questions = [
-    azureOrgName(curConfig.azure_devops?.org),
-    azureProjectName(curConfig.azure_devops?.project),
-    azureAccessToken(curConfig.azure_devops?.access_token),
-    askToSetupIntrospectionConfig(false)
+    promptBuilder.azureOrgName(curConfig.azure_devops?.org),
+    promptBuilder.azureProjectName(curConfig.azure_devops?.project),
+    promptBuilder.azureAccessToken(curConfig.azure_devops?.access_token),
+    promptBuilder.askToSetupIntrospectionConfig(false)
   ];
   const answers = await inquirer.prompt(questions);
   return {
@@ -123,7 +113,7 @@ export const validatePersonalAccessToken = async (
 };
 
 export const promptCreateSP = async (): Promise<boolean> => {
-  const questions = [askToCreateServicePrincipal(false)];
+  const questions = [promptBuilder.askToCreateServicePrincipal(false)];
   const answers = await inquirer.prompt(questions);
   return !!answers.create_service_principal;
 };
@@ -153,7 +143,7 @@ export const getSubscriptionId = async (
     azure.subscription_id = subscriptions[0].id;
   } else {
     const ans = await inquirer.prompt([
-      chooseSubscriptionId(subscriptions.map(s => s.name))
+      promptBuilder.chooseSubscriptionId(subscriptions.map(s => s.name))
     ]);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     azure.subscription_id = subscriptions.find(
@@ -187,11 +177,13 @@ export const handleIntrospectionInteractive = async (
     azure.service_principal_secret = sp.password;
     azure.tenant_id = sp.tenantId;
   } else {
-    const answers = await inquirer.prompt([
-      servicePrincipalId(azure.service_principal_id),
-      servicePrincipalPassword(azure.service_principal_secret),
-      servicePrincipalTenantId(azure.tenant_id)
-    ]);
+    const answers = await inquirer.prompt(
+      promptBuilder.servicePrincipal(
+        azure.service_principal_id,
+        azure.service_principal_secret,
+        azure.tenant_id
+      )
+    );
     azure.service_principal_id = answers.az_sp_id;
     azure.service_principal_secret = answers.az_sp_password;
     azure.tenant_id = answers.az_sp_tenant;

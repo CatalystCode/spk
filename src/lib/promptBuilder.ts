@@ -105,6 +105,18 @@ export const servicePrincipalTenantId = (
   };
 };
 
+export const servicePrincipal = (
+  id?: string | undefined,
+  pwd?: string | undefined,
+  tenantId?: string | undefined
+): QuestionCollection[] => {
+  return [
+    servicePrincipalId(id),
+    servicePrincipalPassword(pwd),
+    servicePrincipalTenantId(tenantId)
+  ];
+};
+
 export const chooseSubscriptionId = (names: string[]): QuestionCollection => {
   return {
     choices: names,
