@@ -116,7 +116,6 @@ export const isExist = async (
   servicePrincipalPassword: string,
   servicePrincipalTenantId: string,
   subscriptionId: string,
-  resourceGroup: string,
   name: string
 ): Promise<boolean> => {
   const registries = await getContainerRegistries(
@@ -127,7 +126,7 @@ export const isExist = async (
   );
 
   return (registries || []).some(
-    r => r.resourceGroup === resourceGroup && r.name === name
+    r => r.name === name // ACR name will be unique across Azure so only check the name.
   );
 };
 
@@ -158,15 +157,14 @@ export const create = async (
     servicePrincipalPassword,
     servicePrincipalTenantId,
     subscriptionId,
-    resourceGroup,
     name
   );
 
   if (exist) {
     logger.info(
-      `Azure container registry, ${name} in ${resourceGroup} already existed`
+      `Azure container registry, ${name} already existed in subscription`
     );
-    return false;
+    return true;
   }
   await getClient(
     servicePrincipalId,

@@ -110,7 +110,6 @@ describe("test container registries function", () => {
       servicePrincipalPassword,
       servicePrincipalTenantId,
       subscriptionId,
-      RESOURCE_GROUP,
       "test"
     );
     expect(res).toBeTruthy();
@@ -124,7 +123,6 @@ describe("test container registries function", () => {
       servicePrincipalPassword,
       servicePrincipalTenantId,
       subscriptionId,
-      RESOURCE_GROUP,
       "test"
     );
     expect(res).toBeFalsy();
@@ -144,7 +142,6 @@ describe("test container registries function", () => {
       servicePrincipalPassword,
       servicePrincipalTenantId,
       subscriptionId,
-      RESOURCE_GROUP,
       "test"
     );
     expect(res).toBeFalsy();
