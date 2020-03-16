@@ -258,5 +258,8 @@ export const validateACRName = (value: string): string | boolean => {
   if (!isAlphaNumeric(value)) {
     return "The value for Azure Container Registry Name is invalid.";
   }
+  if (value.length < 5 || value.length > 50) {
+    return "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long.";
+  }
   return true;
 };

@@ -245,6 +245,13 @@ describe("test validateACRName function", () => {
     expect(validateACRName("xyz-")).toBe(
       "The value for Azure Container Registry Name is invalid."
     );
+    expect(validateACRName("1")).toBe(
+      "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long."
+    );
+    expect(validateACRName("1234567890a".repeat(10))).toBe(
+      "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long."
+    );
+
     expect(validateACRName("abc12356")).toBeTruthy();
   });
 });
