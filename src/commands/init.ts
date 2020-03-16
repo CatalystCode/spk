@@ -142,6 +142,9 @@ export const handleIntrospectionInteractive = async (
   azure.table_name = ans.azdo_storage_table_name;
 };
 
+/**
+ * Clone configuration and keep the storage key function
+ */
 export const cloneConfig = (): ConfigYaml => {
   const config = getConfig();
   const introspection = config.introspection;
