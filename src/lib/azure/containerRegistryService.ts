@@ -164,7 +164,7 @@ export const create = async (
     logger.info(
       `Azure container registry, ${name} already existed in subscription`
     );
-    return true;
+    return false;
   }
   await getClient(
     servicePrincipalId,

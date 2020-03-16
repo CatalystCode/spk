@@ -128,7 +128,7 @@ export const createAppRepoTasks = async (
     if (approved) {
       await createBuildPipeline(buildAPI, rc);
     } else {
-      logger.warning("HLD Pull Request is not approved.");
+      logger.warn("HLD Pull Request is not approved.");
     }
   }
 };
