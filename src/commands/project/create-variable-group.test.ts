@@ -43,6 +43,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+jest.mock("../../../package.json", () => {
+  return { version: "0.5" };
+});
+
 const registryName = uuid();
 const variableGroupName = uuid();
 const hldRepoUrl = uuid();
