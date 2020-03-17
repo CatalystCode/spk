@@ -3,6 +3,7 @@ import { VM_IMAGE } from "../lib/constants";
 import {
   BUILD_REPO_NAME,
   generateYamlScript,
+  sanitizeTriggerPath,
   IMAGE_REPO,
   IMAGE_TAG,
   SAFE_SOURCE_BRANCH
@@ -22,11 +23,10 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
   ringBranches: string[] = ["master", "qa", "test"],
   variableGroups: string[] = []
 ): AzurePipelinesYaml | string => {
-  // tslint:disable: object-literal-sort-keys
   const data: AzurePipelinesYaml = {
     trigger: {
       branches: { include: ringBranches },
-      paths: { include: [relativeServicePathFormatted] } // Only building for a single service's path.
+      paths: { include: [sanitizeTriggerPath(relativeServicePathFormatted)] } // Only building for a single service's path.
     },
     variables: [...(variableGroups ?? []).map(group => ({ group }))],
     stages: [
@@ -63,7 +63,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `. ./build.sh --source-only`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
+                  `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service --repository $repourl`
                 ]),
                 displayName:
                   "If configured, update Spektate storage with build pipeline",
@@ -76,7 +76,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `export IMAGE_TAG=${IMAGE_TAG}`,
                   `export IMAGE_NAME=$BUILD_REPO_NAME:$IMAGE_TAG`,
                   `echo "Image Name: $IMAGE_NAME"`,
-                  `cd ${relativeServicePathFormatted}`,
+                  `cd ${sanitizeTriggerPath(relativeServicePathFormatted)}`,
                   `echo "az acr build -r $(ACR_NAME) --image $IMAGE_NAME ."`,
                   `az acr build -r $(ACR_NAME) --image $IMAGE_NAME .`
                 ]),
@@ -181,7 +181,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `. ./build.sh --source-only`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id`,
+                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id --repository $repourl`,
                   `fi`
                 ]),
                 displayName:
@@ -198,7 +198,6 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
       }
     ]
   };
-  // tslint:enable: object-literal-sort-keys
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
@@ -290,7 +289,6 @@ export const createTestBedrockYaml = (
 export const createTestHldLifecyclePipelineYaml = (
   asString = true
 ): AzurePipelinesYaml | string => {
-  // tslint:disable: object-literal-sort-keys
   const data: AzurePipelinesYaml = {
     trigger: {
       branches: {
@@ -373,7 +371,6 @@ export const createTestHldLifecyclePipelineYaml = (
       }
     ]
   };
-  // tslint:enable: object-literal-sort-keys
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
@@ -383,7 +380,6 @@ export const createTestHldLifecyclePipelineYaml = (
 export const createTestHldAzurePipelinesYaml = (
   asString = true
 ): AzurePipelinesYaml | string => {
-  // tslint:disable: object-literal-sort-keys
   const data: AzurePipelinesYaml = {
     trigger: {
       branches: {
@@ -398,6 +394,12 @@ export const createTestHldAzurePipelinesYaml = (
         checkout: "self",
         persistCredentials: true,
         clean: true
+      },
+      {
+        task: "HelmInstaller@1",
+        inputs: {
+          helmVersionToInstall: "2.16.3"
+        }
       },
       {
         script: generateYamlScript([
@@ -453,9 +455,9 @@ export const createTestHldAzurePipelinesYaml = (
           `message="$(Build.SourceVersionMessage)"`,
           `if [[ $message == *"Merged PR"* ]]; then`,
           `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\\+//')`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr $pr_id`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr $pr_id --repository $repourl`,
           `else`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --repository $repourl`,
           `fi`
         ]),
         displayName:
@@ -465,7 +467,6 @@ export const createTestHldAzurePipelinesYaml = (
       }
     ]
   };
-  // tslint:enable: object-literal-sort-keys
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
@@ -480,7 +481,6 @@ export const createTestComponentYaml = (
     subcomponents: [
       {
         name: "traefik2",
-        // tslint:disable-next-line:object-literal-sort-keys
         method: "git",
         source: "https://github.com/microsoft/fabrikate-definitions.git",
         path: "definitions/traefik2"
