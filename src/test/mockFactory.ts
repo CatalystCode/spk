@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import { VM_IMAGE } from "../lib/constants";
+import { HELM_VERSION, VM_IMAGE } from "../lib/constants";
 import {
   BUILD_REPO_NAME,
   generateYamlScript,
@@ -49,7 +49,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
               {
                 task: "HelmInstaller@1",
                 inputs: {
-                  helmVersionToInstall: "2.16.3"
+                  helmVersionToInstall: HELM_VERSION
                 }
               },
               {
@@ -121,7 +121,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
               {
                 task: "HelmInstaller@1",
                 inputs: {
-                  helmVersionToInstall: "2.16.3"
+                  helmVersionToInstall: HELM_VERSION
                 }
               },
               {
@@ -325,7 +325,7 @@ export const createTestHldLifecyclePipelineYaml = (
       {
         task: "HelmInstaller@1",
         inputs: {
-          helmVersionToInstall: "2.16.3"
+          helmVersionToInstall: HELM_VERSION
         }
       },
       {
@@ -426,7 +426,7 @@ export const createTestHldAzurePipelinesYaml = (
       {
         task: "HelmInstaller@1",
         inputs: {
-          helmVersionToInstall: "2.16.3"
+          helmVersionToInstall: HELM_VERSION
         }
       },
       {

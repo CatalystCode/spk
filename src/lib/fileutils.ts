@@ -3,6 +3,7 @@ import yaml from "js-yaml";
 import path from "path";
 import {
   ACCESS_FILENAME,
+  HELM_VERSION,
   HLD_COMPONENT_FILENAME,
   PROJECT_PIPELINE_FILENAME,
   RENDER_HLD_PIPELINE_FILENAME,
@@ -162,7 +163,7 @@ export const serviceBuildAndUpdatePipeline = (
               {
                 task: "HelmInstaller@1",
                 inputs: {
-                  helmVersionToInstall: "2.16.3"
+                  helmVersionToInstall: HELM_VERSION
                 }
               },
               {
@@ -234,7 +235,7 @@ export const serviceBuildAndUpdatePipeline = (
               {
                 task: "HelmInstaller@1",
                 inputs: {
-                  helmVersionToInstall: "2.16.3"
+                  helmVersionToInstall: HELM_VERSION
                 }
               },
               {
@@ -496,7 +497,7 @@ const manifestGenerationPipelineYaml = (): string => {
       {
         task: "HelmInstaller@1",
         inputs: {
-          helmVersionToInstall: "2.16.3"
+          helmVersionToInstall: HELM_VERSION
         }
       },
       {
@@ -696,7 +697,7 @@ const hldLifecyclePipelineYaml = (): string => {
       {
         task: "HelmInstaller@1",
         inputs: {
-          helmVersionToInstall: "2.16.3"
+          helmVersionToInstall: HELM_VERSION
         }
       },
       {
