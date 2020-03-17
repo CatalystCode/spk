@@ -46,10 +46,6 @@ export const authorizeAccessToAllPipelines = async (
 ): Promise<boolean> => {
   const message = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
 
-  if (typeof variableGroup === undefined || variableGroup === null) {
-    throw new Error("variable group input must be defined");
-  }
-
   if (variableGroup.id === undefined) {
     throw new Error("variable group id must be defined");
   }
@@ -73,8 +69,8 @@ export const authorizeAccessToAllPipelines = async (
       `Creating resource definition: ${JSON.stringify(resourceDefinition)}`
     );
 
-    const buildCleint = await getBuildApi(opts);
-    const resourceDefinitionResponse = await buildCleint.authorizeProjectResources(
+    const buildClient = await getBuildApi(opts);
+    const resourceDefinitionResponse = await buildClient.authorizeProjectResources(
       [resourceDefinition],
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       project!
@@ -156,8 +152,8 @@ export const addVariableGroup = async (
     logger.info(`Creating ${message}`);
 
     if (
-      typeof variableGroupData.variables === undefined ||
-      typeof variableGroupData.variables === null
+      variableGroupData.variables === undefined ||
+      variableGroupData.variables === null
     ) {
       throw new Error("Invalid input. Variable are not configured");
     }
