@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/camelcase */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   VariableGroup,
   VariableGroupParameters
@@ -83,7 +82,7 @@ describe("addVariableGroupWithKeyVaultMap", () => {
     let invalidGroupError: Error | undefined;
     try {
       logger.info("calling add variable group with Key Vault map");
-      await addVariableGroupWithKeyVaultMap(data!);
+      await addVariableGroupWithKeyVaultMap(data);
     } catch (err) {
       invalidGroupError = err;
     }

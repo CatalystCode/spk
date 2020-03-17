@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import commander from "commander";
@@ -114,12 +113,17 @@ export const getConfig = (): ConfigYaml => {
 export const validatePersonalAccessToken = async (
   azure: ConfigYaml["azure_devops"]
 ): Promise<boolean> => {
+  if (!azure || !azure.org || !azure.project || !azure.access_token) {
+    throw Error(
+      "Unable to validate personal access token because organization, project or access token information were missing"
+    );
+  }
   try {
     const res = await axios.get(
-      `https://dev.azure.com/${azure!.org}/_apis/projects/${azure!.project}`,
+      `https://dev.azure.com/${azure.org}/_apis/projects/${azure.project}`,
       {
         auth: {
-          password: azure!.access_token as string,
+          password: azure.access_token as string,
           username: ""
         }
       }
@@ -136,9 +140,13 @@ export const validatePersonalAccessToken = async (
 export const handleInteractiveMode = async (): Promise<void> => {
   const curConfig = deepClone(getConfig());
   const answer = await prompt(curConfig);
-  curConfig.azure_devops!.org = answer.azdo_org_name;
-  curConfig.azure_devops!.project = answer.azdo_project_name;
-  curConfig.azure_devops!.access_token = answer.azdo_pat;
+
+  curConfig.azure_devops = curConfig.azure_devops || {};
+
+  curConfig.azure_devops.org = answer.azdo_org_name;
+  curConfig.azure_devops.project = answer.azdo_project_name;
+  curConfig.azure_devops.access_token = answer.azdo_pat;
+
   const data = yaml.safeDump(curConfig);
   fs.writeFileSync(defaultConfigFile(), data);
   logger.info("Successfully constructed SPK configuration file.");

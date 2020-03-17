@@ -33,10 +33,10 @@ export const promptForSubscriptionId = async (
       }
     ];
     const ans = await inquirer.prompt(questions);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    rc.subscriptionId = subscriptions.find(
+    const found = subscriptions.find(
       s => s.name === (ans.az_subscription as string)
-    )!.id;
+    );
+    rc.subscriptionId = found ? found.id : undefined;
   }
 };
 

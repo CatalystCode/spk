@@ -4,7 +4,6 @@
 import { IRequestOptions, IRestResponse, RestClient } from "typed-rest-client";
 import uuid from "uuid/v4";
 import { Config, readYaml } from "../../config";
-import { deepClone } from "../../lib/util";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { ServiceEndpointData, VariableGroupData } from "../../types";
 import * as azdoClient from "../azdoClient";
