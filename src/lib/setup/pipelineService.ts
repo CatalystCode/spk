@@ -267,7 +267,6 @@ export const createBuildPipeline = async (
     await deletePipelineIfExist(buildApi, rc, pipelineName);
 
     await installBuildUpdatePipeline(
-      APP_REPO,
       path.join(".", SERVICE_PIPELINE_FILENAME),
       {
         buildScriptUrl: BUILD_SCRIPT_URL,
