@@ -43,6 +43,7 @@ import {
   generateHldLifecyclePipelineYaml,
   generateServiceBuildAndUpdatePipelineYaml,
   generateYamlScript,
+  getVersionMessage,
   sanitizeTriggerPath,
   serviceBuildAndUpdatePipeline,
   updateTriggerBranchesForServiceBuildAndUpdatePipeline
@@ -58,6 +59,10 @@ afterAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+jest.mock("../../package.json", () => {
+  return { version: "0.5" };
 });
 
 describe("generateAccessYaml", () => {
@@ -158,6 +163,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
   const targetDirectory = "app-repository";
   const serviceDirectory = "my-service";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
 
   beforeEach(() => {
     mockFs({
@@ -198,7 +204,13 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
       path.join(targetDirectory, serviceDirectory),
       []
     );
+
     expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      getVersionMessage(),
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
       expectedFilePath,
       createTestServiceBuildAndUpdatePipelineYaml(
         true,
@@ -322,6 +334,7 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
 describe("generateHldLifecyclePipelineYaml", () => {
   const targetDirectory = "app-repository";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
 
   beforeEach(() => {
     mockFs({
@@ -349,6 +362,11 @@ describe("generateHldLifecyclePipelineYaml", () => {
     generateHldLifecyclePipelineYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
+      getVersionMessage(),
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
+      expectedFilePath,
       createTestHldLifecyclePipelineYaml(),
       "utf8"
     );
@@ -359,6 +377,8 @@ describe("generateHldLifecyclePipelineYaml", () => {
 describe("generateHldAzurePipelinesYaml", () => {
   const targetDirectory = "hld-repository";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
+
   beforeEach(() => {
     mockFs({
       "hld-repository": {}
@@ -384,6 +404,11 @@ describe("generateHldAzurePipelinesYaml", () => {
 
     generateHldAzurePipelinesYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      getVersionMessage(),
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
       expectedFilePath,
       createTestHldAzurePipelinesYaml(),
       "utf8"
