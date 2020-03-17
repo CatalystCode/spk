@@ -156,6 +156,12 @@ export const serviceBuildAndUpdatePipeline = (
             },
             steps: [
               {
+                task: "HelmInstaller@1",
+                inputs: {
+                  helmVersionToInstall: "2.16.3"
+                }
+              },
+              {
                 script: generateYamlScript([
                   `echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"`,
                   `az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"`
@@ -213,6 +219,12 @@ export const serviceBuildAndUpdatePipeline = (
               vmImage: VM_IMAGE
             },
             steps: [
+              {
+                task: "HelmInstaller@1",
+                inputs: {
+                  helmVersionToInstall: "2.16.3"
+                }
+              },
               {
                 script: generateYamlScript([
                   `# Download build.sh`,
@@ -639,6 +651,12 @@ const hldLifecyclePipelineYaml = (): string => {
       vmImage: VM_IMAGE
     },
     steps: [
+      {
+        task: "HelmInstaller@1",
+        inputs: {
+          helmVersionToInstall: "2.16.3"
+        }
+      },
       {
         script: generateYamlScript([
           `# Download build.sh`,
