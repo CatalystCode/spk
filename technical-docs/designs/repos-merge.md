@@ -137,9 +137,9 @@ The majority of the proposed changes in `spk` repo are related to organizing
   and `yarn test` continue to work.
 - Move `azure-pipelines\templates` folder to `build\pipelines\templates` folder
   and verify all pipelines continue to work.
-- Move `guides\contributing.md` file to `docs\contribution` folder
-- Move `guides` folder to `docs` folder
-- Move `technical-docs\designs` to `docs\contribution\designs` folder
+- Move `guides\contributing.md` file to `documents\contribution` folder
+- Move `guides` folder to `documents` folder
+- Move `technical-docs\designs` to `documents\contribution\designs` folder
 - Remove `.github\workflows` folder since it is not being used
 
 #### Testing Changes
@@ -164,16 +164,17 @@ After making the above changes, need to make sure that the follwing tests pass.
         ├── release-pipeline.yml
         ├── smoke-test-pipeline.yml
      ├── patches
-        ├── 001-azure-devops-node.patch
+         ├── 001-azure-devops-node.patch
      ├── publishing
+         ├── generateDoc.ts
+         ├── locateAliases.ts
      ├── tools
-        ├── generateDoc.ts
-        ├── locateAliases.ts
-        ├── release-version-bump.sh
-        ├── tag-release.sh
-        ├── update_introspection.sh
+         ├── release-version-bump.sh
+         ├── tag-release.sh
+         ├── update_introspection.sh
 ├── docs
     ├── commands
+├── documents
     ├── contribution
         ├── contributing.md
         ├── designs
@@ -235,14 +236,15 @@ _color legend:_
 +     ├── patches
 +         ├── 001-azure-devops-node.patch
 +     ├── publishing
-+     ├── tools
 +         ├── generateDoc.ts
 +         ├── locateAliases.ts
++     ├── tools
 +         ├── release-version-bump.sh
 +         ├── tag-release.sh
 +         ├── update_introspection.sh
 + ├── docs
 +     ├── commands
++ ├── documents
 +     ├── contribution
 +         ├── contributing.md
 +         ├── designs
@@ -276,7 +278,7 @@ the 4th phase of post merge changes.
 
 - Evaluate the contents of `gitops` folder and move contents to appropriate
   folders
-- Move all `*.md` files from `gitops` folder to `docs\gitops` folder
+- Move all `*.md` files from `gitops` folder to `documents\gitops` folder
 - Move all `*.sh` script files from `gitops` folder to `build\tools` folder
 
 ## Phase 4: Create a side by side new repo for Bedrock Infra/Cluster terraform
