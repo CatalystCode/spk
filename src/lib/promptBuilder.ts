@@ -143,15 +143,27 @@ export const azureStorageTableName = (
   };
 };
 
-export const azureStorageKey = (
+export const azureStoragePartitionKey = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    message: `${i18n.prompt.storagePartitionKey}\n`,
+    name: "azdo_storage_partition_key",
+    type: "input",
+    validate: validator.validateStoragePartitionKey
+  };
+};
+
+export const azureStorageRepoAccessKey = (
   defaultValue?: string | undefined
 ): QuestionCollection => {
   return {
     default: defaultValue,
     mask: "*",
-    message: `${i18n.prompt.storageKey}\n`,
-    name: "azdo_storage_key",
+    message: `${i18n.prompt.storageRepoAccessKey}\n`,
+    name: "azdo_storage_repo_access_key",
     type: "password",
-    validate: validator.validatePassword
+    validate: validator.validateStoragePartitionKey
   };
 };

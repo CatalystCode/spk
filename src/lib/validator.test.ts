@@ -18,6 +18,7 @@ import {
   validateServicePrincipalPassword,
   validateServicePrincipalTenantId,
   validateStorageAccountName,
+  validateStoragePartitionKey,
   validateStorageTableName,
   validateSubscriptionId
 } from "./validator";
@@ -288,5 +289,19 @@ describe("test validatePassword test", () => {
     );
     expect(validatePassword("abcd1234")).toBeTruthy();
     expect(validatePassword("abcdefg123456678")).toBeTruthy();
+  });
+});
+
+describe("test validateStoragePartitionKey test", () => {
+  it("sanity test", () => {
+    expect(validateStoragePartitionKey("")).toBe(
+      "Must enter a storage partition key."
+    );
+    ["abc\\", "abc/", "abc?", "abc#"].forEach(s => {
+      expect(validateStoragePartitionKey(s)).toBe(
+        "The value for storage partition key is invalid. /, \\, # and ? characters are not allowed."
+      );
+    });
+    expect(validateStoragePartitionKey("abcdefg123456678")).toBeTruthy();
   });
 });

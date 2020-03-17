@@ -136,10 +136,13 @@ export const handleIntrospectionInteractive = async (
   const ans = await inquirer.prompt([
     promptBuilder.azureStorageAccountName(azure.account_name),
     promptBuilder.azureStorageTableName(azure.table_name),
-    promptBuilder.azureStorageKey(undefined)
+    promptBuilder.azureStoragePartitionKey(azure.partition_key),
+    promptBuilder.azureStorageRepoAccessKey(azure.source_repo_access_token)
   ]);
   azure.account_name = ans.azdo_storage_account_name;
   azure.table_name = ans.azdo_storage_table_name;
+  azure.partition_key = ans.azdo_storage_partition_key;
+  azure.source_repo_access_token = ans.azdo_storage_repo_access_key;
 };
 
 /**

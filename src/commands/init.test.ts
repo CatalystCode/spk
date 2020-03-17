@@ -244,11 +244,15 @@ const testHandleIntrospectionInteractive = async (
   }
   jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
     azdo_storage_account_name: "storagetest",
-    azdo_storage_table_name: "storagetabletest"
+    azdo_storage_table_name: "storagetabletest",
+    azdo_storage_partition_key: "test1234key",
+    azdo_storage_repo_access_key: "repokey"
   });
   await handleIntrospectionInteractive(config);
   expect(config.introspection?.azure?.account_name).toBe("storagetest");
   expect(config.introspection?.azure?.table_name).toBe("storagetabletest");
+  expect(config.introspection?.azure?.partition_key).toBe("test1234key");
+  expect(config.introspection?.azure?.source_repo_access_token).toBe("repokey");
 };
 
 describe("test handleIntrospectionInteractive function", () => {

@@ -278,7 +278,7 @@ export const validateStorageAccountName = (value: string): string | boolean => {
 /**
  * Returns true if storage table name is valid.
  *
- * @param value storage table name .
+ * @param value storage table name.
  */
 export const validateStorageTableName = (value: string): string | boolean => {
   if (!hasValue(value)) {
@@ -289,6 +289,23 @@ export const validateStorageTableName = (value: string): string | boolean => {
   }
   if (value.length < 3 || value.length > 63) {
     return "The value for storage table name is invalid. It has to be between 3 and 63 characters long";
+  }
+  return true;
+};
+
+/**
+ * Returns true if storage partition key is valid.
+ *
+ * @param value storage partition key.
+ */
+export const validateStoragePartitionKey = (
+  value: string
+): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter a storage partition key.";
+  }
+  if (value.match(/[/\\#?]/)) {
+    return "The value for storage partition key is invalid. /, \\, # and ? characters are not allowed.";
   }
   return true;
 };
