@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as azdo from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi";
@@ -30,10 +29,11 @@ export const GitAPI = async (opts: AzureDevOpsOpts = {}): Promise<IGitApi> => {
   // Load the gitApi if it has not been initialized
   if (typeof gitApi === "undefined") {
     // Load config from opts and fallback to spk config
-    const { azure_devops } = Config();
+    const config = Config();
+    const azureDevops = config["azure_devops"];
     const {
-      personalAccessToken = azure_devops && azure_devops.access_token,
-      orgName = azure_devops && azure_devops.org
+      personalAccessToken = azureDevops && azureDevops.access_token,
+      orgName = azureDevops && azureDevops.org
     } = opts;
 
     // PAT and devops URL are required

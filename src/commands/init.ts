@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import commander from "commander";
 import fs from "fs";
@@ -141,11 +140,11 @@ export const handleInteractiveMode = async (): Promise<void> => {
   const curConfig = deepClone(getConfig());
   const answer = await prompt(curConfig);
 
-  curConfig.azure_devops = curConfig.azure_devops || {};
+  curConfig["azure_devops"] = curConfig.azure_devops || {};
 
   curConfig.azure_devops.org = answer.azdo_org_name;
   curConfig.azure_devops.project = answer.azdo_project_name;
-  curConfig.azure_devops.access_token = answer.azdo_pat;
+  curConfig.azure_devops["access_token"] = answer.azdo_pat;
 
   const data = yaml.safeDump(curConfig);
   fs.writeFileSync(defaultConfigFile(), data);

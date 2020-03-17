@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import commander from "commander";
 import GitUrlParse from "git-url-parse";
@@ -90,13 +89,13 @@ export const cleanDashboardContainers = async (
 export const extractManifestRepositoryInformation = (
   config: ConfigYaml
 ): IntrospectionManifest | undefined => {
-  const { azure_devops } = config;
-  if (azure_devops!.manifest_repository) {
+  const { azure_devops: azureDevops } = config;
+  if (azureDevops!.manifest_repository) {
     const manifestRepoName = getRepositoryName(
-      azure_devops!.manifest_repository
+      azureDevops!.manifest_repository
     );
 
-    const gitComponents = GitUrlParse(azure_devops!.manifest_repository);
+    const gitComponents = GitUrlParse(azureDevops!.manifest_repository);
     if (gitComponents.resource === "github.com") {
       return {
         githubUsername: gitComponents.organization,

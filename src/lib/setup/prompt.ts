@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import fs from "fs";
 import inquirer from "inquirer";
 import {
@@ -214,7 +213,7 @@ const parseInformationFromFile = (file: string): { [key: string]: string } => {
  */
 export const getAnswerFromFile = (file: string): RequestContext => {
   const map = parseInformationFromFile(file);
-  map.azdo_project_name = map.azdo_project_name || DEFAULT_PROJECT_NAME;
+  map["azdo_project_name"] = map.azdo_project_name || DEFAULT_PROJECT_NAME;
 
   const vOrgName = validateOrgName(map.azdo_org_name);
   if (typeof vOrgName === "string") {

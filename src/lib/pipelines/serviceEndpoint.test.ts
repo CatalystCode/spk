@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/camelcase */
-import { IRequestOptions, IRestResponse, RestClient } from "typed-rest-client";
+import { IRestResponse } from "typed-rest-client";
 import uuid from "uuid/v4";
 import { Config, readYaml } from "../../config";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
@@ -148,6 +145,7 @@ describe("Validate service endpoint parameters creation", () => {
     const input = readYaml<VariableGroupData>("");
 
     const data = createServiceEndPointParams(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       input.key_vault_provider!.service_endpoint
     );
 
@@ -183,6 +181,7 @@ describe("Validate service endpoint parameters creation", () => {
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -207,6 +206,7 @@ describe("Validate service endpoint parameters creation", () => {
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -231,6 +231,7 @@ describe("Validate service endpoint parameters creation", () => {
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -255,6 +256,7 @@ describe("Validate service endpoint parameters creation", () => {
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -279,6 +281,7 @@ describe("Validate service endpoint parameters creation", () => {
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -297,6 +300,7 @@ describe("Validate service endpoint parameters creation", () => {
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -314,12 +318,7 @@ const testAddServiceEndpoint = async (
 
   jest.spyOn(azdoClient, "getRestClient").mockReturnValueOnce(
     Promise.resolve({
-      create: async (
-        _resource: string,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        _resources: any,
-        _options?: IRequestOptions
-      ): Promise<IRestResponse<{ [key: string]: string }>> => {
+      create: async (): Promise<IRestResponse<{ [key: string]: string }>> => {
         if (getRestClientThrowException) {
           return new Promise((_, reject) => {
             reject(new Error("fake"));
@@ -334,10 +333,12 @@ const testAddServiceEndpoint = async (
           });
         });
       }
-    } as RestClient)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
   );
 
   const input = readYaml<VariableGroupData>("");
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return await addServiceEndpoint(input.key_vault_provider!.service_endpoint);
 };
 
@@ -365,10 +366,7 @@ const testGetServiceEndpointByName = async (
 
   jest.spyOn(azdoClient, "getRestClient").mockReturnValueOnce(
     Promise.resolve({
-      get: async (
-        _resource: string,
-        _options?: IRequestOptions
-      ): Promise<
+      get: async (): Promise<
         IRestResponse<{
           count: number;
           value: ServiceEndpoint[];
@@ -384,10 +382,11 @@ const testGetServiceEndpointByName = async (
           }
         });
       }
-    } as RestClient)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
   );
 
-  const input = readYaml<VariableGroupData>("");
+  readYaml<VariableGroupData>("");
   return await getServiceEndpointByName("dummy");
 };
 
