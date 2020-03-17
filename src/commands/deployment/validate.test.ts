@@ -134,16 +134,16 @@ afterAll(() => {
 describe("Validate deployment configuration", () => {
   test("valid deployment configuration", async () => {
     const config: ConfigYaml = {
-      azure_devops: {
+      "azure_devops": {
         org: uuid(),
         project: uuid()
       },
       introspection: {
         azure: {
-          account_name: uuid(),
+          "account_name": uuid(),
           key: Promise.resolve(uuid()),
-          partition_key: uuid(),
-          table_name: uuid()
+          "partition_key": uuid(),
+          "table_name": uuid()
         }
       }
     };
@@ -210,7 +210,7 @@ describe("test runSelfTest function", () => {
       introspection: {
         azure: {
           key: Promise.resolve(uuid()),
-          table_name: undefined
+          "table_name": undefined
         }
       }
     };
@@ -229,7 +229,7 @@ describe("test runSelfTest function", () => {
       introspection: {
         azure: {
           key: Promise.resolve(uuid()),
-          table_name: undefined
+          "table_name": undefined
         }
       }
     };
@@ -244,7 +244,7 @@ describe("test runSelfTest function", () => {
       introspection: {
         azure: {
           key: Promise.resolve(uuid()),
-          table_name: undefined
+          "table_name": undefined
         }
       }
     };
@@ -277,7 +277,7 @@ describe("Validate missing deployment.storage configuration", () => {
     const config: ConfigYaml = {
       introspection: {
         azure: {
-          account_name: undefined,
+          "account_name": undefined,
           key: Promise.resolve(uuid())
         }
       }
@@ -292,7 +292,7 @@ describe("Validate missing deployment.storage configuration", () => {
       introspection: {
         azure: {
           key: Promise.resolve(uuid()),
-          table_name: undefined
+          "table_name": undefined
         }
       }
     };
@@ -306,7 +306,7 @@ describe("Validate missing deployment.storage configuration", () => {
       introspection: {
         azure: {
           key: Promise.resolve(uuid()),
-          partition_key: undefined
+          "partition_key": undefined
         }
       }
     };
@@ -343,7 +343,7 @@ describe("Validate missing deployment.pipeline configuration", () => {
 describe("Validate missing deployment.pipeline configuration", () => {
   test("missing deployment.pipeline.org configuration", async () => {
     const config: ConfigYaml = {
-      azure_devops: {
+      "azure_devops": {
         org: undefined
       },
       introspection: {
@@ -359,7 +359,7 @@ describe("Validate missing deployment.pipeline configuration", () => {
 describe("Validate missing deployment.pipeline configuration", () => {
   test("missing deployment.pipeline.project configuration", async () => {
     const config: ConfigYaml = {
-      azure_devops: {
+      "azure_devops": {
         org: "org",
         project: undefined
       },

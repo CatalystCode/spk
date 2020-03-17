@@ -106,8 +106,8 @@ describe("Test execute function", () => {
 describe("test getConfig function", () => {
   it("with configuration file", () => {
     const mockedValues = {
-      azure_devops: {
-        access_token: "access_token",
+      "azure_devops": {
+        "access_token": "access_token",
         org: "org",
         project: "project"
       }
@@ -124,8 +124,8 @@ describe("test getConfig function", () => {
     });
     const cfg = getConfig();
     expect(cfg).toStrictEqual({
-      azure_devops: {
-        access_token: "",
+      "azure_devops": {
+        "access_token": "",
         org: "",
         project: ""
       }
@@ -141,7 +141,7 @@ describe("test validatePersonalAccessToken function", () => {
       })
     );
     const result = await validatePersonalAccessToken({
-      access_token: "token",
+      "access_token": "token",
       org: "org",
       project: "project"
     });
@@ -153,7 +153,7 @@ describe("test validatePersonalAccessToken function", () => {
       .spyOn(axios, "get")
       .mockReturnValueOnce(Promise.reject(new Error("fake")));
     const result = await validatePersonalAccessToken({
-      access_token: "token",
+      "access_token": "token",
       org: "org",
       project: "project"
     });
@@ -166,17 +166,35 @@ const testHandleInteractiveModeFunc = async (
   verified: boolean
 ): Promise<void> => {
   jest.spyOn(init, "getConfig").mockReturnValueOnce({
-    azure_devops: {
-      access_token: "",
+    "azure_devops": {
+      "access_token": "",
       org: "",
       project: ""
     }
   });
+<<<<<<< Updated upstream
   jest.spyOn(init, "prompt").mockResolvedValueOnce({
     azdo_org_name: "org_name",
     azdo_pat: "pat",
     azdo_project_name: "project"
   });
+=======
+<<<<<<< Updated upstream
+  jest.spyOn(init, "prompt").mockReturnValueOnce(
+    Promise.resolve({
+      azdo_org_name: "org_name",
+      azdo_pat: "pat",
+      azdo_project_name: "project"
+    })
+  );
+=======
+  jest.spyOn(init, "prompt").mockResolvedValueOnce({
+    "azdo_org_name": "org_name",
+    "azdo_pat": "pat",
+    "azdo_project_name": "project"
+  });
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
   jest
     .spyOn(init, "validatePersonalAccessToken")
     .mockReturnValueOnce(Promise.resolve(verified));
@@ -206,9 +224,9 @@ describe("test handleInteractiveMode function", () => {
 describe("test prompt function", () => {
   it("positive test", async done => {
     const answers = {
-      azdo_org_name: "org",
-      azdo_pat: "pat",
-      azdo_project_name: "project"
+      "azdo_org_name": "org",
+      "azdo_pat": "pat",
+      "azdo_project_name": "project"
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     const ans = await prompt({});
