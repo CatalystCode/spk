@@ -19,6 +19,7 @@ import {
   validateServicePrincipalPassword,
   validateServicePrincipalTenantId,
   validateStorageAccountName,
+  validateStorageKeVaultName,
   validateStoragePartitionKey,
   validateStorageTableName,
   validateSubscriptionId
@@ -318,5 +319,29 @@ describe("test validateACRName function", () => {
     );
 
     expect(validateACRName("abc12356")).toBeTruthy();
+  });
+});
+
+describe("test validateStorageKeVaultName function", () => {
+  it("sanity test", () => {
+    expect(validateStorageKeVaultName("ab*")).toBe(
+      "The value for Key Value  Name is invalid."
+    );
+    expect(validateStorageKeVaultName("1abc0")).toBe(
+      "Key Value Name must start with a letter."
+    );
+    expect(validateStorageKeVaultName("abc0-")).toBe(
+      "Key Value Name must end with letter or digit."
+    );
+    expect(validateStorageKeVaultName("a--b")).toBe(
+      "Key Value Name cannot contain consecutive hyphens."
+    );
+    expect(validateStorageKeVaultName("ab")).toBe(
+      "The value for Key Vault Name is invalid because it has to be between 3 and 24 characters long."
+    );
+    expect(validateStorageKeVaultName("a12345678".repeat(3))).toBe(
+      "The value for Key Vault Name is invalid because it has to be between 3 and 24 characters long."
+    );
+    expect(validateStorageKeVaultName("abc-12356")).toBeTruthy();
   });
 });

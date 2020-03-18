@@ -120,6 +120,10 @@ export const isAlphaNumeric = (value: string): boolean => {
   return !!value.match(/^[a-zA-Z0-9]+$/);
 };
 
+export const isDashAlphaNumeric = (value: string): boolean => {
+  return !!value.match(/^[a-zA-Z0-9-]+$/);
+};
+
 /**
  * Returns true if password is proper. Typical password validation
  *
@@ -325,6 +329,28 @@ export const validateACRName = (value: string): string | boolean => {
   }
   if (value.length < 5 || value.length > 50) {
     return "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long.";
+  }
+  return true;
+};
+
+export const validateStorageKeVaultName = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return true; // optional
+  }
+  if (!isDashAlphaNumeric(value)) {
+    return "The value for Key Value  Name is invalid.";
+  }
+  if (!value.match(/^[a-zA-Z]/)) {
+    return "Key Value Name must start with a letter.";
+  }
+  if (!value.match(/[a-zA-Z0-9]$/)) {
+    return "Key Value Name must end with letter or digit.";
+  }
+  if (value.indexOf("--") !== -1) {
+    return "Key Value Name cannot contain consecutive hyphens.";
+  }
+  if (value.length < 3 || value.length > 24) {
+    return "The value for Key Vault Name is invalid because it has to be between 3 and 24 characters long.";
   }
   return true;
 };

@@ -167,3 +167,15 @@ export const azureStorageRepoAccessKey = (
     validate: validator.validateStoragePartitionKey
   };
 };
+
+export const azureKeyVaultName = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    message: `${i18n.prompt.storageKeVaultName}\n`,
+    name: "azdo_storage_key_vault_name",
+    type: "input",
+    validate: validator.validateStorageKeVaultName
+  };
+};
