@@ -11,7 +11,8 @@ import {
   isExists,
   read,
   removeRing,
-  setDefaultRing
+  setDefaultRing,
+  validateRings
 } from "./bedrockYaml";
 
 describe("Creation and Existence test on bedrock.yaml", () => {
@@ -225,4 +226,51 @@ describe("removeRing", () => {
     expect(ringToRemove).toBeDefined();
     expect(() => removeRing(original, ringToRemove as string)).toThrow();
   });
+});
+
+describe("validateRings", () => {
+  const bedrockFile = createTestBedrockYaml(false) as BedrockFile;
+  const tests: {
+    name: string;
+    actual: () => unknown;
+    throws: boolean;
+  }[] = [
+    {
+      name: "no default ring: does not throw",
+      actual: (): unknown =>
+        validateRings({
+          ...bedrockFile,
+          rings: { master: { isDefault: false }, qa: {} }
+        }),
+      throws: false
+    },
+    {
+      name: "one default ring: does not throw",
+      actual: (): unknown =>
+        validateRings({
+          ...bedrockFile,
+          rings: { master: { isDefault: true }, qa: {} }
+        }),
+      throws: false
+    },
+    {
+      name: "multiple default ring: throws",
+      actual: (): unknown =>
+        validateRings({
+          ...bedrockFile,
+          rings: { master: { isDefault: true }, qa: { isDefault: true } }
+        }),
+      throws: true
+    }
+  ];
+
+  for (const { name, actual, throws } of tests) {
+    it(name, () => {
+      if (throws) {
+        expect(() => actual()).toThrow();
+      } else {
+        expect(() => actual()).not.toThrow();
+      }
+    });
+  }
 });
