@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // imports
 import uuid from "uuid/v4";
 import * as deploymenttable from "../../lib/azure/deploymenttable";
@@ -23,6 +21,7 @@ import {
 import * as validate from "./validate";
 
 jest.spyOn(storage, "getStorageManagementClient").mockImplementation(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async (): Promise<any> => {
     return undefined;
   }
@@ -78,6 +77,7 @@ jest
         | RowACRToHLDPipeline
         | RowHLDToManifestPipeline
     ) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return new Promise<any>(resolve => {
         mockedDB.push(entry);
         resolve(entry);
@@ -86,6 +86,7 @@ jest
   );
 
 jest.spyOn(deploymenttable, "deleteFromTable").mockImplementation(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new Promise<any>(resolve => {
     if (mockedDB.length === 1 && mockedDB[0].p1 === "500") {
       mockedDB = [];
@@ -105,6 +106,7 @@ jest
         | RowHLDToManifestPipeline
         | RowManifest
     ) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return new Promise<any>(resolve => {
         mockedDB.forEach((row, index: number) => {
           if (row.RowKey === entry.RowKey) {

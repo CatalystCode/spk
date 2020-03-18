@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   Build,
@@ -173,9 +172,9 @@ const deletePipelineIfExist = async (
     rc.projectName,
     pipelineName
   );
-  if (pipeline) {
+  if (pipeline && pipeline.id) {
     logger.info(`${pipelineName} is found, deleting it`);
-    await deletePipeline(buildApi, rc.projectName, pipelineName, pipeline.id!);
+    await deletePipeline(buildApi, rc.projectName, pipelineName, pipeline.id);
   }
 };
 

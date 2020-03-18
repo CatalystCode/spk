@@ -1,7 +1,5 @@
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { IGitApi } from "azure-devops-node-api/GitApi";
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/camelcase */
 import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
@@ -86,9 +84,7 @@ export const getErrorMessage = (
 ): string => {
   if (rc) {
     if (err.message && err.message.indexOf("VS402392") !== -1) {
-      return `Project, ${
-        rc!.projectName
-      } might have been deleted less than 28 days ago. Choose a different project name.`;
+      return `Project, ${rc.projectName} might have been deleted less than 28 days ago. Choose a different project name.`;
     }
     if (!(err instanceof Error) && err.statusCode && err.statusCode === 401) {
       return `Authentication Failed. Make sure that the organization name and access token are correct; or your access token may have expired.`;
@@ -102,22 +98,29 @@ export const createAppRepoTasks = async (
   buildAPI: IBuildApi,
   rc: RequestContext
 ): Promise<void> => {
-  if (rc.toCreateAppRepo) {
+  if (
+    rc.toCreateAppRepo &&
+    rc.servicePrincipalId &&
+    rc.servicePrincipalPassword &&
+    rc.servicePrincipalTenantId &&
+    rc.subscriptionId &&
+    rc.acrName
+  ) {
     rc.createdResourceGroup = await createResourceGroup(
-      rc.servicePrincipalId!,
-      rc.servicePrincipalPassword!,
-      rc.servicePrincipalTenantId!,
-      rc.subscriptionId!,
+      rc.servicePrincipalId,
+      rc.servicePrincipalPassword,
+      rc.servicePrincipalTenantId,
+      rc.subscriptionId,
       RESOURCE_GROUP,
       RESOURCE_GROUP_LOCATION
     );
     rc.createdACR = await createACR(
-      rc.servicePrincipalId!,
-      rc.servicePrincipalPassword!,
-      rc.servicePrincipalTenantId!,
-      rc.subscriptionId!,
+      rc.servicePrincipalId,
+      rc.servicePrincipalPassword,
+      rc.servicePrincipalTenantId,
+      rc.subscriptionId,
       RESOURCE_GROUP,
-      rc.acrName!,
+      rc.acrName,
       RESOURCE_GROUP_LOCATION
     );
     await helmRepo(gitAPI, rc);
@@ -148,6 +151,7 @@ export const execute = async (
 
   try {
     requestContext = opts.file ? getAnswerFromFile(opts.file) : await prompt();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const rc = requestContext!;
     createDirectory(WORKSPACE, true);
     createSPKConfig(rc);
@@ -172,7 +176,7 @@ export const execute = async (
     if (requestContext) {
       requestContext.error = msg;
     }
-    createSetupLog(requestContext!);
+    createSetupLog(requestContext);
 
     logger.error(msg);
     await exitFn(1);
