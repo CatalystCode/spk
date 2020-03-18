@@ -207,7 +207,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
 
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
-      getVersionMessage(),
+      `${getVersionMessage()}\n`,
       "utf8"
     );
     expect(appendSpy).toBeCalledWith(
@@ -362,7 +362,7 @@ describe("generateHldLifecyclePipelineYaml", () => {
     generateHldLifecyclePipelineYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
-      getVersionMessage(),
+      `${getVersionMessage()}\n`,
       "utf8"
     );
     expect(appendSpy).toBeCalledWith(
@@ -405,7 +405,7 @@ describe("generateHldAzurePipelinesYaml", () => {
     generateHldAzurePipelinesYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
-      getVersionMessage(),
+      `${getVersionMessage()}\n`,
       "utf8"
     );
     expect(appendSpy).toBeCalledWith(
