@@ -55,9 +55,9 @@ export const prompt = async (curConfig: ConfigYaml): Promise<Answer> => {
   ];
   const answers = await inquirer.prompt(questions);
   return {
-    "azdo_org_name": answers.azdo_org_name as string,
-    "azdo_pat": answers.azdo_pat as string,
-    "azdo_project_name": answers.azdo_project_name as string,
+    azdo_org_name: answers.azdo_org_name as string,
+    azdo_pat: answers.azdo_pat as string,
+    azdo_project_name: answers.azdo_project_name as string,
     toSetupIntrospectionConfig: answers.toSetupIntrospectionConfig
   };
 };
@@ -73,8 +73,8 @@ export const getConfig = (): ConfigYaml => {
   } catch (_) {
     logger.info("current config is not found.");
     return {
-      "azure_devops": {
-        "access_token": "",
+      azure_devops: {
+        access_token: "",
         org: "",
         project: ""
       }
