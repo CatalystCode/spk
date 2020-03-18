@@ -258,6 +258,7 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
   const targetDirectory = "app-repository";
   const serviceDirectory = "my-service";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
 
   beforeEach(() => {
     mockFs({
@@ -317,6 +318,11 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
     );
 
     expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      `${getVersionMessage()}\n`,
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
       expectedFilePath,
       createTestServiceBuildAndUpdatePipelineYaml(
         true,
