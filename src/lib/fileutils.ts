@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import EOL from "os";
 import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
@@ -866,8 +865,7 @@ export const generateDockerfile = (targetDirectory: string): void => {
  * @param filePath The path to the file
  */
 export const writeVersion = (filePath: string): void => {
-  fs.writeFileSync(filePath, getVersionMessage(), "utf8");
-  fs.appendFileSync(filePath, "\n", "utf8");
+  fs.writeFileSync(filePath, `${getVersionMessage()}\n`, "utf8");
 };
 
 /**
