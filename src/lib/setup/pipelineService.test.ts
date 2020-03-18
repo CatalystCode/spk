@@ -292,9 +292,11 @@ describe("test createLifecyclePipeline function", () => {
     expect(rc.createdLifecyclePipeline).toBeTruthy();
   });
   it("positive test: pipeline already exists", async () => {
-    jest
-      .spyOn(pipelineService, "getPipelineByName")
-      .mockReturnValueOnce(Promise.resolve({}));
+    jest.spyOn(pipelineService, "getPipelineByName").mockReturnValueOnce(
+      Promise.resolve({
+        id: 1
+      })
+    );
     const fnDeletePipeline = jest
       .spyOn(pipelineService, "deletePipeline")
       .mockReturnValueOnce(Promise.resolve());
@@ -337,9 +339,11 @@ describe("test createBuildPipeline function", () => {
     expect(rc.createdBuildPipeline).toBeTruthy();
   });
   it("positive test: pipeline already exists", async () => {
-    jest
-      .spyOn(pipelineService, "getPipelineByName")
-      .mockReturnValueOnce(Promise.resolve({}));
+    jest.spyOn(pipelineService, "getPipelineByName").mockReturnValueOnce(
+      Promise.resolve({
+        id: 1
+      })
+    );
     const fnDeletePipeline = jest
       .spyOn(pipelineService, "deletePipeline")
       .mockReturnValueOnce(Promise.resolve());
