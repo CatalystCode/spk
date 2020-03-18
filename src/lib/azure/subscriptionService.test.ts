@@ -37,11 +37,13 @@ describe("test getSubscriptions function", () => {
       .mockImplementationOnce(async () => {
         return {};
       });
+
     const result = await getSubscriptions(
       principalId,
       principalPassword,
       principalTenantId
     );
+
     expect(result).toStrictEqual([
       {
         id: "1234567890-abcdef",

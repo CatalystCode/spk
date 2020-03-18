@@ -31,10 +31,10 @@ export const promptForSubscriptionId = async (
     const ans = await inquirer.prompt([
       promptBuilder.chooseSubscriptionId(subscriptions.map(s => s.name))
     ]);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    rc.subscriptionId = subscriptions.find(
+    const found = subscriptions.find(
       s => s.name === (ans.az_subscription as string)
-    )!.id;
+    );
+    rc.subscriptionId = found ? found.id : undefined;
   }
 };
 
@@ -171,7 +171,7 @@ const parseInformationFromFile = (file: string): { [key: string]: string } => {
  */
 export const getAnswerFromFile = (file: string): RequestContext => {
   const map = parseInformationFromFile(file);
-  map["azdo_project_name"] = map["azdo_project_name"] || DEFAULT_PROJECT_NAME;
+  map["azdo_project_name"] = map.azdo_project_name || DEFAULT_PROJECT_NAME;
 
   const vOrgName = validateOrgName(map.azdo_org_name);
   if (typeof vOrgName === "string") {

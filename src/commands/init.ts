@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import commander from "commander";
 import fs from "fs";
@@ -94,12 +92,17 @@ export const getConfig = (): ConfigYaml => {
 export const validatePersonalAccessToken = async (
   azure: ConfigYaml["azure_devops"]
 ): Promise<boolean> => {
+  if (!azure || !azure.org || !azure.project || !azure.access_token) {
+    throw Error(
+      "Unable to validate personal access token because organization, project or access token information were missing"
+    );
+  }
   try {
     const res = await axios.get(
-      `https://dev.azure.com/${azure!.org}/_apis/projects/${azure!.project}`,
+      `https://dev.azure.com/${azure.org}/_apis/projects/${azure.project}`,
       {
         auth: {
-          password: azure!.access_token as string,
+          password: azure.access_token as string,
           username: ""
         }
       }
@@ -111,10 +114,10 @@ export const validatePersonalAccessToken = async (
 };
 
 export const isIntrospectionAzureDefined = (curConfig: ConfigYaml): boolean => {
-  if (curConfig.introspection === undefined) {
+  if (!curConfig.introspection) {
     return false;
   }
-  const intro = curConfig.introspection!;
+  const intro = curConfig.introspection;
   return intro.azure !== undefined;
 };
 
@@ -131,18 +134,19 @@ export const handleIntrospectionInteractive = async (
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const azure = curConfig.introspection!.azure!;
-  console.log(JSON.stringify(azure));
+
   const ans = await inquirer.prompt([
     promptBuilder.azureStorageAccountName(azure.account_name),
     promptBuilder.azureStorageTableName(azure.table_name),
     promptBuilder.azureStoragePartitionKey(azure.partition_key),
     promptBuilder.azureStorageRepoAccessKey(azure.source_repo_access_token)
   ]);
-  azure.account_name = ans.azdo_storage_account_name;
-  azure.table_name = ans.azdo_storage_table_name;
-  azure.partition_key = ans.azdo_storage_partition_key;
-  azure.source_repo_access_token = ans.azdo_storage_repo_access_key;
+  azure["account_name"] = ans.azdo_storage_account_name;
+  azure["table_name"] = ans.azdo_storage_table_name;
+  azure["partition_key"] = ans.azdo_storage_partition_key;
+  azure["source_repo_access_token"] = ans.azdo_storage_repo_access_key;
 };
 
 /**
@@ -171,9 +175,11 @@ export const cloneConfig = (): ConfigYaml => {
 export const handleInteractiveMode = async (): Promise<void> => {
   const curConfig = cloneConfig();
   const answer = await prompt(curConfig);
-  curConfig.azure_devops!.org = answer.azdo_org_name;
-  curConfig.azure_devops!.project = answer.azdo_project_name;
-  curConfig.azure_devops!.access_token = answer.azdo_pat;
+  curConfig["azure_devops"] = curConfig.azure_devops || {};
+
+  curConfig.azure_devops.org = answer.azdo_org_name;
+  curConfig.azure_devops.project = answer.azdo_project_name;
+  curConfig.azure_devops["access_token"] = answer.azdo_pat;
 
   if (answer.toSetupIntrospectionConfig) {
     await handleIntrospectionInteractive(curConfig);

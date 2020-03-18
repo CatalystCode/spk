@@ -3,6 +3,7 @@ import { VM_IMAGE } from "../lib/constants";
 import {
   BUILD_REPO_NAME,
   generateYamlScript,
+  sanitizeTriggerPath,
   IMAGE_REPO,
   IMAGE_TAG,
   SAFE_SOURCE_BRANCH
@@ -22,11 +23,10 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
   ringBranches: string[] = ["master", "qa", "test"],
   variableGroups: string[] = []
 ): AzurePipelinesYaml | string => {
-  // tslint:disable: object-literal-sort-keys
   const data: AzurePipelinesYaml = {
     trigger: {
       branches: { include: ringBranches },
-      paths: { include: [relativeServicePathFormatted] } // Only building for a single service's path.
+      paths: { include: [sanitizeTriggerPath(relativeServicePathFormatted)] } // Only building for a single service's path.
     },
     variables: [...(variableGroups ?? []).map(group => ({ group }))],
     stages: [
@@ -41,11 +41,28 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
             },
             steps: [
               {
+                task: "HelmInstaller@1",
+                inputs: {
+                  helmVersionToInstall: "2.16.3"
+                }
+              },
+              {
                 script: generateYamlScript([
                   `echo "az login --service-principal --username $(SP_APP_ID) --password $(SP_PASS) --tenant $(SP_TENANT)"`,
                   `az login --service-principal --username "$(SP_APP_ID)" --password "$(SP_PASS)" --tenant "$(SP_TENANT)"`
                 ]),
                 displayName: "Azure Login"
+              },
+              {
+                script: generateYamlScript([
+                  `# Download build.sh`,
+                  `curl $BEDROCK_BUILD_SCRIPT > build.sh`,
+                  `chmod +x ./build.sh`
+                ]),
+                displayName: "Download bedrock bash scripts",
+                env: {
+                  BEDROCK_BUILD_SCRIPT: "$(BUILD_SCRIPT_URL)"
+                }
               },
               {
                 script: generateYamlScript([
@@ -57,13 +74,10 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `service=\${service##*/}`,
                   `url=$(git remote --verbose | grep origin | grep fetch | cut -f2 | cut -d' ' -f1)`,
                   `repourl=\${url##*@}`,
-                  `echo "Downloading SPK"`,
-                  `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
-                  `chmod +x build.sh`,
                   `. ./build.sh --source-only`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
+                  `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service --repository $repourl`
                 ]),
                 displayName:
                   "If configured, update Spektate storage with build pipeline",
@@ -76,7 +90,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `export IMAGE_TAG=${IMAGE_TAG}`,
                   `export IMAGE_NAME=$BUILD_REPO_NAME:$IMAGE_TAG`,
                   `echo "Image Name: $IMAGE_NAME"`,
-                  `cd ${relativeServicePathFormatted}`,
+                  `cd ${sanitizeTriggerPath(relativeServicePathFormatted)}`,
                   `echo "az acr build -r $(ACR_NAME) --image $IMAGE_NAME ."`,
                   `az acr build -r $(ACR_NAME) --image $IMAGE_NAME .`
                 ]),
@@ -98,6 +112,12 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
               vmImage: VM_IMAGE
             },
             steps: [
+              {
+                task: "HelmInstaller@1",
+                inputs: {
+                  helmVersionToInstall: "2.16.3"
+                }
+              },
               {
                 script: generateYamlScript([
                   `# Download build.sh`,
@@ -166,7 +186,6 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `response=$(az repos pr create --description "Updating $SERVICE_NAME_LOWER to ${IMAGE_TAG}." "PR created by: $(Build.DefinitionName) with buildId: $(Build.BuildId) and buildNumber: $(Build.BuildNumber)")`,
                   `pr_id=$(echo $response | jq -r '.pullRequestId')`,
                   ``,
-                  ``,
                   `# Update introspection storage with this information, if applicable`,
                   `if [ -z "$(INTROSPECTION_ACCOUNT_NAME)" -o -z "$(INTROSPECTION_ACCOUNT_KEY)" -o -z "$(INTROSPECTION_TABLE_NAME)" -o -z "$(INTROSPECTION_PARTITION_KEY)" ]; then`,
                   `echo "Introspection variables are not defined. Skipping..."`,
@@ -175,13 +194,9 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
                   `url=$(git remote --verbose | grep origin | grep fetch | cut -f2 | cut -d' ' -f1)`,
                   `repourl=\${url##*@}`,
-                  `echo "Downloading SPK"`,
-                  `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
-                  `chmod +x build.sh`,
-                  `. ./build.sh --source-only`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id`,
+                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id --repository $repourl`,
                   `fi`
                 ]),
                 displayName:
@@ -198,7 +213,6 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
       }
     ]
   };
-  // tslint:enable: object-literal-sort-keys
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
@@ -290,7 +304,6 @@ export const createTestBedrockYaml = (
 export const createTestHldLifecyclePipelineYaml = (
   asString = true
 ): AzurePipelinesYaml | string => {
-  // tslint:disable: object-literal-sort-keys
   const data: AzurePipelinesYaml = {
     trigger: {
       branches: {
@@ -302,6 +315,12 @@ export const createTestHldLifecyclePipelineYaml = (
       vmImage: VM_IMAGE
     },
     steps: [
+      {
+        task: "HelmInstaller@1",
+        inputs: {
+          helmVersionToInstall: "2.16.3"
+        }
+      },
       {
         script: generateYamlScript([
           `# Download build.sh`,
@@ -373,7 +392,6 @@ export const createTestHldLifecyclePipelineYaml = (
       }
     ]
   };
-  // tslint:enable: object-literal-sort-keys
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
@@ -383,7 +401,6 @@ export const createTestHldLifecyclePipelineYaml = (
 export const createTestHldAzurePipelinesYaml = (
   asString = true
 ): AzurePipelinesYaml | string => {
-  // tslint:disable: object-literal-sort-keys
   const data: AzurePipelinesYaml = {
     trigger: {
       branches: {
@@ -400,6 +417,12 @@ export const createTestHldAzurePipelinesYaml = (
         clean: true
       },
       {
+        task: "HelmInstaller@1",
+        inputs: {
+          helmVersionToInstall: "2.16.3"
+        }
+      },
+      {
         script: generateYamlScript([
           `# Download build.sh`,
           `curl $BEDROCK_BUILD_SCRIPT > build.sh`,
@@ -409,6 +432,26 @@ export const createTestHldAzurePipelinesYaml = (
         env: {
           BEDROCK_BUILD_SCRIPT: "$(BUILD_SCRIPT_URL)"
         }
+      },
+      {
+        script: generateYamlScript([
+          `commitId=$(Build.SourceVersion)`,
+          `commitId=$(echo "\${commitId:0:7}")`,
+          `. ./build.sh --source-only`,
+          `get_spk_version`,
+          `download_spk`,
+          `message="$(Build.SourceVersionMessage)"`,
+          `if [[ $message == *"Merged PR"* ]]; then`,
+          `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\\+//')`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --pr $pr_id`,
+          `else`,
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId`,
+          `fi`
+        ]),
+        displayName:
+          "If configured, update manifest pipeline details in Spektate db before manifest generation",
+        condition:
+          "and(ne(variables['INTROSPECTION_ACCOUNT_NAME'], ''), ne(variables['INTROSPECTION_ACCOUNT_KEY'], ''),ne(variables['INTROSPECTION_TABLE_NAME'], ''),ne(variables['INTROSPECTION_PARTITION_KEY'], ''))"
       },
       {
         task: "ShellScript@2",
@@ -438,34 +481,22 @@ export const createTestHldAzurePipelinesYaml = (
       },
       {
         script: generateYamlScript([
+          `. ./build.sh --source-only`,
           `cd "$HOME"/\${MANIFEST_REPO##*/}`,
-          `commitId=$(Build.SourceVersion)`,
-          `commitId=$(echo "\${commitId:0:7}")`,
           `latest_commit=$(git rev-parse --short HEAD)`,
           `url=$(git remote --verbose | grep origin | grep fetch | cut -f2 | cut -d' ' -f1)`,
           `repourl=\${url##*@}`,
-          `echo "Downloading SPK"`,
-          `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
-          `chmod +x build.sh`,
-          `. ./build.sh --source-only`,
           `get_spk_version`,
           `download_spk`,
-          `message="$(Build.SourceVersionMessage)"`,
-          `if [[ $message == *"Merged PR"* ]]; then`,
-          `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\\+//')`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit --pr $pr_id`,
-          `else`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`,
-          `fi`
+          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --manifest-commit-id $latest_commit --repository $repourl`
         ]),
         displayName:
-          "If configured, update manifest pipeline details in Spektate db",
+          "If configured, update manifest pipeline details in Spektate db after manifest generation",
         condition:
           "and(ne(variables['INTROSPECTION_ACCOUNT_NAME'], ''), ne(variables['INTROSPECTION_ACCOUNT_KEY'], ''),ne(variables['INTROSPECTION_TABLE_NAME'], ''),ne(variables['INTROSPECTION_PARTITION_KEY'], ''))"
       }
     ]
   };
-  // tslint:enable: object-literal-sort-keys
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
@@ -480,7 +511,6 @@ export const createTestComponentYaml = (
     subcomponents: [
       {
         name: "traefik2",
-        // tslint:disable-next-line:object-literal-sort-keys
         method: "git",
         source: "https://github.com/microsoft/fabrikate-definitions.git",
         path: "definitions/traefik2"

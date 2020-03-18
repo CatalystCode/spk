@@ -143,15 +143,9 @@ describe("createServiceComponent", () => {
       .fn()
       .mockImplementation(async () => Promise.reject(new Error()));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let error: any;
-    try {
-      await createServiceComponent(exec, repoInHldPath, pathBase);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
+    await expect(
+      createServiceComponent(exec, repoInHldPath, pathBase)
+    ).rejects.toThrow();
   });
 });
 
@@ -194,15 +188,9 @@ describe("createRepositoryComponent", () => {
       .fn()
       .mockImplementation(async () => Promise.reject(new Error()));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let error: any;
-    try {
-      await createRepositoryComponent(exec, hldPath, repositoryName);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
+    await expect(
+      createRepositoryComponent(exec, hldPath, repositoryName)
+    ).rejects.toThrow();
   });
 });
 
@@ -224,15 +212,9 @@ describe("createRingComponent", () => {
       .fn()
       .mockImplementation(async () => Promise.reject(new Error()));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let error: any;
-    try {
-      await createRingComponent(exec, svcPathInHld, ring);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
+    await expect(
+      createRingComponent(exec, svcPathInHld, ring)
+    ).rejects.toThrow();
   });
 });
 
@@ -253,15 +235,7 @@ describe("createStaticComponent", () => {
       .fn()
       .mockImplementation(async () => Promise.reject(new Error()));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let error: any;
-    try {
-      await createStaticComponent(exec, ringPathInHld);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
+    await expect(createStaticComponent(exec, ringPathInHld)).rejects.toThrow();
   });
 });
 
@@ -286,7 +260,6 @@ describe("addChartToRing", () => {
       k8sBackendPort: 1337
     };
 
-    /* tslint:disable-next-line: no-string-literal */
     const addHelmChartCommand = `fab add chart --source ${git} --path ${chartPath} --branch ${branch} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
@@ -315,7 +288,6 @@ describe("addChartToRing", () => {
       k8sBackendPort: 1337
     };
 
-    /* tslint:disable-next-line: no-string-literal */
     const addHelmChartCommand = `fab add chart --source ${git} --path ${chartPath} --version ${sha} --type helm`;
 
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
@@ -342,7 +314,6 @@ describe("addChartToRing", () => {
       k8sBackendPort: 1337
     };
 
-    /* tslint:disable-next-line: no-string-literal */
     const addHelmChartCommand = `fab add chart --source ${repository} --path ${chart} --type helm`;
     const expectedInvocation = `cd ${ringPath} && ${addHelmChartCommand}`;
 
@@ -371,15 +342,9 @@ describe("addChartToRing", () => {
       k8sBackendPort: 1337
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let error: any;
-    try {
-      await addChartToRing(exec, ringPath, serviceConfig);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
+    await expect(
+      addChartToRing(exec, ringPath, serviceConfig)
+    ).rejects.toThrow();
   });
 });
 
@@ -415,15 +380,9 @@ describe("configureChartForRing", () => {
       .fn()
       .mockImplementation(async () => Promise.reject(new Error()));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let error: any;
-    try {
-      await configureChartForRing(exec, ringPath, ringName, serviceConfig);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
+    await expect(
+      configureChartForRing(exec, ringPath, ringName, serviceConfig)
+    ).rejects.toThrow();
   });
 });
 
