@@ -54,23 +54,23 @@ interface APIError {
 export const createSPKConfig = (rc: RequestContext): void => {
   const data = rc.toCreateAppRepo
     ? {
-        azure_devops: {
-          access_token: rc.accessToken,
+        "azure_devops": {
+          "access_token": rc.accessToken,
           org: rc.orgName,
           project: rc.projectName
         },
         introspection: {
           azure: {
-            service_principal_id: rc.servicePrincipalId,
-            service_principal_secret: rc.servicePrincipalPassword,
-            subscription_id: rc.subscriptionId,
-            tenant_id: rc.servicePrincipalTenantId
+            "service_principal_id": rc.servicePrincipalId,
+            "service_principal_secret": rc.servicePrincipalPassword,
+            "subscription_id": rc.subscriptionId,
+            "tenant_id": rc.servicePrincipalTenantId
           }
         }
       }
     : {
-        azure_devops: {
-          access_token: rc.accessToken,
+        "azure_devops": {
+          "access_token": rc.accessToken,
           org: rc.orgName,
           project: rc.projectName
         }
