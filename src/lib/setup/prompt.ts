@@ -3,6 +3,7 @@ import inquirer from "inquirer";
 import * as promptBuilder from "../promptBuilder";
 import {
   validateAccessToken,
+  validateACRName,
   validateOrgName,
   validateProjectName,
   validateServicePrincipalId,
@@ -10,7 +11,12 @@ import {
   validateServicePrincipalTenantId,
   validateSubscriptionId
 } from "../validator";
-import { DEFAULT_PROJECT_NAME, RequestContext, WORKSPACE } from "./constants";
+import {
+  ACR_NAME,
+  DEFAULT_PROJECT_NAME,
+  RequestContext,
+  WORKSPACE
+} from "./constants";
 import { createWithAzCLI } from "../azure/servicePrincipalService";
 import { getSubscriptions } from "../azure/subscriptionService";
 
@@ -52,6 +58,26 @@ export const promptForServicePrincipal = async (
   rc.servicePrincipalId = answers.az_sp_id;
   rc.servicePrincipalPassword = answers.az_sp_password;
   rc.servicePrincipalTenantId = answers.az_sp_tenant;
+};
+
+/**
+ * Prompts for ACR name, default value is "quickStartACR".
+ * This is needed bacause ACR name has to be unique within Azure.
+ *
+ * @param rc Request Context
+ */
+export const promptForACRName = async (rc: RequestContext): Promise<void> => {
+  const questions = [
+    {
+      default: ACR_NAME,
+      message: `Enter Azure Container Register Name. The registry name must be unique within Azure\n`,
+      name: "acr_name",
+      type: "input",
+      validate: validateACRName
+    }
+  ];
+  const answers = await inquirer.prompt(questions);
+  rc.acrName = answers.acr_name as string;
 };
 
 /**
@@ -107,6 +133,7 @@ export const prompt = async (): Promise<RequestContext> => {
 
   if (rc.toCreateAppRepo) {
     await promptForServicePrincipalCreation(rc);
+    await promptForACRName(rc);
   }
   return rc;
 };
@@ -188,6 +215,12 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     throw new Error(vToken);
   }
 
+  const acrName = map.az_acr_name || ACR_NAME;
+  const vACRName = validateACRName(acrName);
+  if (typeof vACRName === "string") {
+    throw new Error(vACRName);
+  }
+
   const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
@@ -195,6 +228,7 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     servicePrincipalId: map.az_sp_id,
     servicePrincipalPassword: map.az_sp_password,
     servicePrincipalTenantId: map.az_sp_tenant,
+    acrName,
     workspace: WORKSPACE
   };
 

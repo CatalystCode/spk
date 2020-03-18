@@ -37,7 +37,7 @@ describe("test createSPKConfig function", () => {
     createSPKConfig(mockRequestContext);
     const data = readYaml<ConfigYaml>(tmpFile);
     expect(data.azure_devops).toStrictEqual({
-      "access_token": "pat",
+      access_token: "pat",
       org: "orgname",
       project: "project"
     });
@@ -56,16 +56,16 @@ describe("test createSPKConfig function", () => {
 
     const data = readYaml<ConfigYaml>(tmpFile);
     expect(data.azure_devops).toStrictEqual({
-      "access_token": "pat",
+      access_token: "pat",
       org: "orgname",
       project: "project"
     });
     expect(data.introspection).toStrictEqual({
       azure: {
-        "service_principal_id": rc.servicePrincipalId,
-        "service_principal_secret": rc.servicePrincipalPassword,
-        "subscription_id": rc.subscriptionId,
-        "tenant_id": rc.servicePrincipalTenantId
+        service_principal_id: rc.servicePrincipalId,
+        service_principal_secret: rc.servicePrincipalPassword,
+        subscription_id: rc.subscriptionId,
+        tenant_id: rc.servicePrincipalTenantId
       }
     });
   });
@@ -80,8 +80,10 @@ const testExecuteFunc = async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .mockReturnValueOnce(Promise.resolve({} as any));
   jest.spyOn(fsUtil, "createDirectory").mockReturnValueOnce();
-  jest.spyOn(scaffold, "hldRepo").mockReturnValueOnce(Promise.resolve());
-  jest.spyOn(scaffold, "manifestRepo").mockReturnValueOnce(Promise.resolve());
+  jest.spyOn(scaffold, "hldRepo").mockResolvedValueOnce();
+  jest.spyOn(scaffold, "manifestRepo").mockResolvedValueOnce();
+  jest.spyOn(scaffold, "helmRepo").mockResolvedValueOnce();
+  jest.spyOn(scaffold, "appRepo").mockResolvedValueOnce();
   jest
     .spyOn(pipelineService, "createHLDtoManifestPipeline")
     .mockReturnValueOnce(Promise.resolve());

@@ -116,6 +116,10 @@ export const isDashHex = (value: string): boolean => {
   return !!value.match(/^[a-f0-9-]+$/);
 };
 
+export const isAlphaNumeric = (value: string): boolean => {
+  return !!value.match(/^[a-zA-Z0-9]+$/);
+};
+
 /**
  * Returns true if password is proper. Typical password validation
  *
@@ -303,6 +307,24 @@ export const validateStoragePartitionKey = (
   }
   if (value.match(/[/\\#?]/)) {
     return "The value for storage partition key is invalid. /, \\, # and ? characters are not allowed.";
+  }
+  return true;
+};
+
+/**
+ * Returns true if Azure Container Registry Name is valid
+ *
+ * @param value Azure Container Registry Name.
+ */
+export const validateACRName = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter an Azure Container Registry Name.";
+  }
+  if (!isAlphaNumeric(value)) {
+    return "The value for Azure Container Registry Name is invalid.";
+  }
+  if (value.length < 5 || value.length > 50) {
+    return "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long.";
   }
   return true;
 };
