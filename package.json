@@ -53,7 +53,7 @@
   },
   "prettier": {
     "proseWrap": "always",
-    "quote-props": "consistent"
+    "quote-props": "preserve"
   },
   "husky": {
     "hooks": {
