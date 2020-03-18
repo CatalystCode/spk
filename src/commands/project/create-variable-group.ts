@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/camelcase */
 import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
@@ -117,7 +116,10 @@ export const execute = async (
     );
 
     // set the variable group name
-    setVariableGroupInBedrockFile(projectPath, variableGroup.name!);
+    // variableGroup.name is set at this point that's it should have value
+    // and not empty string or undefined. having || "" is just to avoid
+    // eslint error
+    setVariableGroupInBedrockFile(projectPath, variableGroup.name || "");
 
     // update hld-lifecycle.yaml with variable groups in bedrock.yaml
     updateLifeCyclePipeline(projectPath);
@@ -231,7 +233,7 @@ export const setVariableGroupInBedrockFile = (
   const bedrockFile = Bedrock(rootProjectPath);
 
   if (typeof bedrockFile === "undefined") {
-    throw new Error(`Bedrock file does not exist.`);
+    throw Error(`Bedrock file does not exist.`);
   }
 
   logger.verbose(
@@ -257,10 +259,10 @@ export const setVariableGroupInBedrockFile = (
  */
 export const updateLifeCyclePipeline = (rootProjectPath: string): void => {
   if (!hasValue(rootProjectPath)) {
-    throw new Error("Project root path is not valid");
+    throw Error("Project root path is not valid");
   }
 
-  const fileName: string = PROJECT_PIPELINE_FILENAME;
+  const fileName = PROJECT_PIPELINE_FILENAME;
   const absProjectRoot = path.resolve(rootProjectPath);
 
   // Get bedrock.yaml

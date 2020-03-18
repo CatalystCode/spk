@@ -1,10 +1,7 @@
 import {
-  ResourceGroup,
   ResourceGroupsCreateOrUpdateResponse,
-  ResourceManagementClientOptions
+  ResourceGroupsListResponse
 } from "@azure/arm-resources/src/models";
-import { RequestOptionsBase } from "@azure/ms-rest-js";
-import { ApplicationTokenCredentials } from "@azure/ms-rest-nodeauth";
 import * as restAuth from "@azure/ms-rest-nodeauth";
 import { create, getResourceGroups, isExist } from "./resourceService";
 import * as resourceService from "./resourceService";
@@ -13,28 +10,24 @@ const RESOURCE_GROUP_LOCATION = "westus2";
 
 jest.mock("@azure/arm-resources", () => {
   class MockClient {
-    constructor(
-      cred: ApplicationTokenCredentials,
-      subId: string,
-      options?: ResourceManagementClientOptions
-    ) {
+    constructor() {
       return {
         resourceGroups: {
-          createOrUpdate: async (
-            resourceGroupName: string,
-            parameters: ResourceGroup,
-            opts?: RequestOptionsBase
-          ): Promise<ResourceGroupsCreateOrUpdateResponse> => {
+          createOrUpdate: async (): Promise<
+            ResourceGroupsCreateOrUpdateResponse
+          > => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return {} as any;
           },
-          list: () => {
+          list: (): Promise<ResourceGroupsListResponse> => {
             return [
               {
                 id: "1234567890-abcdef",
                 location: RESOURCE_GROUP_LOCATION,
                 name: "test"
               }
-            ];
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ] as any;
           }
         }
       };
@@ -45,14 +38,10 @@ jest.mock("@azure/arm-resources", () => {
   };
 });
 
-const accessToken = "pat";
-const orgName = "org";
-const projectName = "project";
 const servicePrincipalId = "1eba2d04-1506-4278-8f8c-b1eb2fc462a8";
 const servicePrincipalPassword = "e4c19d72-96d6-4172-b195-66b3b1c36db1";
 const servicePrincipalTenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const subscriptionId = "test";
-const workspace = "test";
 const RESOURCE_GROUP = "quick-start-rg";
 
 describe("Resource Group tests", () => {
