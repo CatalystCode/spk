@@ -55,17 +55,6 @@
     "proseWrap": "always",
     "quote-props": "preserve"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx,css,json,md}": [
-      "prettier --write",
-      "git add"
-    ]
-  },
   "dependencies": {
     "@azure/arm-containerregistry": "^7.0.0",
     "@azure/arm-resources": "^2.1.0",
