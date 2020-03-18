@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import fs from "fs";
 import inquirer from "inquirer";
 import os from "os";
@@ -6,17 +5,22 @@ import path from "path";
 import uuid from "uuid/v4";
 import { createTempDir } from "../../lib/ioUtil";
 import { DEFAULT_PROJECT_NAME, RequestContext, WORKSPACE } from "./constants";
-import { getAnswerFromFile, prompt, promptForSubscriptionId } from "./prompt";
+import {
+  getAnswerFromFile,
+  prompt,
+  promptForACRName,
+  promptForSubscriptionId
+} from "./prompt";
 import * as servicePrincipalService from "./servicePrincipalService";
 import * as subscriptionService from "./subscriptionService";
 
 describe("test prompt function", () => {
   it("positive test: No App Creation", async () => {
     const answers = {
-      azdo_org_name: "org",
-      azdo_pat: "pat",
-      azdo_project_name: "project",
-      create_app_repo: false
+      "azdo_org_name": "org",
+      "azdo_pat": "pat",
+      "azdo_project_name": "project",
+      "create_app_repo": false
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     const ans = await prompt();
@@ -30,15 +34,19 @@ describe("test prompt function", () => {
   });
   it("positive test: create SP", async () => {
     const answers = {
-      azdo_org_name: "org",
-      azdo_pat: "pat",
-      azdo_project_name: "project",
-      create_app_repo: true
+      "azdo_org_name": "org",
+      "azdo_pat": "pat",
+      "azdo_project_name": "project",
+      "create_app_repo": true
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      create_service_principal: true
+      "create_service_principal": true
     });
+    jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+      "acr_name": "testACR"
+    });
+
     jest
       .spyOn(servicePrincipalService, "createWithAzCLI")
       .mockReturnValueOnce(Promise.resolve());
@@ -52,6 +60,7 @@ describe("test prompt function", () => {
     const ans = await prompt();
     expect(ans).toStrictEqual({
       accessToken: "pat",
+      acrName: "testACR",
       orgName: "org",
       projectName: "project",
       subscriptionId: "72f988bf-86f1-41af-91ab-2d7cd011db48",
@@ -62,19 +71,22 @@ describe("test prompt function", () => {
   });
   it("positive test: no create SP", async () => {
     const answers = {
-      azdo_org_name: "org",
-      azdo_pat: "pat",
-      azdo_project_name: "project",
-      create_app_repo: true
+      "azdo_org_name": "org",
+      "azdo_pat": "pat",
+      "azdo_project_name": "project",
+      "create_app_repo": true
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      create_service_principal: false
+      "create_service_principal": false
     });
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      az_sp_id: "b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
-      az_sp_password: "a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
-      az_sp_tenant: "72f988bf-86f1-41af-91ab-2d7cd011db47"
+      "az_sp_id": "b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
+      "az_sp_password": "a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
+      "az_sp_tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+    });
+    jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+      "acr_name": "testACR"
     });
     jest.spyOn(subscriptionService, "getSubscriptions").mockResolvedValueOnce([
       {
@@ -85,6 +97,7 @@ describe("test prompt function", () => {
     const ans = await prompt();
     expect(ans).toStrictEqual({
       accessToken: "pat",
+      acrName: "testACR",
       orgName: "org",
       projectName: "project",
       servicePrincipalId: "b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
@@ -266,7 +279,7 @@ describe("test promptForSubscriptionId function", () => {
       }
     ]);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      az_subscription: "subscription2"
+      "az_subscription": "subscription2"
     });
     const mockRc: RequestContext = {
       accessToken: "pat",
@@ -276,5 +289,21 @@ describe("test promptForSubscriptionId function", () => {
     };
     await promptForSubscriptionId(mockRc);
     expect(mockRc.subscriptionId).toBe("12334567890");
+  });
+});
+
+describe("test promptForACRName function", () => {
+  it("positive test", async () => {
+    const mockRc: RequestContext = {
+      accessToken: "pat",
+      orgName: "org",
+      projectName: "project",
+      workspace: WORKSPACE
+    };
+    jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
+      "acr_name": "testACR"
+    });
+    await promptForACRName(mockRc);
+    expect(mockRc.acrName).toBe("testACR");
   });
 });
