@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/camelcase */
 import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
@@ -28,6 +26,7 @@ import {
 import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
 import decorator from "./setup.decorator.json";
+import { IGitApi } from "azure-devops-node-api/GitApi";
 
 interface CommandOptions {
   file: string | undefined;
@@ -76,9 +75,7 @@ export const getErrorMessage = (
 ): string => {
   if (rc) {
     if (err.message && err.message.indexOf("VS402392") !== -1) {
-      return `Project, ${
-        rc!.projectName
-      } might have been deleted less than 28 days ago. Choose a different project name.`;
+      return `Project, ${rc.projectName} might have been deleted less than 28 days ago. Choose a different project name.`;
     }
     if (!(err instanceof Error) && err.statusCode && err.statusCode === 401) {
       return `Authentication Failed. Make sure that the organization name and access token are correct; or your access token may have expired.`;
@@ -87,25 +84,37 @@ export const getErrorMessage = (
   return err.toString();
 };
 
-export const createAppRepoTasks = async (rc: RequestContext): Promise<void> => {
-  if (rc.toCreateAppRepo) {
+export const createAppRepoTasks = async (
+  gitAPI: IGitApi,
+  rc: RequestContext
+): Promise<void> => {
+  if (
+    rc.toCreateAppRepo &&
+    rc.servicePrincipalId &&
+    rc.servicePrincipalPassword &&
+    rc.servicePrincipalTenantId &&
+    rc.subscriptionId &&
+    rc.acrName
+  ) {
     rc.createdResourceGroup = await createResourceGroup(
-      rc.servicePrincipalId!,
-      rc.servicePrincipalPassword!,
-      rc.servicePrincipalTenantId!,
-      rc.subscriptionId!,
+      rc.servicePrincipalId,
+      rc.servicePrincipalPassword,
+      rc.servicePrincipalTenantId,
+      rc.subscriptionId,
       RESOURCE_GROUP,
       RESOURCE_GROUP_LOCATION
     );
     rc.createdACR = await createACR(
-      rc.servicePrincipalId!,
-      rc.servicePrincipalPassword!,
-      rc.servicePrincipalTenantId!,
-      rc.subscriptionId!,
+      rc.servicePrincipalId,
+      rc.servicePrincipalPassword,
+      rc.servicePrincipalTenantId,
+      rc.subscriptionId,
       RESOURCE_GROUP,
-      rc.acrName!,
+      rc.acrName,
       RESOURCE_GROUP_LOCATION
     );
+    await helmRepo(gitAPI, rc);
+    await appRepo(gitAPI, rc);
   }
 };
 
@@ -136,9 +145,7 @@ export const execute = async (
     await hldRepo(gitAPI, requestContext);
     await manifestRepo(gitAPI, requestContext);
     await createHLDtoManifestPipeline(buildAPI, requestContext);
-    await createAppRepoTasks(requestContext);
-    await helmRepo(gitAPI, requestContext);
-    await appRepo(gitAPI, requestContext);
+    await createAppRepoTasks(gitAPI, requestContext);
 
     createSetupLog(requestContext);
     await exitFn(0);
@@ -149,7 +156,7 @@ export const execute = async (
     if (requestContext) {
       requestContext.error = msg;
     }
-    createSetupLog(requestContext!);
+    createSetupLog(requestContext);
 
     logger.error(msg);
     await exitFn(1);

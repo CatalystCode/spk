@@ -1,18 +1,17 @@
-/* eslint-disable @typescript-eslint/camelcase */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   VariableGroup,
   VariableGroupParameters
 } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import uuid from "uuid/v4";
+import * as azdoClient from "../azdoClient";
 import { readYaml } from "../../config";
+import * as config from "../../config";
 import {
   disableVerboseLogging,
   enableVerboseLogging,
   logger
 } from "../../logger";
 import { VariableGroupData, VariableGroupDataVariable } from "../../types";
-import * as azdoClient from "../azdoClient";
 import {
   addVariableGroup,
   addVariableGroupWithKeyVaultMap,
@@ -41,16 +40,16 @@ describe("addVariableGroup", () => {
     (readYaml as jest.Mock).mockReturnValue({});
 
     const data = readYaml<VariableGroupData>("");
-    let invalidGroupError: Error | undefined;
-    try {
-      logger.info("calling add variable group");
-      await addVariableGroup(data);
-    } catch (err) {
-      invalidGroupError = err;
-    }
-    expect(invalidGroupError).toBeDefined();
+    await expect(addVariableGroup(data)).rejects.toThrow();
   });
+  test("should fail when variable group config variables are not set", async () => {
+    (readYaml as jest.Mock).mockReturnValue({
+      variables: undefined
+    });
 
+    const data = readYaml<VariableGroupData>("");
+    await expect(addVariableGroup(data)).rejects.toThrow();
+  });
   test("should pass when variable group data is set", async () => {
     (readYaml as jest.Mock).mockReturnValue({
       description: "mydesc",
@@ -85,7 +84,7 @@ describe("addVariableGroupWithKeyVaultMap", () => {
     let invalidGroupError: Error | undefined;
     try {
       logger.info("calling add variable group with Key Vault map");
-      await addVariableGroupWithKeyVaultMap(data!);
+      await addVariableGroupWithKeyVaultMap(data);
     } catch (err) {
       invalidGroupError = err;
     }
@@ -304,53 +303,37 @@ describe("doAddVariableGroup", () => {
 });
 
 describe("authorizeAccessToAllPipelines", () => {
+  test("negative test", async () => {
+    await expect(
+      authorizeAccessToAllPipelines({
+        id: undefined
+      })
+    ).rejects.toThrow();
+  });
   test("should pass when valid variable group is passed", async () => {
-    (readYaml as jest.Mock).mockReturnValue({
-      description: uuid(),
-      name: uuid(),
-      variables: {
-        var1: {
-          isSecret: false,
-          value: "val1"
-        },
-        var2: {
-          isSecret: true,
-          value: "val2"
-        }
+    jest.spyOn(config, "Config").mockReturnValueOnce({
+      azure_devops: {
+        project: "test"
       }
     });
-
-    const data = readYaml<VariableGroupData>("");
-    const variablesMap = await buildVariablesMap(data.variables);
-
-    // create variable group parameterts
-    const variableGroup: VariableGroup = {
-      description: data.description,
-      name: data.name,
-      type: data.type,
-      variables: variablesMap
-    };
-
-    let authorized: boolean | undefined;
-    try {
-      authorized = await authorizeAccessToAllPipelines(variableGroup);
-    } catch (err) {
-      logger.error(err);
-    }
-    expect(authorized).toBeUndefined();
+    jest.spyOn(azdoClient, "getBuildApi").mockResolvedValueOnce({
+      authorizeProjectResources: () => {
+        return [
+          {
+            authorized: true
+          }
+        ];
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    const authorized = await authorizeAccessToAllPipelines({
+      id: 1,
+      name: "group"
+    });
+    expect(authorized).toBeTruthy();
   });
-
   test("should fail when passing null variable group", async () => {
-    // create variable group parameterts
-    const variableGroup: VariableGroup | undefined = {};
-
-    let error: Error | undefined;
-    try {
-      await authorizeAccessToAllPipelines(variableGroup);
-    } catch (err) {
-      error = err;
-    }
-    expect(error).toBeDefined();
+    await expect(authorizeAccessToAllPipelines({})).rejects.toThrow();
   });
 });
 
