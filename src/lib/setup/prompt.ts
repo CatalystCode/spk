@@ -18,12 +18,32 @@ import {
   WORKSPACE
 } from "./constants";
 import { getAzureRepoUrl } from "./gitService";
-import { createWithAzCLI } from "./servicePrincipalService";
-import { getSubscriptions } from "./subscriptionService";
+import {
+  azCLILogin,
+  createWithAzCLI,
+  SubscriptionData
+} from "./servicePrincipalService";
+import { getSubscriptions, SubscriptionItem } from "./subscriptionService";
 
 export const promptForSubscriptionId = async (
-  rc: RequestContext
-): Promise<void> => {
+  subscriptions: SubscriptionItem[] | SubscriptionData[]
+): Promise<string | undefined> => {
+  const questions = [
+    {
+      choices: subscriptions.map(s => s.name),
+      message: "Select one of the subscriptions\n",
+      name: "az_subscription",
+      type: "list"
+    }
+  ];
+  const ans = await inquirer.prompt(questions);
+  const found = subscriptions.find(
+    s => s.name === (ans.az_subscription as string)
+  );
+  return found ? found.id : undefined;
+};
+
+export const getSubscriptionId = async (rc: RequestContext): Promise<void> => {
   const subscriptions = await getSubscriptions(rc);
   if (subscriptions.length === 0) {
     throw Error("no subscriptions found");
@@ -31,19 +51,11 @@ export const promptForSubscriptionId = async (
   if (subscriptions.length === 1) {
     rc.subscriptionId = subscriptions[0].id;
   } else {
-    const questions = [
-      {
-        choices: subscriptions.map(s => s.name),
-        message: "Select one of the subscription\n",
-        name: "az_subscription",
-        type: "list"
-      }
-    ];
-    const ans = await inquirer.prompt(questions);
-    const found = subscriptions.find(
-      s => s.name === (ans.az_subscription as string)
-    );
-    rc.subscriptionId = found ? found.id : undefined;
+    const subId = await promptForSubscriptionId(subscriptions);
+    if (!subId) {
+      throw Error("Subscription Identifier is missing.");
+    }
+    rc.subscriptionId = subId;
   }
 };
 
@@ -124,12 +136,18 @@ export const promptForServicePrincipalCreation = async (
   const answers = await inquirer.prompt(questions);
   if (answers.create_service_principal) {
     rc.toCreateSP = true;
+    const subscriptions = await azCLILogin();
+    const subscriptionId = await promptForSubscriptionId(subscriptions);
+    if (!subscriptionId) {
+      throw Error("Subscription Identifier is missing.");
+    }
+    rc.subscriptionId = subscriptionId;
     await createWithAzCLI(rc);
   } else {
     rc.toCreateSP = false;
     await promptForServicePrincipal(rc);
+    await getSubscriptionId(rc);
   }
-  await promptForSubscriptionId(rc);
 };
 
 /**
@@ -161,7 +179,7 @@ export const prompt = async (): Promise<RequestContext> => {
     },
     {
       default: true,
-      message: `Do you like create a sample application repository?`,
+      message: "Would you like to create a sample application repository?",
       name: "create_app_repo",
       type: "confirm"
     }
@@ -259,12 +277,6 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     throw new Error(vToken);
   }
 
-  const acrName = map.az_acr_name || ACR_NAME;
-  const vACRName = validateACRName(acrName);
-  if (typeof vACRName === "string") {
-    throw new Error(vACRName);
-  }
-
   const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
@@ -272,7 +284,7 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     servicePrincipalId: map.az_sp_id,
     servicePrincipalPassword: map.az_sp_password,
     servicePrincipalTenantId: map.az_sp_tenant,
-    acrName,
+    acrName: map.az_acr_name || ACR_NAME,
     workspace: WORKSPACE
   };
 

@@ -54,23 +54,23 @@ interface APIError {
 export const createSPKConfig = (rc: RequestContext): void => {
   const data = rc.toCreateAppRepo
     ? {
-        "azure_devops": {
-          "access_token": rc.accessToken,
+        azure_devops: {
+          access_token: rc.accessToken,
           org: rc.orgName,
           project: rc.projectName
         },
         introspection: {
           azure: {
-            "service_principal_id": rc.servicePrincipalId,
-            "service_principal_secret": rc.servicePrincipalPassword,
-            "subscription_id": rc.subscriptionId,
-            "tenant_id": rc.servicePrincipalTenantId
+            service_principal_id: rc.servicePrincipalId,
+            service_principal_secret: rc.servicePrincipalPassword,
+            subscription_id: rc.subscriptionId,
+            tenant_id: rc.servicePrincipalTenantId
           }
         }
       }
     : {
-        "azure_devops": {
-          "access_token": rc.accessToken,
+        azure_devops: {
+          access_token: rc.accessToken,
           org: rc.orgName,
           project: rc.projectName
         }
@@ -97,7 +97,7 @@ export const createAppRepoTasks = async (
   gitAPI: IGitApi,
   buildAPI: IBuildApi,
   rc: RequestContext
-): Promise<void> => {
+): Promise<boolean> => {
   if (
     rc.toCreateAppRepo &&
     rc.servicePrincipalId &&
@@ -130,9 +130,13 @@ export const createAppRepoTasks = async (
 
     if (approved) {
       await createBuildPipeline(buildAPI, rc);
-    } else {
-      logger.warn("HLD Pull Request is not approved.");
+      return true;
     }
+
+    logger.warn("HLD Pull Request is not approved.");
+    return false;
+  } else {
+    return false;
   }
 };
 
