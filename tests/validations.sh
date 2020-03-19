@@ -350,50 +350,50 @@ pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organizati
 ##################################
 # App Mono Repo create ring
 ##################################
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
-echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
-approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
+# echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
+# approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
 
-# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 4
-ring_name=qa-ring
+# # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 4
+# ring_name=qa-ring
 
-cd $TEST_WORKSPACE
-cd $mono_repo_dir
+# cd $TEST_WORKSPACE
+# cd $mono_repo_dir
 
-echo "Create ring"
-git checkout master
-git pull origin master
-spk ring create $ring_name
-git add -A
-git commit -m "Adding test ring"
-git push -u origin --all
+# echo "Create ring"
+# git checkout master
+# git pull origin master
+# spk ring create $ring_name
+# git add -A
+# git commit -m "Adding test ring"
+# git push -u origin --all
 
-# Wait for the lifecycle pipeline to finish and approve the pull request
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 3
-echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
-approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+# # Wait for the lifecycle pipeline to finish and approve the pull request
+# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 3
+# echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
+# approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
 
-# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 5
+# # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 5
 
-# Verify the file was added in the manifest repository
-cd $TEST_WORKSPACE
-cd $manifests_dir
+# # Verify the file was added in the manifest repository
+# cd $TEST_WORKSPACE
+# cd $manifests_dir
 
-git pull origin master
+# git pull origin master
 
-ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/$ring_name"
-if [ ! -d "$ring_dir" ]; then
-  echo "Directory '$ring_dir' does not exist"
-  exit 1
-fi
+# ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/$ring_name"
+# if [ ! -d "$ring_dir" ]; then
+#   echo "Directory '$ring_dir' does not exist"
+#   exit 1
+# fi
 
-echo "Validating ingress routes"
+# echo "Validating ingress routes"
 
-validate_file "$ring_dir/static.yaml" "'PathPrefix(\`/fabrikam-acme-frontend\`) && Headers(\`Ring\`, \`qa-ring\`)'"
+# validate_file "$ring_dir/static.yaml" "'PathPrefix(\`/fabrikam-acme-frontend\`) && Headers(\`Ring\`, \`qa-ring\`)'"
 
-echo "Successfully created a ring."
+# echo "Successfully created a ring."
 
 # --------------------------------
 # Push the ring branch
