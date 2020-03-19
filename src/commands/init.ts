@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import commander from "commander";
 import fs from "fs";
@@ -73,8 +74,8 @@ export const getConfig = (): ConfigYaml => {
   } catch (_) {
     logger.info("current config is not found.");
     return {
-      "azure_devops": {
-        "access_token": "",
+      azure_devops: {
+        access_token: "",
         org: "",
         project: ""
       }

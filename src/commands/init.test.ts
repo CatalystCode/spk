@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import fs from "fs";
 import inquirer from "inquirer";
@@ -107,8 +108,8 @@ describe("Test execute function", () => {
 describe("test getConfig function", () => {
   it("with configuration file", () => {
     const mockedValues = {
-      "azure_devops": {
-        "access_token": "access_token",
+      azure_devops: {
+        access_token: "access_token",
         org: "org",
         project: "project"
       }
@@ -125,8 +126,8 @@ describe("test getConfig function", () => {
     });
     const cfg = getConfig();
     expect(cfg).toStrictEqual({
-      "azure_devops": {
-        "access_token": "",
+      azure_devops: {
+        access_token: "",
         org: "",
         project: ""
       }
@@ -142,7 +143,7 @@ describe("test validatePersonalAccessToken function", () => {
       })
     );
     const result = await validatePersonalAccessToken({
-      "access_token": "token",
+      access_token: "token",
       org: "org",
       project: "project"
     });
@@ -154,7 +155,7 @@ describe("test validatePersonalAccessToken function", () => {
       .spyOn(axios, "get")
       .mockReturnValueOnce(Promise.reject(new Error("fake")));
     const result = await validatePersonalAccessToken({
-      "access_token": "token",
+      access_token: "token",
       org: "org",
       project: "project"
     });
@@ -167,8 +168,8 @@ const testHandleInteractiveModeFunc = async (
   verified: boolean
 ): Promise<void> => {
   jest.spyOn(init, "getConfig").mockReturnValueOnce({
-    "azure_devops": {
-      "access_token": "",
+    azure_devops: {
+      access_token: "",
       org: "",
       project: ""
     },
