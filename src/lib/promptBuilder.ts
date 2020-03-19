@@ -166,3 +166,16 @@ export const azureKeyVaultName = (
     validate: validator.validateStorageKeyVaultName
   };
 };
+
+export const azureStorageAccessKey = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    mask: "*",
+    message: `${i18n.prompt.storageAccessKey}\n`,
+    name: "azdo_storage_access_key",
+    type: "password",
+    validate: validator.validateStorageAccessKey
+  };
+};

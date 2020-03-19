@@ -356,3 +356,10 @@ export const validateStorageKeyVaultName = (
   }
   return true;
 };
+
+export const validateStorageAccessKey = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter an Storage Access Key.";
+  }
+  return true;
+};

@@ -127,11 +127,7 @@ export const handleIntrospectionInteractive = async (
 ): Promise<void> => {
   if (!isIntrospectionAzureDefined(curConfig)) {
     curConfig.introspection = {
-      azure: {
-        key: new Promise(resolve => {
-          resolve(undefined);
-        })
-      }
+      azure: {}
     };
   }
 
@@ -142,11 +138,13 @@ export const handleIntrospectionInteractive = async (
     promptBuilder.azureStorageAccountName(azure.account_name),
     promptBuilder.azureStorageTableName(azure.table_name),
     promptBuilder.azureStoragePartitionKey(azure.partition_key),
+    promptBuilder.azureStorageAccessKey(azure.key),
     promptBuilder.azureKeyVaultName(curConfig.key_vault_name)
   ]);
   azure["account_name"] = ans.azdo_storage_account_name;
   azure["table_name"] = ans.azdo_storage_table_name;
   azure["partition_key"] = ans.azdo_storage_partition_key;
+  azure.key = ans.azdo_storage_access_key;
 
   const keyVaultName = ans.azdo_storage_key_vault_name.trim();
   if (keyVaultName) {
@@ -176,13 +174,6 @@ export const handleInteractiveMode = async (): Promise<void> => {
     await handleIntrospectionInteractive(curConfig);
   }
 
-  if (curConfig.introspection && curConfig.introspection.azure) {
-    // key is needed to create the azure object in
-    // introspction object however it causes
-    // problem when we do `yaml.safeDump` because
-    // key is a function.
-    delete curConfig.introspection.azure.key;
-  }
   const data = yaml.safeDump(curConfig);
 
   fs.writeFileSync(defaultConfigFile(), data);

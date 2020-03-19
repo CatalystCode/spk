@@ -19,6 +19,7 @@ import {
   validateServicePrincipalPassword,
   validateServicePrincipalTenantId,
   validateStorageAccountName,
+  validateStorageAccessKey,
   validateStorageKeyVaultName,
   validateStoragePartitionKey,
   validateStorageTableName,
@@ -343,5 +344,14 @@ describe("test validateStorageKeyVaultName function", () => {
       "The value for Key Vault Name is invalid because it has to be between 3 and 24 characters long."
     );
     expect(validateStorageKeyVaultName("abc-12356")).toBeTruthy();
+  });
+});
+
+describe("test validateStorageAccessKey function", () => {
+  it("sanity test", () => {
+    expect(validateStorageAccessKey("")).toBe(
+      "Must enter an Storage Access Key."
+    );
+    expect(validateStorageAccessKey("abc-12356")).toBeTruthy();
   });
 });
