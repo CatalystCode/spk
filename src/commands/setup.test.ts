@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import path from "path";
 import { readYaml } from "../config";
 import * as config from "../config";

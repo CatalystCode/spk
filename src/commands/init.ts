@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import commander from "commander";
 import fs from "fs";
