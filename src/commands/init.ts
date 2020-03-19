@@ -56,9 +56,9 @@ export const prompt = async (curConfig: ConfigYaml): Promise<Answer> => {
   ];
   const answers = await inquirer.prompt(questions);
   return {
-    "azdo_org_name": answers.azdo_org_name as string,
-    "azdo_pat": answers.azdo_pat as string,
-    "azdo_project_name": answers.azdo_project_name as string,
+    azdo_org_name: answers.azdo_org_name as string,
+    azdo_pat: answers.azdo_pat as string,
+    azdo_project_name: answers.azdo_project_name as string,
     toSetupIntrospectionConfig: answers.toSetupIntrospectionConfig
   };
 };
@@ -142,13 +142,11 @@ export const handleIntrospectionInteractive = async (
     promptBuilder.azureStorageAccountName(azure.account_name),
     promptBuilder.azureStorageTableName(azure.table_name),
     promptBuilder.azureStoragePartitionKey(azure.partition_key),
-    promptBuilder.azureStorageRepoAccessKey(azure.source_repo_access_token),
     promptBuilder.azureKeyVaultName(curConfig.key_vault_name)
   ]);
   azure["account_name"] = ans.azdo_storage_account_name;
   azure["table_name"] = ans.azdo_storage_table_name;
   azure["partition_key"] = ans.azdo_storage_partition_key;
-  azure["source_repo_access_token"] = ans.azdo_storage_repo_access_key;
 
   const keyVaultName = ans.azdo_storage_key_vault_name.trim();
   if (keyVaultName) {

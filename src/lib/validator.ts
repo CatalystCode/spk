@@ -333,7 +333,9 @@ export const validateACRName = (value: string): string | boolean => {
   return true;
 };
 
-export const validateStorageKeVaultName = (value: string): string | boolean => {
+export const validateStorageKeyVaultName = (
+  value: string
+): string | boolean => {
   if (!hasValue(value)) {
     return true; // optional
   }

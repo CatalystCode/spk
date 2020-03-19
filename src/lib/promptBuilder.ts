@@ -155,19 +155,6 @@ export const azureStoragePartitionKey = (
   };
 };
 
-export const azureStorageRepoAccessKey = (
-  defaultValue?: string | undefined
-): QuestionCollection => {
-  return {
-    default: defaultValue,
-    mask: "*",
-    message: `${i18n.prompt.storageRepoAccessKey}\n`,
-    name: "azdo_storage_repo_access_key",
-    type: "password",
-    validate: validator.validateStoragePartitionKey
-  };
-};
-
 export const azureKeyVaultName = (
   defaultValue?: string | undefined
 ): QuestionCollection => {
@@ -176,6 +163,6 @@ export const azureKeyVaultName = (
     message: `${i18n.prompt.storageKeVaultName}\n`,
     name: "azdo_storage_key_vault_name",
     type: "input",
-    validate: validator.validateStorageKeVaultName
+    validate: validator.validateStorageKeyVaultName
   };
 };

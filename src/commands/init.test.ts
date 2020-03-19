@@ -182,9 +182,9 @@ const testHandleInteractiveModeFunc = async (
     }
   });
   jest.spyOn(init, "prompt").mockResolvedValueOnce({
-    "azdo_org_name": "org_name",
-    "azdo_pat": "pat",
-    "azdo_project_name": "project",
+    azdo_org_name: "org_name",
+    azdo_pat: "pat",
+    azdo_project_name: "project",
     toSetupIntrospectionConfig: true
   });
   jest
@@ -217,9 +217,9 @@ describe("test handleInteractiveMode function", () => {
 describe("test prompt function", () => {
   it("positive test", async done => {
     const answers = {
-      "azdo_org_name": "org",
-      "azdo_pat": "pat",
-      "azdo_project_name": "project",
+      azdo_org_name: "org",
+      azdo_pat: "pat",
+      azdo_project_name: "project",
       toSetupIntrospectionConfig: true
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
@@ -244,17 +244,15 @@ const testHandleIntrospectionInteractive = async (
     };
   }
   jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-    "azdo_storage_account_name": "storagetest",
-    "azdo_storage_table_name": "storagetabletest",
-    "azdo_storage_partition_key": "test1234key",
-    "azdo_storage_repo_access_key": "repokey",
-    "azdo_storage_key_vault_name": withKeyVault ? "keyvault" : ""
+    azdo_storage_account_name: "storagetest",
+    azdo_storage_table_name: "storagetabletest",
+    azdo_storage_partition_key: "test1234key",
+    azdo_storage_key_vault_name: withKeyVault ? "keyvault" : ""
   });
   await handleIntrospectionInteractive(config);
   expect(config.introspection?.azure?.account_name).toBe("storagetest");
   expect(config.introspection?.azure?.table_name).toBe("storagetabletest");
   expect(config.introspection?.azure?.partition_key).toBe("test1234key");
-  expect(config.introspection?.azure?.source_repo_access_token).toBe("repokey");
 
   if (withKeyVault) {
     expect(config.key_vault_name).toBe("keyvault");
