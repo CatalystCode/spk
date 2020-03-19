@@ -12,13 +12,13 @@ import { deepClone } from "../../lib/util";
 import {
   execute,
   fetchValues,
-  ICommandOptions,
+  CommandOptions,
   installBuildUpdatePipeline,
   requiredPipelineVariables
 } from "./pipeline";
 import * as pipeline from "./pipeline";
 
-const MOCKED_VALUES: ICommandOptions = {
+const MOCKED_VALUES: CommandOptions = {
   buildScriptUrl: "buildScriptUrl",
   devopsProject: "project",
   orgName: "orgName",
@@ -42,7 +42,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-const getMockedValues = () => {
+const getMockedValues = (): CommandOptions => {
   return deepClone(MOCKED_VALUES);
 };
 
@@ -118,22 +118,14 @@ describe("required pipeline variables", () => {
 describe("create pipeline tests", () => {
   it("should create a pipeline", async () => {
     (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({ id: 10 });
-    await installBuildUpdatePipeline(
-      "serviceName",
-      "/path/to/yaml",
-      MOCKED_VALUES
-    );
+    await installBuildUpdatePipeline("/path/to/yaml", MOCKED_VALUES);
   });
 
   it("should fail if the build client cant be instantiated", async () => {
     (getBuildApiClient as jest.Mock).mockReturnValueOnce(Promise.reject());
 
     try {
-      await installBuildUpdatePipeline(
-        "serviceName",
-        "/path/to/yaml",
-        MOCKED_VALUES
-      );
+      await installBuildUpdatePipeline("/path/to/yaml", MOCKED_VALUES);
       expect(true).toBe(false);
     } catch (_) {
       // expecting exception to be thrown
@@ -147,11 +139,7 @@ describe("create pipeline tests", () => {
     );
 
     try {
-      await installBuildUpdatePipeline(
-        "serviceName",
-        "/path/to/yaml",
-        MOCKED_VALUES
-      );
+      await installBuildUpdatePipeline("/path/to/yaml", MOCKED_VALUES);
       expect(true).toBe(false);
     } catch (_) {
       // expecting exception to be thrown
@@ -164,11 +152,7 @@ describe("create pipeline tests", () => {
     (queueBuild as jest.Mock).mockReturnValueOnce(Promise.reject());
 
     try {
-      await installBuildUpdatePipeline(
-        "serviceName",
-        "/path/to/yaml",
-        MOCKED_VALUES
-      );
+      await installBuildUpdatePipeline("/path/to/yaml", MOCKED_VALUES);
       expect(true).toBe(false);
     } catch (_) {
       // expecting exception to be thrown

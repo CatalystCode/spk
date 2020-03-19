@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 jest.mock("open");
 import open from "open";
 jest.mock("../../config");
@@ -28,7 +29,7 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-const mockConfig = () => {
+const mockConfig = (): void => {
   (Config as jest.Mock).mockReturnValueOnce({
     azure_devops: {
       access_token: uuid(),
@@ -132,6 +133,7 @@ describe("Validate dashboard container pull", () => {
         const dockerId = await exec("docker", [
           "images",
           "-q",
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           config.introspection!.dashboard!.image!
         ]);
         expect(dockerId).toBeDefined();
@@ -158,6 +160,7 @@ describe("Validate dashboard clean up", () => {
         const dockerId = await exec("docker", [
           "images",
           "-q",
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           config.introspection!.dashboard!.image!
         ]);
 
@@ -183,6 +186,7 @@ describe("Fallback to azure devops access token", () => {
     const envVars = (await getEnvVars(config)).toString();
     logger.info(
       `spin: ${envVars}, act: ${
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         config.introspection!.azure!.source_repo_access_token
       }`
     );
@@ -196,6 +200,7 @@ describe("Fallback to azure devops access token", () => {
     const envVars = (await getEnvVars(config)).toString();
     const expectedSubstring =
       "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=" +
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       config.introspection!.azure!.source_repo_access_token!;
     expect(envVars.includes(expectedSubstring)).toBeTruthy();
   });
@@ -212,13 +217,18 @@ describe("Extract manifest repository information", () => {
     const config = Config();
     let manifestInfo = extractManifestRepositoryInformation(config);
     expect(manifestInfo).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(manifestInfo!.githubUsername).toBeUndefined();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(manifestInfo!.manifestRepoName).toBe("materialized");
-    config.azure_devops!.manifest_repository =
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    config.azure_devops!["manifest_repository"] =
       "https://github.com/username/manifest";
     manifestInfo = extractManifestRepositoryInformation(config);
     expect(manifestInfo).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(manifestInfo!.githubUsername).toBe("username");
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(manifestInfo!.manifestRepoName).toBe("manifest");
 
     logger.info("Verified that manifest repository extraction works");

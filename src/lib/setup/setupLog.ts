@@ -1,11 +1,11 @@
 import fs from "fs";
-import { IRequestContext, SETUP_LOG } from "./constants";
+import { RequestContext, SETUP_LOG } from "./constants";
 
-const getBooleanVal = (val: boolean | undefined) => {
-  return !!val ? "yes" : "no";
+const getBooleanVal = (val: boolean | undefined): "yes" | "no" => {
+  return val ? "yes" : "no";
 };
 
-export const create = (rc: IRequestContext | undefined, file?: string) => {
+export const create = (rc: RequestContext | undefined, file?: string): void => {
   if (rc) {
     file = file || SETUP_LOG;
     if (fs.existsSync(file)) {
@@ -21,9 +21,12 @@ export const create = (rc: IRequestContext | undefined, file?: string) => {
       `az_sp_password=${rc.servicePrincipalPassword ? "********" : ""}`,
       `az_sp_tenant=${rc.servicePrincipalTenantId || ""}`,
       `az_subscription_id=${rc.subscriptionId || ""}`,
+      `az_acr_name=${rc.acrName || ""}`,
       `workspace: ${rc.workspace}`,
       `Project Created: ${getBooleanVal(rc.createdProject)}`,
       `High Level Definition Repo Scaffolded: ${getBooleanVal(rc.scaffoldHLD)}`,
+      `Helm Repo Scaffolded: ${getBooleanVal(rc.scaffoldHelm)}`,
+      `Sample App Repo Scaffolded: ${getBooleanVal(rc.scaffoldAppService)}`,
       `Manifest Repo Scaffolded: ${getBooleanVal(rc.scaffoldManifest)}`,
       `HLD to Manifest Pipeline Created: ${getBooleanVal(
         rc.createdHLDtoManifestPipeline

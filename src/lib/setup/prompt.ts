@@ -1,8 +1,8 @@
 import fs from "fs";
 import inquirer from "inquirer";
-
 import {
   validateAccessToken,
+  validateACRName,
   validateOrgName,
   validateProjectName,
   validateServicePrincipalId,
@@ -10,11 +10,18 @@ import {
   validateServicePrincipalTenantId,
   validateSubscriptionId
 } from "../validator";
-import { DEFAULT_PROJECT_NAME, IRequestContext, WORKSPACE } from "./constants";
+import {
+  DEFAULT_PROJECT_NAME,
+  RequestContext,
+  WORKSPACE,
+  ACR_NAME
+} from "./constants";
 import { createWithAzCLI } from "./servicePrincipalService";
 import { getSubscriptions } from "./subscriptionService";
 
-export const promptForSubscriptionId = async (rc: IRequestContext) => {
+export const promptForSubscriptionId = async (
+  rc: RequestContext
+): Promise<void> => {
   const subscriptions = await getSubscriptions(rc);
   if (subscriptions.length === 0) {
     throw Error("no subscriptions found");
@@ -31,9 +38,10 @@ export const promptForSubscriptionId = async (rc: IRequestContext) => {
       }
     ];
     const ans = await inquirer.prompt(questions);
-    rc.subscriptionId = subscriptions.find(
+    const found = subscriptions.find(
       s => s.name === (ans.az_subscription as string)
-    )!.id;
+    );
+    rc.subscriptionId = found ? found.id : undefined;
   }
 };
 
@@ -44,7 +52,9 @@ export const promptForSubscriptionId = async (rc: IRequestContext) => {
  *
  * @param rc Request Context
  */
-export const promptForServicePrincipal = async (rc: IRequestContext) => {
+export const promptForServicePrincipal = async (
+  rc: RequestContext
+): Promise<void> => {
   const questions = [
     {
       message: "Enter Service Principal Id\n",
@@ -73,14 +83,34 @@ export const promptForServicePrincipal = async (rc: IRequestContext) => {
 };
 
 /**
+ * Prompts for ACR name, default value is "quickStartACR".
+ * This is needed bacause ACR name has to be unique within Azure.
+ *
+ * @param rc Request Context
+ */
+export const promptForACRName = async (rc: RequestContext): Promise<void> => {
+  const questions = [
+    {
+      default: ACR_NAME,
+      message: `Enter Azure Container Register Name. The registry name must be unique within Azure\n`,
+      name: "acr_name",
+      type: "input",
+      validate: validateACRName
+    }
+  ];
+  const answers = await inquirer.prompt(questions);
+  rc.acrName = answers.acr_name as string;
+};
+
+/**
  * Prompts for creating service principal. User can choose
  * Yes or No.
  *
  * @param rc Request Context
  */
 export const promptForServicePrincipalCreation = async (
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   const questions = [
     {
       default: true,
@@ -105,7 +135,7 @@ export const promptForServicePrincipalCreation = async (
  *
  * @return answers to the questions
  */
-export const prompt = async (): Promise<IRequestContext> => {
+export const prompt = async (): Promise<RequestContext> => {
   const questions = [
     {
       message: "Enter organization name\n",
@@ -135,7 +165,7 @@ export const prompt = async (): Promise<IRequestContext> => {
     }
   ];
   const answers = await inquirer.prompt(questions);
-  const rc: IRequestContext = {
+  const rc: RequestContext = {
     accessToken: answers.azdo_pat as string,
     orgName: answers.azdo_org_name as string,
     projectName: answers.azdo_project_name as string,
@@ -145,14 +175,15 @@ export const prompt = async (): Promise<IRequestContext> => {
 
   if (rc.toCreateAppRepo) {
     await promptForServicePrincipalCreation(rc);
+    await promptForACRName(rc);
   }
   return rc;
 };
 
 const validationServicePrincipalInfoFromFile = (
-  rc: IRequestContext,
+  rc: RequestContext,
   map: { [key: string]: string }
-) => {
+): void => {
   if (rc.toCreateAppRepo) {
     rc.toCreateSP = map.az_create_sp === "true";
 
@@ -207,9 +238,9 @@ const parseInformationFromFile = (file: string): { [key: string]: string } => {
  *
  * @param file file name
  */
-export const getAnswerFromFile = (file: string): IRequestContext => {
+export const getAnswerFromFile = (file: string): RequestContext => {
   const map = parseInformationFromFile(file);
-  map.azdo_project_name = map.azdo_project_name || DEFAULT_PROJECT_NAME;
+  map["azdo_project_name"] = map.azdo_project_name || DEFAULT_PROJECT_NAME;
 
   const vOrgName = validateOrgName(map.azdo_org_name);
   if (typeof vOrgName === "string") {
@@ -226,13 +257,20 @@ export const getAnswerFromFile = (file: string): IRequestContext => {
     throw new Error(vToken);
   }
 
-  const rc: IRequestContext = {
+  const acrName = map.az_acr_name || ACR_NAME;
+  const vACRName = validateACRName(acrName);
+  if (typeof vACRName === "string") {
+    throw new Error(vACRName);
+  }
+
+  const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
     projectName: map.azdo_project_name,
     servicePrincipalId: map.az_sp_id,
     servicePrincipalPassword: map.az_sp_password,
     servicePrincipalTenantId: map.az_sp_tenant,
+    acrName,
     workspace: WORKSPACE
   };
 

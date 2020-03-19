@@ -1,7 +1,7 @@
 import commander from "commander";
 import {
   addSrcToACRPipeline,
-  IDeploymentTable,
+  DeploymentTable,
   updateACRToHLDPipeline,
   updateHLDToManifestPipeline,
   updateManifestCommitId
@@ -14,7 +14,7 @@ import decorator from "./create.decorator.json";
 /**
  * Command Line values from the commander
  */
-export interface ICommandOptions {
+export interface CommandOptions {
   accessKey: string | undefined;
   commitId: string | undefined;
   env: string | undefined;
@@ -37,7 +37,7 @@ export interface ICommandOptions {
  *
  * @param opts values from commander
  */
-export const validateValues = (opts: ICommandOptions) => {
+export const validateValues = (opts: CommandOptions): void => {
   if (
     !hasValue(opts.accessKey) ||
     !hasValue(opts.name) ||
@@ -51,9 +51,9 @@ export const validateValues = (opts: ICommandOptions) => {
 };
 
 export const handlePipeline1 = async (
-  tableInfo: IDeploymentTable,
-  opts: ICommandOptions
-) => {
+  tableInfo: DeploymentTable,
+  opts: CommandOptions
+): Promise<void> => {
   if (
     !hasValue(opts.imageTag) ||
     !hasValue(opts.commitId) ||
@@ -65,6 +65,7 @@ export const handlePipeline1 = async (
   }
   await addSrcToACRPipeline(
     tableInfo,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     opts.p1!,
     opts.imageTag,
     opts.service,
@@ -74,9 +75,9 @@ export const handlePipeline1 = async (
 };
 
 export const handlePipeline2 = async (
-  tableInfo: IDeploymentTable,
-  opts: ICommandOptions
-) => {
+  tableInfo: DeploymentTable,
+  opts: CommandOptions
+): Promise<void> => {
   if (
     !hasValue(opts.hldCommitId) ||
     !hasValue(opts.env) ||
@@ -88,6 +89,7 @@ export const handlePipeline2 = async (
   }
   await updateACRToHLDPipeline(
     tableInfo,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     opts.p2!,
     opts.imageTag,
     opts.hldCommitId,
@@ -105,16 +107,20 @@ export const handlePipeline2 = async (
  * @param exitFn exit function
  */
 export const execute = async (
-  opts: ICommandOptions,
+  opts: CommandOptions,
   exitFn: (status: number) => Promise<void>
-) => {
+): Promise<void> => {
   try {
     validateValues(opts);
 
-    const tableInfo: IDeploymentTable = {
+    const tableInfo: DeploymentTable = {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       accountKey: opts.accessKey!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       accountName: opts.name!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       partitionKey: opts.partitionKey!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       tableName: opts.tableName!
     };
 
@@ -125,7 +131,9 @@ export const execute = async (
     } else if (hasValue(opts.p3) && hasValue(opts.hldCommitId)) {
       await updateHLDToManifestPipeline(
         tableInfo,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         opts.hldCommitId!,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         opts.p3!,
         opts.manifestCommitId,
         opts.pr,
@@ -153,7 +161,7 @@ export const execute = async (
  * @param command
  */
 export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
     await execute(opts, async (status: number) => {
       await exitCmd(logger, process.exit, status);
     });

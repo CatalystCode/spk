@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 ////////////////////////////////////////////////////////////////////////////////
 // !!NOTE!!
 // This test suite uses mock-fs to mock out the the file system
@@ -31,7 +32,7 @@ import {
   createTestMaintainersYaml,
   createTestServiceBuildAndUpdatePipelineYaml
 } from "../test/mockFactory";
-import { IAccessYaml, IAzurePipelinesYaml, IMaintainersFile } from "../types";
+import { AccessYaml, AzurePipelinesYaml, MaintainersFile } from "../types";
 import {
   addNewServiceToMaintainersFile,
   generateAccessYaml,
@@ -42,6 +43,8 @@ import {
   generateHldLifecyclePipelineYaml,
   generateServiceBuildAndUpdatePipelineYaml,
   generateYamlScript,
+  getVersionMessage,
+  sanitizeTriggerPath,
   serviceBuildAndUpdatePipeline,
   updateTriggerBranchesForServiceBuildAndUpdatePipeline
 } from "./fileutils";
@@ -56,6 +59,10 @@ afterAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+jest.mock("../../package.json", () => {
+  return { version: "0.5" };
 });
 
 describe("generateAccessYaml", () => {
@@ -83,7 +90,7 @@ describe("generateAccessYaml", () => {
     const gitRepoUrl =
       "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
 
-    const accessYaml: IAccessYaml = {};
+    const accessYaml: AccessYaml = {};
     accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
 
     generateAccessYaml(absTargetPath, gitRepoUrl);
@@ -111,7 +118,7 @@ describe("generateAccessYaml", () => {
 
     const gitRepoUrl2 =
       "https://fabrikam@dev.azure.com/someorg/someproject/_git/private-helm-repo";
-    const accessYaml: IAccessYaml = {};
+    const accessYaml: AccessYaml = {};
     accessYaml[gitRepoUrl2] = "ACCESS_TOKEN_SECRET";
     accessYaml[gitRepoUrl] = "ACCESS_TOKEN_SECRET";
 
@@ -138,7 +145,7 @@ describe("generateAccessYaml", () => {
     const gitRepoUrl =
       "https://fabrikam@dev.azure.com/someorg/someproject/_git/fabrikam2019";
 
-    const accessYaml: IAccessYaml = {};
+    const accessYaml: AccessYaml = {};
     accessYaml[gitRepoUrl] = "MY_CUSTOM_SECRET";
 
     generateAccessYaml(absTargetPath, gitRepoUrl);
@@ -156,6 +163,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
   const targetDirectory = "app-repository";
   const serviceDirectory = "my-service";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
 
   beforeEach(() => {
     mockFs({
@@ -196,7 +204,13 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
       path.join(targetDirectory, serviceDirectory),
       []
     );
+
     expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      `${getVersionMessage()}\n`,
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
       expectedFilePath,
       createTestServiceBuildAndUpdatePipelineYaml(
         true,
@@ -221,7 +235,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
   });
 
   test("path trigger is injected when the path is not the root of the project (not: ./)", () => {
-    for (const p of ["./my-service", "./foo/bar/baz"]) {
+    for (const p of ["my-service", "foo/bar/baz"]) {
       const serviceYaml = serviceBuildAndUpdatePipeline("my-service", p, [
         "master"
       ]);
@@ -235,7 +249,7 @@ describe("generateServiceBuildAndUpdatePipelineYaml", () => {
       ["master"]
     );
     expect(yamlWithNoDot?.trigger?.paths).toStrictEqual({
-      include: ["./another-service"]
+      include: ["another-service"]
     });
   });
 });
@@ -244,6 +258,7 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
   const targetDirectory = "app-repository";
   const serviceDirectory = "my-service";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
 
   beforeEach(() => {
     mockFs({
@@ -304,6 +319,11 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
 
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
+      `${getVersionMessage()}\n`,
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
+      expectedFilePath,
       createTestServiceBuildAndUpdatePipelineYaml(
         true,
         undefined,
@@ -320,6 +340,7 @@ describe("updateTriggerBranchesForServiceBuildAndUpdatePipeline", () => {
 describe("generateHldLifecyclePipelineYaml", () => {
   const targetDirectory = "app-repository";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
 
   beforeEach(() => {
     mockFs({
@@ -347,6 +368,11 @@ describe("generateHldLifecyclePipelineYaml", () => {
     generateHldLifecyclePipelineYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
+      `${getVersionMessage()}\n`,
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
+      expectedFilePath,
       createTestHldLifecyclePipelineYaml(),
       "utf8"
     );
@@ -357,6 +383,8 @@ describe("generateHldLifecyclePipelineYaml", () => {
 describe("generateHldAzurePipelinesYaml", () => {
   const targetDirectory = "hld-repository";
   const writeSpy = jest.spyOn(fs, "writeFileSync");
+  const appendSpy = jest.spyOn(fs, "appendFileSync");
+
   beforeEach(() => {
     mockFs({
       "hld-repository": {}
@@ -382,6 +410,11 @@ describe("generateHldAzurePipelinesYaml", () => {
 
     generateHldAzurePipelinesYaml(targetDirectory);
     expect(writeSpy).toBeCalledWith(
+      expectedFilePath,
+      `${getVersionMessage()}\n`,
+      "utf8"
+    );
+    expect(appendSpy).toBeCalledWith(
       expectedFilePath,
       createTestHldAzurePipelinesYaml(),
       "utf8"
@@ -443,6 +476,7 @@ describe("generateDefaultHldComponentYaml", () => {
 describe("Adding a new service to a Maintainer file", () => {
   beforeAll(() => {
     mockFs({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       "maintainers.yaml": createTestMaintainersYaml() as any
     });
   });
@@ -469,9 +503,10 @@ describe("Adding a new service to a Maintainer file", () => {
 
     const defaultMaintainersFileObject = createTestMaintainersYaml(false);
 
-    const expected: IMaintainersFile = {
+    const expected: MaintainersFile = {
       services: {
-        ...((defaultMaintainersFileObject as any) as IMaintainersFile).services,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...((defaultMaintainersFileObject as any) as MaintainersFile).services,
         ["./" + servicePath]: {
           maintainers: [newUser]
         }
@@ -630,7 +665,7 @@ describe("serviceBuildUpdatePipeline", () => {
     const variableGroups = [uuid(), uuid()];
 
     for (const serviceReference of serviceReferences) {
-      await generateServiceBuildAndUpdatePipelineYaml(
+      generateServiceBuildAndUpdatePipelineYaml(
         randomDirPath,
         ringBranches,
         serviceReference.serviceName,
@@ -642,19 +677,19 @@ describe("serviceBuildUpdatePipeline", () => {
       expect(fs.existsSync(serviceReference.servicePath)).toBe(true);
 
       // pipeline triggers should include the relative path to the service
-      const azureYaml: IAzurePipelinesYaml = yaml.safeLoad(
+      const azureYaml: AzurePipelinesYaml = yaml.safeLoad(
         fs.readFileSync(
           path.join(serviceReference.servicePath, SERVICE_PIPELINE_FILENAME),
           "utf8"
         )
       );
       const hasCorrectIncludes = azureYaml.trigger!.paths!.include!.includes(
-        "./" + path.relative(randomDirPath, serviceReference.servicePath)
+        path.relative(randomDirPath, serviceReference.servicePath)
       );
       expect(hasCorrectIncludes).toBe(true);
 
-      let hasCorrectVariableGroup1: boolean = false;
-      let hasCorrectVariableGroup2: boolean = false;
+      let hasCorrectVariableGroup1 = false;
+      let hasCorrectVariableGroup2 = false;
       for (const value of Object.values(azureYaml.variables!)) {
         const item = value as { group: string };
 
@@ -679,4 +714,39 @@ describe("generateYamlScript", () => {
     const generated = generateYamlScript(["foo", "bar", "baz"]);
     expect(generated.startsWith("set -e\n")).toBe(true);
   });
+});
+
+describe("sanitizeTriggerPath", () => {
+  const tests: {
+    name: string;
+    expected: ReturnType<typeof sanitizeTriggerPath>;
+    actual: ReturnType<typeof sanitizeTriggerPath>;
+  }[] = [
+    {
+      name: "removes ./ when present",
+      expected: "foo/bar",
+      actual: sanitizeTriggerPath("./foo/bar")
+    },
+    {
+      name: "should only remove one slash",
+      expected: "/foo/bar",
+      actual: sanitizeTriggerPath(".//foo/bar")
+    },
+    {
+      name: "does nothing if not starting with ./",
+      expected: "foo/bar",
+      actual: sanitizeTriggerPath("foo/bar")
+    },
+    {
+      name: "dot is escaped",
+      expected: "a/foo/bar",
+      actual: sanitizeTriggerPath("a/foo/bar")
+    }
+  ];
+
+  for (const { name, expected, actual } of tests) {
+    test(name, () => {
+      expect(actual).toBe(expected);
+    });
+  }
 });

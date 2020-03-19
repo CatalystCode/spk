@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/camelcase */
 import path from "path";
 import { Config, loadConfiguration } from "../config";
 import {
@@ -7,6 +9,7 @@ import {
   isPortNumberString,
   ORG_NAME_VIOLATION,
   validateAccessToken,
+  validateACRName,
   validateForNonEmptyValue,
   validateOrgName,
   validatePrereqs,
@@ -92,11 +95,11 @@ describe("Tests on validator helper functions", () => {
   });
 });
 
-const testvalidatePrereqs = (
+const testValidatePrereqs = (
   global: boolean,
   cmd: string,
   expectedResult: boolean
-) => {
+): void => {
   const filename = path.resolve("src/commands/mocks/spk-config.yaml");
   process.env.test_name = "my_storage_account";
   process.env.test_key = "my_storage_key";
@@ -117,11 +120,11 @@ const testvalidatePrereqs = (
 describe("Validating executable prerequisites in spk-config", () => {
   test("Validate that exectuable boolean matches in spk-config - global = true", () => {
     // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
-    testvalidatePrereqs(true, "foobar", false);
+    testValidatePrereqs(true, "foobar", false);
   });
   test("Validate that exectuable boolean matches in spk-config - global = false", () => {
     // Iterate through an array of non-existent binaries to create a force fail. If fails, then test pass
-    testvalidatePrereqs(false, "foobar", false);
+    testValidatePrereqs(false, "foobar", false);
   });
 });
 
@@ -148,11 +151,6 @@ describe("test validateProjectName function", () => {
     expect(validateProjectName("")).toBe("Must enter a project name");
     expect(validateProjectName(" ")).toBe("Must enter a project name");
   });
-  it("space in value", () => {
-    expect(validateProjectName("a b")).toBe(
-      "Project name cannot contains spaces"
-    );
-  });
   it("value over 64 chars long", () => {
     expect(validateProjectName("a".repeat(65))).toBe(
       "Project name cannot be longer than 64 characters"
@@ -172,7 +170,7 @@ describe("test validateProjectName function", () => {
       "Project name cannot begin or end with a period"
     );
     expect(validateProjectName("a*b")).toBe(
-      `Project name can't contain special characters, such as / : \ ~ & % ; @ ' " ? < > | # $ * } { , + = [ ]`
+      `Project name can't contain special characters, such as / : \\ ~ & % ; @ ' " ? < > | # $ * } { , + = [ ]`
     );
   });
   it("valid value", () => {
@@ -231,5 +229,24 @@ describe("test validateSubscriptionId function", () => {
       "The value for Subscription Id is invalid."
     );
     expect(validateSubscriptionId("abc123-456")).toBeTruthy();
+  });
+});
+
+describe("test validateACRName function", () => {
+  it("sanity test", () => {
+    expect(validateACRName("")).toBe(
+      "Must enter an Azure Container Registry Name."
+    );
+    expect(validateACRName("xyz-")).toBe(
+      "The value for Azure Container Registry Name is invalid."
+    );
+    expect(validateACRName("1")).toBe(
+      "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long."
+    );
+    expect(validateACRName("1234567890a".repeat(10))).toBe(
+      "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long."
+    );
+
+    expect(validateACRName("abc12356")).toBeTruthy();
   });
 });

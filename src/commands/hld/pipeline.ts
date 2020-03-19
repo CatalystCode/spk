@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -11,7 +12,7 @@ import {
   BUILD_SCRIPT_URL,
   RENDER_HLD_PIPELINE_FILENAME
 } from "../../lib/constants";
-import { IAzureDevOpsOpts } from "../../lib/git";
+import { AzureDevOpsOpts } from "../../lib/git";
 import { getRepositoryName, isGitHubUrl } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -23,7 +24,7 @@ import {
 import { logger } from "../../logger";
 import decorator from "./pipeline.decorator.json";
 
-export interface ICommandOptions {
+export interface CommandOptions {
   pipelineName: string;
   personalAccessToken: string;
   orgName: string;
@@ -35,11 +36,19 @@ export interface ICommandOptions {
   yamlFileBranch: string;
 }
 
-export const emptyStringIfUndefined = (val: string | undefined) => {
+export const emptyStringIfUndefined = (val: string | undefined): string => {
   return val ? val : "";
 };
 
-export const populateValues = (opts: ICommandOptions) => {
+const validateRepos = (hldRepoUrl: string, manifestRepoUrl: string): void => {
+  const hldGitUrlType = isGitHubUrl(hldRepoUrl);
+  const manifestGitUrlType = isGitHubUrl(manifestRepoUrl);
+  if (hldGitUrlType || manifestGitUrlType) {
+    throw Error(`GitHub repos are not supported`);
+  }
+};
+
+export const populateValues = (opts: CommandOptions): CommandOptions => {
   // NOTE: all the values in opts are defaulted to ""
 
   // exception will be thrown if spk's config.yaml is missing
@@ -81,50 +90,35 @@ export const populateValues = (opts: ICommandOptions) => {
   return opts;
 };
 
-const validateRepos = (hldRepoUrl: string, manifestRepoUrl: string) => {
-  const hldGitUrlType = isGitHubUrl(hldRepoUrl);
-  const manifestGitUrlType = isGitHubUrl(manifestRepoUrl);
-  if (hldGitUrlType || manifestGitUrlType) {
-    throw Error(`GitHub repos are not supported`);
-  }
-};
-
-export const execute = async (
-  opts: ICommandOptions,
-  exitFn: (status: number) => Promise<void>
-) => {
-  try {
-    populateValues(opts);
-    const accessOpts: IAzureDevOpsOpts = {
-      orgName: opts.orgName,
-      personalAccessToken: opts.personalAccessToken,
-      project: opts.devopsProject
-    };
-
-    // By default the version descriptor is for the master branch
-    await repositoryHasFile(
-      RENDER_HLD_PIPELINE_FILENAME,
-      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
-      opts.hldName,
-      accessOpts
-    );
-    await installHldToManifestPipeline(opts);
-    await exitFn(0);
-  } catch (err) {
-    logger.error(
-      `Error occurred installing pipeline for HLD to Manifest pipeline`
-    );
-    logger.error(err);
-    await exitFn(1);
-  }
-};
-
-export const commandDecorator = (command: commander.Command) => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
-    await execute(opts, async (status: number) => {
-      await exitCmd(logger, process.exit, status);
-    });
-  });
+/**
+ * Builds and returns variables required for the HLD to Manifest pipeline.
+ * @param accessToken Access token with access to the manifest repository.
+ * @param buildScriptUrl Build Script URL
+ * @param manifestRepoUrl URL to the materialized manifest repository.
+ * @returns Object containing the necessary run-time variables for the HLD to Manifest pipeline.
+ */
+export const requiredPipelineVariables = (
+  accessToken: string,
+  buildScriptUrl: string,
+  manifestRepoUrl: string
+): { [key: string]: BuildDefinitionVariable } => {
+  return {
+    BUILD_SCRIPT_URL: {
+      allowOverride: true,
+      isSecret: false,
+      value: buildScriptUrl
+    },
+    MANIFEST_REPO: {
+      allowOverride: true,
+      isSecret: false,
+      value: manifestRepoUrl
+    },
+    PAT: {
+      allowOverride: true,
+      isSecret: true,
+      value: accessToken
+    }
+  };
 };
 
 /**
@@ -133,19 +127,16 @@ export const commandDecorator = (command: commander.Command) => {
  *
  * @param values Values for command Options
  */
-export const installHldToManifestPipeline = async (values: ICommandOptions) => {
-  let devopsClient;
+export const installHldToManifestPipeline = async (
+  values: CommandOptions
+): Promise<void> => {
   let builtDefinition;
 
-  try {
-    devopsClient = await getBuildApiClient(
-      values.orgName,
-      values.personalAccessToken
-    );
-    logger.info("Fetched DevOps Client");
-  } catch (err) {
-    throw err; // caller will catch and exit
-  }
+  const devopsClient = await getBuildApiClient(
+    values.orgName,
+    values.personalAccessToken
+  );
+  logger.info("Fetched DevOps Client");
 
   const definition = definitionForAzureRepoPipeline({
     branchFilters: ["master"],
@@ -196,33 +187,40 @@ export const installHldToManifestPipeline = async (values: ICommandOptions) => {
   }
 };
 
-/**
- * Builds and returns variables required for the HLD to Manifest pipeline.
- * @param accessToken Access token with access to the manifest repository.
- * @param buildScriptUrl Build Script URL
- * @param manifestRepoUrl URL to the materialized manifest repository.
- * @returns Object containing the necessary run-time variables for the HLD to Manifest pipeline.
- */
-export const requiredPipelineVariables = (
-  accessToken: string,
-  buildScriptUrl: string,
-  manifestRepoUrl: string
-): { [key: string]: BuildDefinitionVariable } => {
-  return {
-    BUILD_SCRIPT_URL: {
-      allowOverride: true,
-      isSecret: false,
-      value: buildScriptUrl
-    },
-    MANIFEST_REPO: {
-      allowOverride: true,
-      isSecret: false,
-      value: manifestRepoUrl
-    },
-    PAT: {
-      allowOverride: true,
-      isSecret: true,
-      value: accessToken
-    }
-  };
+export const execute = async (
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
+  try {
+    populateValues(opts);
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: opts.orgName,
+      personalAccessToken: opts.personalAccessToken,
+      project: opts.devopsProject
+    };
+
+    // By default the version descriptor is for the master branch
+    await repositoryHasFile(
+      RENDER_HLD_PIPELINE_FILENAME,
+      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
+      opts.hldName,
+      accessOpts
+    );
+    await installHldToManifestPipeline(opts);
+    await exitFn(0);
+  } catch (err) {
+    logger.error(
+      `Error occurred installing pipeline for HLD to Manifest pipeline`
+    );
+    logger.error(err);
+    await exitFn(1);
+  }
+};
+
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
+    await execute(opts, async (status: number) => {
+      await exitCmd(logger, process.exit, status);
+    });
+  });
 };

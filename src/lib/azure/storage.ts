@@ -11,7 +11,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { Config } from "../../config";
 import { logger } from "../../logger";
-import { IAzureAccessOpts } from "../../types";
+import { AzureAccessOpts } from "../../types";
 import { getManagementCredentials } from "./azurecredentials";
 
 let storageManagementClient: StorageManagementClient | undefined; // singleton Storage Management Client so it can be reused
@@ -23,7 +23,7 @@ let storageManagementClient: StorageManagementClient | undefined; // singleton S
  *
  */
 export const getStorageManagementClient = async (
-  opts: IAzureAccessOpts = {}
+  opts: AzureAccessOpts = {}
 ): Promise<StorageManagementClient> => {
   if (storageManagementClient !== undefined) {
     logger.debug(`Returing singleton storageManagementClient object`);
@@ -32,17 +32,87 @@ export const getStorageManagementClient = async (
 
   const creds = await getManagementCredentials(opts);
 
-  // Load config from opts and fallback to spk config
-  const { azure } = Config().introspection!;
-  const { subscriptionId = azure && azure.subscription_id } = opts;
+  if (!creds) {
+    throw Error("Could not get managemenet credentials");
+  }
 
-  storageManagementClient = new StorageManagementClient(
-    creds!,
-    subscriptionId!
-  );
+  // Load config from opts and fallback to spk config
+  const introspection = Config().introspection;
+  const azure = introspection ? introspection.azure : undefined;
+  const { subscriptionId = azure && azure.subscription_id } = opts;
+  if (!subscriptionId) {
+    throw Error("Subscription Id was missing.");
+  }
+
+  storageManagementClient = new StorageManagementClient(creds, subscriptionId);
 
   logger.debug(`created storageManagementClient object`);
   return storageManagementClient;
+};
+
+/**
+ * Checks if the given storage account name already exists
+ * @param accountName The storage account name
+ *
+ */
+export const isStorageAccountNameAvailable = async (
+  accountName: string
+): Promise<boolean> => {
+  logger.verbose(`Check if storage account name ${accountName} exists`);
+
+  const client = await getStorageManagementClient();
+  const nameAvailabilityResult = await client.storageAccounts.checkNameAvailability(
+    accountName
+  );
+
+  return nameAvailabilityResult.nameAvailable || false;
+};
+
+/**
+ * Gets the access keys for the given storage account
+ * @param accountName The storage account name
+ * @param resourceGroup The resource group where the storage account is
+ * @param opts optionally override spk config with Azure subscription access options
+ *
+ */
+export const getStorageAccountKeys = async (
+  accountName: string,
+  resourceGroup: string,
+  opts: AzureAccessOpts = {}
+): Promise<string[]> => {
+  // validate input
+  const errors: string[] = [];
+
+  if (!resourceGroup) {
+    errors.push(`Invalid resourceGroup`);
+  }
+
+  if (!accountName) {
+    errors.push(`Invalid accountName`);
+  }
+
+  if (errors.length !== 0) {
+    throw new Error(`\n${errors.join("\n")}`);
+  }
+
+  const storageAccountKeys: string[] = [];
+
+  logger.verbose(`Get storage account keys for ${accountName}`);
+  const client = await getStorageManagementClient(opts);
+  const keysResponse = await client.storageAccounts.listKeys(
+    resourceGroup,
+    accountName
+  );
+
+  if (keysResponse.keys) {
+    for (const storageKey of keysResponse.keys) {
+      if (storageKey.value) {
+        storageAccountKeys.push(storageKey.value);
+      }
+    }
+  }
+
+  return storageAccountKeys;
 };
 
 /**
@@ -88,107 +158,6 @@ export const validateStorageAccount = async (
 };
 
 /**
- * Checks if the given storage account name already exists
- * @param accountName The storage account name
- *
- */
-export const isStorageAccountNameAvailable = async (
-  accountName: string
-): Promise<boolean> => {
-  logger.verbose(`Check if storage account name ${accountName} exists`);
-
-  const client = await getStorageManagementClient();
-  const nameAvailabilityResult = await client.storageAccounts.checkNameAvailability(
-    accountName
-  );
-
-  return nameAvailabilityResult.nameAvailable!;
-};
-
-/**
- * Gets the access keys for the given storage account
- * @param accountName The storage account name
- * @param resourceGroup The resource group where the storage account is
- * @param opts optionally override spk config with Azure subscription access options
- *
- */
-export const getStorageAccountKeys = async (
-  accountName: string,
-  resourceGroup: string,
-  opts: IAzureAccessOpts = {}
-): Promise<string[]> => {
-  // validate input
-  const errors: string[] = [];
-
-  if (!resourceGroup) {
-    errors.push(`Invalid resourceGroup`);
-  }
-
-  if (!accountName) {
-    errors.push(`Invalid accountName`);
-  }
-
-  if (errors.length !== 0) {
-    throw new Error(`\n${errors.join("\n")}`);
-  }
-
-  const storageAccountKeys: string[] = [];
-
-  logger.verbose(`Get storage account keys for ${accountName}`);
-  const client = await getStorageManagementClient(opts);
-  const keysResponse = await client.storageAccounts.listKeys(
-    resourceGroup,
-    accountName
-  );
-
-  if (typeof keysResponse.keys !== "undefined") {
-    for (const storageKey of keysResponse.keys!) {
-      storageAccountKeys.push(storageKey.value!);
-    }
-  }
-
-  return storageAccountKeys;
-};
-
-/**
- * Checks whether Azure storage account exists in specified resource group `resourceGroup` or not
- *
- * @param resourceGroup Name of Azure resource group
- * @param accountName The Azure storage account name
- * @param opts optionally override spk config with Azure subscription access options
- *
- */
-export const isStorageAccountExist = async (
-  resourceGroup: string,
-  accountName: string,
-  opts: IAzureAccessOpts = {}
-): Promise<boolean> => {
-  // validate input
-  const errors: string[] = [];
-
-  if (!resourceGroup) {
-    errors.push(`Invalid resourceGroup`);
-  }
-
-  if (!accountName) {
-    errors.push(`Invalid accountName`);
-  }
-
-  if (errors.length !== 0) {
-    throw new Error(`\n${errors.join("\n")}`);
-  }
-
-  const message = `Azure storage account ${accountName} in resource group ${resourceGroup}`;
-  try {
-    const account = await getStorageAccount(resourceGroup, accountName, opts);
-    return account !== undefined;
-  } catch (err) {
-    logger.error(`Error occurred while finding ${message} \n ${err}`);
-    throw err;
-  }
-};
-
-/**
  * Checks whether Azure storage account exists in specified resource group `resourceGroup` or not
  *
  * @param resourceGroup Name of Azure resource group
@@ -199,7 +168,7 @@ export const isStorageAccountExist = async (
 export const getStorageAccount = async (
   resourceGroup: string,
   accountName: string,
-  opts: IAzureAccessOpts = {}
+  opts: AzureAccessOpts = {}
 ): Promise<StorageAccount | undefined> => {
   // validate input
   const errors: string[] = [];
@@ -246,6 +215,44 @@ export const getStorageAccount = async (
 };
 
 /**
+ * Checks whether Azure storage account exists in specified resource group `resourceGroup` or not
+ *
+ * @param resourceGroup Name of Azure resource group
+ * @param accountName The Azure storage account name
+ * @param opts optionally override spk config with Azure subscription access options
+ *
+ */
+export const isStorageAccountExist = async (
+  resourceGroup: string,
+  accountName: string,
+  opts: AzureAccessOpts = {}
+): Promise<boolean> => {
+  // validate input
+  const errors: string[] = [];
+
+  if (!resourceGroup) {
+    errors.push(`Invalid resourceGroup`);
+  }
+
+  if (!accountName) {
+    errors.push(`Invalid accountName`);
+  }
+
+  if (errors.length !== 0) {
+    throw new Error(`\n${errors.join("\n")}`);
+  }
+
+  const message = `Azure storage account ${accountName} in resource group ${resourceGroup}`;
+  try {
+    const account = await getStorageAccount(resourceGroup, accountName, opts);
+    return account !== undefined;
+  } catch (err) {
+    logger.error(`Error occurred while finding ${message} \n ${err}`);
+    throw err;
+  }
+};
+
+/**
  * Validates all the values are available for creating a storage
  * account.
  *
@@ -257,7 +264,7 @@ const validateInputsForCreateAccount = (
   resourceGroup: string,
   accountName: string,
   location: string
-) => {
+): void => {
   // validate input
   const errors: string[] = [];
 
@@ -288,7 +295,7 @@ export const createStorageAccount = async (
   resourceGroup: string,
   accountName: string,
   location: string,
-  opts: IAzureAccessOpts = {}
+  opts: AzureAccessOpts = {}
 ): Promise<StorageAccount> => {
   const message = `Azure storage account ${accountName} in resource group ${resourceGroup} in ${location} location.`;
 
@@ -305,7 +312,7 @@ export const createStorageAccount = async (
     );
 
     if (response.nameAvailable === false) {
-      const nameErrorMessage: string = `Storage account name ${accountName} is not available. Please choose a different name.`;
+      const nameErrorMessage = `Storage account name ${accountName} is not available. Please choose a different name.`;
       logger.error(nameErrorMessage);
       throw new Error(nameErrorMessage);
     }
@@ -348,7 +355,7 @@ export const createStorageAccount = async (
 export const getStorageAccountKey = async (
   resourceGroup: string,
   accountName: string,
-  opts: IAzureAccessOpts = {}
+  opts: AzureAccessOpts = {}
 ): Promise<string | undefined> => {
   // validate input
   const errors: string[] = [];
@@ -373,7 +380,7 @@ export const getStorageAccountKey = async (
       resourceGroup,
       accountName
     );
-    if (keyResults.keys === undefined) {
+    if (keyResults.keys === undefined || keyResults.keys.length === 0) {
       logger.verbose(`Storage account ${accountName} access keys do not exist`);
       return undefined;
     }
@@ -381,7 +388,8 @@ export const getStorageAccountKey = async (
     logger.verbose(
       `${keyResults.keys.length} Storage account access keys exist`
     );
-    const key = keyResults.keys![0].value;
+
+    const key = keyResults.keys[0].value;
     logger.verbose(`Returning key: ${key}`);
     return key;
   } catch (err) {
@@ -403,7 +411,7 @@ export const getStorageAccountKey = async (
 const validateValuesForCreateStorageTable = (
   accountName: string,
   tableName: string
-) => {
+): void => {
   const errors: string[] = [];
 
   if (!accountName) {
@@ -464,7 +472,7 @@ export const createTableIfNotExists = (
 export const createResourceGroupIfNotExists = async (
   name: string,
   location: string
-) => {
+): Promise<void> => {
   // validate input
   const errors: string[] = [];
 

@@ -8,7 +8,7 @@ export const ORG_NAME_VIOLATION =
 /**
  * Values to be validated
  */
-export interface IValidationValue {
+export interface ValidationValue {
   value: undefined | null | string;
   error: string;
 }
@@ -59,7 +59,7 @@ export const isPortNumberString = (val: unknown): val is string => {
  * @param err Error message
  */
 export const validateForNonEmptyValue = (
-  validValue: IValidationValue
+  validValue: ValidationValue
 ): string => {
   return hasValue(validValue.value) ? "" : validValue.error;
 };
@@ -113,7 +113,11 @@ export const validateOrgName = (value: string): string | boolean => {
 };
 
 export const isDashHex = (value: string): boolean => {
-  return !!value.match(/^[a-f0-9\-]+$/);
+  return !!value.match(/^[a-f0-9-]+$/);
+};
+
+export const isAlphaNumeric = (value: string): boolean => {
+  return !!value.match(/^[a-zA-Z0-9]+$/);
 };
 
 /**
@@ -124,9 +128,6 @@ export const isDashHex = (value: string): boolean => {
 export const validateProjectName = (value: string): string | boolean => {
   if (!hasValue(value)) {
     return "Must enter a project name";
-  }
-  if (value.indexOf(" ") !== -1) {
-    return "Project name cannot contains spaces";
   }
   if (value.length > 64) {
     return "Project name cannot be longer than 64 characters";
@@ -165,7 +166,7 @@ export const validateProjectName = (value: string): string | boolean => {
     "]"
   ];
   if (invalidChars.some(x => value.indexOf(x) !== -1)) {
-    return `Project name can't contain special characters, such as / : \ ~ & % ; @ ' " ? < > | # $ * } { , + = [ ]`;
+    return `Project name can't contain special characters, such as / : \\ ~ & % ; @ ' " ? < > | # $ * } { , + = [ ]`;
   }
 
   return true;
@@ -238,6 +239,24 @@ export const validateSubscriptionId = (value: string): string | boolean => {
   }
   if (!isDashHex(value)) {
     return "The value for Subscription Id is invalid.";
+  }
+  return true;
+};
+
+/**
+ * Returns true if Azure Container Registry Name is valid
+ *
+ * @param value Azure Container Registry Name.
+ */
+export const validateACRName = (value: string): string | boolean => {
+  if (!hasValue(value)) {
+    return "Must enter an Azure Container Registry Name.";
+  }
+  if (!isAlphaNumeric(value)) {
+    return "The value for Azure Container Registry Name is invalid.";
+  }
+  if (value.length < 5 || value.length > 50) {
+    return "The value for Azure Container Registry Name is invalid because it has to be between 5 and 50 characters long.";
   }
   return true;
 };

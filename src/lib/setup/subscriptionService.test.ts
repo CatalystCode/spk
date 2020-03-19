@@ -1,19 +1,13 @@
-import {
-  Subscription,
-  SubscriptionClientOptions
-} from "@azure/arm-subscriptions/src/models";
-import { ApplicationTokenCredentials } from "@azure/ms-rest-nodeauth";
 import * as restAuth from "@azure/ms-rest-nodeauth";
+import { RequestContext } from "./constants";
 import { getSubscriptions } from "./subscriptionService";
 
 jest.mock("@azure/arm-subscriptions", () => {
   class MockClient {
-    constructor(
-      cred: ApplicationTokenCredentials,
-      options?: SubscriptionClientOptions
-    ) {
+    constructor() {
       return {
         subscriptions: {
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           list: () => {
             return [
               {
@@ -26,6 +20,7 @@ jest.mock("@azure/arm-subscriptions", () => {
       };
     }
   }
+
   return {
     SubscriptionClient: MockClient
   };
@@ -38,12 +33,16 @@ describe("test getSubscriptions function", () => {
       .mockImplementationOnce(async () => {
         return {};
       });
-    const result = await getSubscriptions({
+    const rc: RequestContext = {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: "test"
-    });
+      workspace: "test",
+      servicePrincipalId: "fakeId",
+      servicePrincipalPassword: "fakePassword",
+      servicePrincipalTenantId: "fakeTenantId"
+    };
+    const result = await getSubscriptions(rc);
     expect(result).toStrictEqual([
       {
         id: "1234567890-abcdef",

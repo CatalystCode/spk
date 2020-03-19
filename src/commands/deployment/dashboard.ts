@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import commander from "commander";
 import GitUrlParse from "git-url-parse";
 import open = require("open");
@@ -7,10 +8,10 @@ import { getRepositoryName } from "../../lib/gitutils";
 import { exec } from "../../lib/shell";
 import { isPortNumberString, validatePrereqs } from "../../lib/validator";
 import { logger } from "../../logger";
-import { IConfigYaml } from "../../types";
+import { ConfigYaml } from "../../types";
 import decorator from "./dashboard.decorator.json";
 
-export interface IIntrospectionManifest {
+export interface IntrospectionManifest {
   githubUsername?: string;
   manifestRepoName: string;
 }
@@ -18,7 +19,7 @@ export interface IIntrospectionManifest {
 /**
  * Command line option values from commander
  */
-export interface ICommandOptions {
+export interface CommandOptions {
   port: string;
   removeAll: boolean;
 }
@@ -29,7 +30,10 @@ export interface ICommandOptions {
  * @param config SPK Configuration
  * @param opts Command Line option values
  */
-export const validateValues = (config: IConfigYaml, opts: ICommandOptions) => {
+export const validateValues = (
+  config: ConfigYaml,
+  opts: CommandOptions
+): void => {
   if (opts.port) {
     if (!isPortNumberString(opts.port)) {
       throw new Error("value for port option has to be a valid port number");
@@ -54,47 +58,11 @@ export const validateValues = (config: IConfigYaml, opts: ICommandOptions) => {
 };
 
 /**
- * Executes the command, can all exit function with 0 or 1
- * when command completed successfully or failed respectively.
- *
- * @param opts validated option values
- * @param exitFn exit function
- */
-export const execute = async (
-  opts: ICommandOptions,
-  exitFn: (status: number) => Promise<void>
-) => {
-  try {
-    const config = Config();
-    validateValues(config, opts);
-    const portNumber = parseInt(opts.port, 10);
-
-    if (await launchDashboard(config, portNumber, opts.removeAll)) {
-      await open("http://localhost:" + opts.port);
-    }
-    await exitFn(0);
-  } catch (err) {
-    logger.error(err);
-    await exitFn(1);
-  }
-};
-
-/**
- * Adds the onboard command to the commander command object
- * @param command Commander command object to decorate
- */
-export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
-    await execute(opts, async (status: number) => {
-      await exitCmd(logger, process.exit, status);
-    });
-  });
-};
-
-/**
  * Cleans previously launched spk dashboard docker containers
  */
-export const cleanDashboarContainers = async (config: IConfigYaml) => {
+export const cleanDashboardContainers = async (
+  config: ConfigYaml
+): Promise<void> => {
   let dockerOutput = await exec("docker", [
     "ps",
     "-a",
@@ -114,50 +82,39 @@ export const cleanDashboarContainers = async (config: IConfigYaml) => {
 };
 
 /**
- * Launches an instance of the spk dashboard
- *
- * @param port the port number to launch the dashboard
- * @param removeAll true to remove all previously launched instances of the dashboard
+ * Extracts the necessary information from the config for
+ * `azure_devops.manifest_repository` which is required to fetch cluster sync
+ * information on dashboard
  */
-export const launchDashboard = async (
-  config: IConfigYaml,
-  port: number,
-  removeAll: boolean
-): Promise<string> => {
-  try {
-    if (!validatePrereqs(["docker"], false)) {
-      throw new Error("Requirements to launch dashboard are not met");
-    }
+export const extractManifestRepositoryInformation = (
+  config: ConfigYaml
+): IntrospectionManifest | undefined => {
+  const { azure_devops: azureDevops } = config;
+  if (azureDevops!.manifest_repository) {
+    const manifestRepoName = getRepositoryName(
+      azureDevops!.manifest_repository
+    );
 
-    if (removeAll) {
-      await cleanDashboarContainers(config);
+    const gitComponents = GitUrlParse(azureDevops!.manifest_repository);
+    if (gitComponents.resource === "github.com") {
+      return {
+        githubUsername: gitComponents.organization,
+        manifestRepoName
+      };
+    } else {
+      return {
+        manifestRepoName
+      };
     }
-
-    const dockerRepository = config.introspection!.dashboard!.image!;
-    logger.info("Pulling dashboard docker image");
-    await exec("docker", ["pull", dockerRepository]);
-    logger.info("Launching dashboard on http://localhost:" + port);
-    const containerId = await exec("docker", [
-      "run",
-      "-d",
-      "--rm",
-      ...(await getEnvVars(config)),
-      "-p",
-      port + ":5000",
-      dockerRepository
-    ]);
-    return containerId;
-  } catch (err) {
-    logger.error(`Error occurred while launching dashboard ${err}`);
-    throw err;
   }
+  return undefined;
 };
 
 /**
  * Creates and returns an array of env vars that need to be passed into the
  * docker run command
  */
-export const getEnvVars = async (config: IConfigYaml): Promise<string[]> => {
+export const getEnvVars = async (config: ConfigYaml): Promise<string[]> => {
   const key = await config.introspection!.azure!.key;
   const envVars = [];
   envVars.push("-e");
@@ -231,30 +188,79 @@ export const getEnvVars = async (config: IConfigYaml): Promise<string[]> => {
 };
 
 /**
- * Extracts the necessary information from the config for
- * `azure_devops.manifest_repository` which is required to fetch cluster sync
- * information on dashboard
+ * Launches an instance of the spk dashboard
+ *
+ * @param port the port number to launch the dashboard
+ * @param removeAll true to remove all previously launched instances of the dashboard
  */
-export const extractManifestRepositoryInformation = (
-  config: IConfigYaml
-): IIntrospectionManifest | undefined => {
-  const { azure_devops } = config;
-  if (azure_devops!.manifest_repository) {
-    const manifestRepoName = getRepositoryName(
-      azure_devops!.manifest_repository
-    );
-
-    const gitComponents = GitUrlParse(azure_devops!.manifest_repository);
-    if (gitComponents.resource === "github.com") {
-      return {
-        githubUsername: gitComponents.organization,
-        manifestRepoName
-      };
-    } else {
-      return {
-        manifestRepoName
-      };
+export const launchDashboard = async (
+  config: ConfigYaml,
+  port: number,
+  removeAll: boolean
+): Promise<string> => {
+  try {
+    if (!validatePrereqs(["docker"], false)) {
+      throw new Error("Requirements to launch dashboard are not met");
     }
+
+    if (removeAll) {
+      await cleanDashboardContainers(config);
+    }
+
+    const dockerRepository = config.introspection!.dashboard!.image!;
+    logger.info("Pulling dashboard docker image");
+    await exec("docker", ["pull", dockerRepository]);
+    logger.info("Launching dashboard on http://localhost:" + port);
+    const containerId = await exec("docker", [
+      "run",
+      "-d",
+      "--rm",
+      ...(await getEnvVars(config)),
+      "-p",
+      port + ":5000",
+      dockerRepository
+    ]);
+    return containerId;
+  } catch (err) {
+    logger.error(`Error occurred while launching dashboard ${err}`);
+    throw err;
   }
-  return undefined;
+};
+
+/**
+ * Executes the command, can all exit function with 0 or 1
+ * when command completed successfully or failed respectively.
+ *
+ * @param opts validated option values
+ * @param exitFn exit function
+ */
+export const execute = async (
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
+  try {
+    const config = Config();
+    validateValues(config, opts);
+    const portNumber = parseInt(opts.port, 10);
+
+    if (await launchDashboard(config, portNumber, opts.removeAll)) {
+      await open("http://localhost:" + opts.port);
+    }
+    await exitFn(0);
+  } catch (err) {
+    logger.error(err);
+    await exitFn(1);
+  }
+};
+
+/**
+ * Adds the onboard command to the commander command object
+ * @param command Commander command object to decorate
+ */
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
+    await execute(opts, async (status: number) => {
+      await exitCmd(logger, process.exit, status);
+    });
+  });
 };

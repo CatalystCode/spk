@@ -4,7 +4,7 @@ import { logger } from "../../logger";
 
 let client: ResourceManagementClient;
 
-export interface IResourceGroupItem {
+export interface ResourceGroupItem {
   id: string;
   name: string;
   location: string;
@@ -28,11 +28,11 @@ const getClient = async (
     return client;
   }
   const creds = await loginWithServicePrincipalSecret(
-    servicePrincipalId!,
-    servicePrincipalPassword!,
-    servicePrincipalTenantId!
+    servicePrincipalId,
+    servicePrincipalPassword,
+    servicePrincipalTenantId
   );
-  client = new ResourceManagementClient(creds, subscriptionId!, {});
+  client = new ResourceManagementClient(creds, subscriptionId, {});
   return client;
 };
 
@@ -49,7 +49,7 @@ export const getResourceGroups = async (
   servicePrincipalPassword: string,
   servicePrincipalTenantId: string,
   subscriptionId: string
-): Promise<IResourceGroupItem[]> => {
+): Promise<ResourceGroupItem[]> => {
   logger.info("attempting to get resource groups");
   await getClient(
     servicePrincipalId,
@@ -61,9 +61,9 @@ export const getResourceGroups = async (
   logger.info("Successfully acquired resource groups");
   return groups.map(g => {
     return {
-      id: g.id!,
-      location: g.location!,
-      name: g.name!
+      id: g.id as string,
+      location: g.location as string,
+      name: g.name as string
     };
   });
 };

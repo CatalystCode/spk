@@ -2,10 +2,10 @@ import fs from "fs";
 import path from "path";
 import uuid from "uuid/v4";
 import { createTempDir } from "../ioUtil";
-import { IRequestContext } from "./constants";
+import { RequestContext } from "./constants";
 import { create } from "./setupLog";
 
-const positiveTest = (logExist?: boolean, withAppCreation = false) => {
+const positiveTest = (logExist?: boolean, withAppCreation = false): void => {
   const dir = createTempDir();
   const file = path.join(dir, uuid());
 
@@ -13,7 +13,7 @@ const positiveTest = (logExist?: boolean, withAppCreation = false) => {
     fs.writeFileSync(file, "dummy");
   }
 
-  const rc: IRequestContext = {
+  const rc: RequestContext = {
     accessToken: "accessToken",
     createdACR: false,
     createdHLDtoManifestPipeline: true,
@@ -21,7 +21,10 @@ const positiveTest = (logExist?: boolean, withAppCreation = false) => {
     createdResourceGroup: false,
     orgName: "orgName",
     projectName: "projectName",
+    acrName: "testacr",
+    scaffoldAppService: true,
     scaffoldHLD: true,
+    scaffoldHelm: true,
     scaffoldManifest: true,
     subscriptionId: "72f988bf-86f1-41af-91ab-2d7cd011db48",
     workspace: "workspace"
@@ -51,9 +54,12 @@ const positiveTest = (logExist?: boolean, withAppCreation = false) => {
       "az_sp_password=********",
       "az_sp_tenant=72f988bf-86f1-41af-91ab-2d7cd011db47",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
+      "az_acr_name=testacr",
       "workspace: workspace",
       "Project Created: yes",
       "High Level Definition Repo Scaffolded: yes",
+      "Helm Repo Scaffolded: yes",
+      "Sample App Repo Scaffolded: yes",
       "Manifest Repo Scaffolded: yes",
       "HLD to Manifest Pipeline Created: yes",
       "Service Principal Created: no",
@@ -72,9 +78,12 @@ const positiveTest = (logExist?: boolean, withAppCreation = false) => {
       "az_sp_password=",
       "az_sp_tenant=",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
+      "az_acr_name=testacr",
       "workspace: workspace",
       "Project Created: yes",
       "High Level Definition Repo Scaffolded: yes",
+      "Helm Repo Scaffolded: yes",
+      "Sample App Repo Scaffolded: yes",
       "Manifest Repo Scaffolded: yes",
       "HLD to Manifest Pipeline Created: yes",
       "Service Principal Created: no",
@@ -113,7 +122,9 @@ describe("test create function", () => {
         error: "things broke",
         orgName: "orgName",
         projectName: "projectName",
+        scaffoldAppService: true,
         scaffoldHLD: true,
+        scaffoldHelm: true,
         scaffoldManifest: true,
         workspace: "workspace"
       },
@@ -131,9 +142,12 @@ describe("test create function", () => {
       "az_sp_password=",
       "az_sp_tenant=",
       "az_subscription_id=",
+      "az_acr_name=",
       "workspace: workspace",
       "Project Created: yes",
       "High Level Definition Repo Scaffolded: yes",
+      "Helm Repo Scaffolded: yes",
+      "Sample App Repo Scaffolded: yes",
       "Manifest Repo Scaffolded: yes",
       "HLD to Manifest Pipeline Created: yes",
       "Service Principal Created: no",

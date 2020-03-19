@@ -1,9 +1,8 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import path from "path";
 import { duration, IDeployment, status } from "spektate/lib/IDeployment";
 import * as Deployment from "spektate/lib/IDeployment";
-import { IAzureDevOpsRepo } from "spektate/lib/repository/IAzureDevOpsRepo";
 import * as AzureDevOpsRepo from "spektate/lib/repository/IAzureDevOpsRepo";
-import { IGitHub } from "spektate/lib/repository/IGitHub";
 import * as GitHub from "spektate/lib/repository/IGitHub";
 import { ITag } from "spektate/lib/repository/Tag";
 import { loadConfiguration } from "../../config";
@@ -18,10 +17,10 @@ import {
   getClusterSyncStatuses,
   getDeployments,
   getStatus,
-  ICommandOptions,
-  IInitObject,
+  CommandOptions,
+  InitObject,
   initialize,
-  IValidatedOptions,
+  ValidatedOptions,
   OUTPUT_FORMAT,
   printDeployments,
   processOutputFormat,
@@ -30,7 +29,7 @@ import {
 } from "./get";
 import * as get from "./get";
 
-const MOCKED_INPUT_VALUES: ICommandOptions = {
+const MOCKED_INPUT_VALUES: CommandOptions = {
   buildId: "",
   commitId: "",
   deploymentId: "",
@@ -42,7 +41,7 @@ const MOCKED_INPUT_VALUES: ICommandOptions = {
   watch: false
 };
 
-const MOCKED_VALUES: IValidatedOptions = {
+const MOCKED_VALUES: ValidatedOptions = {
   buildId: "",
   commitId: "",
   deploymentId: "",
@@ -56,18 +55,18 @@ const MOCKED_VALUES: IValidatedOptions = {
   watch: false
 };
 
-const getMockedInputValues = (): ICommandOptions => {
+const getMockedInputValues = (): CommandOptions => {
   return deepClone(MOCKED_INPUT_VALUES);
 };
 
-const getMockedValues = (): IValidatedOptions => {
+const getMockedValues = (): ValidatedOptions => {
   return deepClone(MOCKED_VALUES);
 };
 
-// tslint:disable-next-line: no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const data = require("./mocks/data.json");
 const fakeDeployments = data;
-// tslint:disable-next-line: no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const fakeClusterSyncs = require("./mocks/cluster-sync.json");
 const mockedDeps: IDeployment[] = fakeDeployments.data.map(
   (dep: IDeployment) => {
@@ -97,15 +96,15 @@ jest
   .spyOn(AzureDevOpsRepo, "getManifestSyncState")
   .mockReturnValue(Promise.resolve(mockedClusterSyncs));
 
-let initObject: IInitObject;
+let initObject: InitObject;
 
 beforeAll(async () => {
   enableVerboseLogging();
 
   const mockFileName = "src/commands/mocks/spk-config.yaml";
   const filename = path.resolve(mockFileName);
-  process.env.test_name = "my_storage_account";
-  process.env.test_key = "my_storage_key";
+  process.env["test_name"] = "my_storage_account";
+  process.env["test_key"] = "my_storage_key";
   loadConfiguration(filename);
   initObject = await initialize();
 });

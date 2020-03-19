@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import commander from "commander";
 import fs from "fs";
@@ -18,15 +19,15 @@ import {
   validateProjectName
 } from "../lib/validator";
 import { logger } from "../logger";
-import { IConfigYaml } from "../types";
+import { ConfigYaml } from "../types";
 import decorator from "./init.decorator.json";
 
-interface ICommandOptions {
+interface CommandOptions {
   file: string | undefined;
   interactive: boolean;
 }
 
-interface IAnswer {
+interface Answer {
   azdo_org_name: string;
   azdo_project_name: string;
   azdo_pat: string;
@@ -37,7 +38,7 @@ interface IAnswer {
  *
  * @param file File name
  */
-export const handleFileConfig = (file: string) => {
+export const handleFileConfig = (file: string): void => {
   loadConfiguration(file);
   saveConfiguration(file);
   logger.info("Successfully initialized the spk tool!");
@@ -49,7 +50,7 @@ export const handleFileConfig = (file: string) => {
  * @param curConfig Configuration is used to provide default values to the questions.
  * @return answers to the questions
  */
-export const prompt = async (curConfig: IConfigYaml): Promise<IAnswer> => {
+export const prompt = async (curConfig: ConfigYaml): Promise<Answer> => {
   const questions = [
     {
       default: curConfig.azure_devops?.org || undefined,
@@ -86,7 +87,7 @@ export const prompt = async (curConfig: IConfigYaml): Promise<IAnswer> => {
  * Returns SPK Configuration. Empty azure devops values are returned
  * if config.yaml is absent.
  */
-export const getConfig = (): IConfigYaml => {
+export const getConfig = (): ConfigYaml => {
   try {
     loadConfiguration();
     return Config();
@@ -110,14 +111,19 @@ export const getConfig = (): IConfigYaml => {
  * @return true if verification is successful
  */
 export const validatePersonalAccessToken = async (
-  azure: IConfigYaml["azure_devops"]
+  azure: ConfigYaml["azure_devops"]
 ): Promise<boolean> => {
+  if (!azure || !azure.org || !azure.project || !azure.access_token) {
+    throw Error(
+      "Unable to validate personal access token because organization, project or access token information were missing"
+    );
+  }
   try {
     const res = await axios.get(
-      `https://dev.azure.com/${azure!.org}/_apis/projects/${azure!.project}`,
+      `https://dev.azure.com/${azure.org}/_apis/projects/${azure.project}`,
       {
         auth: {
-          password: azure!.access_token as string,
+          password: azure.access_token as string,
           username: ""
         }
       }
@@ -131,12 +137,16 @@ export const validatePersonalAccessToken = async (
 /**
  * Handles the interactive mode of the command.
  */
-export const handleInteractiveMode = async () => {
+export const handleInteractiveMode = async (): Promise<void> => {
   const curConfig = deepClone(getConfig());
   const answer = await prompt(curConfig);
-  curConfig.azure_devops!.org = answer.azdo_org_name;
-  curConfig.azure_devops!.project = answer.azdo_project_name;
-  curConfig.azure_devops!.access_token = answer.azdo_pat;
+
+  curConfig["azure_devops"] = curConfig.azure_devops || {};
+
+  curConfig.azure_devops.org = answer.azdo_org_name;
+  curConfig.azure_devops.project = answer.azdo_project_name;
+  curConfig.azure_devops["access_token"] = answer.azdo_pat;
+
   const data = yaml.safeDump(curConfig);
   fs.writeFileSync(defaultConfigFile(), data);
   logger.info("Successfully constructed SPK configuration file.");
@@ -160,9 +170,9 @@ export const handleInteractiveMode = async () => {
  * @param exitFn exit function
  */
 export const execute = async (
-  opts: ICommandOptions,
+  opts: CommandOptions,
   exitFn: (status: number) => Promise<void>
-) => {
+): Promise<void> => {
   try {
     if (!hasValue(opts.file) && !opts.interactive) {
       throw new Error(
@@ -194,7 +204,7 @@ export const execute = async (
  * @param command Commander command object to decorate
  */
 export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
     await execute(opts, async (status: number) => {
       await exitCmd(logger, process.exit, status);
     });

@@ -1,6 +1,6 @@
-import * as GitInterfaces from "azure-devops-node-api/interfaces/GitInterfaces";
-import * as azdoClient from "../azdoClient";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { WORKSPACE } from "./constants";
+import * as gitService from "./gitService";
 import {
   commitAndPushToRemote,
   createRepo,
@@ -11,7 +11,6 @@ import {
   getRepoInAzureOrg,
   getRepoURL
 } from "./gitService";
-import * as gitService from "./gitService";
 
 const mockRequestContext = {
   accessToken: "pat",
@@ -65,10 +64,7 @@ describe("test createRepo function", () => {
     };
     const res = await createRepo(
       {
-        createRepository: async (
-          createOptions: GitInterfaces.GitRepositoryCreateOptions,
-          projectName: string
-        ) => {
+        createRepository: async () => {
           return mockResult;
         }
       } as any,
@@ -78,16 +74,10 @@ describe("test createRepo function", () => {
     expect(res).toStrictEqual(mockResult);
   });
   it("negative test: permission issue", async () => {
-    const mockResult = {
-      id: "testRepo"
-    };
     await expect(
       createRepo(
         {
-          createRepository: (
-            createOptions: GitInterfaces.GitRepositoryCreateOptions,
-            projectName: string
-          ) => {
+          createRepository: () => {
             throw {
               message: "Authentication failure",
               statusCode: 401
@@ -100,16 +90,10 @@ describe("test createRepo function", () => {
     ).rejects.toThrow();
   });
   it("negative test: other issue", async () => {
-    const mockResult = {
-      id: "testRepo"
-    };
     await expect(
       createRepo(
         {
-          createRepository: (
-            createOptions: GitInterfaces.GitRepositoryCreateOptions,
-            projectName: string
-          ) => {
+          createRepository: () => {
             throw new Error("fake");
           }
         } as any,

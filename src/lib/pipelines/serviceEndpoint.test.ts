@@ -1,16 +1,11 @@
-// Mocks
-jest.mock("azure-devops-node-api");
-jest.mock("../../config");
-jest.mock("../azdoClient");
-
-import { IRequestOptions, IRestResponse, RestClient } from "typed-rest-client";
+/* eslint-disable @typescript-eslint/camelcase */
+import { IRestResponse } from "typed-rest-client";
 import uuid from "uuid/v4";
 import { Config, readYaml } from "../../config";
-import { deepClone } from "../../lib/util";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
-import { IServiceEndpointData, IVariableGroupData } from "../../types";
+import { ServiceEndpointData, VariableGroupData } from "../../types";
 import * as azdoClient from "../azdoClient";
-import { IServiceEndpoint } from "./azdoInterfaces";
+import { ServiceEndpoint } from "./azdoInterfaces";
 import {
   addServiceEndpoint,
   createServiceEndpointIfNotExists,
@@ -18,6 +13,11 @@ import {
   getServiceEndpointByName
 } from "./serviceEndpoint";
 import * as serviceEndpoint from "./serviceEndpoint";
+
+// Mocks
+jest.mock("azure-devops-node-api");
+jest.mock("../../config");
+jest.mock("../azdoClient");
 
 const serviceEndpointName: string = uuid();
 const subscriptionId: string = uuid();
@@ -111,17 +111,13 @@ const mockedInvalidServiceEndpointResponse = {
   statusCode: 200
 };
 
-const createServiceEndpointInput: IServiceEndpointData = {
+const createServiceEndpointInput: ServiceEndpointData = {
   name: serviceEndpointName,
   service_principal_id: servicePrincipalId,
   service_principal_secret: servicePrincipalSecret,
   subscription_id: subscriptionId,
   subscription_name: subscriptionName,
   tenant_id: tenantId
-};
-
-const getCreateServiceEndpointInput = (): IServiceEndpointData => {
-  return deepClone(createServiceEndpointInput);
 };
 
 beforeAll(() => {
@@ -147,9 +143,10 @@ describe("Validate service endpoint parameters creation", () => {
         }
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     const data = createServiceEndPointParams(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       input.key_vault_provider!.service_endpoint
     );
 
@@ -181,10 +178,11 @@ describe("Validate service endpoint parameters creation", () => {
         }
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -205,10 +203,11 @@ describe("Validate service endpoint parameters creation", () => {
         }
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -229,10 +228,11 @@ describe("Validate service endpoint parameters creation", () => {
         }
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -253,10 +253,11 @@ describe("Validate service endpoint parameters creation", () => {
         }
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -277,10 +278,11 @@ describe("Validate service endpoint parameters creation", () => {
         }
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -295,10 +297,11 @@ describe("Validate service endpoint parameters creation", () => {
         service_endpoint: {}
       }
     });
-    const input = readYaml<IVariableGroupData>("");
+    const input = readYaml<VariableGroupData>("");
 
     let invalidPatError: Error | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       createServiceEndPointParams(input.key_vault_provider!.service_endpoint);
     } catch (err) {
       invalidPatError = err;
@@ -310,17 +313,13 @@ describe("Validate service endpoint parameters creation", () => {
 const testAddServiceEndpoint = async (
   positive = true,
   getRestClientThrowException = false
-) => {
+): Promise<ServiceEndpoint> => {
   (Config as jest.Mock).mockReturnValueOnce(mockedConfig);
   (readYaml as jest.Mock).mockReturnValueOnce(mockedYaml);
 
   jest.spyOn(azdoClient, "getRestClient").mockReturnValueOnce(
     Promise.resolve({
-      create: async (
-        resource: string,
-        resources: any,
-        options?: IRequestOptions
-      ): Promise<IRestResponse<{ [key: string]: string }>> => {
+      create: async (): Promise<IRestResponse<{ [key: string]: string }>> => {
         if (getRestClientThrowException) {
           return new Promise((_, reject) => {
             reject(new Error("fake"));
@@ -335,10 +334,12 @@ const testAddServiceEndpoint = async (
           });
         });
       }
-    } as RestClient)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
   );
 
-  const input = readYaml<IVariableGroupData>("");
+  const input = readYaml<VariableGroupData>("");
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return await addServiceEndpoint(input.key_vault_provider!.service_endpoint);
 };
 
@@ -357,19 +358,19 @@ describe("test addServiceEndpoint function", () => {
   });
 });
 
-const testGetServiceEndpointByName = async (positive = true, more = false) => {
+const testGetServiceEndpointByName = async (
+  positive = true,
+  more = false
+): Promise<ServiceEndpoint | null> => {
   (Config as jest.Mock).mockReturnValueOnce(mockedConfig);
   (readYaml as jest.Mock).mockReturnValueOnce(mockedYaml);
 
   jest.spyOn(azdoClient, "getRestClient").mockReturnValueOnce(
     Promise.resolve({
-      get: async (
-        resource: string,
-        options?: IRequestOptions
-      ): Promise<
+      get: async (): Promise<
         IRestResponse<{
           count: number;
-          value: IServiceEndpoint[];
+          value: ServiceEndpoint[];
         }>
       > => {
         return new Promise(resolve => {
@@ -382,10 +383,11 @@ const testGetServiceEndpointByName = async (positive = true, more = false) => {
           }
         });
       }
-    } as RestClient)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
   );
 
-  const input = readYaml<IVariableGroupData>("");
+  readYaml<VariableGroupData>("");
   return await getServiceEndpointByName("dummy");
 };
 

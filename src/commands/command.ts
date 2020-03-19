@@ -9,12 +9,39 @@ import { enableVerboseLogging, logger } from "../logger";
  * Warning: Avoid implementing this interface directly; use Command() function
  * to generate concrete implementations.
  */
-interface ICommand {
+interface Command {
   name: string;
   description: string;
   command: commander.Command;
-  subCommands: ICommand[];
+  subCommands: Command[];
 }
+
+/**
+ * Links the command and sub-commands in the passed IComponent together.
+ * Adding the necessary command/actions for each sub-command to the parent.
+ *
+ * Note: this linking isn't what actually enables nested sub-command calling,
+ * this is only used for displaying what sub-commands are available for any
+ * given parent. For information on how sub-commands are executed refer to
+ * `executeCommand`
+ *
+ * @param c ICommand object to prepare
+ */
+const linkSubCommands = (c: Command): Command => {
+  const { command, subCommands } = c;
+  // Add all sub-commands
+  for (const subCommand of subCommands) {
+    // Recur; link all sub-sub-commands to the sub-command before adding to current
+    linkSubCommands(subCommand);
+
+    // Add the subCommand to command
+    command
+      .command(subCommand.command.name())
+      .description(subCommand.command.description());
+  }
+
+  return c;
+};
 
 /**
  * Generates an concrete implementation of ICommand.
@@ -39,8 +66,8 @@ export const Command = (
   name: string,
   description: string,
   decorators: Array<(c: commander.Command) => void> = [],
-  subCommands: ICommand[] = []
-): ICommand => {
+  subCommands: Command[] = []
+): Command => {
   // Initialize default command
   const cmd = new commander.Command();
   cmd
@@ -95,7 +122,7 @@ const decrementArgv = (argv: string[]): string[] => {
  * @param cmd ICommand object to execute against
  * @param argv Array of arguments, flags *must* come at the end (limitation of using git-style sub-commands)
  */
-export const executeCommand = (cmd: ICommand, argv: string[]): void => {
+export const executeCommand = (cmd: Command, argv: string[]): void => {
   const targetCommandName = argv.slice(2, 3)[0];
   const targetCommand = cmd.subCommands.find(
     sc => sc.name === targetCommandName
@@ -116,31 +143,4 @@ export const executeCommand = (cmd: ICommand, argv: string[]): void => {
       process.exit(1);
     }
   }
-};
-
-/**
- * Links the command and sub-commands in the passed IComponent together.
- * Adding the necessary command/actions for each sub-command to the parent.
- *
- * Note: this linking isn't what actually enables nested sub-command calling,
- * this is only used for displaying what sub-commands are available for any
- * given parent. For information on how sub-commands are executed refer to
- * `executeCommand`
- *
- * @param c ICommand object to prepare
- */
-const linkSubCommands = (c: ICommand): ICommand => {
-  const { command, subCommands } = c;
-  // Add all sub-commands
-  for (const subCommand of subCommands) {
-    // Recur; link all sub-sub-commands to the sub-command before adding to current
-    linkSubCommands(subCommand);
-
-    // Add the subCommand to command
-    command
-      .command(subCommand.command.name())
-      .description(subCommand.command.description());
-  }
-
-  return c;
 };

@@ -3,22 +3,22 @@ import { AzureKeyVaultVariableValue } from "azure-devops-node-api/interfaces/Tas
 /**
  * Maintainers file
  */
-export interface IMaintainersFile {
+export interface MaintainersFile {
   services: {
     [relativeDirectory: string]: {
-      maintainers: IUser[];
-      contributors?: IUser[];
+      maintainers: User[];
+      contributors?: User[];
     };
   };
 }
 
-interface IUser {
+interface User {
   name: string;
   email: string;
   website?: string;
 }
 
-export interface IHelmConfig {
+export interface HelmConfig {
   chart:
     | {
         repository: string; // repo (eg; https://kubernetes-charts-incubator.storage.googleapis.com/)
@@ -39,11 +39,11 @@ export interface IHelmConfig {
       ));
 }
 
-export interface IRings {
-  [branchName: string]: IRingConfig;
+export interface Rings {
+  [branchName: string]: RingConfig;
 }
 
-export interface IRingConfig {
+export interface RingConfig {
   isDefault?: boolean; // indicates the branch is a default branch to PR against when creating a service revision
 }
 
@@ -51,18 +51,18 @@ export interface IRingConfig {
  * Bedrock config file
  * Used to capture service meta-information regarding how to deploy
  */
-export interface IBedrockFile {
-  rings: IRings;
+export interface BedrockFile {
+  rings: Rings;
   services: {
-    [relativeDirectory: string]: IBedrockServiceConfig;
+    [relativeDirectory: string]: BedrockServiceConfig;
   };
   variableGroups?: string[];
 }
 
-export interface IBedrockServiceConfig {
+export interface BedrockServiceConfig {
   displayName?: string;
   middlewares?: string[];
-  helm: IHelmConfig;
+  helm: HelmConfig;
   disableRouteScaffold?: boolean;
   k8sBackendPort: number; // the service port for the k8s service Traefik2 IngressRoutes will point to
   pathPrefix?: string; // pathprefix for ingress route, ie. document-service
@@ -70,20 +70,22 @@ export interface IBedrockServiceConfig {
   k8sBackend?: string; // k8s service backend name for ingress routing
 }
 
+/**@see https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#triggers */
+type Triggerable = {
+  include?: string[];
+  exclude?: string[];
+};
+
 /**
  * Basic AzurePipelines Interface
  * @see https://github.com/andrebriggs/monorepo-example/blob/master/service-A/azure-pipelines.yml
  */
-export interface IAzurePipelinesYaml {
+export interface AzurePipelinesYaml {
   trigger?: {
-    branches?: {
-      include?: string[];
-      exclude?: string[];
-    };
-    paths?: {
-      include?: string[];
-      exclude?: string[];
-    };
+    batch?: boolean;
+    branches?: Triggerable;
+    tags?: Triggerable;
+    paths?: Triggerable;
   };
   variables?: Array<{ group: string } | { name: string; value: string }>;
   pool?: {
@@ -109,6 +111,10 @@ export interface IAzurePipelinesYaml {
           REPO?: string;
         };
         condition?: string;
+        inputs?: {
+          helmVersionToInstall?: string;
+        };
+        task?: string;
       }>;
     }>;
   }>;
@@ -129,7 +135,8 @@ export interface IAzurePipelinesYaml {
       VERIFY_ONLY?: number;
     };
     inputs?: {
-      scriptPath: string;
+      scriptPath?: string;
+      helmVersionToInstall?: string;
     };
     persistCredentials?: boolean;
     script?: string;
@@ -137,7 +144,7 @@ export interface IAzurePipelinesYaml {
   }>;
 }
 
-export interface IServiceEndpointData {
+export interface ServiceEndpointData {
   name: string;
   subscription_id: string;
   subscription_name: string;
@@ -146,22 +153,22 @@ export interface IServiceEndpointData {
   tenant_id: string;
 }
 
-export interface IVariableGroupDataVariable {
+export interface VariableGroupDataVariable {
   [key: string]: AzureKeyVaultVariableValue;
 }
 
-export interface IVariableGroupData {
+export interface VariableGroupData {
   name: string;
   description: string;
   type: string;
-  variables: IVariableGroupDataVariable;
+  variables: VariableGroupDataVariable;
   key_vault_provider?: {
     name: string;
-    service_endpoint: IServiceEndpointData;
+    service_endpoint: ServiceEndpointData;
   };
 }
 
-export interface IConfigYaml {
+export interface ConfigYaml {
   azure_devops?: {
     org?: string;
     project?: string;
@@ -202,36 +209,38 @@ export interface IConfigYaml {
   key_vault_name?: string;
 }
 
-export interface IAzureAccessOpts {
+export interface AzureAccessOpts {
   servicePrincipalId?: string;
   servicePrincipalPassword?: string;
   tenantId?: string;
   subscriptionId?: string;
 }
 
-export interface IInfraConfigYaml {
+export interface InfraConfigYaml {
   name: string;
   source: string;
   template: string;
   version: string;
   backend?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
   variables?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
 }
 
-interface IBedrockFileInfo {
+interface BedrockFileInfo {
   exist: boolean;
   hasVariableGroups: boolean;
 }
 
-export interface IAccessYaml {
+export interface AccessYaml {
   [gitRepositoryUrl: string]: string;
 }
 
-export interface IComponentYaml {
+export interface ComponentYaml {
   name: string;
   subcomponents?: [
     {

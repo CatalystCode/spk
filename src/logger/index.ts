@@ -1,6 +1,5 @@
 import { createLogger, format, transports } from "winston";
 
-// tslint:disable:object-literal-sort-keys
 // visit https://github.com/winstonjs/logform for format options
 export const logger = createLogger({
   level: "info",
@@ -17,12 +16,12 @@ export const logger = createLogger({
   ]
 });
 
-export const enableVerboseLogging = () => {
+export const enableVerboseLogging = (): void => {
   logger.info("Enabling verbose logging");
   logger.level = "silly";
 };
 
-export const disableVerboseLogging = () => {
+export const disableVerboseLogging = (): void => {
   logger.info("Disabling verbose logging");
   logger.level = "info";
 };

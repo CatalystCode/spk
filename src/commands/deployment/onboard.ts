@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/camelcase */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { StorageAccount } from "@azure/arm-storage/esm/models";
 import commander from "commander";
 import fs from "fs";
@@ -16,10 +18,10 @@ import {
   validateForRequiredValues
 } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
-import { IAzureAccessOpts, IConfigYaml } from "../../types";
+import { AzureAccessOpts, ConfigYaml } from "../../types";
 import decorator from "./onboard.decorator.json";
 
-export interface ICommandOptions {
+export interface CommandOptions {
   storageAccountName: string | undefined;
   storageTableName: string | undefined;
   storageLocation: string | undefined;
@@ -36,7 +38,7 @@ export interface ICommandOptions {
  *
  * @param opts values from commander
  */
-export const populateValues = (opts: ICommandOptions) => {
+export const populateValues = (opts: CommandOptions): CommandOptions => {
   const config = Config();
   const { azure } = config.introspection!;
 
@@ -82,7 +84,7 @@ export const validateStorageName = (name: string): boolean => {
  *
  * @param opts values from commander (including populated values from spk config)
  */
-export const validateValues = (opts: ICommandOptions) => {
+export const validateValues = (opts: CommandOptions): void => {
   const errors = validateForRequiredValues(decorator, {
     servicePrincipalId: opts.servicePrincipalId,
     servicePrincipalPassword: opts.servicePrincipalPassword,
@@ -108,42 +110,29 @@ export const validateValues = (opts: ICommandOptions) => {
 };
 
 /**
- * Executes the command, can all exit function with 0 or 1
- * when command completed successfully or failed respectively.
+ * Set storage account and table names in the configuration file at default location
  *
- * @param opts validated option values
- * @param exitFn exit function
+ * @param storageAccountName The Azure storage account name
+ * @param storageTableName The Azure storage table name
  */
-export const execute = async (
-  opts: ICommandOptions,
-  exitFn: (status: number) => Promise<void>
-) => {
+export const setConfiguration = (
+  storageAccountName: string,
+  storageTableName: string
+): boolean => {
   try {
-    populateValues(opts);
-    validateValues(opts);
-    const storageAccount = await onboard(opts);
-    logger.debug(
-      `Service introspection deployment onboarding is complete. \n ${JSON.stringify(
-        storageAccount
-      )}`
-    );
-    await exitFn(0);
+    const data = readYaml<ConfigYaml>(defaultConfigFile());
+    data.introspection!.azure!.account_name = storageAccountName;
+    data.introspection!.azure!.table_name = storageTableName;
+    const jsonData = yaml.safeDump(data);
+    logger.verbose(jsonData);
+    fs.writeFileSync(defaultConfigFile(), jsonData);
+    return true;
   } catch (err) {
-    logger.error(err);
-    await exitFn(1);
+    logger.error(
+      `Unable to set storage account and table names in configuration file. \n ${err}`
+    );
+    return false;
   }
-};
-
-/**
- * Adds the onboard command to the commander command object
- * @param command Commander command object to decorate
- */
-export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
-    await execute(opts, async (status: number) => {
-      await exitCmd(logger, process.exit, status);
-    });
-  });
 };
 
 /**
@@ -153,8 +142,8 @@ export const commandDecorator = (command: commander.Command): void => {
  * @param accessOpts Azure Access Opts
  */
 export const validateAndCreateStorageAccount = async (
-  values: ICommandOptions,
-  accessOpts: IAzureAccessOpts
+  values: CommandOptions,
+  accessOpts: AzureAccessOpts
 ): Promise<StorageAccount | undefined> => {
   const isExist = await isStorageAccountExist(
     values.storageResourceGroupName!,
@@ -189,8 +178,8 @@ export const validateAndCreateStorageAccount = async (
  * @throws Error if access key cannot be obtained.
  */
 export const getStorageAccessKey = async (
-  values: ICommandOptions,
-  accessOpts: IAzureAccessOpts
+  values: CommandOptions,
+  accessOpts: AzureAccessOpts
 ): Promise<string> => {
   const accessKey = await getStorageAccountKey(
     values.storageResourceGroupName!,
@@ -214,10 +203,10 @@ export const getStorageAccessKey = async (
  * @param accessKey Access Key
  */
 export const createKeyVault = async (
-  values: ICommandOptions,
-  accessOpts: IAzureAccessOpts,
+  values: CommandOptions,
+  accessOpts: AzureAccessOpts,
   accessKey: string
-) => {
+): Promise<void> => {
   // if key vault is not specified, exit without reading storage account
   // key and setting it in the key vault
   if (values.keyVaultName) {
@@ -249,14 +238,14 @@ export const createKeyVault = async (
  * @param values Values from commander.
  */
 export const onboard = async (
-  values: ICommandOptions
+  values: CommandOptions
 ): Promise<StorageAccount | undefined> => {
   logger.debug(
     `onboard called with ${values.storageTableName}, ${values.storageTableName},
     ${values.storageResourceGroupName}, ${values.storageLocation}, and ${values.keyVaultName}`
   );
 
-  const accessOpts: IAzureAccessOpts = {
+  const accessOpts: AzureAccessOpts = {
     servicePrincipalId: values.servicePrincipalId,
     servicePrincipalPassword: values.servicePrincipalPassword,
     subscriptionId: values.subscriptionId,
@@ -295,27 +284,40 @@ export const onboard = async (
 };
 
 /**
- * Set storage account and table names in the configuration file at default location
+ * Executes the command, can all exit function with 0 or 1
+ * when command completed successfully or failed respectively.
  *
- * @param storageAccountName The Azure storage account name
- * @param storageTableName The Azure storage table name
+ * @param opts validated option values
+ * @param exitFn exit function
  */
-export const setConfiguration = (
-  storageAccountName: string,
-  storageTableName: string
-): boolean => {
+export const execute = async (
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
   try {
-    const data = readYaml<IConfigYaml>(defaultConfigFile());
-    data.introspection!.azure!.account_name = storageAccountName;
-    data.introspection!.azure!.table_name = storageTableName;
-    const jsonData = yaml.safeDump(data);
-    logger.verbose(jsonData);
-    fs.writeFileSync(defaultConfigFile(), jsonData);
-    return true;
-  } catch (err) {
-    logger.error(
-      `Unable to set storage account and table names in configuration file. \n ${err}`
+    populateValues(opts);
+    validateValues(opts);
+    const storageAccount = await onboard(opts);
+    logger.debug(
+      `Service introspection deployment onboarding is complete. \n ${JSON.stringify(
+        storageAccount
+      )}`
     );
-    return false;
+    await exitFn(0);
+  } catch (err) {
+    logger.error(err);
+    await exitFn(1);
   }
+};
+
+/**
+ * Adds the onboard command to the commander command object
+ * @param command Commander command object to decorate
+ */
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
+    await execute(opts, async (status: number) => {
+      await exitCmd(logger, process.exit, status);
+    });
+  });
 };

@@ -6,11 +6,134 @@ import {
 } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import { Config } from "../../config";
 import { logger } from "../../logger";
-import { IVariableGroupData, IVariableGroupDataVariable } from "../../types";
+import { VariableGroupData, VariableGroupDataVariable } from "../../types";
 import { getBuildApi, getTaskAgentApi } from "../azdoClient";
-import { IAzureDevOpsOpts } from "../git";
-import { IServiceEndpoint } from "./azdoInterfaces";
+import { AzureDevOpsOpts } from "../git";
 import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
+
+/**
+ * Creates `IVariablesMap` object from variables key/value pairs
+ *
+ * @param variableGroup The Variable group object
+ * @returns `IVariablesMap[]` with Varibale Group variables
+ */
+export const buildVariablesMap = async (
+  variables: VariableGroupDataVariable
+): Promise<VariableGroupDataVariable> => {
+  const variablesMap: VariableGroupDataVariable = {};
+  logger.debug(`variables: ${JSON.stringify(variables)}`);
+
+  for (const [key, value] of Object.entries(variables)) {
+    logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
+    variablesMap[key] = value;
+  }
+
+  logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
+  return variablesMap;
+};
+
+/**
+ * Enables authorization for all pipelines to access Variable group with
+ * `variableGroup` data and returns `true` if successful
+ *
+ * @param variableGroup The Variable group object
+ * @param opts optionally override spk config with Azure DevOps access options
+ * @returns `true` if successful; otherwise `false`
+ */
+export const authorizeAccessToAllPipelines = async (
+  variableGroup: VariableGroup,
+  opts: AzureDevOpsOpts = {}
+): Promise<boolean> => {
+  const message = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
+
+  if (variableGroup.id === undefined) {
+    throw new Error("variable group id must be defined");
+  }
+
+  try {
+    // authorize access to variable group from all pipelines
+    logger.info(`Creating ${message}`);
+    const config = Config();
+    const {
+      project = config.azure_devops && config.azure_devops.project
+    } = opts;
+
+    const resourceDefinition: DefinitionResourceReference = {
+      authorized: true,
+      id: variableGroup.id.toString(),
+      name: variableGroup.name,
+      type: "variablegroup"
+    };
+
+    logger.debug(
+      `Creating resource definition: ${JSON.stringify(resourceDefinition)}`
+    );
+
+    const buildClient = await getBuildApi(opts);
+    const resourceDefinitionResponse = await buildClient.authorizeProjectResources(
+      [resourceDefinition],
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      project!
+    );
+
+    logger.debug(
+      `Created resource definition: ${JSON.stringify(
+        resourceDefinitionResponse
+      )}`
+    );
+    logger.info(
+      `Authorized access ${message} authorized flag set to ${resourceDefinitionResponse[0].authorized}`
+    );
+
+    return true;
+  } catch (err) {
+    logger.error(`Failed to create ${message}\n ${err}`);
+    throw err;
+  }
+};
+
+/**
+ * Adds Variable group with `VariableGroupParameters` data and returns
+ * `VariableGroup` object.
+ *
+ * @param variableGroupData The Variable group data
+ * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
+ * @param opts optionally override spk config with Azure DevOps access options
+ * @returns newly created `VariableGroup` object
+ */
+export const doAddVariableGroup = async (
+  variableGroupData: VariableGroupParameters,
+  accessToAllPipelines: boolean,
+  opts: AzureDevOpsOpts = {}
+): Promise<VariableGroup> => {
+  const message = `Variable Group ${variableGroupData.name}`;
+  const config = Config();
+  const { project = config.azure_devops && config.azure_devops.project } = opts;
+  if (typeof project !== "string") {
+    throw Error(
+      `Azure DevOps Project not defined; ensure that azure_devops.project is set`
+    );
+  }
+  try {
+    logger.debug(
+      `Creating new Variable Group ${JSON.stringify(variableGroupData)}`
+    );
+    logger.info(`Attempting to create Variable Group in project '${project}'`);
+    const taskClient = await getTaskAgentApi(opts);
+    const group = await taskClient.addVariableGroup(variableGroupData, project);
+    logger.debug(`Created new Variable Group: ${JSON.stringify(group)}`);
+    logger.info(`Created ${message} with id: ${group.id}`);
+
+    if (accessToAllPipelines) {
+      await authorizeAccessToAllPipelines(group, opts);
+    }
+
+    return group;
+  } catch (err) {
+    logger.error(`Failed to create ${message}\n ${err}`);
+    throw err;
+  }
+};
 
 /**
  * Adds Variable group `groupConfig` in Azure DevOps project and returns
@@ -21,22 +144,22 @@ import { createServiceEndpointIfNotExists } from "./serviceEndpoint";
  * @returns newly created `VariableGroup` object
  */
 export const addVariableGroup = async (
-  variableGroupData: IVariableGroupData,
-  opts: IAzureDevOpsOpts = {}
+  variableGroupData: VariableGroupData,
+  opts: AzureDevOpsOpts = {}
 ): Promise<VariableGroup> => {
-  const message: string = `Variable Group ${variableGroupData.name}`;
+  const message = `Variable Group ${variableGroupData.name}`;
   try {
     logger.info(`Creating ${message}`);
 
     if (
-      typeof variableGroupData.variables === undefined ||
-      typeof variableGroupData.variables === null
+      variableGroupData.variables === undefined ||
+      variableGroupData.variables === null
     ) {
       throw new Error("Invalid input. Variable are not configured");
     }
 
     // map variables from configuration
-    const variablesMap = await buildVariablesMap(variableGroupData.variables!);
+    const variablesMap = await buildVariablesMap(variableGroupData.variables);
 
     // create variable group parameters
     const params: VariableGroupParameters = {
@@ -62,20 +185,18 @@ export const addVariableGroup = async (
  * @returns newly created `VariableGroup` object
  */
 export const addVariableGroupWithKeyVaultMap = async (
-  variableGroupData: IVariableGroupData,
-  opts: IAzureDevOpsOpts = {}
+  variableGroupData: VariableGroupData,
+  opts: AzureDevOpsOpts = {}
 ): Promise<VariableGroup> => {
-  const message: string = `Variable Group ${variableGroupData.name}`;
+  const message = `Variable Group ${variableGroupData.name}`;
 
   try {
     logger.info(`Creating ${message}`);
-    let serviceEndpoint: IServiceEndpoint;
     if (
-      typeof variableGroupData.key_vault_provider === undefined ||
-      typeof variableGroupData.key_vault_provider === null ||
-      typeof variableGroupData.key_vault_provider!.service_endpoint ===
-        undefined ||
-      typeof variableGroupData.key_vault_provider!.service_endpoint === null
+      variableGroupData.key_vault_provider === undefined ||
+      variableGroupData.key_vault_provider === null ||
+      variableGroupData.key_vault_provider.service_endpoint === undefined ||
+      typeof variableGroupData.key_vault_provider.service_endpoint === null
     ) {
       throw new Error(
         "Invalid input. Azure KeyVault Provider data is not configured"
@@ -84,8 +205,8 @@ export const addVariableGroupWithKeyVaultMap = async (
 
     // get service endpoint id
     logger.info(`Checking for Service endpoint`);
-    serviceEndpoint = await createServiceEndpointIfNotExists(
-      variableGroupData.key_vault_provider!.service_endpoint,
+    const serviceEndpoint = await createServiceEndpointIfNotExists(
+      variableGroupData.key_vault_provider.service_endpoint,
       opts
     );
 
@@ -96,11 +217,11 @@ export const addVariableGroupWithKeyVaultMap = async (
     // create AzureKeyVaultVariableValue object
     const kvProvideData: AzureKeyVaultVariableGroupProviderData = {
       serviceEndpointId: serviceEndpoint.id,
-      vault: variableGroupData.key_vault_provider!.name
+      vault: variableGroupData.key_vault_provider.name
     };
 
     // map variables as secrets from input
-    const secretsMap = await buildVariablesMap(variableGroupData.variables!);
+    const secretsMap = await buildVariablesMap(variableGroupData.variables);
 
     // creating variable group parameters
     const params: VariableGroupParameters = {
@@ -119,127 +240,24 @@ export const addVariableGroupWithKeyVaultMap = async (
 };
 
 /**
- * Adds Variable group with `VariableGroupParameters` data and returns
- * `VariableGroup` object.
+ * Deletes variable group
  *
- * @param variableGroupData The Variable group data
- * @param accessToAllPipelines Whether the variable group should be accessible by all pipelines
  * @param opts optionally override spk config with Azure DevOps access options
- * @returns newly created `VariableGroup` object
+ * @param name Name of group to be deleted.
+ * @returns true if group exists and deleted.
  */
-export const doAddVariableGroup = async (
-  variableGroupData: VariableGroupParameters,
-  accessToAllPipelines: boolean,
-  opts: IAzureDevOpsOpts = {}
-): Promise<VariableGroup> => {
-  const message: string = `Variable Group ${variableGroupData.name}`;
-  const config = Config();
-  const { project = config.azure_devops && config.azure_devops.project } = opts;
-  if (typeof project !== "string") {
-    throw Error(
-      `Azure DevOps Project not defined; ensure that azure_devops.project is set`
-    );
-  }
-  try {
-    logger.debug(
-      `Creating new Variable Group ${JSON.stringify(variableGroupData)}`
-    );
-    logger.info(`Attempting to create Variable Group in project '${project}'`);
-    const taskClient = await getTaskAgentApi(opts);
-    const group = await taskClient.addVariableGroup(
-      variableGroupData,
-      project!
-    );
-    logger.debug(`Created new Variable Group: ${JSON.stringify(group)}`);
-    logger.info(`Created ${message} with id: ${group.id!}`);
-
-    if (accessToAllPipelines) {
-      await authorizeAccessToAllPipelines(group, opts);
-    }
-
-    return group;
-  } catch (err) {
-    logger.error(`Failed to create ${message}\n ${err}`);
-    throw err;
-  }
-};
-
-/**
- * Enables authorization for all pipelines to access Variable group with
- * `variableGroup` data and returns `true` if successful
- *
- * @param variableGroup The Variable group object
- * @param opts optionally override spk config with Azure DevOps access options
- * @returns `true` if successful; otherwise `false`
- */
-export const authorizeAccessToAllPipelines = async (
-  variableGroup: VariableGroup,
-  opts: IAzureDevOpsOpts = {}
+export const deleteVariableGroup = async (
+  opts: AzureDevOpsOpts,
+  name: string
 ): Promise<boolean> => {
-  const message: string = `Resource definition for all pipelines to access Variable Group ${variableGroup.name}`;
+  const taskClient = await getTaskAgentApi(opts);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const project = opts.project!;
 
-  if (typeof variableGroup === undefined || variableGroup === null) {
-    throw new Error("Invalid input");
-  }
-
-  try {
-    // authorize access to variable group from all pipelines
-    logger.info(`Creating ${message}`);
-    const config = Config();
-    const {
-      project = config.azure_devops && config.azure_devops.project
-    } = opts;
-
-    const resourceDefinition: DefinitionResourceReference = {
-      authorized: true,
-      id: variableGroup.id!.toString(),
-      name: variableGroup.name,
-      type: "variablegroup"
-    };
-
-    logger.debug(
-      `Creating resource definition: ${JSON.stringify(resourceDefinition)}`
-    );
-
-    const buildCleint = await getBuildApi(opts);
-    const resourceDefinitionResponse = await buildCleint.authorizeProjectResources(
-      [resourceDefinition],
-      project!
-    );
-
-    logger.debug(
-      `Created resource definition: ${JSON.stringify(
-        resourceDefinitionResponse
-      )}`
-    );
-    logger.info(
-      `Authorized access ${message} authorized flag set to ${resourceDefinitionResponse[0].authorized}`
-    );
-
+  const groups = await taskClient.getVariableGroups(project, name);
+  if (groups && groups.length > 0 && groups[0].id) {
+    await taskClient.deleteVariableGroup(project, groups[0].id);
     return true;
-  } catch (err) {
-    logger.error(`Failed to create ${message}\n ${err}`);
-    throw err;
   }
-};
-
-/**
- * Creates `IVariablesMap` object from variables key/value pairs
- *
- * @param variableGroup The Variable group object
- * @returns `IVariablesMap[]` with Varibale Group variables
- */
-export const buildVariablesMap = async (
-  variables: IVariableGroupDataVariable
-): Promise<IVariableGroupDataVariable> => {
-  const variablesMap: IVariableGroupDataVariable = {};
-  logger.debug(`variables: ${JSON.stringify(variables)}`);
-
-  for (const [key, value] of Object.entries(variables)) {
-    logger.debug(`variable: ${key}: value: ${JSON.stringify(value)}`);
-    variablesMap[key] = value;
-  }
-
-  logger.debug(`variablesMap: ${JSON.stringify(variablesMap)}`);
-  return variablesMap;
+  return false;
 };

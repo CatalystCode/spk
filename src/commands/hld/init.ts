@@ -12,12 +12,40 @@ import { logger } from "../../logger";
 import decorator from "./init.decorator.json";
 
 // values that we need to pull out from command operator
-interface ICommandOptions {
+interface CommandOptions {
   defaultComponentGit: string;
   defaultComponentName: string;
   defaultComponentPath: string;
   gitPush: boolean;
 }
+
+export const initialize = async (
+  hldRepoPath: string,
+  gitPush: boolean,
+  componentGit: string,
+  componentName: string,
+  componentPath: string
+): Promise<void> => {
+  // Create manifest-generation.yaml for hld repository, if required.
+  logger.info("Initializing bedrock HLD repository.");
+
+  generateHldAzurePipelinesYaml(hldRepoPath);
+  generateDefaultHldComponentYaml(
+    hldRepoPath,
+    componentGit,
+    componentName,
+    componentPath
+  );
+  // Create .gitignore file in directory ignoring spk.log, if one doesn't already exist.
+  generateGitIgnoreFile(hldRepoPath, "spk.log");
+
+  // If requested, create new git branch, commit, and push
+  if (gitPush) {
+    const newBranchName = "spk-hld-init";
+    const directory = ".";
+    await checkoutCommitPushCreatePRLink(newBranchName, directory);
+  }
+};
 
 export const execute = async (
   hldRepoPath: string,
@@ -26,7 +54,7 @@ export const execute = async (
   componentName: string,
   componentPath: string,
   exitFn: (status: number) => Promise<void>
-) => {
+): Promise<void> => {
   try {
     if (!hasValue(hldRepoPath)) {
       throw new Error("project path is not provided");
@@ -49,7 +77,7 @@ export const execute = async (
 };
 
 export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
     const hldRepoPath = process.cwd();
     // gitPush will is always true or false. It shall not be
     // undefined because default value is set in the commander decorator
@@ -65,32 +93,4 @@ export const commandDecorator = (command: commander.Command): void => {
       }
     );
   });
-};
-
-export const initialize = async (
-  hldRepoPath: string,
-  gitPush: boolean,
-  componentGit: string,
-  componentName: string,
-  componentPath: string
-) => {
-  // Create manifest-generation.yaml for hld repository, if required.
-  logger.info("Initializing bedrock HLD repository.");
-
-  generateHldAzurePipelinesYaml(hldRepoPath);
-  generateDefaultHldComponentYaml(
-    hldRepoPath,
-    componentGit,
-    componentName,
-    componentPath
-  );
-  // Create .gitignore file in directory ignoring spk.log, if one doesn't already exist.
-  generateGitIgnoreFile(hldRepoPath, "spk.log");
-
-  // If requested, create new git branch, commit, and push
-  if (gitPush) {
-    const newBranchName = "spk-hld-init";
-    const directory = ".";
-    await checkoutCommitPushCreatePRLink(newBranchName, directory);
-  }
 };

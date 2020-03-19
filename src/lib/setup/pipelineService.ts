@@ -8,7 +8,7 @@ import { installHldToManifestPipeline } from "../../commands/hld/pipeline";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { sleep } from "../../lib/util";
 import { logger } from "../../logger";
-import { HLD_REPO, IRequestContext, MANIFEST_REPO } from "./constants";
+import { HLD_REPO, RequestContext, MANIFEST_REPO } from "./constants";
 import { getAzureRepoUrl } from "./gitService";
 
 /**
@@ -16,7 +16,16 @@ import { getAzureRepoUrl } from "./gitService";
  *
  * @param status build status
  */
-export const getBuildStatusString = (status: number | undefined) => {
+export const getBuildStatusString = (
+  status: number | undefined
+):
+  | "Unknown"
+  | "None"
+  | "In Progress"
+  | "Completed"
+  | "Cancelling"
+  | "Postponed"
+  | "Not Started" => {
   if (status === undefined) {
     return "Unknown";
   }
@@ -76,7 +85,7 @@ export const deletePipeline = async (
   projectName: string,
   pipelineName: string,
   pipelineId: number
-) => {
+): Promise<void> => {
   try {
     logger.info(`Deleting pipeline ${pipelineName}`);
     await buildApi.deleteDefinition(projectName, pipelineId);
@@ -120,7 +129,7 @@ export const pollForPipelineStatus = async (
   projectName: string,
   pipelineName: string,
   waitDuration = 15000
-) => {
+): Promise<void> => {
   const oPipeline = await getPipelineByName(
     buildApi,
     projectName,
@@ -148,8 +157,8 @@ export const pollForPipelineStatus = async (
  */
 export const createHLDtoManifestPipeline = async (
   buildApi: IBuildApi,
-  rc: IRequestContext
-) => {
+  rc: RequestContext
+): Promise<void> => {
   const manifestUrl = getAzureRepoUrl(
     rc.orgName,
     rc.projectName,
@@ -164,14 +173,9 @@ export const createHLDtoManifestPipeline = async (
       rc.projectName,
       pipelineName
     );
-    if (pipeline) {
+    if (pipeline && pipeline.id !== undefined) {
       logger.info(`${pipelineName} is found, deleting it`);
-      await deletePipeline(
-        buildApi,
-        rc.projectName,
-        pipelineName,
-        pipeline.id!
-      );
+      await deletePipeline(buildApi, rc.projectName, pipelineName, pipeline.id);
     }
     await installHldToManifestPipeline({
       buildScriptUrl: BUILD_SCRIPT_URL,
@@ -187,7 +191,7 @@ export const createHLDtoManifestPipeline = async (
     await pollForPipelineStatus(buildApi, rc.projectName, pipelineName);
     rc.createdHLDtoManifestPipeline = true;
   } catch (err) {
-    logger.error(`An error occured in create HLD to Manifest Pipeline`);
+    logger.error(`An error occurred in create HLD to Manifest Pipeline`);
     throw err;
   }
 };

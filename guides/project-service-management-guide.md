@@ -251,6 +251,160 @@ application repositories
 **NOTE** `spk service` command documentation can be found
 [here](/guides/service-management.md).
 
+#### Helm Configuration for SPK
+
+`spk service create` allows a user to configure a service a number of ways with
+a backing helm chart.
+
+Presently, there are are a number of options for `spk service create` documented
+below:
+
+```
+  -c, --helm-chart-chart <helm-chart>                         bedrock helm chart name. --helm-chart-* and --helm-config-* are exclusive; you may only use one. (default: "")
+  -r, --helm-chart-repository <helm-repository>               bedrock helm chart repository. --helm-chart-* and --helm-config-* are exclusive; you may only use one. (default: "")
+
+  -g, --helm-config-git <helm-git>                            bedrock helm chart configuration git repository. --helm-chart-* and --helm-config-* are exclusive; you may only use one. (default: "")
+  -b, --helm-config-branch <helm-branch>                      bedrock custom helm chart configuration branch. --helm-chart-* and --helm-config-* are exclusive; you may only use one. (default: "")
+  -p, --helm-config-path <helm-path>                          bedrock custom helm chart configuration path. --helm-chart-* and --helm-config-* are exclusive; you may only use one. (default: "")
+```
+
+As noted by the the documentation text, `helm-chart-*` and `helm-config-*` are
+both mutually exclusive configurations: you can _only_ use one set of
+configurations or the other.
+
+This section intends on documenting the various use cases for both sets of
+mutually exclusive configurations.
+
+##### Helm Charts in a well-known Helm Repository
+
+A Helm Repository is a well known set of helm charts conforming to the
+[helm repository guidelines](https://helm.sh/docs/topics/chart_repository/).
+Perhaps the best known helm repository is the community run
+[helm charts repository](https://github.com/helm/charts).
+
+As an `spk` user, if you would like to incorporate helm charts from a well known
+public repository, you may simply run `spk` the following `helm-chart`
+arguments:
+
+```
+spk service create --helm-chart-chart stable/nginx --helm-chart-repository github.com/helm/charts
+```
+
+##### Helm Charts in a distinct Git Repository from Application Sources in the same Azure DevOps Project
+
+If your Helm Charts are in their own distinct Git Repository in the _same_ Azure
+DevOps project, you can use the `helm-config` arguments to configure `spk`:
+
+```
+spk service create \
+  --helm-config-git https://dev.azure.com/fabrikam/fabrikam-project/_git/fabrikam-helm-charts
+  --helm-config-branch master \
+  --helm-path /charts/fabrikam
+```
+
+The above invocation presumes that the helm chart repository configured for
+`spk` is _different_ from the application repository configured for `spk` usage.
+
+The `helm-config-git` parameter _must not_ contain the username portion of a
+url. If you retrieve the URL from Azure DevOps's "Clone Repository" UI, it will
+automatically have the username filled for an HTTPs clone ie:
+
+`https://fabrikam@dev.azure.com/fabrikam/fabrikam-project/_git/fabrikam-helm-charts`
+
+Ensure that the you _remove_ the `fabrikam@` portion of the URL when passing
+parameters to `spk service create --helm-config-git`:
+
+`https://dev.azure.com/fabrikam/fabrikam-project/_git/fabrikam-helm-charts`
+
+When you invoke `spk service create` with `--helm-config` argments, there is a
+4th optional argument that can be provided
+`--helm-config-access-token-variable`. This configuration option is the name of
+the environment variable containing a Personal Access Token to access the git
+repository in `helm config git`. In this scenario, however, both git
+repositories are in the same Azure DevOps project, `fabrikam-project`, so it is
+un-necessary to provide `--helm-config-access-token-variable`, as the Personal
+Access Token utilized by the pipelines, `ACCESS_TOKEN_SECRET`, will be the same
+for both application repository and helm chart repository. When
+`--helm-config-access-token-variable` is not provided, the repository defined by
+`--helm-config-git` will automatically use `ACCESS_TOKEN_SECRET`. The following
+scenario covers a situation in which you will want to configure the
+`--helm-config-access-token-variable` to something custom.
+
+##### Helm Charts in a distinct Git Repository from Application Sources in a different Azure DevOps Project
+
+If your Helm Charts are in their own distinct Git Repository in a different
+Azure DevOps project, you can use still use the `helm-config` arguments to
+configure `spk`, but must also provide another option,
+`--helm-config-access-token-variable`. This configuration option is the name of
+the environment variable containing the Personal Access Token to access the git
+repository in `helm-config-git`:
+
+```
+spk service create \
+  --helm-config-git https://dev.azure.com/fabrikam/fabrikam-helm-charts-project/_git/fabrikam-helm-charts \
+  --helm-config-branch master \
+  --helm-path /charts/fabrikam \
+  --helm-config-access-token-variable FABRIKAM_HELM_CHARTS_REPO_PAT
+```
+
+The `helm-config-git` parameter _must not_ contain the username portion of a
+url. If you retrieve the URL from Azure DevOps's "Clone Repository" UI, it will
+automatically have the username filled for an HTTPs clone ie:
+
+`https://fabrikam@dev.azure.com/fabrikam/fabrikam-helm-charts-project/_git/fabrikam-helm-charts`
+
+Ensure that the you _remove_ the `fabrikam@` portion of the URL when passing
+parameters to `spk service create --helm-config-git`:
+
+`https://dev.azure.com/fabrikam/fabrikam-helm-charts-project/_git/fabrikam-helm-charts`
+
+Note the different Azure DevOps URL for the helm charts project in Azure DevOps
+and the addition of the `--helm-config-access-token-variable` parameter.
+
+The `--helm-config-access-token-variable` parameter configures how an
+`access.yaml` file is written to the HLD for `fabrikate` to consume when
+rendering helm charts. For more information on authenticating with private git
+repositories when rendering helm charts, please refer to
+[fabrikate's documentation](https://github.com/microsoft/fabrikate/blob/master/docs/auth.md).
+
+When the bedrock.yaml is committed, all the pipelines created, and the HLD
+repository is populated, you must add the environment variable,
+`FABRIKAM_HELM_CHARTS_REPO_PAT` to the HLD to Materialized pipeline as a
+pipeline variable. To do so, find the HLD to Materialized pipeline in the
+pipelines view on Azure DevOps, select it, select `Variables`, then select
+`New Variable`:
+
+![Add a new pipeline variable](./images/spk-add-variable.png)
+
+##### Helm Charts in the same repository as the application
+
+If your Helm Charts are intended to be placed adjacent to your application
+source (no distinct git repository), you may still use the `helm-config`
+arguments to configure `spk`.
+
+If you presume that the `fabrikam-app` repository is the _same_ repository as
+the repository of your application sources, then the following invocation will
+allow a user to configure a service with helm charts tracked in the _same_
+repository.
+
+```
+spk service create
+  --helm-config-git https://dev.azure.com/fabrikam/fabrikam-project/_git/fabrikam-app \
+  --helm-config-branch master \
+  --helm-path /charts/fabrikam
+```
+
+The `helm-config-git` parameter _must not_ contain the username portion of a
+url. If you retrieve the URL from Azure DevOps's "Clone Repository" UI, it will
+automatically have the username filled for an HTTPs clone ie:
+
+`https://fabrikam@dev.azure.com/fabrikam/fabrikam-project/_git/fabrikam-helm-charts`
+
+Ensure that the you _remove_ the `fabrikam@` portion of the URL when passing
+parameters to `spk service create --helm-config-git`:
+
+`https://dev.azure.com/fabrikam/fabrikam-project/_git/fabrikam-helm-charts`
+
 #### Creating a Service Revision
 
 - Create and checkout a new git branch
@@ -279,13 +433,18 @@ application repositories
 To have spk's build pipelines work properly, an application needs an associated
 [Helm](https://helm.sh/) chart with specific variables.
 
+See the
+[guide to building helm charts with spk for more details](./building-helm-charts-for-spk.md)
+
 ### Requirements
 
 TBD
 
 ### Sample Helm Chart
 
-TBD
+This repository bundles a sample helm chart. Please refer to the
+[guide for building helm charts](./building-helm-charts-for-spk.md) and the
+[sample helm chart](./sample-helm-chart) for details.
 
 ## Variable Groups
 

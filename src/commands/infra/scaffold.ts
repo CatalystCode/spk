@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import commander from "commander";
 import fs from "fs";
 import fsextra from "fs-extra";
@@ -6,8 +7,8 @@ import path from "path";
 import { Config } from "../../config";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
-import { IConfigYaml } from "../../types";
-import { ISourceInformation, validateRemoteSource } from "./generate";
+import { ConfigYaml } from "../../types";
+import { SourceInformation, validateRemoteSource } from "./generate";
 import {
   BACKEND_TFVARS,
   DEFAULT_VAR_VALUE,
@@ -19,7 +20,7 @@ import {
 } from "./infra_common";
 import decorator from "./scaffold.decorator.json";
 
-export interface ICommandOptions {
+export interface CommandOptions {
   name: string;
   source: string;
   template: string;
@@ -32,14 +33,17 @@ export interface ICommandOptions {
  * @param config Configuration
  * @param opts Command Line options that are passed in
  */
-export const validateValues = (config: IConfigYaml, opts: ICommandOptions) => {
+export const validateValues = (
+  config: ConfigYaml,
+  opts: CommandOptions
+): void => {
   if (
     !config.azure_devops ||
     !config.azure_devops.access_token ||
     !config.azure_devops.infra_repository
   ) {
-    logger.warn(`The infrastructure repository containing the remote terraform \
-template repo and access token was not specified. Checking passed arguments.`);
+    logger.info(`The infrastructure repository containing the remote terraform \
+template repo and access token was not specified in spk-config.yml. Checking passed arguments.`);
 
     if (!opts.source) {
       // since access_token and infra_repository are missing, we cannot construct source for them
@@ -55,7 +59,7 @@ or PAT embedded in source URL.`);
 };
 
 // Construct the source based on the the passed configurations of spk-config.yaml
-export const constructSource = (config: IConfigYaml) => {
+export const constructSource = (config: ConfigYaml): string => {
   const devops = config.azure_devops!;
   const source = `https://spk:${devops.access_token}@${devops.infra_repository}`;
   logger.info(
@@ -64,53 +68,36 @@ export const constructSource = (config: IConfigYaml) => {
   return source;
 };
 
-export const execute = async (
-  config: IConfigYaml,
-  opts: ICommandOptions,
-  exitFn: (status: number) => Promise<void>
-) => {
-  try {
-    validateValues(config, opts);
-    opts.source = opts.source || constructSource(config);
-
-    /* scaffoldDefinition will take in a definition object with a
-        null configuration. Hence, the first index is "" */
-    const scaffoldDefinition: ISourceInformation = {
-      source: opts.source,
-      template: opts.template,
-      version: opts.version
-    };
-    const sourceFolder = getSourceFolderNameFromURL(opts.source);
-    const sourcePath = path.join(spkTemplatesPath, sourceFolder);
-    await validateRemoteSource(scaffoldDefinition);
-    await copyTfTemplate(
-      path.join(sourcePath, opts.template),
-      opts.name,
-      false
-    );
-    validateVariablesTf(path.join(sourcePath, opts.template, VARIABLES_TF));
-    scaffold(opts);
-    removeTemplateFiles(opts.name);
-    await exitFn(0);
-  } catch (err) {
-    logger.error("Error occurred while generating scaffold");
-    logger.error(err);
-    await exitFn(1);
-  }
-};
-
 /**
- * Adds the init command to the commander command object
+ * Copies the Terraform environment template
  *
- * @param command Commander command object to decorate
+ * @param templatePath path so the directory of Terraform templates
+ * @param envName name of destination directory
  */
-export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: ICommandOptions) => {
-    const config = Config();
-    await execute(config, opts, async (status: number) => {
-      await exitCmd(logger, process.exit, status);
-    });
-  });
+export const copyTfTemplate = async (
+  templatePath: string,
+  envName: string,
+  generation: boolean
+): Promise<void> => {
+  try {
+    if (generation === true) {
+      await fsextra.copy(templatePath, envName, {
+        filter: file =>
+          file.indexOf(TERRAFORM_TFVARS) === -1 &&
+          file.indexOf(BACKEND_TFVARS) === -1
+      });
+    } else {
+      await fsextra.copy(templatePath, envName, {
+        filter: file => file.indexOf(TERRAFORM_TFVARS) === -1
+      });
+    }
+    logger.info(`Terraform template files copied from ${templatePath}`);
+  } catch (err) {
+    logger.error(
+      `Unable to find Terraform environment. Please check template path.`
+    );
+    throw err;
+  }
 };
 
 /**
@@ -118,7 +105,7 @@ export const commandDecorator = (command: commander.Command): void => {
  *
  * @param templatePath Path to the variables.tf file
  */
-export const validateVariablesTf = (templatePath: string) => {
+export const validateVariablesTf = (templatePath: string): void => {
   try {
     if (!fs.existsSync(templatePath)) {
       throw new Error(
@@ -150,58 +137,6 @@ export const validateBackendTfvars = (dir: string): boolean => {
 };
 
 /**
- * Copies the Terraform environment template
- *
- * @param templatePath path so the directory of Terraform templates
- * @param envName name of destination directory
- */
-export const copyTfTemplate = async (
-  templatePath: string,
-  envName: string,
-  generation: boolean
-) => {
-  try {
-    if (generation === true) {
-      await fsextra.copy(templatePath, envName, {
-        filter: file =>
-          file.indexOf(TERRAFORM_TFVARS) === -1 &&
-          file.indexOf(BACKEND_TFVARS) === -1
-      });
-    } else {
-      await fsextra.copy(templatePath, envName, {
-        filter: file => file.indexOf(TERRAFORM_TFVARS) === -1
-      });
-    }
-    logger.info(`Terraform template files copied from ${templatePath}`);
-  } catch (err) {
-    logger.error(
-      `Unable to find Terraform environment. Please check template path.`
-    );
-    throw err;
-  }
-};
-
-/**
- * Removes the Terraform environment template
- *
- * @param envPath path so the directory of Terraform templates
- */
-export const removeTemplateFiles = (envPath: string) => {
-  // Remove template files after parsing
-  try {
-    const files = fs.readdirSync(envPath);
-    files
-      .filter(f => f !== DEFINITION_YAML)
-      .forEach(f => {
-        fs.unlinkSync(path.join(envPath, f));
-      });
-  } catch (e) {
-    logger.error(`cannot read ${envPath}`);
-    // TOFIX: I guess we are ok with files not removed.
-  }
-};
-
-/**
  * Takes in the contents of a Terraform 'variables.tf' file and returns
  * an array of key:value pairs which are "variable name" and "default value"/
  * In the case where there is no default value, the entry is null.
@@ -228,7 +163,7 @@ export const parseVariablesTf = (data: string): { [key: string]: string } => {
   // iterate through each 'block' and extract the variable name and any possible
   // default value.  if no default value found, null is used in it's place
   const fields: { [key: string]: string } = {};
-  const fieldSplitRegex = /\"\s{0,}\{/;
+  const fieldSplitRegex = /"\s{0,}\{/;
   const defaultRegex = /default\s{0,}=\s{0,}(.*)/;
   blocks.forEach(b => {
     b = b.trim();
@@ -262,12 +197,12 @@ export const parseBackendTfvars = (
   backendData: string
 ): { [key: string]: string } => {
   const backend: { [key: string]: string | "" } = {};
-  const block = backendData.replace(/\=/g, ":").split("\n");
+  const block = backendData.replace(/=/g, ":").split("\n");
   block.forEach(b => {
     const elt = b.split(":");
     if (elt[0].length > 0) {
       backend[elt[0]] = elt[1]
-        .replace(/\"/g, "")
+        .replace(/"/g, "")
         .replace(/(?:\\[rn]|[\r\n]+)+/g, "");
     }
   });
@@ -282,7 +217,7 @@ export const parseBackendTfvars = (
  * @param vartfData path to the variables.tf file
  */
 export const generateClusterDefinition = (
-  values: ICommandOptions,
+  values: CommandOptions,
   backendData: string,
   vartfData: string
 ): { [key: string]: string | { [key: string]: string } } => {
@@ -320,7 +255,7 @@ export const generateClusterDefinition = (
  *
  * @param values Values from command line
  */
-export const scaffold = (values: ICommandOptions) => {
+export const scaffold = (values: CommandOptions): void => {
   try {
     const tfVariableFile = path.join(values.name, VARIABLES_TF);
     const backendTfvarsFile = path.join(values.name, BACKEND_TFVARS);
@@ -356,4 +291,73 @@ export const scaffold = (values: ICommandOptions) => {
     logger.warn("Unable to create scaffold");
     throw err;
   }
+};
+
+/**
+ * Removes the Terraform environment template
+ *
+ * @param envPath path so the directory of Terraform templates
+ */
+export const removeTemplateFiles = (envPath: string): void => {
+  // Remove template files after parsing
+  try {
+    const files = fs.readdirSync(envPath);
+    files
+      .filter(f => f !== DEFINITION_YAML)
+      .forEach(f => {
+        fs.unlinkSync(path.join(envPath, f));
+      });
+  } catch (e) {
+    logger.error(`cannot read ${envPath}`);
+    // TOFIX: I guess we are ok with files not removed.
+  }
+};
+
+export const execute = async (
+  config: ConfigYaml,
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
+  try {
+    validateValues(config, opts);
+    opts.source = opts.source || constructSource(config);
+
+    /* scaffoldDefinition will take in a definition object with a
+        null configuration. Hence, the first index is "" */
+    const scaffoldDefinition: SourceInformation = {
+      source: opts.source,
+      template: opts.template,
+      version: opts.version
+    };
+    const sourceFolder = getSourceFolderNameFromURL(opts.source);
+    const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+    await validateRemoteSource(scaffoldDefinition);
+    await copyTfTemplate(
+      path.join(sourcePath, opts.template),
+      opts.name,
+      false
+    );
+    validateVariablesTf(path.join(sourcePath, opts.template, VARIABLES_TF));
+    scaffold(opts);
+    removeTemplateFiles(opts.name);
+    await exitFn(0);
+  } catch (err) {
+    logger.error("Error occurred while generating scaffold");
+    logger.error(err);
+    await exitFn(1);
+  }
+};
+
+/**
+ * Adds the init command to the commander command object
+ *
+ * @param command Commander command object to decorate
+ */
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
+    const config = Config();
+    await execute(config, opts, async (status: number) => {
+      await exitCmd(logger, process.exit, status);
+    });
+  });
 };
