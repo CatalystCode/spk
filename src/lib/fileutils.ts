@@ -349,6 +349,21 @@ export const serviceBuildAndUpdatePipeline = (
 };
 
 /**
+ * Gets the spk version message
+ */
+export const getVersionMessage = (): string => {
+  return VERSION_MESSAGE + require("../../package.json").version;
+};
+
+/**
+ * Writes the spk version to the given file
+ * @param filePath The path to the file
+ */
+export const writeVersion = (filePath: string): void => {
+  fs.writeFileSync(filePath, `${getVersionMessage()}\n`, "utf8");
+};
+
+/**
  * Creates the service multistage build and update image tag pipeline.
  * One pipeline should exist for each service.
  *
@@ -871,19 +886,4 @@ export const generateDockerfile = (targetDirectory: string): void => {
     "FROM alpine\nRUN echo 'hello world'",
     "utf8"
   );
-};
-
-/**
- * Writes the spk version to the given file
- * @param filePath The path to the file
- */
-export const writeVersion = (filePath: string): void => {
-  fs.writeFileSync(filePath, `${getVersionMessage()}\n`, "utf8");
-};
-
-/**
- * Gets the spk version message
- */
-export const getVersionMessage = (): string => {
-  return VERSION_MESSAGE + require("../../package.json").version;
 };
