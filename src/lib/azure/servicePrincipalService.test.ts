@@ -1,5 +1,4 @@
 import * as shell from "../shell";
-import { RequestContext, WORKSPACE } from "./constants";
 import { azCLILogin, createWithAzCLI } from "./servicePrincipalService";
 
 describe("test azCLILogin function", () => {
@@ -28,25 +27,13 @@ describe("test createWithAzCLI function", () => {
       tenant: "72f988bf-86f1-41af-91ab-2d7cd011db47"
     };
     jest.spyOn(shell, "exec").mockResolvedValueOnce(JSON.stringify(result));
-    const rc: RequestContext = {
-      accessToken: "pat",
-      orgName: "orgName",
-      projectName: "project",
-      workspace: WORKSPACE
-    };
-    await createWithAzCLI(rc);
-    expect(rc.createServicePrincipal).toBeTruthy();
-    expect(rc.servicePrincipalPassword).toBe(result.password);
-    expect(rc.servicePrincipalTenantId).toBe(result.tenant);
+    const sub = await createWithAzCLI("subscriptionId");
+    expect(sub.id).toBe(result.appId);
+    expect(sub.password).toBe(result.password);
+    expect(sub.tenantId).toBe(result.tenant);
   });
   it("negative test", async () => {
     jest.spyOn(shell, "exec").mockRejectedValueOnce(Error("fake"));
-    const rc: RequestContext = {
-      accessToken: "pat",
-      orgName: "orgName",
-      projectName: "project",
-      workspace: WORKSPACE
-    };
-    await expect(createWithAzCLI(rc)).rejects.toThrow();
+    await expect(createWithAzCLI("subscfriptionId")).rejects.toThrow();
   });
 });
