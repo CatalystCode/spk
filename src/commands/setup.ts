@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { IGitApi } from "azure-devops-node-api/GitApi";
 import commander from "commander";
