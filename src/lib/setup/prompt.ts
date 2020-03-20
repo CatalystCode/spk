@@ -1,5 +1,6 @@
 import fs from "fs";
 import inquirer from "inquirer";
+import * as promptBuilder from "../promptBuilder";
 import {
   validateAccessToken,
   validateACRName,
@@ -11,37 +12,61 @@ import {
   validateSubscriptionId
 } from "../validator";
 import {
+  ACR_NAME,
   DEFAULT_PROJECT_NAME,
+  HLD_REPO,
   RequestContext,
-  WORKSPACE,
-  ACR_NAME
+  WORKSPACE
 } from "./constants";
-import { createWithAzCLI } from "./servicePrincipalService";
-import { getSubscriptions } from "./subscriptionService";
+import { getAzureRepoUrl } from "./gitService";
+import {
+  azCLILogin,
+  createWithAzCLI,
+  SubscriptionData
+} from "../azure/servicePrincipalService";
+import {
+  getSubscriptions,
+  SubscriptionItem
+} from "../azure/subscriptionService";
 
 export const promptForSubscriptionId = async (
-  rc: RequestContext
-): Promise<void> => {
-  const subscriptions = await getSubscriptions(rc);
+  subscriptions: SubscriptionItem[] | SubscriptionData[]
+): Promise<string | undefined> => {
+  const questions = [
+    {
+      choices: subscriptions.map(s => s.name),
+      message: "Select one of the subscriptions\n",
+      name: "az_subscription",
+      type: "list"
+    }
+  ];
+  const ans = await inquirer.prompt(questions);
+  const found = subscriptions.find(
+    s => s.name === (ans.az_subscription as string)
+  );
+  return found ? found.id : undefined;
+};
+
+export const getSubscriptionId = async (rc: RequestContext): Promise<void> => {
+  const subscriptions = await getSubscriptions(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    rc.servicePrincipalId!,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    rc.servicePrincipalPassword!,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    rc.servicePrincipalTenantId!
+  );
   if (subscriptions.length === 0) {
     throw Error("no subscriptions found");
   }
   if (subscriptions.length === 1) {
     rc.subscriptionId = subscriptions[0].id;
   } else {
-    const questions = [
-      {
-        choices: subscriptions.map(s => s.name),
-        message: "Select one of the subscription\n",
-        name: "az_subscription",
-        type: "list"
-      }
-    ];
-    const ans = await inquirer.prompt(questions);
-    const found = subscriptions.find(
-      s => s.name === (ans.az_subscription as string)
-    );
-    rc.subscriptionId = found ? found.id : undefined;
+    const subId = await promptForSubscriptionId(subscriptions);
+    if (!subId) {
+      throw Error("Subscription Identifier is missing.");
+    }
+    rc.subscriptionId = subId;
   }
 };
 
@@ -55,31 +80,10 @@ export const promptForSubscriptionId = async (
 export const promptForServicePrincipal = async (
   rc: RequestContext
 ): Promise<void> => {
-  const questions = [
-    {
-      message: "Enter Service Principal Id\n",
-      name: "az_sp_id",
-      type: "input",
-      validate: validateServicePrincipalId
-    },
-    {
-      mask: "*",
-      message: "Enter Service Principal Password\n",
-      name: "az_sp_password",
-      type: "password",
-      validate: validateServicePrincipalPassword
-    },
-    {
-      message: "Enter Service Principal Tenant Id\n",
-      name: "az_sp_tenant",
-      type: "input",
-      validate: validateServicePrincipalTenantId
-    }
-  ];
-  const answers = await inquirer.prompt(questions);
-  rc.servicePrincipalId = answers.az_sp_id as string;
-  rc.servicePrincipalPassword = answers.az_sp_password as string;
-  rc.servicePrincipalTenantId = answers.az_sp_tenant as string;
+  const answers = await inquirer.prompt(promptBuilder.servicePrincipal());
+  rc.servicePrincipalId = answers.az_sp_id;
+  rc.servicePrincipalPassword = answers.az_sp_password;
+  rc.servicePrincipalTenantId = answers.az_sp_tenant;
 };
 
 /**
@@ -111,23 +115,26 @@ export const promptForACRName = async (rc: RequestContext): Promise<void> => {
 export const promptForServicePrincipalCreation = async (
   rc: RequestContext
 ): Promise<void> => {
-  const questions = [
-    {
-      default: true,
-      message: `Do you want to create a service principal?`,
-      name: "create_service_principal",
-      type: "confirm"
-    }
-  ];
+  const questions = [promptBuilder.askToCreateServicePrincipal(true)];
   const answers = await inquirer.prompt(questions);
   if (answers.create_service_principal) {
     rc.toCreateSP = true;
-    await createWithAzCLI(rc);
+    const subscriptions = await azCLILogin();
+    const subscriptionId = await promptForSubscriptionId(subscriptions);
+    if (!subscriptionId) {
+      throw Error("Subscription Identifier is missing.");
+    }
+    rc.subscriptionId = subscriptionId;
+    const sp = await createWithAzCLI(rc.subscriptionId);
+    rc.createServicePrincipal = true;
+    rc.servicePrincipalId = sp.id;
+    rc.servicePrincipalPassword = sp.password;
+    rc.servicePrincipalTenantId = sp.tenantId;
   } else {
     rc.toCreateSP = false;
     await promptForServicePrincipal(rc);
+    await getSubscriptionId(rc);
   }
-  await promptForSubscriptionId(rc);
 };
 
 /**
@@ -137,29 +144,12 @@ export const promptForServicePrincipalCreation = async (
  */
 export const prompt = async (): Promise<RequestContext> => {
   const questions = [
-    {
-      message: "Enter organization name\n",
-      name: "azdo_org_name",
-      type: "input",
-      validate: validateOrgName
-    },
-    {
-      default: DEFAULT_PROJECT_NAME,
-      message: "Enter name of project to be created\n",
-      name: "azdo_project_name",
-      type: "input",
-      validate: validateProjectName
-    },
-    {
-      mask: "*",
-      message: "Enter your Azure DevOps personal access token\n",
-      name: "azdo_pat",
-      type: "password",
-      validate: validateAccessToken
-    },
+    promptBuilder.azureOrgName(),
+    promptBuilder.azureProjectName(),
+    promptBuilder.azureAccessToken(),
     {
       default: true,
-      message: `Do you like create a sample application repository?`,
+      message: "Would you like to create a sample application repository?",
       name: "create_app_repo",
       type: "confirm"
     }
@@ -257,12 +247,6 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     throw new Error(vToken);
   }
 
-  const acrName = map.az_acr_name || ACR_NAME;
-  const vACRName = validateACRName(acrName);
-  if (typeof vACRName === "string") {
-    throw new Error(vACRName);
-  }
-
   const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
@@ -270,7 +254,7 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     servicePrincipalId: map.az_sp_id,
     servicePrincipalPassword: map.az_sp_password,
     servicePrincipalTenantId: map.az_sp_tenant,
-    acrName,
+    acrName: map.az_acr_name || ACR_NAME,
     workspace: WORKSPACE
   };
 
@@ -278,4 +262,24 @@ export const getAnswerFromFile = (file: string): RequestContext => {
   validationServicePrincipalInfoFromFile(rc, map);
 
   return rc;
+};
+
+export const promptForApprovingHLDPullRequest = async (
+  rc: RequestContext
+): Promise<boolean> => {
+  const urlPR = `${getAzureRepoUrl(
+    rc.orgName,
+    rc.projectName,
+    HLD_REPO
+  )}/pullrequest`;
+  const questions = [
+    {
+      default: true,
+      message: `Please approve and merge the Pull Request at ${urlPR}? Refresh the page if you do not see an active Pull Request.`,
+      name: "approve_hld_pr",
+      type: "confirm"
+    }
+  ];
+  const answers = await inquirer.prompt(questions);
+  return !!answers.approve_hld_pr;
 };

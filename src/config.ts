@@ -3,7 +3,7 @@ import fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
 import path from "path";
-import { getSecret } from "./lib/azure/keyvault";
+import { writeVersion } from "./lib/fileutils";
 import { logger } from "./logger";
 import {
   AzurePipelinesYaml,
@@ -85,29 +85,6 @@ export const loadConfigurationFromLocalEnv = <T>(configObj: T): T => {
   return configObj;
 };
 
-const getKeyVaultSecret = async (
-  keyVaultName: string | undefined,
-  storageAccountName: string | undefined
-): Promise<string | undefined> => {
-  logger.debug(`Fetching key from key vault`);
-  let keyVaultKey: string | undefined;
-
-  // fetch storage access key from key vault when it is configured
-  if (
-    keyVaultName !== undefined &&
-    keyVaultName !== null &&
-    storageAccountName !== undefined
-  ) {
-    keyVaultKey = await getSecret(keyVaultName, `${storageAccountName}Key`);
-  }
-
-  if (keyVaultKey === undefined) {
-    keyVaultKey = await spkConfig.introspection?.azure?.key;
-  }
-
-  return keyVaultKey;
-};
-
 /**
  * Fetches the absolute default directory of the spk global config
  */
@@ -167,21 +144,7 @@ export const Config = (): ConfigYaml => {
     }
   }
 
-  const introspectionAzure = {
-    ...spkConfig.introspection?.azure,
-    get key(): Promise<string | undefined> {
-      const accountName = spkConfig.introspection?.azure?.account_name;
-      return getKeyVaultSecret(spkConfig.key_vault_name, accountName);
-    }
-  };
-
-  return {
-    ...spkConfig,
-    introspection: {
-      ...spkConfig.introspection,
-      azure: introspectionAzure
-    }
-  };
+  return spkConfig;
 };
 
 /**
@@ -274,20 +237,22 @@ export const write = (
   const asYaml = yaml.safeDump(file, { lineWidth: Number.MAX_SAFE_INTEGER });
   if ("rings" in file) {
     // Is bedrock.yaml
-    return fs.writeFileSync(path.join(targetDirectory, "bedrock.yaml"), asYaml);
+    fileName = "bedrock.yaml";
+    writeVersion(path.join(targetDirectory, fileName));
+    return fs.appendFileSync(path.join(targetDirectory, fileName), asYaml);
   } else if ("services" in file) {
     // Is maintainers file
-    return fs.writeFileSync(
-      path.join(targetDirectory, "maintainers.yaml"),
-      asYaml
-    );
+    fileName = "maintainers.yaml";
+    writeVersion(path.join(targetDirectory, fileName));
+    return fs.appendFileSync(path.join(targetDirectory, fileName), asYaml);
   } else {
     // Is azure pipelines yaml file
     if (typeof fileName === "undefined") {
       throw new Error(`Pipeline yaml file name is undefined`);
     }
 
-    return fs.writeFileSync(path.join(targetDirectory, fileName), asYaml);
+    writeVersion(path.join(targetDirectory, fileName));
+    return fs.appendFileSync(path.join(targetDirectory, fileName), asYaml);
   }
 };
 

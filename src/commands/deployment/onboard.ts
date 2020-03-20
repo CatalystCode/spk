@@ -40,7 +40,7 @@ export interface CommandOptions {
  */
 export const populateValues = (opts: CommandOptions): CommandOptions => {
   const config = Config();
-  const { azure } = config.introspection!;
+  const azure = config.introspection ? config.introspection.azure : undefined;
 
   opts.storageAccountName =
     opts.storageAccountName || azure?.account_name || undefined;
@@ -121,8 +121,16 @@ export const setConfiguration = (
 ): boolean => {
   try {
     const data = readYaml<ConfigYaml>(defaultConfigFile());
-    data.introspection!.azure!.account_name = storageAccountName;
-    data.introspection!.azure!.table_name = storageTableName;
+    if (!data.introspection) {
+      data.introspection = {
+        azure: {}
+      };
+    } else if (!data.introspection.azure) {
+      data.introspection.azure = {};
+    }
+
+    data.introspection.azure!.account_name = storageAccountName;
+    data.introspection.azure!.table_name = storageTableName;
     const jsonData = yaml.safeDump(data);
     logger.verbose(jsonData);
     fs.writeFileSync(defaultConfigFile(), jsonData);
