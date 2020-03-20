@@ -1,8 +1,8 @@
 # Moving SPK to Bedrock Repo: A Phased Approach
 
-## Phase 1: Make Changes to Bedrock and SPK Repos
+## Phase 1: Prep work before moving SPK to Bedrock Repo
 
-### Changes to Bedrock Repo
+### Bedrock Repo Changes
 
 By making following changes in existing Bedrock repo minimizes the number of
 changes after the merge and limits the testing scope.
@@ -38,7 +38,7 @@ changes after the merge and limits the testing scope.
   - LICENSE
   - .gitignore
 
-#### Testing Changes
+#### Testing
 
 After making the above changes, need to make sure that the follwing tests pass.
 
@@ -67,7 +67,7 @@ After making the above changes, need to make sure that the follwing tests pass.
 
 ```
 
-### Changes to SPK Repo
+### SPK Repo Changes
 
 Making following changes in existing SPK repo minimizes the number of changes
 after the merge and limits the testing scope to SPK functioanlity.
@@ -142,7 +142,7 @@ The majority of the proposed changes in `spk` repo are related to organizing
 - Move `technical-docs\designs` to `documents\contribution\designs` folder
 - Remove `.github\workflows` folder since it is not being used
 
-#### Testing Changes
+#### Testing
 
 After making the above changes, need to make sure that the follwing tests pass.
 
@@ -198,89 +198,10 @@ After making the above changes, need to make sure that the follwing tests pass.
 ├── .yarn.lock
 ```
 
-## Phase 2: Move SPK to Bedrock Repo (under review)
+### Phase 2: Move SPK to Bedrock Repo (under review)
 
-Moving SPK repo to Bedrock involves following changes.
+TODO
 
-### Activities
-
-- Update `.readme.md` in `bedrock` repo with contents from `spk` repo as
-  appropriate. Please note this is not a complete merge since it is a new
-  landing page of combined repos.
-- Create or update `changelog.md` file. (_TBD_)
-- Move all files and folder from the root of `spk` to `bedrock` root
-
-### Combined repo
-
-The combined `bedrock` repo would look like below after implementing the above
-changes.
-
-_color legend:_
-
-```diff
-# - no change from the merge process
-+ - all files and folders including sub folders came from `spk` repo
-! - changed before merge in `bedrock` repo
-```
-
-```diff
-# ├── .github
-# ├── gitops
-! ├── cluster
-+ ├── build
-+     ├── pipelines
-+         ├── templates
-+         ├── azure-pipelines.yml
-+         ├── release-pipeline.yml
-+         ├── smoke-test-pipeline.yml
-+     ├── patches
-+         ├── 001-azure-devops-node.patch
-+     ├── publishing
-+         ├── generateDoc.ts
-+         ├── locateAliases.ts
-+     ├── tools
-+         ├── release-version-bump.sh
-+         ├── tag-release.sh
-+         ├── update_introspection.sh
-+ ├── docs
-+     ├── commands
-+ ├── documents
-+     ├── contribution
-+         ├── contributing.md
-+         ├── designs
-+     ├── guides
-+ ├── src
-+     ├── lib
-+     ├── commands
-+     ├── logger
-+ ├── tests
-+ ├── typings
-+     ├── ssh-url
-+ ├── .editorconfig
-+ ├── .gitignore
-+ ├── jest.config.js
-+ ├── tsconfig.json
-+ ├── tslint.json
-+ ├── CHANGELOG.md
-+ ├── README.md
-+ ├── package.json
-+ ├── webpack.config.js
-+ ├── .yarn.lock
-```
-
-### Next Steps
-
-At this point we can allow the codebase to stabilize for a while before
-implementing phase 4. Once we are confident that things are working we can enter
-the 4th phase of post merge changes.
-
-## Phase 3: Post merge organization
-
-- Evaluate the contents of `gitops` folder and move contents to appropriate
-  folders
-- Move all `*.md` files from `gitops` folder to `documents\gitops` folder
-- Move all `*.sh` script files from `gitops` folder to `build\tools` folder
-
-## Phase 4: Create a side by side new repo for Bedrock Infra/Cluster terraform
+### Phase 3: Create a side by side new repo for Bedrock Infra/Cluster terraform
 
 TODO
