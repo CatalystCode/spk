@@ -175,7 +175,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   ``,
                   `# Commit changes`,
                   `echo "GIT ADD and COMMIT -- Will throw error if there is nothing to commit."`,
-                  `git_commit_if_changes "Updating $SERVICE_NAME_LOWER image tag to ${IMAGE_TAG}." 1`,
+                  `git_commit_if_changes "Updating $SERVICE_NAME_LOWER image tag to ${IMAGE_TAG}." 1 unusedVar`,
                   ``,
                   `# Git Push`,
                   `git_push`,
