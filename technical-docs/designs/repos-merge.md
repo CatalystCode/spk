@@ -198,7 +198,7 @@ After making the above changes, need to make sure that the follwing tests pass.
 ├── .yarn.lock
 ```
 
-### Phase 2: Move SPK to Bedrock Repo (under review)
+### Phase 2: Move SPK to Bedrock Repo
 
 TODO
 
