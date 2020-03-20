@@ -162,7 +162,7 @@ export const create = async (
 
   if (exist) {
     logger.info(
-      `Azure container registry, ${name} already existed in subscription`
+      `Azure container registry, ${name} already exists in subscription`
     );
     return false;
   }

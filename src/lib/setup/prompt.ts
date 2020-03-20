@@ -275,7 +275,7 @@ export const promptForApprovingHLDPullRequest = async (
   const questions = [
     {
       default: true,
-      message: `Please approve and merge a PR at ${urlPR}? Refresh the page after a while if you do not see active PR.`,
+      message: `Please approve and merge the Pull Request at ${urlPR}? Refresh the page if you do not see an active Pull Request.`,
       name: "approve_hld_pr",
       type: "confirm"
     }

@@ -173,7 +173,7 @@ const deletePipelineIfExist = async (
     pipelineName
   );
   if (pipeline && pipeline.id) {
-    logger.info(`${pipelineName} is found, deleting it`);
+    logger.info(`Pipeline ${pipelineName} was found - deleting pipeline`);
     await deletePipeline(buildApi, rc.projectName, pipelineName, pipeline.id);
   }
 };

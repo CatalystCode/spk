@@ -34,6 +34,6 @@ describe("test createWithAzCLI function", () => {
   });
   it("negative test", async () => {
     jest.spyOn(shell, "exec").mockRejectedValueOnce(Error("fake"));
-    await expect(createWithAzCLI("subscfriptionId")).rejects.toThrow();
+    await expect(createWithAzCLI("subscriptionId")).rejects.toThrow();
   });
 });
