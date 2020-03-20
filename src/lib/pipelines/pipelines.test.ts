@@ -2,6 +2,8 @@ import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 
 import {
   createPipelineForDefinition,
+  definitionForAzureRepoPipeline,
+  definitionForGithubRepoPipeline,
   getBuildApiClient,
   GithubRepoPipelineConfig,
   IAzureRepoPipelineConfig,
@@ -32,8 +34,6 @@ describe("test getBuildApiClient function", () => {
 });
 
 describe("It builds an azure repo pipeline definition", () => {
-  const { definitionForAzureRepoPipeline } = jest.requireActual("./pipelines");
-
   test("pipeline definition is well-formed", () => {
     const sampleAzureConfig = {
       branchFilters: ["master"],
@@ -79,8 +79,6 @@ describe("It builds an azure repo pipeline definition", () => {
 });
 
 describe("It builds a github repo pipeline definition", () => {
-  const { definitionForGithubRepoPipeline } = jest.requireActual("./pipelines");
-
   test("pipeline definition is well-formed", () => {
     const sampleGithubConfig = {
       branchFilters: ["master"],
@@ -142,6 +140,7 @@ describe("test createPipelineForDefinition function", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
       "project",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {} as any
     );
     expect(result).toBeDefined();
@@ -156,6 +155,7 @@ describe("test createPipelineForDefinition function", () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
         "project",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {} as any
       )
     ).rejects.toThrow();
@@ -172,6 +172,7 @@ describe("test queueBuild function", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
       "project",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {} as any
     );
     expect(result).toBeDefined();
@@ -186,6 +187,7 @@ describe("test queueBuild function", () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
         "project",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {} as any
       )
     ).rejects.toThrow();
