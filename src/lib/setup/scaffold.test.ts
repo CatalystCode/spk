@@ -6,6 +6,7 @@ import * as cmdCreateVariableGroup from "../../commands/project/create-variable-
 import * as projectInit from "../../commands/project/init";
 import * as createService from "../../commands/service/create";
 import * as variableGroup from "../../lib/pipelines/variableGroup";
+import * as sVariableGroup from "../setup/variableGroup";
 import { createTempDir } from "../ioUtil";
 import {
   APP_REPO,
@@ -173,7 +174,7 @@ describe("test appRepo function", () => {
     jest
       .spyOn(variableGroup, "deleteVariableGroup")
       .mockResolvedValueOnce(true);
-    jest.spyOn(cmdCreateVariableGroup, "create").mockResolvedValueOnce({});
+    jest.spyOn(sVariableGroup, "create").mockResolvedValueOnce();
     jest
       .spyOn(cmdCreateVariableGroup, "setVariableGroupInBedrockFile")
       .mockReturnValueOnce();

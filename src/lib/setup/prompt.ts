@@ -10,7 +10,8 @@ import {
   validateServicePrincipalPassword,
   validateServicePrincipalTenantId,
   validateSubscriptionId,
-  validateStorageAccountName
+  validateStorageAccountName,
+  validateStorageTableName
 } from "../validator";
 import {
   ACR_NAME,
@@ -255,6 +256,11 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     throw new Error(vStorageAccountName);
   }
 
+  const vStorageTable = validateStorageTableName(map.az_storage_table);
+  if (typeof vStorageTable === "string") {
+    throw new Error(vStorageTable);
+  }
+
   const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
@@ -264,6 +270,7 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     servicePrincipalTenantId: map.az_sp_tenant,
     acrName: map.az_acr_name || ACR_NAME,
     storageAccountName: map.az_storage_account_name,
+    storageTableName: map.az_storage_table,
     workspace: WORKSPACE
   };
 

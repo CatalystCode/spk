@@ -49,13 +49,29 @@ describe("test createSPKConfig function", () => {
       project: "project"
     });
   });
+  it("positive test with toCreateAppRepo = false", () => {
+    const tmpFile = path.join(createTempDir(), "config.yaml");
+    jest.spyOn(config, "defaultConfigFile").mockReturnValueOnce(tmpFile);
+    const oData = deepClone(mockRequestContext);
+    oData.toCreateAppRepo = false;
+    createSPKConfig(oData);
+    const data = readYaml<ConfigYaml>(tmpFile);
+    expect(data.azure_devops).toStrictEqual({
+      access_token: "pat",
+      org: "orgname",
+      project: "project"
+    });
+  });
   it("positive test: with service principal", () => {
     const tmpFile = path.join(createTempDir(), "config.yaml");
     jest.spyOn(config, "defaultConfigFile").mockReturnValueOnce(tmpFile);
     const rc: RequestContext = deepClone(mockRequestContext);
     rc.toCreateAppRepo = true;
     rc.toCreateSP = true;
-    rc.servicePrincipalId = "1eba2d04-1506-4278-8f8c-b1eb2fc462a8";
+    (rc.storageAccountName = "storageAccount"),
+      (rc.storageTableName = "storageTable"),
+      (rc.storageAccountAccessKey = "storageAccessKey"),
+      (rc.servicePrincipalId = "1eba2d04-1506-4278-8f8c-b1eb2fc462a8");
     rc.servicePrincipalPassword = "e4c19d72-96d6-4172-b195-66b3b1c36db1";
     rc.servicePrincipalTenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47";
     rc.subscriptionId = "72f988bf-86f1-41af-91ab-2d7cd011db48";
@@ -72,7 +88,11 @@ describe("test createSPKConfig function", () => {
         service_principal_id: rc.servicePrincipalId,
         service_principal_secret: rc.servicePrincipalPassword,
         subscription_id: rc.subscriptionId,
-        tenant_id: rc.servicePrincipalTenantId
+        tenant_id: rc.servicePrincipalTenantId,
+        account_name: "storageAccount",
+        table_name: "storageTable",
+        key: "storageAccessKey",
+        partition_key: "quick-start-part-key"
       }
     });
   });

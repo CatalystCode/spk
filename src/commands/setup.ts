@@ -13,6 +13,7 @@ import {
   RequestContext,
   RESOURCE_GROUP,
   RESOURCE_GROUP_LOCATION,
+  STORAGE_PARTITION_KEY,
   WORKSPACE
 } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
@@ -38,6 +39,7 @@ import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
 import decorator from "./setup.decorator.json";
 import { createStorage } from "../lib/setup/azureStorage";
+import { ConfigYaml } from "../types";
 
 interface CommandOptions {
   file: string | undefined;
@@ -54,30 +56,56 @@ interface APIError {
  * @param answers Answers provided to the commander
  */
 export const createSPKConfig = (rc: RequestContext): void => {
-  const data = rc.toCreateAppRepo
-    ? {
+  if (!rc.toCreateAppRepo) {
+    fs.writeFileSync(
+      defaultConfigFile(),
+      yaml.safeDump({
         azure_devops: {
           access_token: rc.accessToken,
           org: rc.orgName,
           project: rc.projectName
-        },
-        introspection: {
-          azure: {
-            service_principal_id: rc.servicePrincipalId,
-            service_principal_secret: rc.servicePrincipalPassword,
-            subscription_id: rc.subscriptionId,
-            tenant_id: rc.servicePrincipalTenantId
-          }
         }
+      })
+    );
+    return;
+  }
+
+  const data: ConfigYaml = {
+    azure_devops: {
+      access_token: rc.accessToken,
+      org: rc.orgName,
+      project: rc.projectName
+    },
+    introspection: {
+      azure: {
+        service_principal_id: rc.servicePrincipalId,
+        service_principal_secret: rc.servicePrincipalPassword,
+        subscription_id: rc.subscriptionId,
+        tenant_id: rc.servicePrincipalTenantId
       }
-    : {
-        azure_devops: {
-          access_token: rc.accessToken,
-          org: rc.orgName,
-          project: rc.projectName
-        }
-      };
-  fs.writeFileSync(defaultConfigFile(), yaml.safeDump(data));
+    }
+  };
+
+  if (data.introspection && data.introspection.azure) {
+    const azure = data.introspection.azure;
+    if (rc.storageAccountName) {
+      azure.account_name = rc.storageAccountName;
+    }
+    if (rc.storageAccountAccessKey) {
+      azure.key = rc.storageAccountAccessKey;
+    }
+    if (rc.storageTableName) {
+      azure.table_name = rc.storageTableName;
+    }
+    azure.partition_key = STORAGE_PARTITION_KEY;
+  }
+
+  fs.writeFileSync(
+    defaultConfigFile(),
+    yaml.safeDump(data, {
+      lineWidth: 5000
+    })
+  );
 };
 
 export const getErrorMessage = (
@@ -174,6 +202,7 @@ export const execute = async (
     await createHLDtoManifestPipeline(buildAPI, rc);
     await createAppRepoTasks(gitAPI, buildAPI, rc);
 
+    createSPKConfig(rc); // to write storage account information.
     createSetupLog(rc);
     await exitFn(0);
   } catch (err) {

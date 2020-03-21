@@ -437,8 +437,8 @@ export const createTableIfNotExists = (
   accountName: string,
   tableName: string,
   accessKey: string
-): Promise<boolean | undefined> => {
-  return new Promise<boolean | undefined>((resolve, reject) => {
+): Promise<boolean> => {
+  return new Promise<boolean>((resolve, reject) => {
     try {
       validateValuesForCreateStorageTable(accountName, tableName);
       const createTblService = storage.createTableService(

@@ -138,7 +138,8 @@ describe("test getAnswerFromFile function", () => {
       "azdo_org_name=orgname",
       "azdo_pat=pat",
       "azdo_project_name=project",
-      "az_storage_account_name=teststore"
+      "az_storage_account_name=teststore",
+      "az_storage_table=storagetable"
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
@@ -153,7 +154,8 @@ describe("test getAnswerFromFile function", () => {
     const data = [
       "azdo_org_name=orgname",
       "azdo_pat=pat",
-      "az_storage_account_name=teststore"
+      "az_storage_account_name=teststore",
+      "az_storage_table=storagetable"
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
@@ -210,7 +212,8 @@ describe("test getAnswerFromFile function", () => {
       "az_sp_password=a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
       "az_sp_tenant=72f988bf-86f1-41af-91ab-2d7cd011db47",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
-      "az_storage_account_name=teststore"
+      "az_storage_account_name=teststore",
+      "az_storage_table=storagetable"
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);

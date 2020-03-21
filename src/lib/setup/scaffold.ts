@@ -4,7 +4,6 @@ import path from "path";
 import simplegit from "simple-git/promise";
 import { initialize as hldInitialize } from "../../commands/hld/init";
 import {
-  create as createVariableGroup,
   setVariableGroupInBedrockFile,
   updateLifeCyclePipeline
 } from "../../commands/project/create-variable-group";
@@ -12,6 +11,7 @@ import { initialize as projectInitialize } from "../../commands/project/init";
 import { createService } from "../../commands/service/create";
 import { AzureDevOpsOpts } from "../../lib/git";
 import { deleteVariableGroup } from "../../lib/pipelines/variableGroup";
+import { create as createVariableGroup } from "../../lib/setup/variableGroup";
 import { logger } from "../../logger";
 import {
   APP_REPO,
@@ -188,16 +188,7 @@ export const setupVariableGroup = async (rc: RequestContext): Promise<void> => {
   };
 
   await deleteVariableGroup(accessOpts, VARIABLE_GROUP);
-  await createVariableGroup(
-    VARIABLE_GROUP,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    rc.acrName!,
-    getAzureRepoUrl(rc.orgName, rc.projectName, HLD_REPO),
-    rc.servicePrincipalId,
-    rc.servicePrincipalPassword,
-    rc.servicePrincipalTenantId,
-    accessOpts
-  );
+  await createVariableGroup(rc, VARIABLE_GROUP);
   logger.info(`Successfully created variable group, ${VARIABLE_GROUP}`);
 
   setVariableGroupInBedrockFile(".", VARIABLE_GROUP);
