@@ -22,6 +22,7 @@ export const create = (rc: RequestContext | undefined, file?: string): void => {
       `az_sp_tenant=${rc.servicePrincipalTenantId || ""}`,
       `az_subscription_id=${rc.subscriptionId || ""}`,
       `az_acr_name=${rc.acrName || ""}`,
+      `az_storage_account_name=${rc.storageAccountName || ""}`,
       `workspace: ${rc.workspace}`,
       `Project Created: ${getBooleanVal(rc.createdProject)}`,
       `High Level Definition Repo Scaffolded: ${getBooleanVal(rc.scaffoldHLD)}`,
@@ -37,7 +38,8 @@ export const create = (rc: RequestContext | undefined, file?: string): void => {
         rc.createdLifecyclePipeline
       )}`,
       `Build Pipeline Created: ${getBooleanVal(rc.createdBuildPipeline)}`,
-      `ACR Created: ${getBooleanVal(rc.createdACR)}`
+      `ACR Created: ${getBooleanVal(rc.createdACR)}`,
+      `Storage Account Created: ${getBooleanVal(rc.createdStorageAccount)}`
     ];
     if (rc.error) {
       buff.push(`Error: ${rc.error}`);

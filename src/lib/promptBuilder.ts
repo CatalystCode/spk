@@ -179,3 +179,16 @@ export const azureStorageAccessKey = (
     validate: validator.validateStorageAccessKey
   };
 };
+
+export const storageAccountName = (
+  defaultValue?: string | undefined
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    mask: "*",
+    message: `${i18n.prompt.storageAccessKey}\n`,
+    name: "azdo_storage_account_name",
+    type: "password",
+    validate: validator.validateStorageAccessKey
+  };
+};

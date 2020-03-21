@@ -14,6 +14,7 @@ import * as projectService from "../lib/setup/projectService";
 import * as promptInstance from "../lib/setup/prompt";
 import * as scaffold from "../lib/setup/scaffold";
 import * as setupLog from "../lib/setup/setupLog";
+import * as azureStorage from "../lib/setup/azureStorage";
 import { deepClone } from "../lib/util";
 import { ConfigYaml } from "../types";
 import {
@@ -324,10 +325,12 @@ const testCreateAppRepoTasks = async (prApproved = true): Promise<void> => {
     servicePrincipalTenantId: "tenant",
     subscriptionId: "12344",
     acrName: "acr",
+    storageAccountName: "storage",
     workspace: "dummy"
   };
 
   jest.spyOn(resourceService, "create").mockResolvedValueOnce(true);
+  jest.spyOn(azureStorage, "createStorage").mockResolvedValueOnce();
   jest
     .spyOn(azureContainerRegistryService, "create")
     .mockResolvedValueOnce(true);

@@ -4,6 +4,7 @@ export interface RequestContext {
   accessToken: string;
   workspace: string;
   acrName?: string;
+  storageAccountName?: string;
   toCreateAppRepo?: boolean;
   toCreateSP?: boolean;
   createdProject?: boolean;
@@ -15,6 +16,7 @@ export interface RequestContext {
   createdLifecyclePipeline?: boolean;
   createdBuildPipeline?: boolean;
   createServicePrincipal?: boolean;
+  createdStorageAccount?: boolean;
   servicePrincipalId?: string;
   servicePrincipalPassword?: string;
   servicePrincipalTenantId?: string;
@@ -37,6 +39,7 @@ export const RESOURCE_GROUP_LOCATION = "westus2";
 export const ACR_NAME = "quickStartACR";
 export const VARIABLE_GROUP = "quick-start-vg";
 export const APP_REPO_BUILD = "quick-start-app-build";
+export const STORAGE_ACCOUNT_NAME = "quickstartstore";
 export const SETUP_LOG = "setup.log";
 
 export const HLD_DEFAULT_COMPONENT_NAME = "traefik2";

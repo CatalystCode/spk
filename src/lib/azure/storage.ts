@@ -467,7 +467,6 @@ export const createTableIfNotExists = (
  *
  * @param name The Azure resource group name
  * @param location The Azure resource group location
- *
  */
 export const createResourceGroupIfNotExists = async (
   name: string,

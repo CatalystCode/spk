@@ -12,7 +12,8 @@ import {
   prompt,
   promptForACRName,
   promptForApprovingHLDPullRequest,
-  promptForServicePrincipalCreation
+  promptForServicePrincipalCreation,
+  validationServicePrincipalInfoFromFile
 } from "./prompt";
 import * as promptInstance from "./prompt";
 import * as gitService from "./gitService";
@@ -136,18 +137,24 @@ describe("test getAnswerFromFile function", () => {
     const data = [
       "azdo_org_name=orgname",
       "azdo_pat=pat",
-      "azdo_project_name=project"
+      "azdo_project_name=project",
+      "az_storage_account_name=teststore"
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
     expect(requestContext.orgName).toBe("orgname");
     expect(requestContext.accessToken).toBe("pat");
     expect(requestContext.projectName).toBe("project");
+    expect(requestContext.storageAccountName).toBe("teststore");
   });
   it("positive test: without project name", () => {
     const dir = createTempDir();
     const file = path.join(dir, "testfile");
-    const data = ["azdo_org_name=orgname", "azdo_pat=pat"];
+    const data = [
+      "azdo_org_name=orgname",
+      "azdo_pat=pat",
+      "az_storage_account_name=teststore"
+    ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
     expect(requestContext.orgName).toBe("orgname");
@@ -202,7 +209,8 @@ describe("test getAnswerFromFile function", () => {
       "az_sp_id=b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
       "az_sp_password=a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
       "az_sp_tenant=72f988bf-86f1-41af-91ab-2d7cd011db47",
-      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
+      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
+      "az_storage_account_name=teststore"
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
@@ -388,5 +396,72 @@ describe("test promptForApprovingHLDPullRequest function", () => {
     };
     const ans = await promptForApprovingHLDPullRequest(mockRc);
     expect(ans).toBeTruthy();
+  });
+});
+
+const testValidationServicePrincipalInfoFromFile = (vals: {
+  [key: string]: string;
+}): void => {
+  validationServicePrincipalInfoFromFile(
+    {
+      orgName: "orgName",
+      projectName: "project",
+      accessToken: "notuse",
+      workspace: "notused",
+      toCreateAppRepo: true,
+      toCreateSP: false
+    },
+    vals
+  );
+};
+
+describe("test validationServicePrincipalInfoFromFile function", () => {
+  it("positive test", () => {
+    testValidationServicePrincipalInfoFromFile({
+      az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
+      az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
+      az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
+      az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+    });
+  });
+  it("negative test: sp id is invalid", () => {
+    expect(() => {
+      testValidationServicePrincipalInfoFromFile({
+        az_sp_id: "id",
+        az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+      });
+    }).toThrow();
+  });
+  it("negative test: sp password is invalid", () => {
+    expect(() => {
+      testValidationServicePrincipalInfoFromFile({
+        az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_sp_password: "pwd",
+        az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+      });
+    }).toThrow();
+  });
+  it("negative test: sp id is invalid", () => {
+    expect(() => {
+      testValidationServicePrincipalInfoFromFile({
+        az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_sp_tenant: "tenant",
+        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+      });
+    }).toThrow();
+  });
+  it("negative test: sp id is invalid", () => {
+    expect(() => {
+      testValidationServicePrincipalInfoFromFile({
+        az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
+        az_subscription_id: "subid"
+      });
+    }).toThrow();
   });
 });

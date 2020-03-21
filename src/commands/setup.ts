@@ -37,6 +37,7 @@ import {
 import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
 import decorator from "./setup.decorator.json";
+import { createStorage } from "../lib/setup/azureStorage";
 
 interface CommandOptions {
   file: string | undefined;
@@ -115,6 +116,7 @@ export const createAppRepoTasks = async (
       RESOURCE_GROUP,
       RESOURCE_GROUP_LOCATION
     );
+    await createStorage(rc);
     rc.createdACR = await createACR(
       rc.servicePrincipalId,
       rc.servicePrincipalPassword,

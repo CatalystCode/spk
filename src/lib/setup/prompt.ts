@@ -9,7 +9,8 @@ import {
   validateServicePrincipalId,
   validateServicePrincipalPassword,
   validateServicePrincipalTenantId,
-  validateSubscriptionId
+  validateSubscriptionId,
+  validateStorageAccountName
 } from "../validator";
 import {
   ACR_NAME,
@@ -170,7 +171,7 @@ export const prompt = async (): Promise<RequestContext> => {
   return rc;
 };
 
-const validationServicePrincipalInfoFromFile = (
+export const validationServicePrincipalInfoFromFile = (
   rc: RequestContext,
   map: { [key: string]: string }
 ): void => {
@@ -247,6 +248,13 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     throw new Error(vToken);
   }
 
+  const vStorageAccountName = validateStorageAccountName(
+    map.az_storage_account_name
+  );
+  if (typeof vStorageAccountName === "string") {
+    throw new Error(vStorageAccountName);
+  }
+
   const rc: RequestContext = {
     accessToken: map.azdo_pat,
     orgName: map.azdo_org_name,
@@ -255,6 +263,7 @@ export const getAnswerFromFile = (file: string): RequestContext => {
     servicePrincipalPassword: map.az_sp_password,
     servicePrincipalTenantId: map.az_sp_tenant,
     acrName: map.az_acr_name || ACR_NAME,
+    storageAccountName: map.az_storage_account_name,
     workspace: WORKSPACE
   };
 

@@ -36,10 +36,13 @@ const positiveTest = (logExist?: boolean, withAppCreation = false): void => {
       (rc.servicePrincipalId = "b510c1ff-358c-4ed4-96c8-eb23f42bb65b");
     rc.servicePrincipalPassword = "a510c1ff-358c-4ed4-96c8-eb23f42bbc5b";
     rc.servicePrincipalTenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+    rc.storageAccountName = "teststore";
     rc.createdResourceGroup = true;
     rc.createdACR = true;
     rc.createdLifecyclePipeline = true;
     rc.createdBuildPipeline = true;
+    rc.createdStorageAccount = true;
+    rc.createdStorageAccount = true;
   }
   create(rc, file);
 
@@ -57,6 +60,7 @@ const positiveTest = (logExist?: boolean, withAppCreation = false): void => {
       "az_sp_tenant=72f988bf-86f1-41af-91ab-2d7cd011db47",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
       "az_acr_name=testacr",
+      "az_storage_account_name=teststore",
       "workspace: workspace",
       "Project Created: yes",
       "High Level Definition Repo Scaffolded: yes",
@@ -69,6 +73,7 @@ const positiveTest = (logExist?: boolean, withAppCreation = false): void => {
       "Lifecycle Pipeline Created: yes",
       "Build Pipeline Created: yes",
       "ACR Created: yes",
+      "Storage Account Created: yes",
       "Status: Completed"
     ]);
   } else {
@@ -83,6 +88,7 @@ const positiveTest = (logExist?: boolean, withAppCreation = false): void => {
       "az_sp_tenant=",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
       "az_acr_name=testacr",
+      "az_storage_account_name=",
       "workspace: workspace",
       "Project Created: yes",
       "High Level Definition Repo Scaffolded: yes",
@@ -95,6 +101,7 @@ const positiveTest = (logExist?: boolean, withAppCreation = false): void => {
       "Lifecycle Pipeline Created: no",
       "Build Pipeline Created: no",
       "ACR Created: no",
+      "Storage Account Created: no",
       "Status: Completed"
     ]);
   }
@@ -149,6 +156,7 @@ describe("test create function", () => {
       "az_sp_tenant=",
       "az_subscription_id=",
       "az_acr_name=",
+      "az_storage_account_name=",
       "workspace: workspace",
       "Project Created: yes",
       "High Level Definition Repo Scaffolded: yes",
@@ -161,6 +169,7 @@ describe("test create function", () => {
       "Lifecycle Pipeline Created: no",
       "Build Pipeline Created: no",
       "ACR Created: no",
+      "Storage Account Created: no",
       "Error: things broke",
       "Status: Incomplete"
     ]);
