@@ -50,6 +50,16 @@ export const create = (rc: RequestContext | undefined, file?: string): void => {
       buff.push("Status: Completed");
     }
 
+    console.log("");
+    console.log(buff.join("\n"));
+    console.log("");
+
+    if (rc.toCreateAppRepo && !rc.error) {
+      console.log(
+        `type "spk deployment get" or "spk deployment dashboard" command to view deployments information.`
+      );
+    }
+
     fs.writeFileSync(file, buff.join("\n"));
   }
 };
