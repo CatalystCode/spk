@@ -364,6 +364,9 @@ const testCreateAppRepoTasks = async (prApproved = true): Promise<void> => {
     .mockResolvedValueOnce(prApproved);
   if (prApproved) {
     jest.spyOn(pipelineService, "createBuildPipeline").mockResolvedValueOnce();
+    jest
+      .spyOn(promptInstance, "promptForApprovingHLDPullRequest")
+      .mockResolvedValueOnce(prApproved);
   }
 
   const res = await createAppRepoTasks(

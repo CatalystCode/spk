@@ -288,14 +288,8 @@ export const promptForApprovingHLDPullRequest = async (
     rc.projectName,
     HLD_REPO
   )}/pullrequest`;
-  const questions = [
-    {
-      default: true,
-      message: `Please approve and merge the Pull Request at ${urlPR}? Refresh the page if you do not see an active Pull Request.`,
-      name: "approve_hld_pr",
-      type: "confirm"
-    }
-  ];
-  const answers = await inquirer.prompt(questions);
+  const answers = await inquirer.prompt([
+    promptBuilder.approvingHLDPullRequest(urlPR)
+  ]);
   return !!answers.approve_hld_pr;
 };

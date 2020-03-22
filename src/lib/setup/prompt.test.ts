@@ -243,6 +243,8 @@ describe("test getAnswerFromFile function", () => {
       "azdo_pat=pat",
       "azdo_project_name=project",
       "az_create_app=true",
+      "az_storage_account_name=abc1234",
+      "az_storage_table=abc1234",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
     ];
     [".", ".##", ".abc"].forEach((v, i) => {
@@ -262,6 +264,40 @@ describe("test getAnswerFromFile function", () => {
         getAnswerFromFile(file);
       }).toThrow();
     });
+  });
+  it("negative test: with app creation, incorrect storage account name", () => {
+    const dir = createTempDir();
+    const file = path.join(dir, "testfile");
+    const data = [
+      "azdo_org_name=orgname",
+      "azdo_pat=pat",
+      "azdo_project_name=project",
+      "az_create_app=true",
+      "az_storage_account_name=ab",
+      "az_storage_table=abc1234",
+      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
+    ];
+    fs.writeFileSync(file, data.join("\n"));
+    expect(() => {
+      getAnswerFromFile(file);
+    }).toThrow();
+  });
+  it("negative test: with app creation, incorrect storage table name", () => {
+    const dir = createTempDir();
+    const file = path.join(dir, "testfile");
+    const data = [
+      "azdo_org_name=orgname",
+      "azdo_pat=pat",
+      "azdo_project_name=project",
+      "az_create_app=true",
+      "az_storage_account_name=abx1234",
+      "az_storage_table=*a",
+      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
+    ];
+    fs.writeFileSync(file, data.join("\n"));
+    expect(() => {
+      getAnswerFromFile(file);
+    }).toThrow();
   });
   it("negative test: with app creation, incorrect subscription id value", () => {
     const dir = createTempDir();

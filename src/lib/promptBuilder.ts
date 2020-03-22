@@ -192,3 +192,15 @@ export const storageAccountName = (
     validate: validator.validateStorageAccessKey
   };
 };
+
+export const approvingHLDPullRequest = (
+  url: string,
+  defaultValue = true
+): QuestionCollection => {
+  return {
+    default: defaultValue,
+    message: `Please approve and merge the Pull Request at ${url}? Refresh the page if you do not see an active Pull Request.`,
+    name: "approve_hld_pr",
+    type: "confirm"
+  };
+};
