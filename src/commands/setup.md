@@ -57,15 +57,18 @@ The followings shall be created
 5. A High Level Definition (HLD) to Manifest pipeline.
 6. If user chose to create sample app repo
    1. A Service Principal (if requested)
-   2. A resource group, `quick-start-rg` if it does not exist.
-   3. A Azure Container Registry, `quickStartACR` in resource group,
+   1. A resource group, `quick-start-rg` if it does not exist.
+   1. A storage account if it does not exist. Storage Account name has to be
+      unqiue acess Azure.
+   1. A storage table in the storage account.
+   1. A Azure Container Registry, `quickStartACR` in resource group,
       `quick-start-rg` if it does not exist.
-   4. A Git Repo, `quick-start-helm`, it shall be deleted and recreated if is
+   1. A Git Repo, `quick-start-helm`, it shall be deleted and recreated if is
       already exists.
-   5. A Git Repo, `quick-start-app`, it shall be deleted and recreated if is
+   1. A Git Repo, `quick-start-app`, it shall be deleted and recreated if is
       already exists.
-   6. A Lifecycle pipeline.
-   7. A Build pipeline.
+   1. A Lifecycle pipeline.
+   1. A Build pipeline.
 
 ## Setup log
 
