@@ -45,6 +45,10 @@ describe("test createSPKConfig function", () => {
     const data = readYaml<ConfigYaml>(tmpFile);
     expect(data.azure_devops).toStrictEqual({
       access_token: "pat",
+      hld_repository:
+        "https://dev.azure.com/orgname/project/_git/quick-start-hld",
+      manifest_repository:
+        "https://dev.azure.com/orgname/project/_git/quick-start-manifest",
       org: "orgname",
       project: "project"
     });
@@ -58,6 +62,10 @@ describe("test createSPKConfig function", () => {
     const data = readYaml<ConfigYaml>(tmpFile);
     expect(data.azure_devops).toStrictEqual({
       access_token: "pat",
+      hld_repository:
+        "https://dev.azure.com/orgname/project/_git/quick-start-hld",
+      manifest_repository:
+        "https://dev.azure.com/orgname/project/_git/quick-start-manifest",
       org: "orgname",
       project: "project"
     });
@@ -80,6 +88,10 @@ describe("test createSPKConfig function", () => {
     const data = readYaml<ConfigYaml>(tmpFile);
     expect(data.azure_devops).toStrictEqual({
       access_token: "pat",
+      hld_repository:
+        "https://dev.azure.com/orgname/project/_git/quick-start-hld",
+      manifest_repository:
+        "https://dev.azure.com/orgname/project/_git/quick-start-manifest",
       org: "orgname",
       project: "project"
     });

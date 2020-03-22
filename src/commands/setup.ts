@@ -10,6 +10,8 @@ import { create as createACR } from "../lib/azure/containerRegistryService";
 import { create as createResourceGroup } from "../lib/azure/resourceService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
 import {
+  HLD_REPO,
+  MANIFEST_REPO,
   RequestContext,
   RESOURCE_GROUP,
   RESOURCE_GROUP_LOCATION,
@@ -17,7 +19,7 @@ import {
   WORKSPACE
 } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
-import { getGitApi } from "../lib/setup/gitService";
+import { getAzureRepoUrl, getGitApi } from "../lib/setup/gitService";
 import {
   createBuildPipeline,
   createHLDtoManifestPipeline,
@@ -56,33 +58,30 @@ interface APIError {
  * @param answers Answers provided to the commander
  */
 export const createSPKConfig = (rc: RequestContext): void => {
-  if (!rc.toCreateAppRepo) {
-    fs.writeFileSync(
-      defaultConfigFile(),
-      yaml.safeDump({
-        azure_devops: {
-          access_token: rc.accessToken,
-          org: rc.orgName,
-          project: rc.projectName
-        }
-      })
-    );
-    return;
-  }
-
   const data: ConfigYaml = {
     azure_devops: {
       access_token: rc.accessToken,
       org: rc.orgName,
-      project: rc.projectName
-    },
-    introspection: {
-      azure: {
-        service_principal_id: rc.servicePrincipalId,
-        service_principal_secret: rc.servicePrincipalPassword,
-        subscription_id: rc.subscriptionId,
-        tenant_id: rc.servicePrincipalTenantId
-      }
+      project: rc.projectName,
+      hld_repository: getAzureRepoUrl(rc.orgName, rc.projectName, HLD_REPO),
+      manifest_repository: getAzureRepoUrl(
+        rc.orgName,
+        rc.projectName,
+        MANIFEST_REPO
+      )
+    }
+  };
+  if (!rc.toCreateAppRepo) {
+    fs.writeFileSync(defaultConfigFile(), yaml.safeDump(data));
+    return;
+  }
+
+  data.introspection = {
+    azure: {
+      service_principal_id: rc.servicePrincipalId,
+      service_principal_secret: rc.servicePrincipalPassword,
+      subscription_id: rc.subscriptionId,
+      tenant_id: rc.servicePrincipalTenantId
     }
   };
 
