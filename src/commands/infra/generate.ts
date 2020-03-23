@@ -22,6 +22,7 @@ import {
   spkTemplatesPath,
 } from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
+import { build as buildError } from "../../lib/errorBuilder";
 
 interface CommandOptions {
   project: string | undefined;
@@ -287,12 +288,10 @@ export const validateRemoteSource = async (
             version
           );
         } else {
-          throw new Error(
-            `Unable to determine error from supported retry cases ${err.message}`
-          );
+          throw buildError(1100, "infra-103", err);
         }
       } catch (retryError) {
-        throw new Error(`Failure error thrown during retry ${retryError}`);
+        throw buildError(1100, "infra-104", err);
       }
     }
   }
