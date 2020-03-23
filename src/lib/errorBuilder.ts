@@ -16,6 +16,16 @@ interface ErrorParam {
   values: string[];
 }
 
+const isErrorChainObject = (o: Error | ErrorChain): boolean => {
+  return "spkStatusCode" in o;
+};
+
+/**
+ * Returns formatted error message.
+ *
+ * @param errorInstance string or ErrorParam. latter is for
+ *                      string substitution in error message
+ */
 export const getErrorMessage = (errorInstance: string | ErrorParam): string => {
   let key = "";
   let values: string[] | undefined = undefined;
@@ -40,13 +50,25 @@ export const getErrorMessage = (errorInstance: string | ErrorParam): string => {
   return key;
 };
 
+/**
+ * Builds an error object
+ *
+ * @param code spk error code
+ * @param errorKey Error key. e.g. "infra-101" or can be an object
+ *                 to support string substitution in error message
+ *                 {
+ *                    errorKey: "infra-105",
+ *                    values: ["someValue"]
+ *                 }
+ * @param error: Parent error object.
+ */
 export const build = (
   code: number,
   errorKey: string | ErrorParam,
   error?: Error | ErrorChain
 ): ErrorChain => {
   if (!isValid(code)) {
-    throw Error(`invalid ststus code, ${code}`);
+    throw Error(`Invalid status code, ${code}`);
   }
 
   const oError: ErrorChain = {
@@ -55,7 +77,7 @@ export const build = (
   };
 
   if (error) {
-    if ("spkStatusCode" in error) {
+    if (isErrorChainObject(error)) {
       oError.parent = error as ErrorChain;
     } else {
       const e = error as Error;
@@ -66,6 +88,13 @@ export const build = (
   return oError;
 };
 
+/**
+ * Generates error messages and have them in messages array.
+ *
+ * @param error Error object
+ * @param messages string of messages
+ * @param padding Padding to be added to the beginning of messages
+ */
 export const message = (
   error: ErrorChain,
   messages: string[],
@@ -85,8 +114,13 @@ export const message = (
   }
 };
 
+/**
+ * Writing error log.
+ *
+ * @param err Error object
+ */
 export const log = (err: Error | ErrorChain): void => {
-  if ("spkStatusCode" in err) {
+  if (isErrorChainObject(err)) {
     const messages: string[] = [];
     message(err as ErrorChain, messages);
     logger.error("\n" + messages.join("\n"));
