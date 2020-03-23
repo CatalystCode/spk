@@ -171,7 +171,7 @@ describe("test validate function", () => {
       );
       expect(true).toBe(false);
     } catch (err) {
-      expect(err.spkStatusCode).toBe(1001);
+      expect(err.errorCode).toBe(1001);
     }
   });
   it("name, template, version is missing", () => {

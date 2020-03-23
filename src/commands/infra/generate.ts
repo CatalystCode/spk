@@ -183,14 +183,16 @@ export const checkRemoteGitExist = async (
 ): Promise<void> => {
   // Checking for git remote
   if (!fs.existsSync(sourcePath)) {
-    throw new Error(`${sourcePath} does not exist`);
+    throw buildError(1100, {
+      errorKey: "infra-109",
+      values: [sourcePath],
+    });
   }
 
   const result = await simpleGit(sourcePath).listRemote([source]);
   if (!result) {
     logger.error(result);
-    throw new Error(`Unable to clone the source remote repository. \
-The remote repo may not exist or you do not have the rights to access it`);
+    throw buildError(1100, "infra-108");
   }
 
   logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
@@ -293,6 +295,8 @@ export const validateRemoteSource = async (
       } catch (retryError) {
         throw buildError(1100, "infra-104", err);
       }
+    } else {
+      throw err;
     }
   }
 };

@@ -396,7 +396,7 @@ describe("test validateRemoteSource function", () => {
       });
       expect(true).toBe(false);
     } catch (err) {
-      expect(err.spkStatusCode).toBe(1100);
+      expect(err.errorCode).toBe(1100);
     }
   });
 });
