@@ -10,7 +10,7 @@
     "build-cmd-docs": "ts-node tools/generateDoc.ts",
     "lint": "eslint 'src/**/*.ts{,x}'",
     "lint-fix": "eslint --fix 'src/**/*.ts{,x}'",
-    "md-lint": "find guides -name \\*.md -exec markdown-link-check {} \\;",
+    "md-lint": "ts-node tools/mdLint.ts",
     "format": "prettier --write 'src/**/*.ts{,x}'",
     "test": "jest --rootDir src --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",
     "test-watch": "jest --watchAll",
