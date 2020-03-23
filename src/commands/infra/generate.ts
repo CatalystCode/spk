@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import commander from "commander";
 import fs from "fs";
 import fsExtra from "fs-extra";
@@ -38,51 +36,6 @@ export enum DefinitionYAMLExistence {
   BOTH_EXIST,
   PARENT_ONLY
 }
-
-export const execute = async (
-  opts: CommandOptions,
-  exitFn: (status: number) => Promise<void>
-): Promise<void> => {
-  const parentPath = process.cwd();
-  // if the "--project" argument is not specified, then it is assumed
-  // that the current working directory is the project path.
-  const projectPath = opts.project || parentPath;
-  const outputPath = opts.output || "";
-  try {
-    const definitionConfig = validateDefinition(parentPath, projectPath);
-    const sourceConfig = validateTemplateSources(
-      definitionConfig,
-      parentPath,
-      projectPath
-    );
-    await validateRemoteSource(sourceConfig);
-    await generateConfig(
-      parentPath,
-      projectPath,
-      definitionConfig,
-      sourceConfig,
-      outputPath
-    );
-    await exitFn(0);
-  } catch (err) {
-    logger.error("Error occurred while generating project deployment files");
-    logger.error(err);
-    await exitFn(1);
-  }
-};
-
-/**
- * Adds the init command to the commander command object
- *
- * @param command Commander command object to decorate
- */
-export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
-    await execute(opts, async (status: number) => {
-      await exitCmd(logger, process.exit, status);
-    });
-  });
-};
 
 /**
  * Checks if definition.yaml is present locally to provided project path
@@ -168,11 +121,21 @@ There is a missing field for it's sources. \
 Template: ${source.template} source: ${source.source} version: ${source.version}`
     );
   }
-  const safeLoggingUrl = safeGitUrlForLogging(source.source!);
+  const safeLoggingUrl = safeGitUrlForLogging(source.source);
   logger.info(
     `Checking for locally stored template: ${source.template} from remote repository: ${safeLoggingUrl} at version: ${source.version}`
   );
   return source;
+};
+
+/**
+ * Creates "generated" directory if it does not already exists
+ *
+ * @param projectPath path to the project directory
+ */
+export const createGenerated = (projectPath: string): void => {
+  mkdirp.sync(projectPath);
+  logger.info(`Created generated directory: ${projectPath}`);
 };
 
 export const checkRemoteGitExist = async (
@@ -215,6 +178,47 @@ export const gitCheckout = async (
 };
 
 /**
+ * Performs a 'git clone...'
+ *
+ * @param source git url to clone
+ * @param sourcePath location to clone repo to
+ */
+export const gitClone = async (
+  git: simpleGit.SimpleGit,
+  source: string,
+  sourcePath: string
+): Promise<void> => {
+  await git.clone(source, `${sourcePath}`);
+  logger.info(`Cloning source repo to .spk/templates was successful.`);
+};
+
+/**
+ * Creates "generated" directory if it does not already exists
+ *
+ * @param source remote URL for cloning to cache
+ * @param sourcePath Path to the template folder cache
+ * @param safeLoggingUrl URL with redacted authentication
+ * @param version version of terraform template
+ */
+
+export const retryRemoteValidate = async (
+  source: string,
+  sourcePath: string,
+  safeLoggingUrl: string,
+  version: string
+): Promise<void> => {
+  // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
+  fsExtra.removeSync(sourcePath);
+  createGenerated(sourcePath);
+  const git = simpleGit();
+  await gitClone(git, source, sourcePath);
+  await gitFetchPull(sourcePath, safeLoggingUrl);
+  logger.info(`Checking out template version: ${version}`);
+  await gitCheckout(sourcePath, version);
+  logger.info(`Successfully re-cloned repo`);
+};
+
+/**
  * Checks if provided source, template and version are valid. TODO/ Private Repo, PAT, ssh-key agent
  *
  * @param sourceConfig definition object
@@ -222,7 +226,9 @@ export const gitCheckout = async (
 export const validateRemoteSource = async (
   sourceConfig: SourceInformation
 ): Promise<void> => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const source = sourceConfig.source!;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const version = sourceConfig.version!;
 
   // Converting source name to storable folder name
@@ -298,21 +304,6 @@ export const validateRemoteSource = async (
   }
 };
 
-/**
- * Performs a 'git clone...'
- *
- * @param source git url to clone
- * @param sourcePath location to clone repo to
- */
-export const gitClone = async (
-  git: simpleGit.SimpleGit,
-  source: string,
-  sourcePath: string
-): Promise<void> => {
-  await git.clone(source, `${sourcePath}`);
-  logger.info(`Cloning source repo to .spk/templates was successful.`);
-};
-
 export const getParentGeneratedFolder = (
   parentPath: string,
   outputPath: string
@@ -322,6 +313,59 @@ export const getParentGeneratedFolder = (
     return path.join(outputPath, folderName + "-generated");
   }
   return parentPath + "-generated";
+};
+
+/**
+ * Returns an array of formatted string for a given definition object.
+ * e.g.
+ * {
+ *   keyA: "Value1",
+ *   keyB: "\"Value2"
+ * }
+ * results in ["keyA = "Value1"", "keyB = "\"Value2""]
+ *
+ * @param definition a dictionary of key, value
+ */
+export const generateTfvars = (
+  definition: { [key: string]: string } | undefined
+): string[] => {
+  if (!definition) {
+    return [];
+  }
+  return Object.keys(definition).map(k => `${k} = "${definition[k]}"`);
+};
+
+/**
+ * Checks if an spk.tfvars already exists
+ *
+ * @param generatedPath Path to the spk.tfvars file
+ * @param tfvarsFilename Name of .tfvars file
+ */
+export const checkTfvars = (
+  generatedPath: string,
+  tfvarsFilename: string
+): void => {
+  // Remove existing spk.tfvars if it already exists
+  if (fs.existsSync(path.join(generatedPath, tfvarsFilename))) {
+    fs.unlinkSync(path.join(generatedPath, tfvarsFilename));
+  }
+};
+
+/**
+ * Reads in a tfVars object and returns a spk.tfvars file
+ *
+ * @param spkTfVars spk tfvars object in an array
+ * @param generatedPath Path to write the spk.tfvars file to
+ * @param tfvarsFileName Name of the .tfvaras file
+ */
+export const writeTfvarsFile = (
+  spkTfVars: string[],
+  generatedPath: string,
+  tfvarsFilename: string
+): void => {
+  spkTfVars.forEach(tfvar => {
+    fs.appendFileSync(path.join(generatedPath, tfvarsFilename), tfvar + "\n");
+  });
 };
 
 export const generateConfigWithParentEqProjectPath = async (
@@ -350,78 +394,30 @@ export const generateConfigWithParentEqProjectPath = async (
 };
 
 /**
- * Creates "generated" directory if it does not already exists
+ * Replaces values from leaf definition in parent definition
  *
- * @param parentPath Path to the parent definition.yaml file
- * @param projectPath Path to the leaf definition.yaml file
- * @param definitionConfig Parent-leaf definition configuration
- * @param sourceConfig Array of source configuration
- * @param outputPath Path to outputted generated directory
+ * @param parentObject parent definition object
+ * @param leafObject leaf definition object
  */
-export const generateConfig = async (
-  parentPath: string,
-  projectPath: string,
-  definitionConfig: DefinitionYAMLExistence,
-  sourceConfig: SourceInformation,
-  outputPath: string
-): Promise<void> => {
-  const parentDirectory = getParentGeneratedFolder(parentPath, outputPath);
-  const sourceFolder = getSourceFolderNameFromURL(sourceConfig.source!);
-  const templatePath = path.join(
-    spkTemplatesPath,
-    sourceFolder,
-    sourceConfig.template!
-  );
-  const childDirectory =
-    projectPath === parentPath
-      ? parentPath
-      : path.join(parentDirectory, projectPath);
-
-  if (definitionConfig === DefinitionYAMLExistence.BOTH_EXIST) {
-    const parentInfraConfig = getDefinitionYaml(parentPath);
-    const leafInfraConfig = getDefinitionYaml(projectPath);
-
-    if (projectPath === parentPath) {
-      await generateConfigWithParentEqProjectPath(
-        parentDirectory,
-        templatePath,
-        parentInfraConfig
-      );
-    } else {
-      createGenerated(parentDirectory);
-      createGenerated(childDirectory);
-    }
-
-    combineVariable(
-      parentInfraConfig.variables!,
-      leafInfraConfig.variables!,
-      childDirectory,
-      SPK_TFVARS
-    );
-
-    // Create a backend.tfvars for remote backend configuration
-    if (parentInfraConfig.backend && leafInfraConfig.backend) {
-      combineVariable(
-        parentInfraConfig.backend,
-        leafInfraConfig.backend,
-        childDirectory,
-        BACKEND_TFVARS
-      );
-    }
-    await copyTfTemplate(templatePath, childDirectory, true);
-  } else if (definitionConfig === DefinitionYAMLExistence.PARENT_ONLY) {
-    const parentInfraConfig = getDefinitionYaml(parentPath);
-    // there will not be a case here when parentPath === projectPath
-    // here because if both are the same, we would have
-    // DefinitionYAMLExistence.BOTH_EXIST and not
-    // DefinitionYAMLExistence.PARENT_ONLY)
-    await singleDefinitionGeneration(
-      parentInfraConfig,
-      parentDirectory,
-      childDirectory,
-      templatePath
-    );
+export const dirIteration = (
+  parentObject: { [key: string]: string } | undefined,
+  leafObject: { [key: string]: string } | undefined
+): { [key: string]: string } => {
+  if (!parentObject) {
+    return !leafObject ? {} : deepClone(leafObject);
   }
+  if (!leafObject) {
+    return parentObject;
+  }
+
+  // parent take leaf's value
+  Object.keys(leafObject).forEach(k => {
+    if (leafObject[k]) {
+      parentObject[k] = leafObject[k];
+    }
+  });
+
+  return parentObject;
 };
 
 const combineVariable = (
@@ -468,117 +464,125 @@ export const singleDefinitionGeneration = async (
 };
 
 /**
- * Replaces values from leaf definition in parent definition
- *
- * @param parentObject parent definition object
- * @param leafObject leaf definition object
- */
-export const dirIteration = (
-  parentObject: { [key: string]: string } | undefined,
-  leafObject: { [key: string]: string } | undefined
-): { [key: string]: string } => {
-  if (!parentObject) {
-    return !leafObject ? {} : deepClone(leafObject);
-  }
-  if (!leafObject) {
-    return parentObject;
-  }
-
-  // parent take leaf's value
-  Object.keys(leafObject).forEach(k => {
-    if (leafObject[k]) {
-      parentObject[k] = leafObject[k];
-    }
-  });
-
-  return parentObject;
-};
-
-/**
  * Creates "generated" directory if it does not already exists
  *
- * @param projectPath path to the project directory
+ * @param parentPath Path to the parent definition.yaml file
+ * @param projectPath Path to the leaf definition.yaml file
+ * @param definitionConfig Parent-leaf definition configuration
+ * @param sourceConfig Array of source configuration
+ * @param outputPath Path to outputted generated directory
  */
-export const createGenerated = (projectPath: string): void => {
-  mkdirp.sync(projectPath);
-  logger.info(`Created generated directory: ${projectPath}`);
-};
-
-/**
- * Creates "generated" directory if it does not already exists
- *
- * @param source remote URL for cloning to cache
- * @param sourcePath Path to the template folder cache
- * @param safeLoggingUrl URL with redacted authentication
- * @param version version of terraform template
- */
-
-export const retryRemoteValidate = async (
-  source: string,
-  sourcePath: string,
-  safeLoggingUrl: string,
-  version: string
+export const generateConfig = async (
+  parentPath: string,
+  projectPath: string,
+  definitionConfig: DefinitionYAMLExistence,
+  sourceConfig: SourceInformation,
+  outputPath: string
 ): Promise<void> => {
-  // SPK can assume that there is a remote that it has access to since it was able to compare commit histories. Delete cache and reset on provided remote
-  fsExtra.removeSync(sourcePath);
-  createGenerated(sourcePath);
-  const git = simpleGit();
-  await gitClone(git, source, sourcePath);
-  await gitFetchPull(sourcePath, safeLoggingUrl);
-  logger.info(`Checking out template version: ${version}`);
-  await gitCheckout(sourcePath, version);
-  logger.info(`Successfully re-cloned repo`);
+  const parentDirectory = getParentGeneratedFolder(parentPath, outputPath);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const sourceFolder = getSourceFolderNameFromURL(sourceConfig.source!);
+  const templatePath = path.join(
+    spkTemplatesPath,
+    sourceFolder,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    sourceConfig.template!
+  );
+  const childDirectory =
+    projectPath === parentPath
+      ? parentPath
+      : path.join(parentDirectory, projectPath);
+
+  if (definitionConfig === DefinitionYAMLExistence.BOTH_EXIST) {
+    const parentInfraConfig = getDefinitionYaml(parentPath);
+    const leafInfraConfig = getDefinitionYaml(projectPath);
+
+    if (projectPath === parentPath) {
+      await generateConfigWithParentEqProjectPath(
+        parentDirectory,
+        templatePath,
+        parentInfraConfig
+      );
+    } else {
+      createGenerated(parentDirectory);
+      createGenerated(childDirectory);
+    }
+
+    combineVariable(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      parentInfraConfig.variables!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      leafInfraConfig.variables!,
+      childDirectory,
+      SPK_TFVARS
+    );
+
+    // Create a backend.tfvars for remote backend configuration
+    if (parentInfraConfig.backend && leafInfraConfig.backend) {
+      combineVariable(
+        parentInfraConfig.backend,
+        leafInfraConfig.backend,
+        childDirectory,
+        BACKEND_TFVARS
+      );
+    }
+    await copyTfTemplate(templatePath, childDirectory, true);
+  } else if (definitionConfig === DefinitionYAMLExistence.PARENT_ONLY) {
+    const parentInfraConfig = getDefinitionYaml(parentPath);
+    // there will not be a case here when parentPath === projectPath
+    // here because if both are the same, we would have
+    // DefinitionYAMLExistence.BOTH_EXIST and not
+    // DefinitionYAMLExistence.PARENT_ONLY)
+    await singleDefinitionGeneration(
+      parentInfraConfig,
+      parentDirectory,
+      childDirectory,
+      templatePath
+    );
+  }
 };
 
-/**
- * Checks if an spk.tfvars already exists
- *
- * @param generatedPath Path to the spk.tfvars file
- * @param tfvarsFilename Name of .tfvars file
- */
-export const checkTfvars = (
-  generatedPath: string,
-  tfvarsFilename: string
-): void => {
-  // Remove existing spk.tfvars if it already exists
-  if (fs.existsSync(path.join(generatedPath, tfvarsFilename))) {
-    fs.unlinkSync(path.join(generatedPath, tfvarsFilename));
+export const execute = async (
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
+  const parentPath = process.cwd();
+  // if the "--project" argument is not specified, then it is assumed
+  // that the current working directory is the project path.
+  const projectPath = opts.project || parentPath;
+  const outputPath = opts.output || "";
+  try {
+    const definitionConfig = validateDefinition(parentPath, projectPath);
+    const sourceConfig = validateTemplateSources(
+      definitionConfig,
+      parentPath,
+      projectPath
+    );
+    await validateRemoteSource(sourceConfig);
+    await generateConfig(
+      parentPath,
+      projectPath,
+      definitionConfig,
+      sourceConfig,
+      outputPath
+    );
+    await exitFn(0);
+  } catch (err) {
+    logger.error("Error occurred while generating project deployment files");
+    logger.error(err);
+    await exitFn(1);
   }
 };
 
 /**
- * Returns an array of formatted string for a given definition object.
- * e.g.
- * {
- *   keyA: "Value1",
- *   keyB: "\"Value2"
- * }
- * results in ["keyA = "Value1"", "keyB = "\"Value2""]
+ * Adds the init command to the commander command object
  *
- * @param definition a dictionary of key, value
+ * @param command Commander command object to decorate
  */
-export const generateTfvars = (
-  definition: { [key: string]: string } | undefined
-): string[] => {
-  if (!definition) {
-    return [];
-  }
-  return Object.keys(definition).map(k => `${k} = "${definition[k]}"`);
-};
-
-/**
- * Reads in a tfVars object and returns a spk.tfvars file
- *
- * @param spkTfVars spk tfvars object in an array
- * @param generatedPath Path to write the spk.tfvars file to
- * @param tfvarsFileName Name of the .tfvaras file
- */
-export const writeTfvarsFile = (
-  spkTfVars: string[],
-  generatedPath: string,
-  tfvarsFilename: string
-): void => {
-  spkTfVars.forEach(tfvar => {
-    fs.appendFileSync(path.join(generatedPath, tfvarsFilename), tfvar + "\n");
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
+    await execute(opts, async (status: number) => {
+      await exitCmd(logger, process.exit, status);
+    });
   });
 };

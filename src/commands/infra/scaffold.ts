@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import commander from "commander";
 import fs from "fs";
 import fsextra from "fs-extra";
@@ -60,7 +59,10 @@ or PAT embedded in source URL.`);
 
 // Construct the source based on the the passed configurations of spk-config.yaml
 export const constructSource = (config: ConfigYaml): string => {
-  const devops = config.azure_devops!;
+  if (!config.azure_devops) {
+    throw Error("azure_devops property is missing in spk config.yaml");
+  }
+  const devops = config.azure_devops;
   const source = `https://spk:${devops.access_token}@${devops.infra_repository}`;
   logger.info(
     `Infrastructure repository detected from initialized spk-config.yaml.`
