@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import { VariableGroupParameters } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
+import {
+  VariableGroup,
+  VariableGroupParameters,
+} from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import uuid from "uuid/v4";
 import * as azdoClient from "../azdoClient";
 import { readYaml } from "../../config";
@@ -12,7 +15,7 @@ import {
   authorizeAccessToAllPipelines,
   buildVariablesMap,
   deleteVariableGroup,
-  doAddVariableGroup
+  doAddVariableGroup,
 } from "./variableGroup";
 import * as variableGroup from "./variableGroup";
 import * as serviceEndpoint from "./serviceEndpoint";
@@ -40,7 +43,7 @@ describe("addVariableGroup", () => {
   });
   test("should fail when variable group config variables are not set", async () => {
     (readYaml as jest.Mock).mockReturnValueOnce({
-      variables: undefined
+      variables: undefined,
     });
 
     const data = readYaml<VariableGroupData>("");
@@ -55,10 +58,10 @@ describe("addVariableGroup", () => {
         {
           var1: {
             isSecret: true,
-            value: "val1"
-          }
-        }
-      ]
+            value: "val1",
+          },
+        },
+      ],
     });
     const data = readYaml<VariableGroupData>("");
     jest.spyOn(variableGroup, "doAddVariableGroup").mockResolvedValueOnce({});
@@ -81,10 +84,10 @@ describe("addVariableGroupWithKeyVaultMap", () => {
       variables: [
         {
           secret1: {
-            enabled: true
-          }
-        }
-      ]
+            enabled: true,
+          },
+        },
+      ],
     });
     const data = readYaml<VariableGroupData>("");
     await expect(addVariableGroupWithKeyVaultMap(data)).rejects.toThrow();
@@ -99,18 +102,18 @@ describe("addVariableGroupWithKeyVaultMap", () => {
           service_principal_secret: "secret",
           subscription_id: "id",
           subscription_name: "subname",
-          tenant_id: "tid"
-        }
+          tenant_id: "tid",
+        },
       },
       name: "myvg",
       type: "AzureKeyVault",
       variables: [
         {
           secret1: {
-            enabled: true
-          }
-        }
-      ]
+            enabled: true,
+          },
+        },
+      ],
     });
 
     const data = readYaml<VariableGroupData>("");
@@ -121,16 +124,16 @@ describe("addVariableGroupWithKeyVaultMap", () => {
       description: "myvg desc",
       key_vault_provider: {
         name: "mykv",
-        service_endpoint: {}
+        service_endpoint: {},
       },
       name: "myvg",
       variables: [
         {
           secret1: {
-            enabled: true
-          }
-        }
-      ]
+            enabled: true,
+          },
+        },
+      ],
     });
     const data = readYaml<VariableGroupData>("");
     await expect(addVariableGroupWithKeyVaultMap(data)).rejects.toThrow();
@@ -146,24 +149,24 @@ describe("addVariableGroupWithKeyVaultMap", () => {
           service_principal_secret: "princsecret",
           subscription_id: "subid",
           subscription_name: "subname",
-          tenant_id: "tenid"
-        }
+          tenant_id: "tenid",
+        },
       },
       name: "myvg",
       variables: [
         {
           secret1: {
-            enabled: true
-          }
-        }
-      ]
+            enabled: true,
+          },
+        },
+      ],
     });
 
     const data = readYaml<VariableGroupData>("");
     jest
       .spyOn(serviceEndpoint, "createServiceEndpointIfNotExists")
       .mockResolvedValueOnce({
-        id: "test"
+        id: "test",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
     jest.spyOn(variableGroup, "doAddVariableGroup").mockResolvedValueOnce({});
@@ -175,16 +178,16 @@ describe("addVariableGroupWithKeyVaultMap", () => {
 const mockForDoAddVariableGroupTest = (): void => {
   jest.spyOn(config, "Config").mockReturnValueOnce({
     azure_devops: {
-      project: "project"
-    }
+      project: "project",
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
   jest.spyOn(azdoClient, "getTaskAgentApi").mockResolvedValueOnce({
     addVariableGroup: () => {
       return {
-        id: "test"
+        id: "test",
       };
-    }
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
   jest
@@ -209,13 +212,13 @@ describe("doAddVariableGroup", () => {
       variables: {
         var1: {
           isSecret: false,
-          value: "val1"
+          value: "val1",
         },
         var2: {
           isSecret: true,
-          value: "val2"
-        }
-      }
+          value: "val2",
+        },
+      },
     });
 
     const data = readYaml<VariableGroupData>("");
@@ -226,7 +229,7 @@ describe("doAddVariableGroup", () => {
       description: data.description,
       name: data.name,
       type: data.type,
-      variables: variablesMap
+      variables: variablesMap,
     };
 
     const group = await doAddVariableGroup(params, true);
@@ -244,21 +247,21 @@ describe("doAddVariableGroup", () => {
           service_principal_secret: "princsecret",
           subscription_id: "subid",
           subscription_name: "subname",
-          tenant_id: "tenid"
-        }
+          tenant_id: "tenid",
+        },
       },
       name: uuid(),
       type: "AzureKeyVault",
       variables: {
         var1: {
           isSecret: false,
-          value: "val1"
+          value: "val1",
         },
         var2: {
           isSecret: true,
-          value: "val2"
-        }
-      }
+          value: "val2",
+        },
+      },
     });
 
     const data = readYaml<VariableGroupData>("");
@@ -268,7 +271,7 @@ describe("doAddVariableGroup", () => {
       description: data.description,
       name: data.name,
       type: data.type,
-      variables: buildVariablesMap(data.variables)
+      variables: buildVariablesMap(data.variables),
     };
 
     const group = await doAddVariableGroup(params, true);
@@ -280,29 +283,29 @@ describe("authorizeAccessToAllPipelines", () => {
   test("negative test", async () => {
     await expect(
       authorizeAccessToAllPipelines({
-        id: undefined
+        id: undefined,
       })
     ).rejects.toThrow();
   });
   test("should pass when valid variable group is passed", async () => {
     jest.spyOn(config, "Config").mockReturnValueOnce({
       azure_devops: {
-        project: "test"
-      }
+        project: "test",
+      },
     });
     jest.spyOn(azdoClient, "getBuildApi").mockResolvedValueOnce({
       authorizeProjectResources: () => {
         return [
           {
-            authorized: true
-          }
+            authorized: true,
+          },
         ];
-      }
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const authorized = await authorizeAccessToAllPipelines({
       id: 1,
-      name: "group"
+      name: "group",
     });
     expect(authorized).toBeTruthy();
   });
@@ -313,7 +316,7 @@ describe("authorizeAccessToAllPipelines", () => {
     await expect(
       authorizeAccessToAllPipelines({
         id: 1,
-        name: "group"
+        name: "group",
       })
     ).rejects.toThrow();
   });
@@ -324,12 +327,12 @@ describe("buildVariablesMap", () => {
     const variables: VariableGroupDataVariable = {
       var1: {
         isSecret: false,
-        value: "val1"
+        value: "val1",
       },
       var2: {
         isSecret: true,
-        value: "val2"
-      }
+        value: "val2",
+      },
     };
 
     const map = buildVariablesMap(variables);
@@ -340,8 +343,8 @@ describe("buildVariablesMap", () => {
     const variables: VariableGroupDataVariable = {
       var1: {
         isSecret: false,
-        value: "val1"
-      }
+        value: "val1",
+      },
     };
 
     const map = buildVariablesMap(variables);
@@ -357,11 +360,11 @@ describe("buildVariablesMap", () => {
   test("should create variable map with two secrets", async () => {
     const variables: VariableGroupDataVariable = {
       secret1: {
-        enabled: false
+        enabled: false,
       },
       secret2: {
-        enabled: true
-      }
+        enabled: true,
+      },
     };
 
     const secretsMap = buildVariablesMap(variables);
@@ -371,8 +374,8 @@ describe("buildVariablesMap", () => {
   test("should create variable map with one secret", async () => {
     const variables: VariableGroupDataVariable = {
       secret1: {
-        enabled: true
-      }
+        enabled: true,
+      },
     };
 
     const secretsMap = buildVariablesMap(variables);
@@ -392,9 +395,9 @@ describe("test deleteVariableGroup function", () => {
       deleteVariableGroup: delFn,
       getVariableGroups: () => [
         {
-          id: "test"
-        }
-      ]
+          id: "test",
+        },
+      ],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const deleted = await deleteVariableGroup({}, "test");
@@ -405,7 +408,7 @@ describe("test deleteVariableGroup function", () => {
     const delFn = jest.fn();
     jest.spyOn(azdoClient, "getTaskAgentApi").mockResolvedValueOnce({
       deleteVariableGroup: delFn,
-      getVariableGroups: () => []
+      getVariableGroups: () => [],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const deleted = await deleteVariableGroup({}, "test");
