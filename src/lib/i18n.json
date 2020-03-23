@@ -23,7 +23,6 @@
     "infra-104": "Failure error thrown during retrying validating remote git source.",
     "infra-105": "Unable to find Terraform environment. Ensure template path {0} exists.",
     "infra-106": "Provided Terraform {0} path is invalid or cannot be found: {1}",
-    "infra-107": "Unable to create scaffold",
-    "infra-108": "Unable to read {0}"
+    "infra-107": "Unable to create scaffold"
   }
 }

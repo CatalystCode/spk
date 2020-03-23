@@ -310,10 +310,8 @@ export const removeTemplateFiles = (envPath: string): void => {
         fs.unlinkSync(path.join(envPath, f));
       });
   } catch (e) {
-    throw buildError(1002, {
-      errorKey: "infra-108",
-      values: [envPath],
-    });
+    logger.warn(`cannot read ${envPath}`);
+    // TOFIX: I guess we are ok with files not removed.
   }
 };
 

@@ -396,9 +396,7 @@ describe("test validateRemoteSource function", () => {
       });
       expect(true).toBe(false);
     } catch (err) {
-      expect(err.message).toBe(
-        "Failure error thrown during retry Error: Unable to determine error from supported retry cases other error"
-      );
+      expect(err.spkStatusCode).toBe(1100);
     }
   });
 });
