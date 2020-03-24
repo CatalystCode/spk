@@ -11,6 +11,7 @@ import {
   getTaskAgentApi,
   getWebApi,
   invalidateWebApi,
+  repositoryExists,
   repositoryHasFile,
 } from "./azdoClient";
 import * as azdoClient from "./azdoClient";
@@ -141,6 +142,49 @@ describe("test getBuildApi function", () => {
     mockConfig(); // empty config. still work because API client is cached
     const again = await getBuildApi();
     expect(again).toBeDefined();
+  });
+});
+
+describe("repositoryExists", () => {
+  test("repository exists", async () => {
+    const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
+    createPullRequestFunc.mockReturnValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Promise.resolve({ getRepository: () => ({ id: "3839fjfkj" }) } as any)
+    );
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+    let hasError = false;
+
+    try {
+      await repositoryExists("my-project", "my-repo", accessOpts);
+    } catch (err) {
+      hasError = true;
+    }
+    expect(hasError).toBe(false);
+  });
+  test("repository does not exist", async () => {
+    const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
+    createPullRequestFunc.mockReturnValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Promise.resolve({ getRepository: () => null } as any)
+    );
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+    let hasError = false;
+
+    try {
+      await repositoryExists("my-project", "my-repo", accessOpts);
+    } catch (err) {
+      hasError = true;
+    }
+    expect(hasError).toBe(true);
   });
 });
 

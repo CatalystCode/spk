@@ -157,3 +157,24 @@ export const repositoryHasFile = async (
     );
   }
 };
+
+/**
+ * Checks if a repository exists in the given project
+ * @param project The Azure DevOps project name
+ * @param repoName The name of the repository
+ * @param accessOpts The Azure DevOps access options to the repository
+ */
+export const repositoryExists = async (
+  project: string,
+  repoName: string,
+  accessOpts: AzureDevOpsOpts
+): Promise<void> => {
+  const gitApi = await GitAPI(accessOpts);
+  const repo = await gitApi.getRepository(repoName, project);
+
+  if (!repo) {
+    throw Error(
+      `Project '${project}' does not contain repository '${repoName}'.`
+    );
+  }
+};
