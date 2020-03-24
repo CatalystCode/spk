@@ -50,6 +50,7 @@
         "registryURL": "hellorings.azurecr.io",
         "registryResourceGroup": "bedrock-rings"
       },
+      "pr": "1123",
       "commitId": "c626394",
       "hldCommitId": "a3dc9a7",
       "imageTag": "hello-bedrock-master-6053",
@@ -224,6 +225,7 @@
         "registryURL": "hellorings.azurecr.io",
         "registryResourceGroup": "bedrock-rings"
       },
+      "pr": "1125",
       "commitId": "5b54eb4",
       "hldCommitId": "18abc7a",
       "imageTag": "hello-bedrock-master-6074",
@@ -572,6 +574,7 @@
         "registryURL": "hellorings.azurecr.io",
         "registryResourceGroup": "bedrock-rings"
       },
+      "pr": "1126",
       "commitId": "65d30ef",
       "hldCommitId": "51feb51",
       "imageTag": "hello-bedrock-master-5975",

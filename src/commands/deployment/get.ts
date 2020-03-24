@@ -195,11 +195,11 @@ export const getDeployments = (
         if (values.outputFormat === OUTPUT_FORMAT.WIDE) {
           getPRs(deployments);
         }
-        Promise.all(promises).then(() => {
-          if (values.outputFormat === OUTPUT_FORMAT.JSON) {
-            console.log(JSON.stringify(deployments, null, 2));
-            resolve(deployments);
-          } else {
+        if (values.outputFormat === OUTPUT_FORMAT.JSON) {
+          console.log(JSON.stringify(deployments, null, 2));
+          resolve(deployments);
+        } else {
+          Promise.all(promises).then(() => {
             printDeployments(
               deployments,
               values.outputFormat,
@@ -207,8 +207,8 @@ export const getDeployments = (
               syncStatuses
             );
             resolve(deployments);
-          }
-        });
+          });
+        }
       })
       .catch((e) => {
         reject(new Error(e));
@@ -464,7 +464,7 @@ export const printDeployments = (
       row.push(deployment.hldCommitId || "-");
       row.push(dockerToHldStatus);
 
-      // Print PR if available and if output requested is wide
+      // Print PR if available
       if (
         prsExist &&
         deployment.pr &&
@@ -480,6 +480,7 @@ export const printDeployments = (
       } else if (prsExist) {
         row.push("-");
       }
+
       row.push(
         deployment.hldToManifestBuild ? deployment.hldToManifestBuild.id : "-"
       );
@@ -523,6 +524,10 @@ export const printDeployments = (
   }
 };
 
+/**
+ * Gets PR information for all the deployments
+ * @param deployments all deployments to be displayed
+ */
 export const getPRs = (deployments: IDeployment[] | undefined) => {
   if (deployments && deployments.length > 0) {
     deployments.forEach((deployment: IDeployment) => {
@@ -531,6 +536,11 @@ export const getPRs = (deployments: IDeployment[] | undefined) => {
   }
 };
 
+/**
+ * Fetches pull request data for deployments that complete merge into HLD
+ * by merging a PR
+ * @param deployment deployment for which PR has to be fetched
+ */
 export const fetchPRInformation = (deployment: IDeployment) => {
   const config = Config();
   if (!deployment.hldRepo || !deployment.pr) {
