@@ -28,13 +28,14 @@ class ErrorChain extends Error {
     let key = "";
     let values: string[] | undefined = undefined;
 
-    if (typeof errorInstance === "object") {
+    if (typeof errorInstance === "string") {
+      key = errorInstance;
+    } else {
       key = errorInstance.errorKey;
       values = errorInstance.values;
-    } else {
-      key = errorInstance;
     }
 
+    // if key is found in i18n json
     if (key in errors) {
       let results = errors[key];
       if (values) {
