@@ -20,9 +20,9 @@ const location = uuid();
       service_principal_id: uuid(),
       service_principal_secret: uuid(),
       subscription_id: uuid,
-      tenant_id: uuid
-    }
-  }
+      tenant_id: uuid,
+    },
+  },
 });
 
 const mockGetStorageManagementClient = (
@@ -38,7 +38,7 @@ const mockGetStorageManagementClient = (
         if (hasResourceGroups) {
           return [
             { name: "testAccountName" },
-            { name: "otherTestAccountName" }
+            { name: "otherTestAccountName" },
           ];
         }
         return undefined;
@@ -47,13 +47,13 @@ const mockGetStorageManagementClient = (
         return {};
       },
       create(): Promise<unknown> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           resolve({
-            status: "created"
+            status: "created",
           });
         });
-      }
-    }
+      },
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
 };
@@ -100,8 +100,8 @@ describe("get storage account key", () => {
       storageAccounts: {
         listKeys: (): never => {
           throw Error("fake");
-        }
-      }
+        },
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     await expect(
@@ -113,8 +113,8 @@ describe("get storage account key", () => {
       storageAccounts: {
         listKeys: (): unknown => {
           return {};
-        }
-      }
+        },
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const key = await storage.getStorageAccountKey(
@@ -128,8 +128,8 @@ describe("get storage account key", () => {
       storageAccounts: {
         listKeys: (): unknown => {
           return { keys: [{ value: "testkey" }] };
-        }
-      }
+        },
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const key = await storage.getStorageAccountKey(
@@ -184,8 +184,8 @@ describe("get storage account keys", () => {
       storageAccounts: {
         listKeys: (): unknown => {
           return { keys: [{ value: "testkey" }] };
-        }
-      }
+        },
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const keys = await storage.getStorageAccountKeys(
@@ -222,7 +222,7 @@ describe("storage account exists", () => {
   test("invalid resource group", async () => {
     jest.spyOn(storage, "getStorageAccount").mockResolvedValueOnce({
       enableHttpsTrafficOnly: true,
-      location: "uswest"
+      location: "uswest",
     });
     try {
       await storage.isStorageAccountExist("", "testAccountName");

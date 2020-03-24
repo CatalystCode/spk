@@ -9,7 +9,7 @@ import {
   AzurePipelinesYaml,
   BedrockFile,
   ConfigYaml,
-  MaintainersFile
+  MaintainersFile,
 } from "./types";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,7 +182,7 @@ export const Bedrock = (fileDirectory = process.cwd()): BedrockFile => {
         );
       }
     })
-    .filter(e => !!e) as Error[];
+    .filter((e) => !!e) as Error[];
   // log all the errors and throw an exception if their are any
   if (helmErrors.length > 0) {
     for (const error of helmErrors) {
@@ -266,7 +266,9 @@ export const saveConfiguration = (
   targetDir: string = defaultConfigDir()
 ): void => {
   try {
-    const data = yaml.safeDump(readYaml<ConfigYaml>(sourceFilePath));
+    const data = yaml.safeDump(readYaml<ConfigYaml>(sourceFilePath), {
+      lineWidth: Number.MAX_SAFE_INTEGER,
+    });
     const targetFile = path.join(targetDir, "config.yaml");
     fs.writeFileSync(targetFile, data);
   } catch (err) {

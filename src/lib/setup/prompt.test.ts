@@ -13,7 +13,7 @@ import {
   promptForACRName,
   promptForApprovingHLDPullRequest,
   promptForServicePrincipalCreation,
-  validationServicePrincipalInfoFromFile
+  validationServicePrincipalInfoFromFile,
 } from "./prompt";
 import * as promptInstance from "./prompt";
 import * as gitService from "./gitService";
@@ -26,7 +26,7 @@ describe("test prompt function", () => {
       azdo_org_name: "org",
       azdo_pat: "pat",
       azdo_project_name: "project",
-      create_app_repo: false
+      create_app_repo: false,
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     const ans = await prompt();
@@ -35,7 +35,7 @@ describe("test prompt function", () => {
       orgName: "org",
       projectName: "project",
       toCreateAppRepo: false,
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     });
   });
   it("positive test: create SP", async () => {
@@ -43,25 +43,25 @@ describe("test prompt function", () => {
       azdo_org_name: "org",
       azdo_pat: "pat",
       azdo_project_name: "project",
-      create_app_repo: true
+      create_app_repo: true,
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      create_service_principal: true
+      create_service_principal: true,
     });
 
     jest.spyOn(servicePrincipalService, "azCLILogin").mockResolvedValueOnce([
       {
         id: "72f988bf-86f1-41af-91ab-2d7cd011db48",
-        name: "subname"
-      }
+        name: "subname",
+      },
     ]);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      az_subscription: "subname"
+      az_subscription: "subname",
     });
 
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      acr_name: "testACR"
+      acr_name: "testACR",
     });
 
     jest
@@ -69,7 +69,7 @@ describe("test prompt function", () => {
       .mockResolvedValueOnce({
         id: "b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
         password: "a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
-        tenantId: "72f988bf-86f1-41af-91ab-2d7cd011db47"
+        tenantId: "72f988bf-86f1-41af-91ab-2d7cd011db47",
       });
 
     const ans = await prompt();
@@ -85,7 +85,7 @@ describe("test prompt function", () => {
       subscriptionId: "72f988bf-86f1-41af-91ab-2d7cd011db48",
       toCreateAppRepo: true,
       toCreateSP: true,
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     });
   });
   it("positive test: no create SP", async () => {
@@ -93,25 +93,25 @@ describe("test prompt function", () => {
       azdo_org_name: "org",
       azdo_pat: "pat",
       azdo_project_name: "project",
-      create_app_repo: true
+      create_app_repo: true,
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce(answers);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      create_service_principal: false
+      create_service_principal: false,
     });
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
       az_sp_id: "b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
       az_sp_password: "a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
-      az_sp_tenant: "72f988bf-86f1-41af-91ab-2d7cd011db47"
+      az_sp_tenant: "72f988bf-86f1-41af-91ab-2d7cd011db47",
     });
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      acr_name: "testACR"
+      acr_name: "testACR",
     });
     jest.spyOn(subscriptionService, "getSubscriptions").mockResolvedValueOnce([
       {
         id: "72f988bf-86f1-41af-91ab-2d7cd011db48",
-        name: "test"
-      }
+        name: "test",
+      },
     ]);
     const ans = await prompt();
     expect(ans).toStrictEqual({
@@ -125,7 +125,7 @@ describe("test prompt function", () => {
       subscriptionId: "72f988bf-86f1-41af-91ab-2d7cd011db48",
       toCreateAppRepo: true,
       toCreateSP: false,
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     });
   });
 });
@@ -139,7 +139,7 @@ describe("test getAnswerFromFile function", () => {
       "azdo_pat=pat",
       "azdo_project_name=project",
       "az_storage_account_name=teststore",
-      "az_storage_table=storagetable"
+      "az_storage_table=storagetable",
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
@@ -155,7 +155,7 @@ describe("test getAnswerFromFile function", () => {
       "azdo_org_name=orgname",
       "azdo_pat=pat",
       "az_storage_account_name=teststore",
-      "az_storage_table=storagetable"
+      "az_storage_table=storagetable",
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
@@ -184,7 +184,7 @@ describe("test getAnswerFromFile function", () => {
     const data = [
       "azdo_org_name=orgname",
       "azdo_project_name=.project",
-      "azdo_pat=pat"
+      "azdo_pat=pat",
     ];
     fs.writeFileSync(file, data.join("\n"));
     expect(() => {
@@ -213,7 +213,7 @@ describe("test getAnswerFromFile function", () => {
       "az_sp_tenant=72f988bf-86f1-41af-91ab-2d7cd011db47",
       "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
       "az_storage_account_name=teststore",
-      "az_storage_table=storagetable"
+      "az_storage_table=storagetable",
     ];
     fs.writeFileSync(file, data.join("\n"));
     const requestContext = getAnswerFromFile(file);
@@ -245,7 +245,7 @@ describe("test getAnswerFromFile function", () => {
       "az_create_app=true",
       "az_storage_account_name=abc1234",
       "az_storage_table=abc1234",
-      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
+      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
     ];
     [".", ".##", ".abc"].forEach((v, i) => {
       if (i === 0) {
@@ -275,7 +275,7 @@ describe("test getAnswerFromFile function", () => {
       "az_create_app=true",
       "az_storage_account_name=ab",
       "az_storage_table=abc1234",
-      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
+      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
     ];
     fs.writeFileSync(file, data.join("\n"));
     expect(() => {
@@ -292,7 +292,7 @@ describe("test getAnswerFromFile function", () => {
       "az_create_app=true",
       "az_storage_account_name=abx1234",
       "az_storage_table=*a",
-      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48"
+      "az_subscription_id=72f988bf-86f1-41af-91ab-2d7cd011db48",
     ];
     fs.writeFileSync(file, data.join("\n"));
     expect(() => {
@@ -310,7 +310,7 @@ describe("test getAnswerFromFile function", () => {
       "az_sp_id=b510c1ff-358c-4ed4-96c8-eb23f42bb65b",
       "az_sp_password=a510c1ff-358c-4ed4-96c8-eb23f42bbc5b",
       "az_sp_tenant=72f988bf-86f1-41af-91ab-2d7cd011db47",
-      "az_subscription_id=xyz"
+      "az_subscription_id=xyz",
     ];
     fs.writeFileSync(file, data.join("\n"));
     expect(() => {
@@ -328,7 +328,7 @@ describe("test getSubscriptions function", () => {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     };
     await expect(getSubscriptionId(mockRc)).rejects.toThrow();
   });
@@ -336,21 +336,21 @@ describe("test getSubscriptions function", () => {
     jest.spyOn(subscriptionService, "getSubscriptions").mockResolvedValueOnce([
       {
         id: "123345",
-        name: "subscription1"
+        name: "subscription1",
       },
       {
         id: "12334567890",
-        name: "subscription2"
-      }
+        name: "subscription2",
+      },
     ]);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      az_subscription: "subscription2"
+      az_subscription: "subscription2",
     });
     const mockRc: RequestContext = {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     };
     await getSubscriptionId(mockRc);
     expect(mockRc.subscriptionId).toBe("12334567890");
@@ -359,21 +359,21 @@ describe("test getSubscriptions function", () => {
     jest.spyOn(subscriptionService, "getSubscriptions").mockResolvedValueOnce([
       {
         id: "123345",
-        name: "subscription1"
+        name: "subscription1",
       },
       {
         id: "12334567890",
-        name: "subscription2"
-      }
+        name: "subscription2",
+      },
     ]);
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      az_subscription: "subscription3"
+      az_subscription: "subscription3",
     });
     const mockRc: RequestContext = {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     };
     await expect(getSubscriptionId(mockRc)).rejects.toThrow();
   });
@@ -385,10 +385,10 @@ describe("test promptForACRName function", () => {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     };
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      acr_name: "testACR"
+      acr_name: "testACR",
     });
     await promptForACRName(mockRc);
     expect(mockRc.acrName).toBe("testACR");
@@ -398,13 +398,13 @@ describe("test promptForACRName function", () => {
 describe("test promptForServicePrincipalCreation function", () => {
   it("covering the test gap: negative test", async () => {
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      create_service_principal: true
+      create_service_principal: true,
     });
     jest.spyOn(servicePrincipalService, "azCLILogin").mockResolvedValueOnce([
       {
         id: "72f988bf-86f1-41af-91ab-2d7cd011db48",
-        name: "subname"
-      }
+        name: "subname",
+      },
     ]);
     jest
       .spyOn(promptInstance, "promptForSubscriptionId")
@@ -413,7 +413,7 @@ describe("test promptForServicePrincipalCreation function", () => {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     };
     await expect(promptForServicePrincipalCreation(mockRc)).rejects.toThrow();
   });
@@ -425,13 +425,13 @@ describe("test promptForApprovingHLDPullRequest function", () => {
       .spyOn(gitService, "getAzureRepoUrl")
       .mockReturnValueOnce("https://sample/example");
     jest.spyOn(inquirer, "prompt").mockResolvedValueOnce({
-      approve_hld_pr: true
+      approve_hld_pr: true,
     });
     const mockRc: RequestContext = {
       accessToken: "pat",
       orgName: "org",
       projectName: "project",
-      workspace: WORKSPACE
+      workspace: WORKSPACE,
     };
     const ans = await promptForApprovingHLDPullRequest(mockRc);
     expect(ans).toBeTruthy();
@@ -448,7 +448,7 @@ const testValidationServicePrincipalInfoFromFile = (vals: {
       accessToken: "notuse",
       workspace: "notused",
       toCreateAppRepo: true,
-      toCreateSP: false
+      toCreateSP: false,
     },
     vals
   );
@@ -460,7 +460,7 @@ describe("test validationServicePrincipalInfoFromFile function", () => {
       az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
       az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
       az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
-      az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+      az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45",
     });
   });
   it("negative test: sp id is invalid", () => {
@@ -469,7 +469,7 @@ describe("test validationServicePrincipalInfoFromFile function", () => {
         az_sp_id: "id",
         az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
         az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
-        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45",
       });
     }).toThrow();
   });
@@ -479,7 +479,7 @@ describe("test validationServicePrincipalInfoFromFile function", () => {
         az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
         az_sp_password: "pwd",
         az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
-        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45",
       });
     }).toThrow();
   });
@@ -489,7 +489,7 @@ describe("test validationServicePrincipalInfoFromFile function", () => {
         az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
         az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
         az_sp_tenant: "tenant",
-        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45"
+        az_subscription_id: "a2f988bf-86f1-41af-91ab-2d7cd011db45",
       });
     }).toThrow();
   });
@@ -499,7 +499,7 @@ describe("test validationServicePrincipalInfoFromFile function", () => {
         az_sp_id: "f2f988bf-86f1-41af-91ab-2d7cd011db48",
         az_sp_password: "d2f988bf-86f1-41af-91ab-2d7cd011db48",
         az_sp_tenant: "b2f988bf-86f1-41af-91ab-2d7cd011db48",
-        az_subscription_id: "subid"
+        az_subscription_id: "subid",
       });
     }).toThrow();
   });

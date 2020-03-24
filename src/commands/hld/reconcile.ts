@@ -2,19 +2,20 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import child_process from "child_process";
 import commander from "commander";
-import { writeFileSync } from "fs";
+import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
 import process from "process";
 import shelljs, { TestOptions } from "shelljs";
 import { Bedrock } from "../../config";
 import { assertIsStringWithContent } from "../../lib/assertions";
+import * as bedrock from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { generateAccessYaml } from "../../lib/fileutils";
 import { tryGetGitOrigin } from "../../lib/gitutils";
 import * as dns from "../../lib/net/dns";
-import { TraefikIngressRoute } from "../../lib/traefik/ingress-route";
-import { TraefikMiddleware } from "../../lib/traefik/middleware";
+import * as ingressRoute from "../../lib/traefik/ingress-route";
+import * as middleware from "../../lib/traefik/middleware";
 import { logger } from "../../logger";
 import { BedrockFile, BedrockServiceConfig } from "../../types";
 import decorator from "./reconcile.decorator.json";
@@ -39,11 +40,11 @@ interface ExecResult {
  * @param pipeIO if true, will pipe all stdio the executing parent process
  */
 const exec = async (cmd: string, pipeIO = false): Promise<ExecResult> => {
-  return new Promise<ExecResult>(resolve => {
+  return new Promise<ExecResult>((resolve) => {
     const child = child_process.exec(cmd, (error, stdout, stderr) => {
       return resolve({
         error: error ?? undefined,
-        value: { stdout, stderr }
+        value: { stdout, stderr },
       });
     });
     if (pipeIO) {
@@ -57,7 +58,7 @@ const exec = async (cmd: string, pipeIO = false): Promise<ExecResult> => {
 
 export interface ReconcileDependencies {
   exec: typeof execAndLog;
-  writeFile: typeof writeFileSync;
+  writeFile: typeof fs.writeFileSync;
   getGitOrigin: typeof tryGetGitOrigin;
   generateAccessYaml: typeof generateAccessYaml;
   createAccessYaml: typeof createAccessYaml;
@@ -105,6 +106,7 @@ export const execute = async (
     );
 
     const bedrockConfig = Bedrock(absBedrockPath);
+    bedrock.validateRings(bedrockConfig);
 
     logger.info(
       `Attempting to reconcile HLD with services tracked in bedrock.yaml`
@@ -123,7 +125,7 @@ export const execute = async (
       exec: execAndLog,
       generateAccessYaml,
       getGitOrigin: tryGetGitOrigin,
-      writeFile: writeFileSync
+      writeFile: fs.writeFileSync,
     };
 
     await reconcileHld(
@@ -238,22 +240,23 @@ export const reconcileHld = async (
       normalizedSvcName
     );
 
-    const ringsToCreate = Object.keys(managedRings).map(ring => {
-      const normalizedRingName = normalizedName(ring);
-      return {
-        normalizedRingName,
-        normalizedRingPathInHld: path.join(
-          normalizedSvcPathInHld,
-          normalizedRingName
-        )
-      };
-    });
+    const ringsToCreate = Object.entries(managedRings).map(
+      ([ring, { isDefault }]) => {
+        const normalizedRingName = normalizedName(ring);
+        return {
+          isDefault: !!isDefault,
+          normalizedRingName,
+          normalizedRingPathInHld: path.join(
+            normalizedSvcPathInHld,
+            normalizedRingName
+          ),
+        };
+      }
+    );
 
     // Will only loop over _existing_ rings in bedrock.yaml - does not cover the deletion case, ie: i remove a ring from bedrock.yaml
-    for (const {
-      normalizedRingName,
-      normalizedRingPathInHld
-    } of ringsToCreate) {
+    for (const ring of ringsToCreate) {
+      const { normalizedRingName, normalizedRingPathInHld, isDefault } = ring;
       // Create the ring in the service.
       await dependencies.createRingComponent(
         dependencies.exec,
@@ -302,7 +305,8 @@ export const reconcileHld = async (
         normalizedRingPathInHld,
         normalizedSvcName,
         normalizedRingName,
-        ingressVersionAndPath
+        ingressVersionAndPath,
+        isDefault
       );
 
       // Create Ingress Route.
@@ -312,7 +316,8 @@ export const reconcileHld = async (
         serviceConfig,
         middlewares,
         normalizedRingName,
-        ingressVersionAndPath
+        ingressVersionAndPath,
+        isDefault
       );
     }
   }
@@ -369,50 +374,89 @@ export const createAccessYaml = async (
   writeAccessYaml(absRepositoryPathInHldPath, originUrl);
 };
 
-const createIngressRouteForRing = (
+type MiddlewareMap<T = Partial<ReturnType<typeof middleware.create>>> = {
+  ringed: T;
+  default?: T;
+};
+
+export const createIngressRouteForRing = (
   ringPathInHld: string,
   serviceName: string,
   serviceConfig: BedrockServiceConfig,
-  middlewares: TraefikMiddleware,
+  middlewares: MiddlewareMap,
   ring: string,
-  ingressVersionAndPath: string
-): void => {
+  ingressVersionAndPath: string,
+  ringIsDefault = false
+): ReturnType<typeof ingressRoute.create>[] => {
   const staticComponentPathInRing = path.join(ringPathInHld, "static");
   const ingressRoutePathInStaticComponent = path.join(
     staticComponentPathInRing,
     "ingress-route.yaml"
   );
-  const ingressRoute = TraefikIngressRoute(
+
+  // Push the default ingress route with ring header
+  const ingressRoutes = [];
+  const ringedRoute = ingressRoute.create(
     serviceName,
     ring,
     serviceConfig.k8sBackendPort,
     ingressVersionAndPath,
     {
+      isDefault: false,
       k8sBackend: serviceConfig.k8sBackend,
       middlewares: [
-        middlewares.metadata.name,
-        ...(serviceConfig.middlewares ?? [])
-      ]
+        middlewares.ringed.metadata?.name,
+        ...(serviceConfig.middlewares ?? []),
+      ].filter((e): e is NonNullable<typeof e> => !!e),
     }
   );
+  ingressRoutes.push(ringedRoute);
 
-  const routeYaml = yaml.safeDump(ingressRoute, {
-    lineWidth: Number.MAX_SAFE_INTEGER
-  });
+  // If ring isDefault, scaffold an additional ingress route without the ring
+  // header -- i.e with an empty string ring name
+  if (ringIsDefault) {
+    const defaultRingRoute = ingressRoute.create(
+      serviceName,
+      ring,
+      serviceConfig.k8sBackendPort,
+      ingressVersionAndPath,
+      {
+        isDefault: ringIsDefault,
+        k8sBackend: serviceConfig.k8sBackend,
+        middlewares: [
+          middlewares.default?.metadata?.name,
+          ...(serviceConfig.middlewares ?? []),
+        ].filter((e): e is NonNullable<typeof e> => !!e),
+      }
+    );
+    ingressRoutes.push(defaultRingRoute);
+  }
+
+  // serialize to routes to yaml separately and join them with `---` to specify
+  // multiple yaml documents in a single string
+  const routeYaml = ingressRoutes
+    .map((str) => {
+      return yaml.safeDump(str, {
+        lineWidth: Number.MAX_SAFE_INTEGER,
+      });
+    })
+    .join("\n---\n");
 
   logger.info(
     `Writing IngressRoute YAML to '${ingressRoutePathInStaticComponent}'`
   );
 
-  writeFileSync(ingressRoutePathInStaticComponent, routeYaml);
+  fs.writeFileSync(ingressRoutePathInStaticComponent, routeYaml);
+  return ingressRoutes;
 };
 
-const createMiddlewareForRing = (
+export const createMiddlewareForRing = (
   ringPathInHld: string,
   serviceName: string,
   ring: string,
-  ingressVersionAndPath: string
-): TraefikMiddleware => {
+  ingressVersionAndPath: string,
+  ringIsDefault = false
+): MiddlewareMap => {
   // Create Middlewares
   const staticComponentPathInRing = path.join(ringPathInHld, "static");
   const middlewaresPathInStaticComponent = path.join(
@@ -420,17 +464,30 @@ const createMiddlewareForRing = (
     "middlewares.yaml"
   );
 
-  const middlewares = TraefikMiddleware(serviceName, ring, [
-    ingressVersionAndPath
-  ]);
-  const middlewareYaml = yaml.safeDump(middlewares, {
-    lineWidth: Number.MAX_SAFE_INTEGER
-  });
+  // Create the standard ringed middleware as well as one without the ring in
+  // the name if the ring isDefault
+  const middlewares = {
+    ringed: middleware.create(serviceName, ring, [ingressVersionAndPath]),
+    default: ringIsDefault
+      ? middleware.create(serviceName, "", [ingressVersionAndPath])
+      : undefined,
+  };
+
+  // Serialize all the middlewares to yaml separately and join the strings with
+  // '---' to specify multiple yaml docs in a single string
+  const middlewareYaml = Object.values(middlewares)
+    .filter((e): e is NonNullable<typeof e> => !!e)
+    .map((str) =>
+      yaml.safeDump(str, {
+        lineWidth: Number.MAX_SAFE_INTEGER,
+      })
+    )
+    .join("\n---\n");
 
   logger.info(
     `Writing Middlewares YAML to '${middlewaresPathInStaticComponent}'`
   );
-  writeFileSync(middlewaresPathInStaticComponent, middlewareYaml);
+  fs.writeFileSync(middlewaresPathInStaticComponent, middlewareYaml);
 
   return middlewares;
 };
@@ -445,7 +502,7 @@ export const createRepositoryComponent = async (
 
   return execCmd(
     `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`
-  ).catch(err => {
+  ).catch((err) => {
     logger.error(
       `error creating repository component '${repositoryName}' in path '${absHldPath}'`
     );
@@ -465,7 +522,7 @@ export const createServiceComponent = async (
 
   return execCmd(
     `cd ${absRepositoryInHldPath} && mkdir -p ${serviceName} config && fab add ${serviceName} --path ./${serviceName} --method local --type component && touch ./config/common.yaml`
-  ).catch(err => {
+  ).catch((err) => {
     logger.error(
       `error creating service component '${serviceName}' in path '${absRepositoryInHldPath}'`
     );
@@ -482,7 +539,7 @@ export const createRingComponent = async (
   assertIsStringWithContent(normalizedRingName, "ring-name");
   const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${normalizedRingName} config && fab add ${normalizedRingName} --path ./${normalizedRingName} --method local --type component && touch ./config/common.yaml`;
 
-  return execCmd(createRingInSvcCommand).catch(err => {
+  return execCmd(createRingInSvcCommand).catch((err) => {
     logger.error(
       `error creating ring component '${normalizedRingName}' in path '${svcPathInHld}'`
     );
@@ -515,14 +572,16 @@ export const addChartToRing = async (
     addHelmChartCommand = `fab add chart --source ${chart.repository} --path ${chart.chart} --type helm`;
   }
 
-  return execCmd(`cd ${ringPathInHld} && ${addHelmChartCommand}`).catch(err => {
-    logger.error(
-      `error adding helm chart for service-config ${JSON.stringify(
-        serviceConfig
-      )} to ring path '${ringPathInHld}'`
-    );
-    throw err;
-  });
+  return execCmd(`cd ${ringPathInHld} && ${addHelmChartCommand}`).catch(
+    (err) => {
+      logger.error(
+        `error adding helm chart for service-config ${JSON.stringify(
+          serviceConfig
+        )} to ring path '${ringPathInHld}'`
+      );
+      throw err;
+    }
+  );
 };
 
 export const configureChartForRing = async (
@@ -535,12 +594,12 @@ export const configureChartForRing = async (
   const k8sBackendName = serviceConfig.k8sBackend || "";
   const k8sSvcBackendAndName = [
     normalizedName(k8sBackendName),
-    normalizedRingName
+    normalizedRingName,
   ].join("-");
 
   const fabConfigureCommand = `cd ${normalizedRingPathInHld} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
 
-  return execCmd(fabConfigureCommand).catch(err => {
+  return execCmd(fabConfigureCommand).catch((err) => {
     logger.error(`error configuring helm chart for service `);
     throw err;
   });
@@ -553,7 +612,7 @@ export const createStaticComponent = async (
   assertIsStringWithContent(ringPathInHld, "ring-path");
   const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
 
-  return execCmd(createConfigAndStaticComponentCommand).catch(err => {
+  return execCmd(createConfigAndStaticComponentCommand).catch((err) => {
     logger.error(`error creating static component in path '${ringPathInHld}'`);
     throw err;
   });

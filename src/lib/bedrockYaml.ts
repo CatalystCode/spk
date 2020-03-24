@@ -3,7 +3,13 @@ import yaml from "js-yaml";
 import path from "path";
 import { createTempDir } from "../lib/ioUtil";
 import { logger } from "../logger";
-import { BedrockFile, BedrockFileInfo, HelmConfig, Rings } from "../types";
+import {
+  BedrockFile,
+  BedrockFileInfo,
+  HelmConfig,
+  Rings,
+  RingConfig,
+} from "../types";
 import { writeVersion, getVersion } from "./fileutils";
 
 export const YAML_NAME = "bedrock.yaml";
@@ -12,7 +18,7 @@ export const DEFAULT_CONTENT: BedrockFile = {
   rings: {},
   services: {},
   variableGroups: [],
-  version: getVersion()
+  version: getVersion(),
 };
 
 /**
@@ -30,7 +36,7 @@ export const create = (dir?: string, data?: BedrockFile): string => {
   const absPath = path.resolve(dir);
   data = data || DEFAULT_CONTENT;
   const asYaml = yaml.safeDump(data, {
-    lineWidth: Number.MAX_SAFE_INTEGER
+    lineWidth: Number.MAX_SAFE_INTEGER,
   });
   writeVersion(path.join(absPath, YAML_NAME));
   fs.appendFileSync(path.join(absPath, YAML_NAME), asYaml);
@@ -99,11 +105,11 @@ export const addNewService = (
     k8sBackendPort,
     middlewares,
     pathPrefix,
-    pathPrefixMajorVersion
+    pathPrefixMajorVersion,
   };
 
   const asYaml = yaml.safeDump(data, {
-    lineWidth: Number.MAX_SAFE_INTEGER
+    lineWidth: Number.MAX_SAFE_INTEGER,
   });
   fs.writeFileSync(path.join(absPath, YAML_NAME), asYaml);
 };
@@ -153,7 +159,7 @@ export const addNewRing = (dir: string, ringName: string): void => {
   data.rings[ringName] = {}; // Alternatively, we can set isDefault = false or some passable value.
 
   const asYaml = yaml.safeDump(data, {
-    lineWidth: Number.MAX_SAFE_INTEGER
+    lineWidth: Number.MAX_SAFE_INTEGER,
   });
   fs.writeFileSync(path.join(absPath, YAML_NAME), asYaml);
 };
@@ -176,13 +182,13 @@ export const fileInfo = (rootProjectPath?: string): BedrockFileInfo => {
     logger.verbose(`bedrockFile: \n ${JSON.stringify(bedrockFile)}`);
     return {
       exist: true,
-      hasVariableGroups: (bedrockFile?.variableGroups ?? []).length > 0
+      hasVariableGroups: (bedrockFile?.variableGroups ?? []).length > 0,
     };
   } catch (error) {
     logger.error(error);
     return {
       exist: false,
-      hasVariableGroups: false
+      hasVariableGroups: false,
     };
   }
 };
@@ -204,7 +210,7 @@ export const removeRing = (
   // Check if ring exists, if not, warn and exit
   const rings = Object.entries(bedrock.rings).map(([name, config]) => ({
     config,
-    name
+    name,
   }));
   const matchingRing = rings.find(({ name }) => name === ringToDelete);
   if (matchingRing === undefined) {
@@ -228,8 +234,30 @@ export const removeRing = (
   }, {});
   const bedrockWithoutRing: BedrockFile = {
     ...bedrock,
-    rings: updatedRings
+    rings: updatedRings,
   };
 
   return bedrockWithoutRing;
+};
+
+/**
+ * Validates that the rings in `bedrock` are valid and throws an Error if not.
+ *
+ * Throws when:
+ *  - More than one ring is marked `isDefault`
+ *
+ * @param bedrock file to validate the rings of
+ */
+export const validateRings = (bedrock: BedrockFile): void => {
+  const rings = Object.entries(bedrock.rings).reduce(
+    (carry, [name, config]) => carry.concat({ ...config, name }),
+    [] as (RingConfig & { name: string })[]
+  );
+  const defaultRings = rings.filter((ring) => ring.isDefault);
+  if (defaultRings.length > 1) {
+    const defaultRingsNames = defaultRings.map((ring) => ring.name).join(", ");
+    throw Error(
+      `only one ring may be set as 'isDefault: true' -- found [${defaultRingsNames}] `
+    );
+  }
 };

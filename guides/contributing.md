@@ -40,8 +40,8 @@ ts-node src/index.ts project init # same as running `./spk project init`
 
 ### Implementing Commands
 
-Refer to this [doc](./guides/command-implementation.md) for guidelines for
-implementing commands.
+Refer to this [doc](./command-implementation.md) for guidelines for implementing
+commands.
 
 ### Running Tests
 
@@ -213,7 +213,7 @@ const Sheep = ({ says, legs }: IAnimal) => {
     says: () => "bahhh",
     legs: 4,
     says,
-    legs
+    legs,
   };
 };
 ```
@@ -305,7 +305,7 @@ function foo(bar: number): string {
 }
 
 // Don't do
-const foo = function(bar: number): string {
+const foo = function (bar: number): string {
   return bar.toString();
 };
 
@@ -339,10 +339,10 @@ const promiseBasedReadFile = promisify(readFile);
 
 // Full promise based
 promiseBasedReadFile("/etc/passwd")
-  .then(data => {
+  .then((data) => {
     console.log(data);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error(err);
     return Promise.reject(err);
   });

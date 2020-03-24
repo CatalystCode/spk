@@ -16,26 +16,26 @@ import {
   RESOURCE_GROUP,
   RESOURCE_GROUP_LOCATION,
   STORAGE_PARTITION_KEY,
-  WORKSPACE
+  WORKSPACE,
 } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
 import { getAzureRepoUrl, getGitApi } from "../lib/setup/gitService";
 import {
   createBuildPipeline,
   createHLDtoManifestPipeline,
-  createLifecyclePipeline
+  createLifecyclePipeline,
 } from "../lib/setup/pipelineService";
 import { createProjectIfNotExist } from "../lib/setup/projectService";
 import {
   getAnswerFromFile,
   prompt,
-  promptForApprovingHLDPullRequest
+  promptForApprovingHLDPullRequest,
 } from "../lib/setup/prompt";
 import {
   appRepo,
   helmRepo,
   hldRepo,
-  manifestRepo
+  manifestRepo,
 } from "../lib/setup/scaffold";
 import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
@@ -68,8 +68,8 @@ export const createSPKConfig = (rc: RequestContext): void => {
         rc.orgName,
         rc.projectName,
         MANIFEST_REPO
-      )
-    }
+      ),
+    },
   };
   if (!rc.toCreateAppRepo) {
     fs.writeFileSync(defaultConfigFile(), yaml.safeDump(data));
@@ -81,8 +81,8 @@ export const createSPKConfig = (rc: RequestContext): void => {
       service_principal_id: rc.servicePrincipalId,
       service_principal_secret: rc.servicePrincipalPassword,
       subscription_id: rc.subscriptionId,
-      tenant_id: rc.servicePrincipalTenantId
-    }
+      tenant_id: rc.servicePrincipalTenantId,
+    },
   };
 
   if (data.introspection && data.introspection.azure) {
@@ -102,7 +102,7 @@ export const createSPKConfig = (rc: RequestContext): void => {
   fs.writeFileSync(
     defaultConfigFile(),
     yaml.safeDump(data, {
-      lineWidth: 5000
+      lineWidth: 5000,
     })
   );
 };

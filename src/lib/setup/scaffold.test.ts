@@ -13,7 +13,7 @@ import {
   HELM_REPO,
   HLD_REPO,
   MANIFEST_REPO,
-  RequestContext
+  RequestContext,
 } from "./constants";
 import * as gitService from "./gitService";
 import {
@@ -22,7 +22,7 @@ import {
   hldRepo,
   initService,
   manifestRepo,
-  setupVariableGroup
+  setupVariableGroup,
 } from "./scaffold";
 import * as scaffold from "./scaffold";
 
@@ -31,7 +31,7 @@ const createRequestContext = (workspace: string): RequestContext => {
     accessToken: "accessToken",
     orgName: "orgName",
     projectName: "projectName",
-    workspace
+    workspace,
   };
 };
 
@@ -85,7 +85,7 @@ describe("test hldRepo function", () => {
     expect(fs.existsSync(folder)).toBe(true);
     expect(fs.statSync(folder).isDirectory()).toBeTruthy();
 
-    ["component.yaml", "manifest-generation.yaml"].forEach(f => {
+    ["component.yaml", "manifest-generation.yaml"].forEach((f) => {
       const sPath = path.join(folder, f);
       expect(fs.existsSync(sPath)).toBe(true);
       expect(fs.statSync(sPath).isFile()).toBeTruthy();
@@ -120,13 +120,13 @@ describe("test helmRepo function", () => {
     expect(fs.statSync(folder).isDirectory()).toBeTruthy();
 
     const folderAppChart = path.join(folder, APP_REPO, "chart");
-    ["Chart.yaml", "values.yaml"].forEach(f => {
+    ["Chart.yaml", "values.yaml"].forEach((f) => {
       const sPath = path.join(folderAppChart, f);
       expect(fs.existsSync(sPath)).toBe(true);
       expect(fs.statSync(sPath).isFile()).toBeTruthy();
     });
     const folderAppChartTemplates = path.join(folderAppChart, "templates");
-    ["all-in-one.yaml"].forEach(f => {
+    ["all-in-one.yaml"].forEach((f) => {
       const sPath = path.join(folderAppChartTemplates, f);
       expect(fs.existsSync(sPath)).toBe(true);
       expect(fs.statSync(sPath).isFile()).toBeTruthy();
