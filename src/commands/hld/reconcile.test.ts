@@ -365,15 +365,42 @@ describe("configureChartForRing", () => {
     k8sBackendPort: 80,
   };
 
-  const k8sSvcBackendAndName = [serviceConfig.k8sBackend, ringName].join("-");
-  const expectedInvocation = `cd ${ringPath} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
-
-  it("should invoke the correct command for configuring a chart for a ring", async () => {
+  it("should invoke the correct command for configuring a chart for a ring with the k8s service being configured from the config", async () => {
     await configureChartForRing(
       exec,
       ringPath,
       ringName,
       serviceConfig,
+      normalizedServiceName
+    );
+
+    const k8sSvcBackendAndName = [serviceConfig.k8sBackend, ringName].join("-");
+    const expectedInvocation = `cd ${ringPath} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
+
+    expect(exec).toBeCalled();
+    expect(exec).toBeCalledWith(expectedInvocation);
+  });
+
+  it("should invoke the correct command and calculate the k8s service name from the bedrock service name if there is no k8sbackend configured.", async () => {
+    const serviceConfigNoK8sBackend: BedrockServiceConfig = {
+      helm: {
+        chart: {
+          git: "foo",
+          path: "bar",
+          sha: "baz",
+        },
+      },
+      k8sBackend: "",
+      k8sBackendPort: 80,
+    };
+
+    const k8sSvcBackendAndName = [normalizedServiceName, ringName].join("-");
+    const expectedInvocation = `cd ${ringPath} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
+    await configureChartForRing(
+      exec,
+      ringPath,
+      ringName,
+      serviceConfigNoK8sBackend,
       normalizedServiceName
     );
 
