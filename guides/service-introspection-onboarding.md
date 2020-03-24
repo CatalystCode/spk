@@ -81,7 +81,7 @@ You will need the following variables:
   account
 - `INTROSPECTION_ACCOUNT_NAME`: Set this to the name of your storage account
 - `INTROSPECTION_PARTITION_KEY`: This field can be a distinguishing key that
-  recognizea your source repository in the storage, for eg. in this example,
+  recognizes your source repository in the storage, for eg. in this example,
   we're using the name of the source repository `hello-bedrock`
 - `INTROSPECTION_TABLE_NAME`: Set this to the name of the table in your storage
   account that you prefer to use
