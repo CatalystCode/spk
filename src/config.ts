@@ -272,7 +272,7 @@ export const saveConfiguration = (
     });
     const targetFile = path.join(targetDir, "config.yaml");
     fs.writeFileSync(targetFile, data);
-    logger.info("config.yaml was generated and located at ~/.spk/config.yaml.");
+    logger.info(`config.yaml was generated and located at ${targetFile}.`);
   } catch (err) {
     logger.error(
       `Error occurred while writing config to default location ${err}`
