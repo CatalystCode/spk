@@ -9,6 +9,7 @@ import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { Config } from "../../config";
 import { getStorageAccount, validateStorageAccount } from "./storage";
 import * as storage from "./storage";
+import * as azureStorage from "azure-storage";
 
 const resourceGroupName = uuid();
 const storageAccountName = uuid();
@@ -261,40 +262,59 @@ describe("storage account exists", () => {
 
 describe("get storage account", () => {
   test("invalid resource group", async () => {
-    try {
-      await storage.getStorageAccount("", "testAccountName");
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err.message).toEqual("\nInvalid resourceGroup");
-    }
+    await expect(
+      storage.getStorageAccount("", "testAccountName")
+    ).rejects.toThrow("\nInvalid resourceGroup");
   });
-
   test("invalid account name", async () => {
-    try {
-      await storage.getStorageAccount("testResourceGroup", "");
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err.message).toEqual("\nInvalid accountName");
-    }
+    await expect(
+      storage.getStorageAccount("testResourceGroup", "")
+    ).rejects.toThrow("\nInvalid accountName");
   });
 });
 
 describe("create table if it doesn't exist", () => {
   test("invalid account name", async () => {
-    try {
-      await storage.createTableIfNotExists("", "tableName", "accessKey");
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err.message).toEqual("\nInvalid accountName");
-    }
+    await expect(
+      storage.createTableIfNotExists("", "tableName", "accessKey")
+    ).rejects.toThrow("\nInvalid accountName");
   });
   test("invalid account name", async () => {
-    try {
-      await storage.createTableIfNotExists("testAccountName", "", "accesKey");
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err.message).toEqual("\nInvalid tableName");
-    }
+    await expect(
+      storage.createTableIfNotExists("testAccountName", "", "accessKey")
+    ).rejects.toThrow("\nInvalid tableName");
+  });
+  test("positive test", async () => {
+    jest.spyOn(azureStorage, "createTableService").mockReturnValueOnce({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createTableIfNotExists: (tableName: string, callbackFn: any) => {
+        callbackFn(null, {
+          created: true,
+        });
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    await storage.createTableIfNotExists(
+      "testAccountName",
+      "tableName",
+      "accessKey"
+    );
+  });
+  test("negative test", async () => {
+    jest.spyOn(azureStorage, "createTableService").mockReturnValueOnce({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createTableIfNotExists: (tableName: string, callbackFn: any) => {
+        callbackFn(Error("fake message"), null);
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    await expect(
+      storage.createTableIfNotExists(
+        "testAccountName",
+        "tableName",
+        "accessKey"
+      )
+    ).rejects.toThrow("fake message");
   });
 });
 

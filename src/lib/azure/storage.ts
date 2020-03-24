@@ -452,9 +452,10 @@ export const createTableIfNotExists = (
             `Unable to create table in storage account ${accountName} \n ${err}`
           );
           reject(err);
+        } else {
+          logger.debug(`table result: ${JSON.stringify(result)}`);
+          resolve(result.created);
         }
-        logger.debug(`table result: ${JSON.stringify(result)}`);
-        resolve(result.created);
       });
     } catch (err) {
       reject(err);
