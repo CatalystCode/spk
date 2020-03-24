@@ -13,6 +13,7 @@ import {
   invalidateWebApi,
   repositoryExists,
   repositoryHasFile,
+  validateRepository,
 } from "./azdoClient";
 import * as azdoClient from "./azdoClient";
 import { AzureDevOpsOpts } from "./git";
@@ -145,12 +146,17 @@ describe("test getBuildApi function", () => {
   });
 });
 
-describe("repositoryExists", () => {
+describe("validateRepository", () => {
   test("repository exists", async () => {
-    const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
-    createPullRequestFunc.mockReturnValueOnce(
+    const getRepositoryFunc = jest.spyOn(azure, "GitAPI");
+    getRepositoryFunc.mockReturnValueOnce(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Promise.resolve({ getRepository: () => ({ id: "3839fjfkj" }) } as any)
+    );
+    const getItemFunc = jest.spyOn(azure, "GitAPI");
+    getItemFunc.mockReturnValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Promise.resolve({ getItem: () => ({ commitId: "3839fjfkj" }) } as any)
     );
     const accessOpts: AzureDevOpsOpts = {
       orgName: "testOrg",
@@ -160,7 +166,13 @@ describe("repositoryExists", () => {
     let hasError = false;
 
     try {
-      await repositoryExists("my-project", "my-repo", accessOpts);
+      await validateRepository(
+        "my-project",
+        "myFile",
+        "master",
+        "my-repo",
+        accessOpts
+      );
     } catch (err) {
       hasError = true;
     }

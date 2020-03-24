@@ -40,8 +40,7 @@ const mockValues: CommandOptions = {
   yamlFileBranch: "master",
 };
 
-jest.spyOn(azdo, "repositoryHasFile").mockReturnValue(Promise.resolve());
-jest.spyOn(azdo, "repositoryExists").mockReturnValue(Promise.resolve());
+jest.spyOn(azdo, "validateRepository").mockReturnValue(Promise.resolve());
 
 const mockMissingValues: CommandOptions = {
   buildScriptUrl: undefined,

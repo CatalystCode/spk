@@ -6,7 +6,7 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
-import { repositoryExists, repositoryHasFile } from "../../lib/azdoClient";
+import { validateRepository } from "../../lib/azdoClient";
 import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
@@ -235,15 +235,11 @@ export const execute = async (
         personalAccessToken: values.personalAccessToken,
         project: values.devopsProject,
       };
-      await repositoryExists(
+      await validateRepository(
         values.devopsProject!,
-        values.repoName,
-        accessOpts
-      );
-      await repositoryHasFile(
         PROJECT_PIPELINE_FILENAME,
         values.yamlFileBranch ? opts.yamlFileBranch : "master",
-        values.repoName!,
+        values.repoName,
         accessOpts
       );
       await installLifecyclePipeline(values);
