@@ -233,7 +233,6 @@ function storage_account_table_exists () {
             fi
         fi
     fi
-}i
 }
 
 function pipeline_exists () {
