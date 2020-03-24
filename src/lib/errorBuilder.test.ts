@@ -1,57 +1,63 @@
 import { build, log } from "./errorBuilder";
+import i18n from "./i18n.json";
+
+const errors = i18n.errors;
 
 describe("test getErrorMessage function", () => {
   it("positive test: string", () => {
-    const oErr = build(1000, "infra-100");
+    const oErr = build(1000, "infra-scaffold-cmd-failed");
     expect(oErr.message).toBe(
-      "infra-100: Scaffold Command was not successfully executed."
+      `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
   });
   it("positive test: object", () => {
     const oErr = build(1000, {
-      errorKey: "infra-105",
+      errorKey: "infra-err-locate-tf-env",
       values: ["test"],
     });
     expect(oErr.message).toBe(
-      "infra-105: Unable to find Terraform environment. Ensure template path test exists."
+      `infra-err-locate-tf-env: ${errors["infra-err-locate-tf-env"].replace(
+        "{0}",
+        "test"
+      )}`
     );
   });
   it("negative test: invalid test", () => {
-    const oErr = build(1000, "infra-100xxxxx");
-    expect(oErr.message).toBe("infra-100xxxxx");
+    const oErr = build(1000, "infra-scaffold-cmd-failedxxxxx");
+    expect(oErr.message).toBe("infra-scaffold-cmd-failedxxxxx");
   });
 });
 
 describe("test build function", () => {
   it("negative test: invalid code", () => {
     expect(() => {
-      build(-1, "infra-1000");
+      build(-1, "infra-scaffold-cmd-failed");
     }).toThrow();
   });
   it("positive test: without error", () => {
-    const err = build(1000, "infra-100");
+    const err = build(1000, "infra-scaffold-cmd-failed");
     expect(err.errorCode).toBe(1000);
     expect(err.message).toBe(
-      "infra-100: Scaffold Command was not successfully executed."
+      `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
     expect(err.details).toBeUndefined();
     expect(err.parent).toBeUndefined();
   });
   it("positive test: with Error", () => {
-    const err = build(1000, "infra-100", Error("test"));
+    const err = build(1000, "infra-scaffold-cmd-failed", Error("test"));
     expect(err.errorCode).toBe(1000);
     expect(err.message).toBe(
-      "infra-100: Scaffold Command was not successfully executed."
+      `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
     expect(err.details).toBe("test");
     expect(err.parent).toBeUndefined();
   });
   it("positive test: with ErrorChain", () => {
-    const e = build(1000, "infra-101");
-    const err = build(1000, "infra-100", e);
+    const e = build(1000, "infra-scaffold-cmd-src-missing");
+    const err = build(1000, "infra-scaffold-cmd-failed", e);
     expect(err.errorCode).toBe(1000);
     expect(err.message).toBe(
-      "infra-100: Scaffold Command was not successfully executed."
+      `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
     expect(err.details).toBeUndefined();
     expect(err.parent).toStrictEqual(e);
@@ -61,41 +67,49 @@ describe("test build function", () => {
 describe("test message function", () => {
   it("positive test: one error chain", () => {
     const messages: string[] = [];
-    const oError = build(1000, "infra-101");
+    const oError = build(1000, "infra-scaffold-cmd-src-missing");
     oError.messages(messages);
     expect(messages).toStrictEqual([
-      "code: 1000\nmessage: infra-101: Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.",
+      `code: 1000\nmessage: infra-scaffold-cmd-src-missing: ${errors["infra-scaffold-cmd-src-missing"]}`,
     ]);
   });
   it("positive test: one error chain with details", () => {
     const messages: string[] = [];
-    const oError = build(1000, "infra-101", Error("test message"));
+    const oError = build(
+      1000,
+      "infra-scaffold-cmd-src-missing",
+      Error("test message")
+    );
     oError.messages(messages);
     expect(messages).toStrictEqual([
-      "code: 1000\nmessage: infra-101: Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.\ndetails: test message",
+      `code: 1000\nmessage: infra-scaffold-cmd-src-missing: ${errors["infra-scaffold-cmd-src-missing"]}\ndetails: test message`,
     ]);
   });
   it("positive test: multiple error chains", () => {
     const messages: string[] = [];
     const oError = build(
       1000,
-      "infra-101",
-      build(1001, "infra-102", build(1010, "infra-103"))
+      "infra-scaffold-cmd-src-missing",
+      build(
+        1001,
+        "infra-scaffold-cmd-values-missing",
+        build(1010, "infra-err-validating-remote-git")
+      )
     );
     oError.messages(messages);
     expect(messages).toStrictEqual([
-      "code: 1000\nmessage: infra-101: Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.",
-      "  code: 1001\n  message: infra-102: Values for name, version and/or 'template were missing. Provide value for values for them.",
-      "    code: 1010\n    message: infra-103: Unable to determine error when validating remote git source.",
+      `code: 1000\nmessage: infra-scaffold-cmd-src-missing: ${errors["infra-scaffold-cmd-src-missing"]}`,
+      `  code: 1001\n  message: infra-scaffold-cmd-values-missing: ${errors["infra-scaffold-cmd-values-missing"]}`,
+      `    code: 1010\n    message: infra-err-validating-remote-git: ${errors["infra-err-validating-remote-git"]}`,
     ]);
   });
 });
 
 describe("test log function", () => {
   it("test: Error chain object", () => {
-    const oError = build(1000, "infra-100");
+    const oError = build(1000, "infra-scaffold-cmd-failed");
     expect(log(oError)).toBe(
-      "\ncode: 1000\nmessage: infra-100: Scaffold Command was not successfully executed."
+      `\ncode: 1000\nmessage: infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
   });
   it("test: Error object", () => {

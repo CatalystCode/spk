@@ -184,7 +184,7 @@ export const checkRemoteGitExist = async (
   // Checking for git remote
   if (!fs.existsSync(sourcePath)) {
     throw buildError(1100, {
-      errorKey: "infra-109",
+      errorKey: "infra-git-source-no-exist",
       values: [sourcePath],
     });
   }
@@ -192,7 +192,7 @@ export const checkRemoteGitExist = async (
   const result = await simpleGit(sourcePath).listRemote([source]);
   if (!result) {
     logger.error(result);
-    throw buildError(1100, "infra-108");
+    throw buildError(1100, "infra-err-git-clone-failed");
   }
 
   logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
@@ -290,10 +290,10 @@ export const validateRemoteSource = async (
             version
           );
         } else {
-          throw buildError(1100, "infra-103", err);
+          throw buildError(1100, "infra-err-validating-remote-git", err);
         }
       } catch (retryError) {
-        throw buildError(1100, "infra-104", err);
+        throw buildError(1100, "infra-err-retry-validating-remote-git", err);
       }
     } else {
       throw err;

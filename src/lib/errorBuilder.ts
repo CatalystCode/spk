@@ -72,10 +72,10 @@ const isErrorChainObject = (o: Error | ErrorChain): boolean => {
  * Builds an error object
  *
  * @param code spk error code
- * @param errorKey Error key. e.g. "infra-101" or can be an object
+ * @param errorKey Error key. e.g. "infra-scaffold-cmd-src-missing" or can be an object
  *                 to support string substitution in error message
  *                 {
- *                    errorKey: "infra-105",
+ *                    errorKey: "infra-scaffold-cmd-src-missing",
  *                    values: ["someValue"]
  *                 }
  * @param error: Parent error object.
