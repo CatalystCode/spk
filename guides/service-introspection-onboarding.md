@@ -57,23 +57,6 @@ pipelines and services that is displayed by service introspection.
 
 [instructions](https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-quickstart-portal).
 
-#### 3. Storage account CORS settings
-
-Configure the CORS settings for the storage account to allow requests from the
-service introspection dasbhoard.
-
-1. Go to the [Azure portal](https://portal.azure.com)
-2. Search for the name of your storage account
-3. Click the CORS options on the menu on the left side:
-
-![cors menu option](./images/cors-menu.png)
-
-Add the following settings under **Table Service**:
-![cors settings](./images/cors-settings.png)
-
-**Note:** If you are running the service introspection spk dashboard in a port
-other than `4040`, add that entry in the settings instead.
-
 ### Pipelines Configuration
 
 The Bedrock GitOps pipelines need to be configured to start sending data to
