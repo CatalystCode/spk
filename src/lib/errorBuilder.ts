@@ -18,6 +18,12 @@ class ErrorChain extends Error {
     this.errorCode = code;
     this.message = this.getErrorMessage(errorInstance);
   }
+
+  /**
+   * Returns error message
+   *
+   * @param errorInstance Error instance
+   */
   getErrorMessage(errorInstance: string | ErrorParam): string {
     let key = "";
     let values: string[] | undefined = undefined;
@@ -44,7 +50,6 @@ class ErrorChain extends Error {
   /**
    * Generates error messages and have them in messages array.
    *
-   * @param error Error object
    * @param messages string of messages
    * @param padding Padding to be added to the beginning of messages
    */
