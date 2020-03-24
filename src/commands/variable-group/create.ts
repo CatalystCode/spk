@@ -37,8 +37,8 @@ export const validateValues = (opts: CommandOptions): void => {
   const azure = config.azure_devops;
 
   if (!hasValue(opts.orgName) && !azure?.org) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     throw Error(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       `value for ${getCmdOption(decorator, "org-name")!.arg} is missing`
     );
   }
@@ -49,8 +49,8 @@ export const validateValues = (opts: CommandOptions): void => {
   }
 
   if (!hasValue(opts.devopsProject) && !azure?.project) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     throw Error(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       `value for ${getCmdOption(decorator, "devops-project")!.arg} is missing`
     );
   }
@@ -61,9 +61,9 @@ export const validateValues = (opts: CommandOptions): void => {
   }
 
   if (!hasValue(opts.personalAccessToken) && !azure?.access_token) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     throw Error(
       `value for ${
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         getCmdOption(decorator, "personal-access-token")!.arg
       } is missing`
     );

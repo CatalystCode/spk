@@ -379,7 +379,7 @@ describe("updateLifeCyclePipeline", () => {
 });
 
 describe("test validateValues function", () => {
-  it("valid project name", () => {
+  it("valid org and project name", () => {
     validateValues(devopsProject, orgName);
   });
   it("invalid project name", () => {
@@ -387,9 +387,9 @@ describe("test validateValues function", () => {
       validateValues("project\\abc", orgName);
     }).toThrow();
   });
-  it("valid project name", () => {
+  it("invalid org name", () => {
     expect(() => {
-      validateValues(devopsProject, " asdad asdad");
+      validateValues(devopsProject, "org name");
     }).toThrow();
   });
 });

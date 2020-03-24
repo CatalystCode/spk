@@ -32,6 +32,10 @@ import {
   getBuildApiClient,
   queueBuild,
 } from "../../lib/pipelines/pipelines";
+import {
+  validateOrgNameThrowable,
+  validateProjectNameThrowable,
+} from "../../lib/validator";
 import { logger } from "../../logger";
 import { BedrockFileInfo, ConfigYaml } from "../../types";
 import decorator from "./pipeline.decorator.json";
@@ -105,6 +109,9 @@ export const fetchValidateValues = (
   if (error.length > 0) {
     throw Error("invalid option values");
   }
+
+  validateProjectNameThrowable(values.devopsProject!);
+  validateOrgNameThrowable(values.orgName!);
 
   return values;
 };

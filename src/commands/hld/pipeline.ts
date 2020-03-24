@@ -77,8 +77,8 @@ export const populateValues = (opts: CommandOptions): CommandOptions => {
   if (hasValue(opts.orgName)) {
     validateOrgNameThrowable(opts.orgName);
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     throw Error(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       `value for ${getCmdOption(decorator, "org-name")!.arg} is missing`
     );
   }
@@ -93,8 +93,8 @@ export const populateValues = (opts: CommandOptions): CommandOptions => {
   if (hasValue(opts.devopsProject)) {
     validateProjectNameThrowable(opts.devopsProject);
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     throw Error(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       `value for ${getCmdOption(decorator, "devops-project")!.arg} is missing`
     );
   }
