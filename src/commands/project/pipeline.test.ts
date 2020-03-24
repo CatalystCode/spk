@@ -93,10 +93,11 @@ describe("test fetchValidateValues function", () => {
     }).toThrow(`Repo url not defined`);
   });
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
-    const values = fetchValidateValues(nullValues, gitUrl, {
-      azure_devops: {},
-    });
-    expect(values).toBeNull();
+    expect(() => {
+      fetchValidateValues(nullValues, gitUrl, {
+        azure_devops: {},
+      });
+    }).toThrow();
   });
 });
 

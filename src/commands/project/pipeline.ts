@@ -69,7 +69,7 @@ export const fetchValidateValues = (
   opts: CommandOptions,
   gitOriginUrl: string,
   spkConfig: ConfigYaml | undefined
-): CommandOptions | null => {
+): CommandOptions => {
   if (!spkConfig) {
     throw new Error("SPK Config is missing");
   }
@@ -101,7 +101,12 @@ export const fetchValidateValues = (
   });
 
   const error = validateForRequiredValues(decorator, map);
-  return error.length > 0 ? null : values;
+
+  if (error.length > 0) {
+    throw Error("invalid option values");
+  }
+
+  return values;
 };
 
 /**
@@ -225,23 +230,19 @@ export const execute = async (
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
 
-    if (values === null) {
-      await exitFn(1);
-    } else {
-      const accessOpts: AzureDevOpsOpts = {
-        orgName: values.orgName,
-        personalAccessToken: values.personalAccessToken,
-        project: values.devopsProject,
-      };
-      await repositoryHasFile(
-        PROJECT_PIPELINE_FILENAME,
-        values.yamlFileBranch ? opts.yamlFileBranch : "master",
-        values.repoName!,
-        accessOpts
-      );
-      await installLifecyclePipeline(values);
-      await exitFn(0);
-    }
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: values.orgName,
+      personalAccessToken: values.personalAccessToken,
+      project: values.devopsProject,
+    };
+    await repositoryHasFile(
+      PROJECT_PIPELINE_FILENAME,
+      values.yamlFileBranch ? opts.yamlFileBranch : "master",
+      values.repoName!,
+      accessOpts
+    );
+    await installLifecyclePipeline(values);
+    await exitFn(0);
   } catch (err) {
     logger.error(
       `Error occurred installing pipeline for project hld lifecycle.`
