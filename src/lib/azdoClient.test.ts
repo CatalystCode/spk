@@ -11,7 +11,6 @@ import {
   getTaskAgentApi,
   getWebApi,
   invalidateWebApi,
-  repositoryExists,
   repositoryHasFile,
   validateRepository,
 } from "./azdoClient";
@@ -192,7 +191,13 @@ describe("validateRepository", () => {
     let hasError = false;
 
     try {
-      await repositoryExists("my-project", "my-repo", accessOpts);
+      await validateRepository(
+        "my-project",
+        "myFile",
+        "master",
+        "my-repo",
+        accessOpts
+      );
     } catch (err) {
       hasError = true;
     }
