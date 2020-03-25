@@ -479,6 +479,7 @@ export const printDeployments = (
         }
       } else if (prsExist) {
         row.push("-");
+        row.push("-");
       }
 
       row.push(

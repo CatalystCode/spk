@@ -596,10 +596,10 @@
         }
       },
       "deploymentId": "33733a9f4573",
-      "dockerToHldRelease": {
+      "dockerToHldReleaseStage": {
         "URL": "https://dev.azure.com/epicstuff/f8a98d9c-8f11-46ef-89e4-07b4a56d1ad5/_release?releaseId=173&_a=release-summary",
         "finishTime": "2019-08-28T20:14:30.093Z",
-        "id": 173,
+        "id": 5975,
         "queueTime": "2019-08-28T20:13:56.163Z",
         "releaseName": "Release-170",
         "startTime": "2019-08-28T20:14:08.787Z",
@@ -608,10 +608,6 @@
         "registryURL": "hellorings.azurecr.io",
         "registryResourceGroup": "bedrock-rings"
       },
-      "pr": "1126",
-      "hldRepo": "https://github.com/samiyaakhtar/hello-bedrock-hld",
-      "manifestRepo": "https://github.com/samiyaakhtar/hello-bedrock-manifest",
-      "sourceRepo": "https://github.com/samiyaakhtar/hello-bedrock",
       "commitId": "65d30ef",
       "hldCommitId": "51feb51",
       "imageTag": "hello-bedrock-master-5975",

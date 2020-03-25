@@ -77,6 +77,7 @@ const mockedDeps: IDeployment[] = fakeDeployments.data.map(
       commitId: dep.commitId,
       deploymentId: dep.deploymentId,
       dockerToHldRelease: dep.dockerToHldRelease,
+      dockerToHldReleaseStage: dep.dockerToHldReleaseStage,
       environment: dep.environment,
       hldCommitId: dep.hldCommitId || "",
       hldRepo: dep.hldRepo,
