@@ -224,15 +224,19 @@ export const displayDeployments = (
       console.log(JSON.stringify(deployments, null, 2));
       resolve(deployments);
     } else {
-      Promise.all(promises).then(() => {
-        printDeployments(
-          deployments,
-          values.outputFormat,
-          values.nTop,
-          syncStatuses
-        );
-        resolve(deployments);
-      });
+      Promise.all(promises)
+        .then(() => {
+          printDeployments(
+            deployments,
+            values.outputFormat,
+            values.nTop,
+            syncStatuses
+          );
+          resolve(deployments);
+        })
+        .catch((e) => {
+          reject(e);
+        });
     }
   });
 };
