@@ -189,30 +189,51 @@ export const getDeployments = (
   );
   return new Promise((resolve, reject) => {
     Promise.all([deploymentsPromise, syncStatusesPromise])
-      .then((tuple: [IDeployment[] | undefined, ITag[] | undefined]) => {
+      .then(async (tuple: [IDeployment[] | undefined, ITag[] | undefined]) => {
         const deployments: IDeployment[] | undefined = tuple[0];
         const syncStatuses: ITag[] | undefined = tuple[1];
-        if (values.outputFormat === OUTPUT_FORMAT.WIDE) {
-          getPRs(deployments);
-        }
-        if (values.outputFormat === OUTPUT_FORMAT.JSON) {
-          console.log(JSON.stringify(deployments, null, 2));
-          resolve(deployments);
-        } else {
-          Promise.all(promises).then(() => {
-            printDeployments(
-              deployments,
-              values.outputFormat,
-              values.nTop,
-              syncStatuses
-            );
-            resolve(deployments);
-          });
-        }
+        const displayedDeployments = await displayDeployments(
+          values,
+          deployments,
+          syncStatuses
+        );
+        resolve(displayedDeployments);
       })
       .catch((e) => {
         reject(new Error(e));
       });
+  });
+};
+
+/**
+ * Displays the deployments based on output format requested and top n
+ * @param values validated command line values
+ * @param deployments list of deployments to display
+ * @param syncStatuses cluster sync statuses
+ */
+export const displayDeployments = (
+  values: ValidatedOptions,
+  deployments: IDeployment[] | undefined,
+  syncStatuses: ITag[] | undefined
+): Promise<IDeployment[]> => {
+  return new Promise((resolve, reject) => {
+    if (values.outputFormat === OUTPUT_FORMAT.WIDE) {
+      getPRs(deployments);
+    }
+    if (values.outputFormat === OUTPUT_FORMAT.JSON) {
+      console.log(JSON.stringify(deployments, null, 2));
+      resolve(deployments);
+    } else {
+      Promise.all(promises).then(() => {
+        printDeployments(
+          deployments,
+          values.outputFormat,
+          values.nTop,
+          syncStatuses
+        );
+        resolve(deployments);
+      });
+    }
   });
 };
 
