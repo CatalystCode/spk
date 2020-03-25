@@ -153,7 +153,7 @@ spk hld install-manifest-pipeline --org-name $AZDO_ORG -d $AZDO_PROJECT --person
 # Will no longer be needed once install-manifest-pipeline supports adding a VG
 ##################################
 cd $hld_dir
-echo -e "variables:\n  - group: $vg_name" | cat - manifest-generation.yaml > temp && mv temp manifest-generation.yaml
+printf "variables:\n  - group: $vg_name\n" | cat - manifest-generation.yaml > temp && mv temp manifest-generation.yaml
 git add .
 git commit -m "Adding variable group $vg_name to pipeline"
 git push origin master
@@ -203,8 +203,6 @@ variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
 
 # Introspection Storage Account Setup
 storage_account_exists $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
-storage_account_cors_enabled $AZ_STORAGE_ACCOUNT "enable"
-storage_account_cors_enabled $AZ_STORAGE_ACCOUNT "wait"
 storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "create"
 storage_account_table_exists $sat_name $AZ_STORAGE_ACCOUNT "fail"
 sa_access_key=$(az storage account keys list -n $AZ_STORAGE_ACCOUNT -g $AZ_RESOURCE_GROUP | jq '.[0].value')
