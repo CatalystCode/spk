@@ -162,20 +162,16 @@ describe("validateRepository", () => {
       personalAccessToken: "mytoken",
       project: "testProject",
     };
-    let hasError = false;
 
-    try {
-      await validateRepository(
+    await expect(
+      validateRepository(
         "my-project",
         "myFile",
         "master",
         "my-repo",
         accessOpts
-      );
-    } catch (err) {
-      hasError = true;
-    }
-    expect(hasError).toBe(false);
+      )
+    ).resolves.not.toThrow();
   });
   test("repository does not exist", async () => {
     const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
@@ -188,20 +184,15 @@ describe("validateRepository", () => {
       personalAccessToken: "mytoken",
       project: "testProject",
     };
-    let hasError = false;
-
-    try {
-      await validateRepository(
+    await expect(
+      validateRepository(
         "my-project",
         "myFile",
         "master",
         "my-repo",
         accessOpts
-      );
-    } catch (err) {
-      hasError = true;
-    }
-    expect(hasError).toBe(true);
+      )
+    ).rejects.toThrow();
   });
 });
 
