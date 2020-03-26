@@ -513,103 +513,10 @@ export const createTestHldAzurePipelinesYaml = (
 export const createTestHldAzurePipelinesYamlWithVariableGroup = (
   asString = true
 ): AzurePipelinesYaml | string => {
-  const data: AzurePipelinesYaml = {
-    trigger: {
-      branches: {
-        include: ["master"],
-      },
-    },
-    variables: [{ group: "my-vg" }],
-    pool: {
-      vmImage: VM_IMAGE,
-    },
-    steps: [
-      {
-        checkout: "self",
-        persistCredentials: true,
-        clean: true,
-      },
-      {
-        task: "HelmInstaller@1",
-        inputs: {
-          helmVersionToInstall: HELM_VERSION,
-        },
-      },
-      {
-        script: generateYamlScript([
-          `# Download build.sh`,
-          `curl $BEDROCK_BUILD_SCRIPT > build.sh`,
-          `chmod +x ./build.sh`,
-        ]),
-        displayName: "Download bedrock bash scripts",
-        env: {
-          BEDROCK_BUILD_SCRIPT: "$(BUILD_SCRIPT_URL)",
-        },
-      },
-      {
-        script: generateYamlScript([
-          `commitId=$(Build.SourceVersion)`,
-          `commitId=$(echo "\${commitId:0:7}")`,
-          `. ./build.sh --source-only`,
-          `get_spk_version`,
-          `download_spk`,
-          `message="$(Build.SourceVersionMessage)"`,
-          `if [[ $message == *"Merge"* ]]; then`,
-          `pr_id=$(echo $message | grep -oE '[0-9]+' | head -1 | sed -e 's/^0\\+//')`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --pr $pr_id`,
-          `else`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId`,
-          `fi`,
-        ]),
-        displayName:
-          "If configured, update manifest pipeline details in Spektate db before manifest generation",
-        condition:
-          "and(ne(variables['INTROSPECTION_ACCOUNT_NAME'], ''), ne(variables['INTROSPECTION_ACCOUNT_KEY'], ''),ne(variables['INTROSPECTION_TABLE_NAME'], ''),ne(variables['INTROSPECTION_PARTITION_KEY'], ''))",
-      },
-      {
-        task: "ShellScript@2",
-        displayName: "Validate fabrikate definitions",
-        inputs: {
-          scriptPath: "build.sh",
-        },
-        condition: `eq(variables['Build.Reason'], 'PullRequest')`,
-        env: {
-          VERIFY_ONLY: 1,
-        },
-      },
-      {
-        task: "ShellScript@2",
-        displayName:
-          "Transform fabrikate definitions and publish to YAML manifests to repo",
-        inputs: {
-          scriptPath: "build.sh",
-        },
-        condition: `ne(variables['Build.Reason'], 'PullRequest')`,
-        env: {
-          ACCESS_TOKEN_SECRET: "$(PAT)",
-          COMMIT_MESSAGE: "$(Build.SourceVersionMessage)",
-          REPO: "$(MANIFEST_REPO)",
-          BRANCH_NAME: "$(Build.SourceBranchName)",
-        },
-      },
-      {
-        script: generateYamlScript([
-          `. ./build.sh --source-only`,
-          `cd "$HOME"/\${MANIFEST_REPO##*/}`,
-          `latest_commit=$(git rev-parse --short HEAD)`,
-          `url=$(git remote --verbose | grep origin | grep fetch | cut -f2 | cut -d' ' -f1)`,
-          `repourl=\${url##*@}`,
-          `get_spk_version`,
-          `download_spk`,
-          `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p3 $(Build.BuildId) --manifest-commit-id $latest_commit --repository $repourl`,
-        ]),
-        displayName:
-          "If configured, update manifest pipeline details in Spektate db after manifest generation",
-        condition:
-          "and(ne(variables['INTROSPECTION_ACCOUNT_NAME'], ''), ne(variables['INTROSPECTION_ACCOUNT_KEY'], ''),ne(variables['INTROSPECTION_TABLE_NAME'], ''),ne(variables['INTROSPECTION_PARTITION_KEY'], ''))",
-      },
-    ],
-  };
+  const data: AzurePipelinesYaml = createTestHldAzurePipelinesYaml(
+    false
+  ) as AzurePipelinesYaml;
+  data.variables = [{ group: "my-vg" }];
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
