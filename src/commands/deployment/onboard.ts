@@ -4,7 +4,6 @@ import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
 import { Config, defaultConfigFile, readYaml } from "../../config";
-// import { setSecret } from "../../lib/azure/keyvault";
 import {
   createStorageAccount,
   createTableIfNotExists,
@@ -203,34 +202,6 @@ export const getStorageAccessKey = async (
   return accessKey;
 };
 
-// export const createKeyVault = async (
-//   values: OnBoardConfig,
-//   accessOpts: AzureAccessOpts,
-//   accessKey: string
-// ): Promise<void> => {
-//   // if key vault is not specified, exit without reading storage account
-//   // key and setting it in the key vault
-//   if (values.keyVaultName) {
-//     logger.debug(
-//       `Calling setSecret with storage account primary key ***
-//         and ${values.keyVaultName}`
-//     );
-//     await setSecret(
-//       values.keyVaultName,
-//       `${values.storageAccountName}Key`,
-//       accessKey,
-//       accessOpts
-//     );
-//   } else {
-//     // notify the user to set the environment variable with storage access key
-//     logger.info(
-//       `Please set the storage account access key in environment variable
-//       INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.`
-//     );
-//     logger.info(`Storage account ${values.storageAccountName} access key: ***`);
-//   }
-// };
-
 /**
  * Creates the Storage account `accountName` in resource group `resourceGroup`,
  * and updates pipelines (acr-hld, hld->manifests)
@@ -275,8 +246,6 @@ export const onboard = async (
     logger.info(`Both storage account ${values.storageAccountName} and
       table ${values.storageTableName} exist.`);
   }
-
-  // await createKeyVault(values, accessOpts, accessKey);
 
   // save storage account and table names in configuration
   setConfiguration(values.storageAccountName, values.storageTableName);
