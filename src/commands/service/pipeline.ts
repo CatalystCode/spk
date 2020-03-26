@@ -8,7 +8,7 @@ import {
 import commander from "commander";
 import path from "path";
 import { Config } from "../../config";
-import { repositoryHasFile } from "../../lib/azdoClient";
+import { validateRepository } from "../../lib/azdoClient";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
@@ -29,6 +29,10 @@ import {
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
 import decorator from "./pipeline.decorator.json";
+import {
+  validateOrgNameThrowable,
+  validateProjectNameThrowable,
+} from "../../lib/validator";
 
 export interface CommandOptions {
   orgName: string;
@@ -57,6 +61,10 @@ export const fetchValues = async (
   opts.repoName = getRepositoryName(opts.repoUrl);
   opts.repoUrl = opts.repoUrl || getRepositoryUrl(gitOriginUrl);
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
+
+  validateOrgNameThrowable(opts.orgName);
+  validateProjectNameThrowable(opts.devopsProject);
+
   return opts;
 };
 
@@ -90,7 +98,8 @@ export const execute = async (
         path.join(serviceName, SERVICE_PIPELINE_FILENAME);
 
     // By default the version descriptor is for the master branch
-    await repositoryHasFile(
+    await validateRepository(
+      opts.devopsProject,
       pipelinesYamlPath,
       opts.yamlFileBranch ? opts.yamlFileBranch : "master",
       opts.repoName,

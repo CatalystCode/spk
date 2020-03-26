@@ -46,7 +46,7 @@ const getMockedValues = (): CommandOptions => {
   return deepClone(MOCKED_VALUES);
 };
 
-jest.spyOn(azdo, "repositoryHasFile").mockReturnValue(Promise.resolve());
+jest.spyOn(azdo, "validateRepository").mockReturnValue(Promise.resolve());
 
 describe("test fetchValues function", () => {
   it("with all values set", async () => {
@@ -66,6 +66,16 @@ describe("test fetchValues function", () => {
     const serviceName = "AAAService";
     const values = await fetchValues(serviceName, mockedVals);
     expect(values.pipelineName).toBe(`${serviceName}-pipeline`);
+  });
+  it("invalid org name", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.orgName = "abc def";
+    await expect(fetchValues("serviceName", mockedVals)).rejects.toThrow();
+  });
+  it("invalid project name", async () => {
+    const mockedVals = getMockedValues();
+    mockedVals.devopsProject = "some\\thing";
+    await expect(fetchValues("serviceName", mockedVals)).rejects.toThrow();
   });
 });
 
