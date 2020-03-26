@@ -4,7 +4,7 @@ import commander from "commander";
 import fs from "fs";
 import yaml from "js-yaml";
 import { Config, defaultConfigFile, readYaml } from "../../config";
-import { setSecret } from "../../lib/azure/keyvault";
+// import { setSecret } from "../../lib/azure/keyvault";
 import {
   createStorageAccount,
   createTableIfNotExists,
@@ -29,7 +29,6 @@ export interface CommandOptions {
   storageTableName: string | undefined;
   storageLocation: string | undefined;
   storageResourceGroupName: string | undefined;
-  keyVaultName: string | undefined;
   servicePrincipalId: string | undefined;
   servicePrincipalPassword: string | undefined;
   tenantId: string | undefined;
@@ -44,7 +43,6 @@ export interface OnBoardConfig {
   servicePrincipalPassword: string;
   subscriptionId: string;
   tenantId: string;
-  keyVaultName?: string;
   storageLocation?: string;
 }
 
@@ -61,7 +59,6 @@ export const populateValues = (opts: CommandOptions): CommandOptions => {
     opts.storageAccountName || azure?.account_name || undefined;
   opts.storageTableName =
     opts.storageTableName || azure?.table_name || undefined;
-  opts.keyVaultName = opts.keyVaultName || config.key_vault_name || undefined;
   opts.servicePrincipalId =
     opts.servicePrincipalId || azure?.service_principal_id || undefined;
   opts.servicePrincipalPassword =
@@ -111,7 +108,6 @@ export const validateValues = (opts: CommandOptions): OnBoardConfig => {
     servicePrincipalPassword: opts.servicePrincipalPassword || "",
     subscriptionId: opts.subscriptionId || "",
     tenantId: opts.tenantId || "",
-    keyVaultName: opts.keyVaultName,
     storageLocation: opts.storageLocation,
   };
 };
@@ -207,45 +203,37 @@ export const getStorageAccessKey = async (
   return accessKey;
 };
 
-/**
- * Creates Key Vault if value from commander has value for `keyVaultName`
- *
- * @param values values from commander
- * @param accessOpts Azure Access Opts
- * @param accessKey Access Key
- */
-export const createKeyVault = async (
-  values: OnBoardConfig,
-  accessOpts: AzureAccessOpts,
-  accessKey: string
-): Promise<void> => {
-  // if key vault is not specified, exit without reading storage account
-  // key and setting it in the key vault
-  if (values.keyVaultName) {
-    logger.debug(
-      `Calling setSecret with storage account primary key ***
-        and ${values.keyVaultName}`
-    );
-    await setSecret(
-      values.keyVaultName,
-      `${values.storageAccountName}Key`,
-      accessKey,
-      accessOpts
-    );
-  } else {
-    // notify the user to set the environment variable with storage access key
-    logger.info(
-      `Please set the storage account access key in environment variable
-      INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.`
-    );
-    logger.info(`Storage account ${values.storageAccountName} access key: ***`);
-  }
-};
+// export const createKeyVault = async (
+//   values: OnBoardConfig,
+//   accessOpts: AzureAccessOpts,
+//   accessKey: string
+// ): Promise<void> => {
+//   // if key vault is not specified, exit without reading storage account
+//   // key and setting it in the key vault
+//   if (values.keyVaultName) {
+//     logger.debug(
+//       `Calling setSecret with storage account primary key ***
+//         and ${values.keyVaultName}`
+//     );
+//     await setSecret(
+//       values.keyVaultName,
+//       `${values.storageAccountName}Key`,
+//       accessKey,
+//       accessOpts
+//     );
+//   } else {
+//     // notify the user to set the environment variable with storage access key
+//     logger.info(
+//       `Please set the storage account access key in environment variable
+//       INTROSPECTION_STORAGE_ACCESS_KEY before issuing any deployment commands.`
+//     );
+//     logger.info(`Storage account ${values.storageAccountName} access key: ***`);
+//   }
+// };
 
 /**
  * Creates the Storage account `accountName` in resource group `resourceGroup`,
- * sets storage account access key in keyvalut, and updates pipelines
- * (acr-hld, hld->manifests)
+ * and updates pipelines (acr-hld, hld->manifests)
  *
  * @param values Values from commander.
  */
@@ -254,7 +242,7 @@ export const onboard = async (
 ): Promise<StorageAccount | undefined> => {
   logger.debug(
     `onboard called with ${values.storageAccountName}, ${values.storageTableName},
-    ${values.storageResourceGroupName}, ${values.storageLocation}, and ${values.keyVaultName}`
+    ${values.storageResourceGroupName} and ${values.storageLocation}`
   );
 
   const accessOpts: AzureAccessOpts = {
@@ -288,7 +276,7 @@ export const onboard = async (
       table ${values.storageTableName} exist.`);
   }
 
-  await createKeyVault(values, accessOpts, accessKey);
+  // await createKeyVault(values, accessOpts, accessKey);
 
   // save storage account and table names in configuration
   setConfiguration(values.storageAccountName, values.storageTableName);
