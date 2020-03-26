@@ -354,9 +354,6 @@ describe("onboard", () => {
     jest
       .spyOn(storage, "createStorageAccount")
       .mockReturnValueOnce(Promise.resolve({ location: "test" }));
-    // jest
-    //   .spyOn(onboardImpl, "createKeyVault")
-    //   .mockReturnValueOnce(Promise.resolve());
     jest.spyOn(onboardImpl, "setConfiguration").mockReturnValueOnce(true);
 
     const data = {
