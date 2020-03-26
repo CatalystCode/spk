@@ -77,6 +77,10 @@ export const createSPKConfig = (rc: RequestContext): void => {
   }
 
   data.introspection = {
+    dashboard: {
+      image: "mcr.microsoft.com/k8s/bedrock/spektate:latest",
+      name: "spektate",
+    },
     azure: {
       service_principal_id: rc.servicePrincipalId,
       service_principal_secret: rc.servicePrincipalPassword,
@@ -86,6 +90,7 @@ export const createSPKConfig = (rc: RequestContext): void => {
   };
 
   if (data.introspection && data.introspection.azure) {
+    // to due to eslint error
     const azure = data.introspection.azure;
     if (rc.storageAccountName) {
       azure.account_name = rc.storageAccountName;
@@ -188,8 +193,7 @@ export const execute = async (
 
   try {
     requestContext = opts.file ? getAnswerFromFile(opts.file) : await prompt();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rc = requestContext!;
+    const rc = requestContext;
     createDirectory(WORKSPACE, true);
     createSPKConfig(rc);
 
