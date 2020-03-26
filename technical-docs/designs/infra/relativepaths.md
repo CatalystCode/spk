@@ -1,9 +1,9 @@
 # Relative Paths for Bedrock Terraform Infrastructure
 
-| Revision | Date         | Author         | Remarks           |
-| -------: | ------------ | -------------- | ----------------- |
-|      0.1 | Mar-23, 2020 | Nathaniel Rose | Initial Draft     |
-|      0.2 | Mar-26, 2020 | Nathaniel Rose | Changes Reflected |
+| Revision | Date         | Author         | Remarks                     |
+| -------: | ------------ | -------------- | --------------------------- |
+|      0.1 | Mar-23, 2020 | Nathaniel Rose | Initial Draft               |
+|      0.2 | Mar-26, 2020 | Nathaniel Rose | Changes Reflected from Team |
 
 ## 1. Overview
 
@@ -26,6 +26,9 @@ module "servers" {
 }
 ```
 
+This design shall only target supporting relative paths in spk scaffolding and
+generation.
+
 ### Issues Addressed:
 
 1. As an SRE, I want to use module sources that are versioned and localalized to
@@ -33,13 +36,7 @@ module "servers" {
 2. As an Operator, I want automated CI pipelines that can handle internal
    references for incoming PR that modify my custom Bedrock modules.
 
-## 2. Solutions
-
-An existing pull request for Bedrock currently exists that verifies relative
-path implementation with the use of Bedrock Provided Templates in
-[#1189](https://github.com/microsoft/bedrock/pull/1189). This design document
-seeks to propose interoperability of the relative paths with SPK tooling and
-adjustment of infrastructure pipeline.
+## 2. Solution
 
 In the current implementation on SPK infra practices, the tool is embedded into
 a generation pipeline that provisions terraform files respective to the modified
@@ -129,11 +126,30 @@ module "flex_volume" {
 }
 ```
 
-Limitations:
+## 3. Dependencies
+
+An existing pull request for Bedrock currently exists that verifies relative
+path implementation with the use of Bedrock Provided Templates in
+[#1189](https://github.com/microsoft/bedrock/pull/1189). This design document
+seeks to propose interoperability of the relative paths with SPK tooling and
+adjustment of infrastructure pipeline.
+
+## 4. Risks & Mitigations
+
+Limitations to the solution include:
 
 - Manipulating user input data and output terraform files
+- Potential Regex parsing for URL validation to detect relative paths
 
-### 2.2 Copy Modules to Alternative Configured Generated Directory
+## 5. Documentation
+
+Yes. A brief update to the
+[`spk-infra-generation-pipeline.md`](/guides/infra/spk-infra-generation-pipeline.md)
+detailing relative path support for module sources.
+
+## 6. Alternatives
+
+### 6.1 Copy Modules to Alternative Configured Generated Directory
 
 Another option is to copy modules from cached remote directory to the generated
 folder. This allows SPK to directly reference the parent module source with the
@@ -184,7 +200,7 @@ Limitations:
   when introducing new folders at template /module levels
 - Copying modules twice local to agent, once for cache and again during generate
 
-### 2.3 Use a symlink to reference the modules
+### 6.2 Use a symlink to reference the modules
 
 A symbolic link, also termed a soft link, is a special kind of file that points
 to another file, much like a shortcut in Windows or a Macintosh alias. This will
