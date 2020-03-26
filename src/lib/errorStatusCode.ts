@@ -1,14 +1,10 @@
 // please do not change the status code numbers
 // you can add new ones but not changing the existing ones
 
-export const errorStatusCode = {
-  1000: "command fails to execute",
-  1001: "validation error",
-  1002: "execution error",
-  1010: "environment related error",
-  1100: "git operation related error",
-};
-
-export const isValid = (code: number): boolean => {
-  return code in errorStatusCode;
-};
+export enum errorStatusCode {
+  CMD_EXE_ERR = 1000,
+  VALIDATION_ERR = 1001,
+  EXE_FLOW_ERR = 1002,
+  ENV_SETTING_ERR = 1010,
+  GIT_OPS_ERR = 1100,
+}

@@ -19,6 +19,7 @@ import {
 } from "./infra_common";
 import decorator from "./scaffold.decorator.json";
 import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
   name: string;
@@ -47,11 +48,17 @@ template repo and access token was not specified in spk-config.yml. Checking pas
 
     if (!opts.source) {
       // since access_token and infra_repository are missing, we cannot construct source for them
-      throw buildError(1001, "infra-scaffold-cmd-src-missing");
+      throw buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "infra-scaffold-cmd-src-missing"
+      );
     }
   }
   if (!opts.name || !opts.version || !opts.template) {
-    throw buildError(1001, "infra-scaffold-cmd-values-missing");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "infra-scaffold-cmd-values-missing"
+    );
   }
   logger.info(`All required options are configured via command line for \
 scaffolding, expecting public remote repository for terraform templates \
@@ -96,7 +103,7 @@ export const copyTfTemplate = async (
     logger.info(`Terraform template files copied from ${templatePath}`);
   } catch (err) {
     throw buildError(
-      1010,
+      errorStatusCode.ENV_SETTING_ERR,
       {
         errorKey: "infra-err-locate-tf-env",
         values: [templatePath],
@@ -113,7 +120,7 @@ export const copyTfTemplate = async (
  */
 export const validateVariablesTf = (templatePath: string): void => {
   if (!fs.existsSync(templatePath)) {
-    throw buildError(1010, {
+    throw buildError(errorStatusCode.ENV_SETTING_ERR, {
       errorKey: "infra-err-tf-path-not-found",
       values: [VARIABLES_TF, templatePath],
     });
@@ -291,7 +298,11 @@ export const scaffold = (values: CommandOptions): void => {
       }
     }
   } catch (err) {
-    throw buildError(1002, "infra-err-create-scaffold", err);
+    throw buildError(
+      errorStatusCode.EXE_FLOW_ERR,
+      "infra-err-create-scaffold",
+      err
+    );
   }
 };
 
@@ -344,7 +355,9 @@ export const execute = async (
     removeTemplateFiles(opts.name);
     await exitFn(0);
   } catch (err) {
-    logError(buildError(1000, "infra-scaffold-cmd-failed", err));
+    logError(
+      buildError(errorStatusCode.CMD_EXE_ERR, "infra-scaffold-cmd-failed", err)
+    );
     await exitFn(1);
   }
 };

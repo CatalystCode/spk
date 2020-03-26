@@ -1,17 +1,21 @@
 import { build, log } from "./errorBuilder";
 import i18n from "./i18n.json";
+import { errorStatusCode } from "./errorStatusCode";
 
 const errors = i18n.errors;
 
 describe("test getErrorMessage function", () => {
   it("positive test: string", () => {
-    const oErr = build(1000, "infra-scaffold-cmd-failed");
+    const oErr = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-failed"
+    );
     expect(oErr.message).toBe(
       `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
   });
   it("positive test: object", () => {
-    const oErr = build(1000, {
+    const oErr = build(errorStatusCode.CMD_EXE_ERR, {
       errorKey: "infra-err-locate-tf-env",
       values: ["test"],
     });
@@ -23,20 +27,18 @@ describe("test getErrorMessage function", () => {
     );
   });
   it("negative test: invalid test", () => {
-    const oErr = build(1000, "infra-scaffold-cmd-failedxxxxx");
+    const oErr = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-failedxxxxx"
+    );
     expect(oErr.message).toBe("infra-scaffold-cmd-failedxxxxx");
   });
 });
 
 describe("test build function", () => {
-  it("negative test: invalid code", () => {
-    expect(() => {
-      build(-1, "infra-scaffold-cmd-failed");
-    }).toThrow();
-  });
   it("positive test: without error", () => {
-    const err = build(1000, "infra-scaffold-cmd-failed");
-    expect(err.errorCode).toBe(1000);
+    const err = build(errorStatusCode.CMD_EXE_ERR, "infra-scaffold-cmd-failed");
+    expect(err.errorCode).toBe(errorStatusCode.CMD_EXE_ERR);
     expect(err.message).toBe(
       `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
@@ -44,8 +46,12 @@ describe("test build function", () => {
     expect(err.parent).toBeUndefined();
   });
   it("positive test: with Error", () => {
-    const err = build(1000, "infra-scaffold-cmd-failed", Error("test"));
-    expect(err.errorCode).toBe(1000);
+    const err = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-failed",
+      Error("test")
+    );
+    expect(err.errorCode).toBe(errorStatusCode.CMD_EXE_ERR);
     expect(err.message).toBe(
       `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
@@ -53,9 +59,16 @@ describe("test build function", () => {
     expect(err.parent).toBeUndefined();
   });
   it("positive test: with ErrorChain", () => {
-    const e = build(1000, "infra-scaffold-cmd-src-missing");
-    const err = build(1000, "infra-scaffold-cmd-failed", e);
-    expect(err.errorCode).toBe(1000);
+    const e = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-src-missing"
+    );
+    const err = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-failed",
+      e
+    );
+    expect(err.errorCode).toBe(errorStatusCode.CMD_EXE_ERR);
     expect(err.message).toBe(
       `infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );
@@ -67,7 +80,10 @@ describe("test build function", () => {
 describe("test message function", () => {
   it("positive test: one error chain", () => {
     const messages: string[] = [];
-    const oError = build(1000, "infra-scaffold-cmd-src-missing");
+    const oError = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-src-missing"
+    );
     oError.messages(messages);
     expect(messages).toStrictEqual([
       `code: 1000\nmessage: infra-scaffold-cmd-src-missing: ${errors["infra-scaffold-cmd-src-missing"]}`,
@@ -93,7 +109,10 @@ describe("test message function", () => {
       build(
         1001,
         "infra-scaffold-cmd-values-missing",
-        build(1010, "infra-err-validating-remote-git")
+        build(
+          errorStatusCode.ENV_SETTING_ERR,
+          "infra-err-validating-remote-git"
+        )
       )
     );
     oError.messages(messages);
@@ -107,7 +126,10 @@ describe("test message function", () => {
 
 describe("test log function", () => {
   it("test: Error chain object", () => {
-    const oError = build(1000, "infra-scaffold-cmd-failed");
+    const oError = build(
+      errorStatusCode.CMD_EXE_ERR,
+      "infra-scaffold-cmd-failed"
+    );
     expect(log(oError)).toBe(
       `\ncode: 1000\nmessage: infra-scaffold-cmd-failed: ${errors["infra-scaffold-cmd-failed"]}`
     );

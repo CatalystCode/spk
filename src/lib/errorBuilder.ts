@@ -1,5 +1,5 @@
 import i18n from "./i18n.json";
-import { isValid } from "./errorStatusCode";
+import { errorStatusCode } from "./errorStatusCode";
 import { logger } from "../logger";
 
 const errors: { [key: string]: string } = i18n.errors;
@@ -87,14 +87,10 @@ const isErrorChainObject = (o: Error | ErrorChain): boolean => {
  * @param error: Parent error object.
  */
 export const build = (
-  code: number,
+  code: errorStatusCode,
   errorKey: string | ErrorParam,
   error?: Error | ErrorChain
 ): ErrorChain => {
-  if (!isValid(code)) {
-    throw Error(`Invalid status code, ${code}`);
-  }
-
   const oError = new ErrorChain(code, errorKey);
 
   if (error) {
