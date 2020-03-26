@@ -4,8 +4,6 @@ import { RENDER_HLD_PIPELINE_FILENAME } from "../../lib/constants";
 import { appendVariableGroupToPipelineYaml } from "../../lib/fileutils";
 import { logger } from "../../logger";
 import decorator from "./append-variable-group.decorator.json";
-import { Logger } from "azure-storage";
-import path from "path";
 
 interface CommandOptions {
   file: string | undefined;
@@ -25,7 +23,7 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   if (!variableGroupName) {
-    logger.error("Service name is missing");
+    logger.error("Variable group name is missing.");
     await exitFn(1);
     return;
   }
@@ -42,8 +40,6 @@ export const execute = async (
     logger.error(err);
     await exitFn(1);
   }
-
-  await exitFn(0);
 };
 
 /**
