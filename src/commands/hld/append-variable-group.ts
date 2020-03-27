@@ -5,16 +5,12 @@ import { appendVariableGroupToPipelineYaml } from "../../lib/fileutils";
 import { logger } from "../../logger";
 import decorator from "./append-variable-group.decorator.json";
 
-interface CommandOptions {
-  file: string | undefined;
-  interactive: boolean;
-}
-
 /**
- * Executes the command, can all exit function with 0 or 1
+ * Executes the command, can call exit function with 0 or 1
  * when command completed successfully or failed respectively.
  *
- * @param opts option value from commander
+ * @param hldRepoPath The hld repository path
+ * @param variableGroupName The variable group name
  * @param exitFn exit function
  */
 export const execute = async (
