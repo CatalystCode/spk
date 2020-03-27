@@ -1,4 +1,4 @@
-# Bedrock CLI Design Software Design Proposals
+# Bedrock CLI Software Design Proposals
 
 ## Summary
 
