@@ -9,6 +9,8 @@ import {
 } from "../../commands/project/create-variable-group";
 import { initialize as projectInitialize } from "../../commands/project/init";
 import { createService } from "../../commands/service/create";
+import { RENDER_HLD_PIPELINE_FILENAME } from "../../lib/constants";
+import { appendVariableGroupToPipelineYaml } from "../../lib/fileutils";
 import { AzureDevOpsOpts } from "../../lib/git";
 import { deleteVariableGroup } from "../../lib/pipelines/variableGroup";
 import { create as createVariableGroup } from "../../lib/setup/variableGroup";
@@ -111,6 +113,11 @@ export const hldRepo = async (
       "https://github.com/microsoft/fabrikate-definitions.git",
       HLD_DEFAULT_COMPONENT_NAME,
       HLD_DEFAULT_DEF_PATH
+    );
+    appendVariableGroupToPipelineYaml(
+      process.cwd(),
+      RENDER_HLD_PIPELINE_FILENAME,
+      VARIABLE_GROUP
     );
     await git.add("./*");
 

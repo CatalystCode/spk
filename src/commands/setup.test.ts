@@ -95,6 +95,10 @@ describe("test createSPKConfig function", () => {
       project: "project",
     });
     expect(data.introspection).toStrictEqual({
+      dashboard: {
+        image: "mcr.microsoft.com/k8s/bedrock/spektate:latest",
+        name: "spektate",
+      },
       azure: {
         service_principal_id: rc.servicePrincipalId,
         service_principal_secret: rc.servicePrincipalPassword,

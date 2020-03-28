@@ -23,6 +23,9 @@ for a few questions
 It can also run in a non interactive mode by providing a file that contains
 answers to the above questions.
 
+After this command is successfully executed, you can launch the introspection
+dashboard to view the status of pipelines.
+
 ```
 spk setup --file <file-name>
 ```

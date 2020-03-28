@@ -97,6 +97,7 @@ const orgNameTest = (hasVal: boolean): void => {
 };
 
 const projectNameTest = (hasVal: boolean): void => {
+  jest.spyOn(config, "Config").mockReturnValueOnce({});
   const data = {
     buildScriptUrl: "",
     devopsProject: hasVal ? "project\\abc" : "",
@@ -122,11 +123,7 @@ const projectNameTest = (hasVal: boolean): void => {
 
 describe("test populateValues function", () => {
   it("with all values in command opts", () => {
-    jest.spyOn(config, "Config").mockImplementationOnce(
-      (): ConfigYaml => {
-        return MOCKED_CONFIG;
-      }
-    );
+    jest.spyOn(config, "Config").mockReturnValueOnce(MOCKED_CONFIG);
     const mockedObject = getMockObject();
     expect(populateValues(mockedObject)).toEqual(mockedObject);
   });
@@ -195,15 +192,11 @@ describe("test populateValues function", () => {
 
 describe("test execute function", () => {
   it("positive test", async () => {
-    jest.spyOn(config, "Config").mockImplementationOnce(
-      (): ConfigYaml => {
-        return MOCKED_CONFIG;
-      }
-    );
+    jest.spyOn(config, "Config").mockReturnValueOnce(MOCKED_CONFIG);
     const exitFn = jest.fn();
     jest
       .spyOn(pipeline, "installHldToManifestPipeline")
-      .mockReturnValueOnce(Promise.resolve());
+      .mockResolvedValueOnce();
 
     await execute(MOCKED_VALUES, exitFn);
     expect(exitFn).toBeCalledTimes(1);
@@ -243,43 +236,33 @@ describe("required pipeline variables", () => {
 
 describe("create hld to manifest pipeline test", () => {
   it("should create a pipeline", async () => {
-    (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
+    (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({ id: 10 });
     await installHldToManifestPipeline(getMockObject());
   });
 
   it("should fail if the build client cant be instantiated", async () => {
-    (getBuildApiClient as jest.Mock).mockReturnValue(Promise.reject("Error"));
-    try {
-      await installHldToManifestPipeline(getMockObject());
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err).toBeDefined();
-    }
+    (getBuildApiClient as jest.Mock).mockRejectedValueOnce(Error("fake Error"));
+    await expect(
+      installHldToManifestPipeline(getMockObject())
+    ).rejects.toThrow();
   });
 
   it("should fail if the pipeline definition cannot be created", async () => {
-    (getBuildApiClient as jest.Mock).mockReturnValue({});
-    (createPipelineForDefinition as jest.Mock).mockReturnValue(
-      Promise.reject("Error")
+    (getBuildApiClient as jest.Mock).mockReturnValueOnce({});
+    (createPipelineForDefinition as jest.Mock).mockRejectedValueOnce(
+      Error("fake error")
     );
-    try {
-      await installHldToManifestPipeline(getMockObject());
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err).toBeDefined();
-    }
+    await expect(
+      installHldToManifestPipeline(getMockObject())
+    ).rejects.toThrow();
   });
 
   it("should fail if a build cannot be queued on the pipeline", async () => {
-    (getBuildApiClient as jest.Mock).mockReturnValue({});
-    (createPipelineForDefinition as jest.Mock).mockReturnValue({ id: 10 });
-    (queueBuild as jest.Mock).mockReturnValue(Promise.reject("Error"));
-
-    try {
-      await installHldToManifestPipeline(getMockObject());
-      expect(true).toBe(false);
-    } catch (err) {
-      expect(err).toBeDefined();
-    }
+    (getBuildApiClient as jest.Mock).mockReturnValueOnce({});
+    (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({ id: 10 });
+    (queueBuild as jest.Mock).mockRejectedValueOnce(Error("fake error"));
+    await expect(
+      installHldToManifestPipeline(getMockObject())
+    ).rejects.toThrow();
   });
 });
