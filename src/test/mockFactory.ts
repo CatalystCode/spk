@@ -198,7 +198,7 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
                   `repourl=\${url##*@}`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id --repository $repourl`,
+                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name --pr $pr_id --repository $repourl`,
                   `fi`,
                 ]),
                 displayName:
@@ -413,6 +413,7 @@ export const createTestHldAzurePipelinesYaml = (
         include: ["master"],
       },
     },
+    variables: [],
     pool: {
       vmImage: VM_IMAGE,
     },
@@ -503,6 +504,19 @@ export const createTestHldAzurePipelinesYaml = (
       },
     ],
   };
+
+  return asString
+    ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })
+    : data;
+};
+
+export const createTestHldAzurePipelinesYamlWithVariableGroup = (
+  asString = true
+): AzurePipelinesYaml | string => {
+  const data: AzurePipelinesYaml = createTestHldAzurePipelinesYaml(
+    false
+  ) as AzurePipelinesYaml;
+  data.variables = [{ group: "my-vg" }];
 
   return asString
     ? yaml.safeDump(data, { lineWidth: Number.MAX_SAFE_INTEGER })

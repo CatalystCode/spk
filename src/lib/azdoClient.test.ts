@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 jest.mock("azure-devops-node-api");
 jest.mock("../config");
 
@@ -12,6 +11,7 @@ import {
   getWebApi,
   invalidateWebApi,
   repositoryHasFile,
+  validateRepository,
 } from "./azdoClient";
 import * as azdoClient from "./azdoClient";
 import { AzureDevOpsOpts } from "./git";
@@ -141,6 +141,57 @@ describe("test getBuildApi function", () => {
     mockConfig(); // empty config. still work because API client is cached
     const again = await getBuildApi();
     expect(again).toBeDefined();
+  });
+});
+
+describe("validateRepository", () => {
+  test("repository exists", async () => {
+    const getRepositoryFunc = jest.spyOn(azure, "GitAPI");
+    getRepositoryFunc.mockReturnValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Promise.resolve({ getRepository: () => ({ id: "3839fjfkj" }) } as any)
+    );
+    const getItemFunc = jest.spyOn(azure, "GitAPI");
+    getItemFunc.mockReturnValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Promise.resolve({ getItem: () => ({ commitId: "3839fjfkj" }) } as any)
+    );
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+
+    await expect(
+      validateRepository(
+        "my-project",
+        "myFile",
+        "master",
+        "my-repo",
+        accessOpts
+      )
+    ).resolves.not.toThrow();
+  });
+  test("repository does not exist", async () => {
+    const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
+    createPullRequestFunc.mockReturnValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Promise.resolve({ getRepository: () => null } as any)
+    );
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+    await expect(
+      validateRepository(
+        "my-project",
+        "myFile",
+        "master",
+        "my-repo",
+        accessOpts
+      )
+    ).rejects.toThrow();
   });
 });
 

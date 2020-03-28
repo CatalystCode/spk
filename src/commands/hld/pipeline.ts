@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -6,8 +5,12 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
-import { repositoryHasFile } from "../../lib/azdoClient";
-import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
+import { validateRepository } from "../../lib/azdoClient";
+import {
+  build as buildCmd,
+  exit as exitCmd,
+  getOption as getCmdOption,
+} from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
   RENDER_HLD_PIPELINE_FILENAME,
@@ -23,6 +26,11 @@ import {
 } from "../../lib/pipelines/pipelines";
 import { logger } from "../../logger";
 import decorator from "./pipeline.decorator.json";
+import {
+  hasValue,
+  validateOrgNameThrowable,
+  validateProjectNameThrowable,
+} from "../../lib/validator";
 
 export interface CommandOptions {
   pipelineName: string;
@@ -65,12 +73,30 @@ export const populateValues = (opts: CommandOptions): CommandOptions => {
 
   opts.orgName = opts.orgName || emptyStringIfUndefined(azure_devops?.org);
 
+  if (hasValue(opts.orgName)) {
+    validateOrgNameThrowable(opts.orgName);
+  } else {
+    throw Error(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      `value for ${getCmdOption(decorator, "org-name")!.arg} is missing`
+    );
+  }
+
   opts.personalAccessToken =
     opts.personalAccessToken ||
     emptyStringIfUndefined(azure_devops?.access_token);
 
   opts.devopsProject =
     opts.devopsProject || emptyStringIfUndefined(azure_devops?.project);
+
+  if (hasValue(opts.devopsProject)) {
+    validateProjectNameThrowable(opts.devopsProject);
+  } else {
+    throw Error(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      `value for ${getCmdOption(decorator, "devops-project")!.arg} is missing`
+    );
+  }
 
   opts.pipelineName =
     opts.hldName + "-to-" + getRepositoryName(opts.manifestUrl);
@@ -200,7 +226,8 @@ export const execute = async (
     };
 
     // By default the version descriptor is for the master branch
-    await repositoryHasFile(
+    await validateRepository(
+      opts.devopsProject,
       RENDER_HLD_PIPELINE_FILENAME,
       opts.yamlFileBranch ? opts.yamlFileBranch : "master",
       opts.hldName,

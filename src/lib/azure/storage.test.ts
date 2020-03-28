@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
-
 jest.mock("@azure/arm-storage");
 jest.mock("azure-storage");
 jest.mock("../../config");

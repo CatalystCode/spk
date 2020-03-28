@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 jest.mock("open");
 import open from "open";
 jest.mock("../../config");
@@ -11,6 +10,7 @@ import {
   logger,
 } from "../../logger";
 import {
+  DashboardConfig,
   execute,
   extractManifestRepositoryInformation,
   getEnvVars,
@@ -20,6 +20,20 @@ import {
 import * as dashboard from "./dashboard";
 
 import uuid from "uuid/v4";
+import { deepClone } from "../../lib/util";
+
+const dashboardConf: DashboardConfig = {
+  port: 2020,
+  image: "mcr.microsoft.com/k8s/bedrock/spektate:latest",
+  org: "testOrg",
+  project: "testProject",
+  key: "fakeKey",
+  accountName: "fakeAccount",
+  tableName: "fakeTable",
+  partitionKey: "fakePartitionKey",
+  accessToken: "accessToken",
+  sourceRepoAccessToken: "test_token",
+};
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -29,23 +43,29 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
+const mockedConf = {
+  azure_devops: {
+    access_token: uuid(),
+    org: uuid(),
+    project: uuid(),
+  },
+  introspection: {
+    dashboard: {
+      image: "mcr.microsoft.com/k8s/bedrock/spektate:latest",
+      name: "spektate",
+    },
+    azure: {
+      account_name: uuid(),
+      key: uuid(),
+      partition_key: uuid(),
+      source_repo_access_token: "test_token",
+      table_name: uuid(),
+    },
+  },
+};
+
 const mockConfig = (): void => {
-  (Config as jest.Mock).mockReturnValueOnce({
-    azure_devops: {
-      access_token: uuid(),
-      org: uuid(),
-      project: uuid(),
-    },
-    introspection: {
-      azure: {
-        account_name: uuid(),
-        key: uuid(),
-        partition_key: uuid(),
-        source_repo_access_token: "test_token",
-        table_name: uuid(),
-      },
-    },
-  });
+  (Config as jest.Mock).mockReturnValueOnce(mockedConf);
 };
 
 describe("Test validateValues function", () => {
@@ -81,8 +101,7 @@ describe("Test validateValues function", () => {
   });
   it("positive test", () => {
     mockConfig();
-    const config = Config();
-    validateValues(config, {
+    validateValues(Config(), {
       port: "4000",
       removeAll: false,
     });
@@ -96,7 +115,7 @@ describe("Test execute function", () => {
     jest
       .spyOn(dashboard, "launchDashboard")
       .mockReturnValueOnce(Promise.resolve(uuid()));
-    jest.spyOn(dashboard, "validateValues").mockReturnValueOnce();
+    jest.spyOn(dashboard, "validateValues").mockReturnValueOnce(dashboardConf);
     (open as jest.Mock).mockReturnValueOnce(Promise.resolve());
     await execute(
       {
@@ -125,16 +144,13 @@ describe("Test execute function", () => {
 describe("Validate dashboard container pull", () => {
   test("Pull dashboard container if docker is installed", async () => {
     try {
-      mockConfig();
-      const config = Config();
-      const dashboardContainerId = await launchDashboard(config, 2020, false);
+      const dashboardContainerId = await launchDashboard(dashboardConf, false);
       const dockerInstalled = validatePrereqs(["docker"], false);
       if (dockerInstalled) {
         const dockerId = await exec("docker", [
           "images",
           "-q",
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          config.introspection!.dashboard!.image!,
+          dashboardConf.image,
         ]);
         expect(dockerId).toBeDefined();
         expect(dashboardContainerId).not.toBe("");
@@ -152,22 +168,22 @@ describe("Validate dashboard container pull", () => {
 describe("Validate dashboard clean up", () => {
   test("Launch the dashboard two times", async () => {
     try {
-      mockConfig();
-      const config = Config();
-      const dashboardContainerId = await launchDashboard(config, 2020, true);
+      const dashboardContainerId = await launchDashboard(dashboardConf, true);
       const dockerInstalled = validatePrereqs(["docker"], false);
       if (dockerInstalled) {
         const dockerId = await exec("docker", [
           "images",
           "-q",
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          config.introspection!.dashboard!.image!,
+          dashboardConf.image,
         ]);
 
         expect(dockerId).toBeDefined();
         expect(dashboardContainerId).not.toBe("");
         logger.info("Verified that docker image has been pulled.");
-        const dashboardContainerId2 = await launchDashboard(config, 2020, true);
+        const dashboardContainerId2 = await launchDashboard(
+          dashboardConf,
+          true
+        );
         expect(dashboardContainerId).not.toBe(dashboardContainerId2);
         await exec("docker", ["container", "stop", dashboardContainerId2]);
       } else {
@@ -181,55 +197,43 @@ describe("Validate dashboard clean up", () => {
 
 describe("Fallback to azure devops access token", () => {
   test("Has repo_access_token specified", async () => {
-    mockConfig();
-    const config = Config();
-    const envVars = (await getEnvVars(config)).toString();
+    const envVars = (await getEnvVars(dashboardConf)).toString();
     logger.info(
-      `spin: ${envVars}, act: ${
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        config.introspection!.azure!.source_repo_access_token
-      }`
+      `spin: ${envVars}, act: ${mockedConf.introspection.azure.source_repo_access_token}`
     );
     const expectedSubstring = "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=test_token";
     expect(envVars.includes(expectedSubstring)).toBeTruthy();
   });
 
   it("No repo_access_token was specified", async () => {
-    mockConfig();
-    const config = Config();
-    const envVars = (await getEnvVars(config)).toString();
-    const expectedSubstring =
-      "REACT_APP_SOURCE_REPO_ACCESS_TOKEN=" +
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      config.introspection!.azure!.source_repo_access_token!;
+    const envVars = (await getEnvVars(dashboardConf)).toString();
+    const expectedSubstring = `REACT_APP_SOURCE_REPO_ACCESS_TOKEN=${dashboardConf.sourceRepoAccessToken}`;
     expect(envVars.includes(expectedSubstring)).toBeTruthy();
   });
 });
 
 describe("Extract manifest repository information", () => {
   test("Manifest repository information is successfully extracted", () => {
-    (Config as jest.Mock).mockReturnValue({
-      azure_devops: {
-        manifest_repository:
-          "https://dev.azure.com/bhnook/fabrikam/_git/materialized",
-      },
-    });
-    const config = Config();
+    const config = deepClone(dashboardConf);
+    config.manifestRepository =
+      "https://dev.azure.com/bhnook/fabrikam/_git/materialized";
+
     let manifestInfo = extractManifestRepositoryInformation(config);
     expect(manifestInfo).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    expect(manifestInfo!.githubUsername).toBeUndefined();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    expect(manifestInfo!.manifestRepoName).toBe("materialized");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    config.azure_devops!["manifest_repository"] =
-      "https://github.com/username/manifest";
+
+    if (manifestInfo) {
+      expect(manifestInfo.githubUsername).toBeUndefined();
+      expect(manifestInfo.manifestRepoName).toBe("materialized");
+    }
+
+    config.manifestRepository = "https://github.com/username/manifest";
     manifestInfo = extractManifestRepositoryInformation(config);
+
     expect(manifestInfo).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    expect(manifestInfo!.githubUsername).toBe("username");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    expect(manifestInfo!.manifestRepoName).toBe("manifest");
+    if (manifestInfo) {
+      expect(manifestInfo.githubUsername).toBe("username");
+      expect(manifestInfo.manifestRepoName).toBe("manifest");
+    }
 
     logger.info("Verified that manifest repository extraction works");
   });

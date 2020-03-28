@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import uuid from "uuid/v4";
 import * as deploymenttable from "../../lib/azure/deploymenttable";
 import {
@@ -9,6 +8,7 @@ import {
   RowSrcToACRPipeline,
 } from "../../lib/azure/deploymenttable";
 import * as storage from "../../lib/azure/storage";
+import { deepClone } from "../../lib/util";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { ConfigYaml } from "../../types";
 import {
@@ -16,9 +16,32 @@ import {
   execute,
   isValidConfig,
   runSelfTest,
+  ValidateConfig,
   writeSelfTestData,
 } from "./validate";
 import * as validate from "./validate";
+
+const mockedValidateConfig: ValidateConfig = {
+  accountName: uuid(),
+  tableName: uuid(),
+  key: uuid(),
+  partitionKey: uuid(),
+};
+
+const mockedConfig: ConfigYaml = {
+  azure_devops: {
+    org: uuid(),
+    project: uuid(),
+  },
+  introspection: {
+    azure: {
+      account_name: mockedValidateConfig.accountName,
+      key: mockedValidateConfig.key,
+      partition_key: mockedValidateConfig.partitionKey,
+      table_name: mockedValidateConfig.tableName,
+    },
+  },
+};
 
 jest.spyOn(storage, "getStorageManagementClient").mockImplementation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,21 +156,7 @@ afterAll(() => {
 
 describe("Validate deployment configuration", () => {
   test("valid deployment configuration", async () => {
-    const config: ConfigYaml = {
-      azure_devops: {
-        org: uuid(),
-        project: uuid(),
-      },
-      introspection: {
-        azure: {
-          account_name: uuid(),
-          key: uuid(),
-          partition_key: uuid(),
-          table_name: uuid(),
-        },
-      },
-    };
-    await isValidConfig(config);
+    isValidConfig(mockedConfig);
   });
 });
 
@@ -155,7 +164,7 @@ describe("test execute function", () => {
   it("positive test", async () => {
     jest
       .spyOn(validate, "isValidConfig")
-      .mockReturnValueOnce(Promise.resolve());
+      .mockReturnValueOnce(mockedValidateConfig);
     const exitFn = jest.fn();
     await execute(
       {
@@ -169,8 +178,8 @@ describe("test execute function", () => {
   it("positive test with self test set", async () => {
     jest
       .spyOn(validate, "isValidConfig")
-      .mockReturnValueOnce(Promise.resolve());
-    jest.spyOn(validate, "runSelfTest").mockReturnValueOnce(Promise.resolve());
+      .mockReturnValueOnce(mockedValidateConfig);
+    jest.spyOn(validate, "runSelfTest").mockResolvedValueOnce();
     const exitFn = jest.fn();
     await execute(
       {
@@ -182,9 +191,9 @@ describe("test execute function", () => {
     expect(exitFn.mock.calls).toEqual([[0]]);
   });
   it("negative test with self test set", async () => {
-    jest
-      .spyOn(validate, "isValidConfig")
-      .mockReturnValueOnce(Promise.reject(new Error("error")));
+    jest.spyOn(validate, "isValidConfig").mockImplementationOnce(() => {
+      throw Error("error");
+    });
     const exitFn = jest.fn();
     await execute(
       {
@@ -205,34 +214,16 @@ describe("test runSelfTest function", () => {
     jest
       .spyOn(validate, "deleteSelfTestData")
       .mockReturnValueOnce(Promise.resolve(true));
-
-    const config: ConfigYaml = {
-      introspection: {
-        azure: {
-          key: uuid(),
-          table_name: undefined,
-        },
-      },
-    };
-
-    await runSelfTest(config);
+    await runSelfTest(mockedValidateConfig);
   });
   it("negative test", async () => {
     jest
       .spyOn(validate, "writeSelfTestData")
       .mockReturnValueOnce(Promise.resolve("buildId"));
-    jest
-      .spyOn(validate, "deleteSelfTestData")
-      .mockReturnValueOnce(Promise.resolve(false));
+    jest.spyOn(validate, "deleteSelfTestData").mockResolvedValueOnce(false);
 
-    const config: ConfigYaml = {
-      introspection: {
-        azure: {
-          key: uuid(),
-          table_name: undefined,
-        },
-      },
-    };
+    const config = deepClone(mockedValidateConfig);
+    config.tableName = "";
     await runSelfTest(config);
   });
   it("negative test: error thrown", async () => {
@@ -240,14 +231,8 @@ describe("test runSelfTest function", () => {
       .spyOn(validate, "writeSelfTestData")
       .mockReturnValueOnce(Promise.reject(new Error("error")));
 
-    const config: ConfigYaml = {
-      introspection: {
-        azure: {
-          key: uuid(),
-          table_name: undefined,
-        },
-      },
-    };
+    const config = deepClone(mockedValidateConfig);
+    config.tableName = "";
     await expect(runSelfTest(config)).rejects.toThrow();
   });
 });
@@ -257,7 +242,9 @@ describe("Validate missing deployment configuration", () => {
     const config: ConfigYaml = {
       introspection: undefined,
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -268,7 +255,9 @@ describe("Validate missing deployment.storage configuration", () => {
         azure: undefined,
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -282,7 +271,9 @@ describe("Validate missing deployment.storage configuration", () => {
         },
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -296,7 +287,9 @@ describe("Validate missing deployment.storage configuration", () => {
         },
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -310,7 +303,9 @@ describe("Validate missing deployment.storage configuration", () => {
         },
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -321,18 +316,9 @@ describe("Validate missing deployment.storage configuration", () => {
         azure: {},
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
-  });
-});
-
-describe("Validate missing deployment.pipeline configuration", () => {
-  test("missing deployment.pipeline configuration", async () => {
-    const config: ConfigYaml = {
-      introspection: {
-        azure: {},
-      },
-    };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -346,7 +332,9 @@ describe("Validate missing deployment.pipeline configuration", () => {
         azure: {},
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
@@ -361,7 +349,9 @@ describe("Validate missing deployment.pipeline configuration", () => {
         azure: {},
       },
     };
-    await expect(isValidConfig(config)).rejects.toThrow();
+    expect(() => {
+      isValidConfig(config);
+    }).toThrow();
   });
 });
 
