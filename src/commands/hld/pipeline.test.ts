@@ -73,6 +73,7 @@ describe("test emptyStringIfUndefined function", () => {
 });
 
 const orgNameTest = (hasVal: boolean): void => {
+  jest.spyOn(config, "Config").mockReturnValueOnce({});
   const data = {
     buildScriptUrl: "",
     devopsProject: "project",
