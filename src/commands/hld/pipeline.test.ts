@@ -58,7 +58,7 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-jest.spyOn(azdo, "validateRepository").mockReturnValue(Promise.resolve());
+jest.spyOn(azdo, "validateRepository").mockResolvedValue();
 
 describe("test emptyStringIfUndefined function", () => {
   it("pass in undefined", () => {
@@ -242,28 +242,28 @@ describe("create hld to manifest pipeline test", () => {
   });
 
   it("should fail if the build client cant be instantiated", async () => {
-    (getBuildApiClient as jest.Mock).mockRejectedValueOnce(Error("fake Error"));
-    await expect(
-      installHldToManifestPipeline(getMockObject())
-    ).rejects.toThrow();
+    (getBuildApiClient as jest.Mock).mockRejectedValueOnce(Error("Error"));
+    await expect(installHldToManifestPipeline(getMockObject())).rejects.toThrow(
+      "Error"
+    );
   });
 
   it("should fail if the pipeline definition cannot be created", async () => {
     (getBuildApiClient as jest.Mock).mockReturnValueOnce({});
     (createPipelineForDefinition as jest.Mock).mockRejectedValueOnce(
-      Error("fake error")
+      Error("Error")
     );
-    await expect(
-      installHldToManifestPipeline(getMockObject())
-    ).rejects.toThrow();
+    await expect(installHldToManifestPipeline(getMockObject())).rejects.toThrow(
+      "Error"
+    );
   });
 
   it("should fail if a build cannot be queued on the pipeline", async () => {
     (getBuildApiClient as jest.Mock).mockReturnValueOnce({});
     (createPipelineForDefinition as jest.Mock).mockReturnValueOnce({ id: 10 });
-    (queueBuild as jest.Mock).mockRejectedValueOnce(Error("fake error"));
-    await expect(
-      installHldToManifestPipeline(getMockObject())
-    ).rejects.toThrow();
+    (queueBuild as jest.Mock).mockRejectedValueOnce(Error("Error"));
+    await expect(installHldToManifestPipeline(getMockObject())).rejects.toThrow(
+      "Error"
+    );
   });
 });
