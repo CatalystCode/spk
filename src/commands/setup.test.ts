@@ -120,7 +120,7 @@ const testExecuteFunc = async (
   jest
     .spyOn(gitService, "getGitApi")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .mockReturnValueOnce(Promise.resolve({} as any));
+    .mockResolvedValueOnce({} as any);
   jest.spyOn(fsUtil, "createDirectory").mockReturnValueOnce();
   jest.spyOn(scaffold, "hldRepo").mockResolvedValueOnce();
   jest.spyOn(scaffold, "manifestRepo").mockResolvedValueOnce();
@@ -136,39 +136,37 @@ const testExecuteFunc = async (
   if (usePrompt) {
     jest
       .spyOn(promptInstance, "prompt")
-      .mockReturnValueOnce(Promise.resolve(mockRequestContext));
+      .mockResolvedValueOnce(mockRequestContext);
   } else {
     jest
       .spyOn(promptInstance, "getAnswerFromFile")
       .mockReturnValueOnce(mockRequestContext);
   }
   jest.spyOn(setup, "createSPKConfig").mockReturnValueOnce();
-  jest.spyOn(azdoClient, "getWebApi").mockReturnValueOnce(
-    Promise.resolve({
-      getCoreApi: async () => {
-        return {};
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
-  );
+  jest.spyOn(azdoClient, "getWebApi").mockResolvedValueOnce({
+    getCoreApi: async () => {
+      return {};
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any);
   jest
     .spyOn(azdoClient, "getBuildApi")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .mockReturnValueOnce(Promise.resolve({} as any));
+    .mockResolvedValueOnce({} as any);
   if (hasProject) {
     jest
       .spyOn(projectService, "getProject")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .mockReturnValueOnce(Promise.resolve({} as any));
+      .mockResolvedValueOnce({} as any);
   } else {
     jest
       .spyOn(projectService, "getProject")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .mockReturnValueOnce(Promise.resolve(undefined as any));
+      .mockResolvedValueOnce(undefined as any);
   }
   const fncreateProject = jest
     .spyOn(projectService, "createProject")
-    .mockReturnValueOnce(Promise.resolve());
+    .mockResolvedValueOnce();
 
   if (usePrompt) {
     await execute(
@@ -213,19 +211,17 @@ describe("test execute function", () => {
     const exitFn = jest.fn();
     jest
       .spyOn(promptInstance, "prompt")
-      .mockReturnValueOnce(Promise.resolve(mockRequestContext));
+      .mockResolvedValueOnce(mockRequestContext);
     jest.spyOn(setup, "createSPKConfig").mockReturnValueOnce();
-    jest.spyOn(azdoClient, "getWebApi").mockReturnValueOnce(
-      Promise.resolve({
-        getCoreApi: () => {
-          throw {
-            message: "Authentication failure",
-            statusCode: 401,
-          };
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-    );
+    jest.spyOn(azdoClient, "getWebApi").mockResolvedValueOnce({
+      getCoreApi: () => {
+        throw {
+          message: "Authentication failure",
+          statusCode: 401,
+        };
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
     jest.spyOn(setupLog, "create").mockReturnValueOnce();
 
     await execute(
@@ -243,18 +239,16 @@ describe("test execute function", () => {
 
     jest
       .spyOn(promptInstance, "prompt")
-      .mockReturnValueOnce(Promise.resolve(mockRequestContext));
+      .mockResolvedValueOnce(mockRequestContext);
     jest.spyOn(setup, "createSPKConfig").mockReturnValueOnce();
-    jest.spyOn(azdoClient, "getWebApi").mockReturnValueOnce(
-      Promise.resolve({
-        getCoreApi: () => {
-          throw {
-            message: "VS402392: ",
-          };
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-    );
+    jest.spyOn(azdoClient, "getWebApi").mockResolvedValueOnce({
+      getCoreApi: () => {
+        throw {
+          message: "VS402392: ",
+        };
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
     jest.spyOn(setupLog, "create").mockReturnValueOnce();
 
     await execute(
@@ -272,18 +266,16 @@ describe("test execute function", () => {
 
     jest
       .spyOn(promptInstance, "prompt")
-      .mockReturnValueOnce(Promise.resolve(mockRequestContext));
+      .mockResolvedValueOnce(mockRequestContext);
     jest.spyOn(setup, "createSPKConfig").mockReturnValueOnce();
-    jest.spyOn(azdoClient, "getWebApi").mockReturnValueOnce(
-      Promise.resolve({
-        getCoreApi: () => {
-          throw {
-            message: "other error",
-          };
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-    );
+    jest.spyOn(azdoClient, "getWebApi").mockResolvedValueOnce({
+      getCoreApi: () => {
+        throw {
+          message: "other error",
+        };
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
     jest.spyOn(setupLog, "create").mockReturnValueOnce();
 
     await execute(
@@ -301,18 +293,16 @@ describe("test execute function", () => {
 
     jest
       .spyOn(promptInstance, "prompt")
-      .mockReturnValueOnce(Promise.resolve(mockRequestContext));
+      .mockResolvedValueOnce(mockRequestContext);
     jest.spyOn(setup, "createSPKConfig").mockReturnValueOnce();
-    jest.spyOn(azdoClient, "getWebApi").mockReturnValueOnce(
-      Promise.resolve({
-        getCoreApi: () => {
-          throw {
-            message: "other error",
-          };
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-    );
+    jest.spyOn(azdoClient, "getWebApi").mockResolvedValueOnce({
+      getCoreApi: () => {
+        throw {
+          message: "other error",
+        };
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
     await execute(
       {
         file: undefined,
