@@ -179,7 +179,7 @@ export const validateTemplateSources = (
     );
     return source;
   }
-  throw buildError(errorStatusCode.INCORRECT_DEF, {
+  throw buildError(errorStatusCode.INCORRECT_DEFINITION, {
     errorKey: "infra-defn-yaml-invalid",
     values: [DEFINITION_YAML, source.template, source.source, source.version],
   });
@@ -362,7 +362,7 @@ export const generateConfigWithParentEqProjectPath = async (
   } else {
     // Consider the case where the only common configuration is just
     // backend configuration, and no common variable configuration.
-    // Thus, it is not "necessary" for a parent definition.yaml to 
+    // Thus, it is not "necessary" for a parent definition.yaml to
     // have a variables block in a multi-cluster.
     logger.warn(`Variables are not defined in the definition.yaml`);
   }
@@ -374,7 +374,7 @@ export const generateConfigWithParentEqProjectPath = async (
     // Not all templates will require a remote backend
     // (i.e Bedrock's azure-simple).
     // If a remote backend is not configured for a template,
-    // it will be impossible to be able to use spk infra in a 
+    // it will be impossible to be able to use spk infra in a
     // pipeline, but this can still work locally.
     logger.warn(
       `A remote backend configuration is not defined in the definition.yaml`
