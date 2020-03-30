@@ -21,7 +21,7 @@ import {
   spkTemplatesPath,
 } from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
-import { build as buildError } from "../../lib/errorBuilder";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 interface CommandOptions {
@@ -68,8 +68,9 @@ export const execute = async (
     );
     await exitFn(0);
   } catch (err) {
-    logger.error("Error occurred while generating project deployment files");
-    logger.error(err);
+    logError(
+      buildError(errorStatusCode.CMD_EXE_ERR, "infra-generate-cmd-failed", err)
+    );
     await exitFn(1);
   }
 };
@@ -119,7 +120,10 @@ export const validateDefinition = (
     return DefinitionYAMLExistence.PARENT_ONLY;
   }
 
-  throw new Error(`${DEFINITION_YAML} was not found in ${parentPath}`);
+  throw buildError(errorStatusCode.ENV_SETTING_ERR, {
+    errorKey: "infra-defn-yaml-not-found",
+    values: [DEFINITION_YAML, parentPath],
+  });
 };
 
 export const getDefinitionYaml = (dir: string): InfraConfigYaml => {
@@ -175,11 +179,10 @@ export const validateTemplateSources = (
     );
     return source;
   }
-  throw new Error(
-    `The ${DEFINITION_YAML} file is invalid. \
-There is a missing field for it's sources. \
-Template: ${source.template} source: ${source.source} version: ${source.version}`
-  );
+  throw buildError(errorStatusCode.INCORRECT_DEF, {
+    errorKey: "infra-defn-yaml-invalid",
+    values: [DEFINITION_YAML, source.template, source.source, source.version],
+  });
 };
 
 export const checkRemoteGitExist = async (
@@ -298,7 +301,7 @@ export const validateRemoteSource = async (
         } else {
           throw buildError(
             errorStatusCode.GIT_OPS_ERR,
-            "infra-err-validating-remote-git",
+            "infra-err-validating-remote-git-after-retry",
             err
           );
         }
@@ -310,7 +313,11 @@ export const validateRemoteSource = async (
         );
       }
     } else {
-      throw err;
+      throw buildError(
+        errorStatusCode.GIT_OPS_ERR,
+        "infra-err-validating-remote-git",
+        err
+      );
     }
   }
 };
@@ -353,6 +360,7 @@ export const generateConfigWithParentEqProjectPath = async (
     writeTfvarsFile(spkTfvarsObject, parentDirectory, SPK_TFVARS);
     await copyTfTemplate(templatePath, parentDirectory, true);
   } else {
+    // TOFIX: are these warnings? if yes, please write some comments.
     logger.warn(`Variables are not defined in the definition.yaml`);
   }
   if (parentInfraConfig.backend) {
@@ -360,6 +368,7 @@ export const generateConfigWithParentEqProjectPath = async (
     checkTfvars(parentDirectory, BACKEND_TFVARS);
     writeTfvarsFile(backendTfvarsObject, parentDirectory, BACKEND_TFVARS);
   } else {
+    // TOFIX: are these warnings? if yes, please write some comments.
     logger.warn(
       `A remote backend configuration is not defined in the definition.yaml`
     );
