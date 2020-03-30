@@ -359,13 +359,13 @@ pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organizati
 # ##################################
 # # App Mono Repo create ring
 # ##################################
-# echo "*Ring: Create ring in mono repo"
+# echo "Create ring in mono repo"
 # verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
 # echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
 # approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
 
 # # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-# echo "*Ring: Wait for fabrikam-hld-to-fabrikam-manifests pipeline"
+# echo "Wait for fabrikam-hld-to-fabrikam-manifests pipeline"
 # verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 500 15 4
 # ring_name=qa-ring
 
@@ -427,7 +427,7 @@ pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organizati
 # approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Updating fabrikam.acme.frontend image tag to qa-ring"
 
 # # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-# echo "Ring: wait for hld to fabrikam manifests"
+# echo "Wait for hld to fabrikam manifests"
 # verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 6
 
 # echo "Validating ring image tag in manifest repo"
