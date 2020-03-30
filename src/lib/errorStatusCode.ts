@@ -6,6 +6,7 @@ export enum errorStatusCode {
   VALIDATION_ERR = 1001,
   EXE_FLOW_ERR = 1002,
   ENV_SETTING_ERR = 1010,
+  FILE_IO_ERR = 1011,
   INCORRECT_DEF = 1012,
   GIT_OPS_ERR = 1100,
 }
