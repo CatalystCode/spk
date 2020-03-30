@@ -3,13 +3,9 @@ import yaml from "js-yaml";
 import mockFs from "mock-fs";
 import path from "path";
 import uuid from "uuid/v4";
-import { readYaml, write } from "../../config";
+import { readYaml } from "../../config";
 import * as config from "../../config";
-import {
-  create as createBedrockYaml,
-  isExists as isBedrockFileExists,
-  read as readBedrockFile,
-} from "../../lib/bedrockYaml";
+import * as bedrockYaml from "../../lib/bedrockYaml";
 import * as commandBuilder from "../../lib/commandBuilder";
 import {
   PROJECT_PIPELINE_FILENAME,
@@ -243,12 +239,12 @@ describe("setVariableGroupInBedrockFile", () => {
 
   test("Should pass adding a valid variable group name when bedrock file exists with empty variableGroups", async () => {
     // Create random directory to initialize
-    const randomTmpDir = createBedrockYaml();
+    const randomTmpDir = bedrockYaml.create();
 
     await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
 
-    expect(isBedrockFileExists(randomTmpDir)).toBe(true);
-    const bedrockFile = readBedrockFile(randomTmpDir);
+    expect(bedrockYaml.isExists(randomTmpDir)).toBe(true);
+    const bedrockFile = bedrockYaml.read(randomTmpDir);
 
     logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
     expect(bedrockFile.variableGroups).toBeDefined();
@@ -264,16 +260,16 @@ describe("setVariableGroupInBedrockFile", () => {
     logger.info(`prevariableGroupName: ${prevariableGroupName}`);
     const bedrockFileData: BedrockFile = {
       rings: {}, // rings is optional but necessary to create a bedrock file in config.write method
-      services: {}, // service property is not optional so set it to null
+      services: [], // service property is not optional so set it to null
       variableGroups: [prevariableGroupName],
       version: "",
     };
 
-    const randomTmpDir = createBedrockYaml("", bedrockFileData);
+    const randomTmpDir = bedrockYaml.create("", bedrockFileData);
     await setVariableGroupInBedrockFile(randomTmpDir, variableGroupName);
-    expect(isBedrockFileExists(randomTmpDir)).toBe(true);
+    expect(bedrockYaml.isExists(randomTmpDir)).toBe(true);
 
-    const bedrockFile = readBedrockFile(randomTmpDir);
+    const bedrockFile = bedrockYaml.read(randomTmpDir);
     logger.info(`filejson: ${JSON.stringify(bedrockFile)}`);
     expect(bedrockFile.variableGroups).toBeDefined();
     if (bedrockFile.variableGroups) {
@@ -330,7 +326,7 @@ describe("updateLifeCyclePipeline", () => {
       false
     ) as BedrockFile;
 
-    write(defaultBedrockFileObject, randomTmpDir);
+    bedrockYaml.create(randomTmpDir, defaultBedrockFileObject);
 
     const hldFilePath = path.join(randomTmpDir, PROJECT_PIPELINE_FILENAME);
 
@@ -369,7 +365,7 @@ describe("updateLifeCyclePipeline", () => {
       variableGroupName,
     ];
 
-    write(defaultBedrockFileObject, randomTmpDir);
+    bedrockYaml.create(randomTmpDir, defaultBedrockFileObject);
 
     const hldFilePath = path.join(randomTmpDir, PROJECT_PIPELINE_FILENAME);
 

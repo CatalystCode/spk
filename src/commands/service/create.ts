@@ -29,7 +29,6 @@ import { BedrockFileInfo, HelmConfig, User } from "../../types";
 import decorator from "./create.decorator.json";
 
 export interface CommandOptions {
-  displayName: string;
   gitPush: boolean;
   helmChartChart: string;
   helmChartRepository: string;
@@ -69,7 +68,6 @@ export const fetchValues = (opts: CommandOptions): CommandValues => {
   }
 
   const values: CommandValues = {
-    displayName: opts.displayName,
     gitPush: opts.gitPush,
     helmChartChart: opts.helmChartChart,
     helmChartRepository: opts.helmChartRepository,
@@ -113,9 +111,6 @@ export const checkDependencies = (projectPath: string): void => {
  *                 pathPrefixMajorVersion are provided and are non-DNS compliant
  */
 export const assertValidDnsInputs = (opts: Partial<CommandOptions>): void => {
-  if (opts.displayName) {
-    dns.assertIsValid("--display-name", opts.displayName);
-  }
   if (opts.k8sBackend) {
     dns.assertIsValid("--k8s-backend", opts.k8sBackend);
   }
@@ -132,6 +127,7 @@ export const assertValidDnsInputs = (opts: Partial<CommandOptions>): void => {
 
 export const execute = async (
   serviceName: string,
+  servicePath: string,
   opts: CommandOptions,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
@@ -141,16 +137,15 @@ export const execute = async (
     return;
   }
 
-  if (serviceName === "." && opts.displayName === "") {
-    logger.error(
-      `If specifying the current directory as service name, please include a display name using '-n'`
-    );
+  if (!servicePath) {
+    logger.error("Service path is missing");
     await exitFn(1);
     return;
   }
 
   // validate user inputs are DNS compliant
   try {
+    dns.assertIsValid("<service-name>", serviceName);
     assertValidDnsInputs(opts);
   } catch (err) {
     logger.error(err);
@@ -166,7 +161,7 @@ export const execute = async (
   try {
     checkDependencies(projectPath);
     const values = fetchValues(opts);
-    await createService(projectPath, serviceName, values);
+    await createService(projectPath, serviceName, servicePath, values);
     await exitFn(0);
   } catch (err) {
     logger.error(
@@ -228,8 +223,8 @@ export const validateGitUrl = async (
  */
 export const commandDecorator = (command: commander.Command): void => {
   buildCmd(command, decorator).action(
-    async (serviceName: string, opts: CommandOptions) => {
-      await execute(serviceName, opts, async (status: number) => {
+    async (serviceName: string, servicePath: string, opts: CommandOptions) => {
+      await execute(serviceName, servicePath, opts, async (status: number) => {
         await exitCmd(logger, process.exit, status);
       });
     }
@@ -246,46 +241,27 @@ export const commandDecorator = (command: commander.Command): void => {
 export const createService = async (
   rootProjectPath: string,
   serviceName: string,
+  servicePath: string,
   values: CommandValues
 ): Promise<void> => {
   logger.info(
-    `Adding Service: ${serviceName}, to Project: ${rootProjectPath} under directory: ${values.packagesDir}`
-  );
-  logger.info(
-    `DisplayName: ${values.displayName}, MaintainerName: ${values.maintainerName}, MaintainerEmail: ${values.maintainerEmail}`
+    `Adding Service: ${serviceName}, located at ${servicePath}, to Project: ${rootProjectPath} under directory: ${values.packagesDir}`
   );
 
   const newServiceDir = path.join(
     rootProjectPath,
     values.packagesDir,
-    serviceName
+    servicePath
   );
   logger.info(`servicePath: ${newServiceDir}`);
 
   shelljs.mkdir("-p", newServiceDir);
 
-  const pipelineServiceName = values.displayName
-    ? values.displayName
-    : serviceName; // displayName takes priority over serviceName (which could be '.')
-  // Sanity check
-  if (
-    pipelineServiceName === "." ||
-    pipelineServiceName === "./" ||
-    pipelineServiceName === "./."
-  ) {
-    logger.error(
-      `Cannot create service pipeline due to serviceName being '.'. Please include a displayName if you are trying to create a service in your project root directory.`
-    );
-    throw Error(
-      "Cannot create service pipeline due to serviceName being '.'. Please include a displayName if you are trying to create a service in your project root directory."
-    );
-  }
-
   // Create azure pipelines yaml in directory
   generateServiceBuildAndUpdatePipelineYaml(
     rootProjectPath,
     values.ringNames,
-    pipelineServiceName,
+    serviceName,
     newServiceDir,
     values.variableGroups
   );
@@ -333,7 +309,7 @@ export const createService = async (
   addNewServiceToBedrockFile(
     rootProjectPath,
     newServiceRelativeDir,
-    values.displayName,
+    serviceName,
     helmConfig,
     values.middlewaresArray,
     values.k8sPort,
