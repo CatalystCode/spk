@@ -360,7 +360,10 @@ export const generateConfigWithParentEqProjectPath = async (
     writeTfvarsFile(spkTfvarsObject, parentDirectory, SPK_TFVARS);
     await copyTfTemplate(templatePath, parentDirectory, true);
   } else {
-    // TOFIX: are these warnings? if yes, please write some comments.
+    // Consider the case where the only common configuration is just
+    // backend configuration, and no common variable configuration.
+    // Thus, it is not "necessary" for a parent definition.yaml to 
+    // have a variables block in a multi-cluster.
     logger.warn(`Variables are not defined in the definition.yaml`);
   }
   if (parentInfraConfig.backend) {
@@ -368,7 +371,11 @@ export const generateConfigWithParentEqProjectPath = async (
     checkTfvars(parentDirectory, BACKEND_TFVARS);
     writeTfvarsFile(backendTfvarsObject, parentDirectory, BACKEND_TFVARS);
   } else {
-    // TOFIX: are these warnings? if yes, please write some comments.
+    // Not all templates will require a remote backend
+    // (i.e Bedrock's azure-simple).
+    // If a remote backend is not configured for a template,
+    // it will be impossible to be able to use spk infra in a 
+    // pipeline, but this can still work locally.
     logger.warn(
       `A remote backend configuration is not defined in the definition.yaml`
     );
