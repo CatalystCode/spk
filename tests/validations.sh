@@ -441,7 +441,7 @@ pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organizati
 # validate_commit $image_tag
 # validate_file "$TEST_WORKSPACE/$manifests_dir/prod/$mono_repo_dir/$FrontEndCompliant/$ring_name/chart.yaml" "image: $image_repository:$image_tag"
 
-echo "Successfully updated a ring."
+# echo "Successfully updated a ring."
 # --------------------------------
 
 echo "Successfully reached the end of the service validations scripts."
