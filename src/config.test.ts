@@ -10,12 +10,12 @@ import {
   loadConfiguration,
   saveConfiguration,
   updateVariableWithLocalEnv,
-  write,
 } from "./config";
 import { createTempDir } from "./lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "./logger";
 import { BedrockFile } from "./types";
 import { getVersionMessage } from "./lib/fileutils";
+import * as bedrockYaml from "./lib/bedrockYaml";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -59,8 +59,9 @@ describe("Bedrock", () => {
     shell.mkdir("-p", randomTmpDir);
     const validBedrockYaml: BedrockFile = {
       rings: {},
-      services: {
-        "foo/a": {
+      services: [
+        {
+          path: "foo/a",
           helm: {
             chart: {
               chart: "elastic",
@@ -72,7 +73,8 @@ describe("Bedrock", () => {
           pathPrefix: "servicepath",
           pathPrefixMajorVersion: "v1",
         },
-        "foo/b": {
+        {
+          path: "foo/b",
           helm: {
             chart: {
               git: "foo",
@@ -85,10 +87,11 @@ describe("Bedrock", () => {
           pathPrefix: "servicepath",
           pathPrefixMajorVersion: "v1",
         },
-      },
+      ],
       version: "1.0",
     };
-    write(validBedrockYaml, randomTmpDir);
+
+    bedrockYaml.create(randomTmpDir, validBedrockYaml);
     const expectedFilePath = path.join(randomTmpDir, "bedrock.yaml");
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
@@ -127,7 +130,7 @@ describe("Bedrock", () => {
       version: "1.0",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
-    write(validBedrockYaml, randomTmpDir);
+    bedrockYaml.create(randomTmpDir, validBedrockYaml);
     const expectedFilePath = path.join(randomTmpDir, "bedrock.yaml");
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
