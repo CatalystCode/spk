@@ -10,6 +10,7 @@ import {
   SERVICE_PIPELINE_FILENAME,
   VERSION_MESSAGE,
   VM_IMAGE,
+  BEDROCK_FILENAME,
 } from "../lib/constants";
 import { logger } from "../logger";
 import {
@@ -20,6 +21,8 @@ import {
   User,
 } from "../types";
 import { readYaml, write } from "../config";
+import { build as buildError } from "../lib/errorBuilder";
+import { errorStatusCode } from "../lib/errorStatusCode";
 
 /**
  * Read given pipeline file as json object.
@@ -147,7 +150,12 @@ export const serviceBuildAndUpdatePipeline = (
       branches: { include: [...new Set(ringBranches)] },
       ...(relativeServicePathFormatted === ""
         ? {}
-        : { paths: { include: [relativeServicePathFormatted] } }),
+        : {
+            paths: {
+              include: [relativeServicePathFormatted],
+              exclude: [BEDROCK_FILENAME],
+            },
+          }),
     },
     variables: [...(variableGroups ?? []).map((group) => ({ group }))],
     stages: [
@@ -482,16 +490,23 @@ export const appendVariableGroupToPipelineYaml = (
   fileName: string,
   variableGroupName: string
 ): void => {
-  const pipelineFile = readYaml(path.join(dir, fileName)) as AzurePipelinesYaml;
+  try {
+    const pipelineFile = readYaml(
+      path.join(dir, fileName)
+    ) as AzurePipelinesYaml;
+    pipelineFile.variables = pipelineFile.variables || [];
 
-  if (!pipelineFile.variables) {
-    pipelineFile.variables = [];
+    pipelineFile.variables.push({ group: variableGroupName });
+
+    logger.info(`Updating '${dir}/${fileName}'.`);
+    write(pipelineFile, dir, fileName);
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.FILE_IO_ERR,
+      "fileutils-append-variable-group-to-pipeline-yaml",
+      err
+    );
   }
-
-  pipelineFile.variables.push({ group: variableGroupName });
-
-  logger.info(`Updating '${dir}/${fileName}'.`);
-  write(pipelineFile, dir, fileName);
 };
 
 /**

@@ -94,7 +94,7 @@ function showDetails(key) {
   );
   content = content.replace("@@cmd-description@@", cmd.description);
 
-  var options = cmd.options.reduce(function (a, c) {
+  var options = (cmd.options || []).reduce(function (a, c) {
     var o = optionTemplate
       .replace("@@option@@", sanitize(c.arg))
       .replace("@@description@@", sanitize(c.description));
