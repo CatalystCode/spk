@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import commander from "commander";
 import fs from "fs";
@@ -22,6 +21,8 @@ import {
   spkTemplatesPath,
 } from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 interface CommandOptions {
   project: string | undefined;
@@ -29,9 +30,9 @@ interface CommandOptions {
 }
 
 export interface SourceInformation {
-  source?: string;
-  template?: string;
-  version?: string;
+  source: string;
+  template: string;
+  version: string;
 }
 
 export enum DefinitionYAMLExistence {
@@ -55,6 +56,8 @@ export const execute = async (
       parentPath,
       projectPath
     );
+    // validateTemplateSources makes sure that
+    // sourceConfig has values for source, template and version
     await validateRemoteSource(sourceConfig);
     await generateConfig(
       parentPath,
@@ -65,8 +68,9 @@ export const execute = async (
     );
     await exitFn(0);
   } catch (err) {
-    logger.error("Error occurred while generating project deployment files");
-    logger.error(err);
+    logError(
+      buildError(errorStatusCode.CMD_EXE_ERR, "infra-generate-cmd-failed", err)
+    );
     await exitFn(1);
   }
 };
@@ -116,7 +120,10 @@ export const validateDefinition = (
     return DefinitionYAMLExistence.PARENT_ONLY;
   }
 
-  throw new Error(`${DEFINITION_YAML} was not found in ${parentPath}`);
+  throw buildError(errorStatusCode.ENV_SETTING_ERR, {
+    errorKey: "infra-defn-yaml-not-found",
+    values: [DEFINITION_YAML, parentPath],
+  });
 };
 
 export const getDefinitionYaml = (dir: string): InfraConfigYaml => {
@@ -140,7 +147,11 @@ export const validateTemplateSources = (
   const sourceKeys = ["source", "template", "version"] as Array<
     keyof SourceInformation
   >;
-  const source: SourceInformation = {};
+  const source: SourceInformation = {
+    source: "",
+    template: "",
+    version: "",
+  };
   let parentInfraConfig: InfraConfigYaml;
   let leafInfraConfig: InfraConfigYaml;
 
@@ -161,18 +172,17 @@ export const validateTemplateSources = (
       source[k] = parentInfraConfig[k];
     }
   });
-  if (!source.source || !source.template || !source.version) {
-    throw new Error(
-      `The ${DEFINITION_YAML} file is invalid. \
-There is a missing field for it's sources. \
-Template: ${source.template} source: ${source.source} version: ${source.version}`
+  if (source.source && source.template && source.version) {
+    const safeLoggingUrl = safeGitUrlForLogging(source.source);
+    logger.info(
+      `Checking for locally stored template: ${source.template} from remote repository: ${safeLoggingUrl} at version: ${source.version}`
     );
+    return source;
   }
-  const safeLoggingUrl = safeGitUrlForLogging(source.source!);
-  logger.info(
-    `Checking for locally stored template: ${source.template} from remote repository: ${safeLoggingUrl} at version: ${source.version}`
-  );
-  return source;
+  throw buildError(errorStatusCode.INCORRECT_DEFINITION, {
+    errorKey: "infra-defn-yaml-invalid",
+    values: [DEFINITION_YAML, source.template, source.source, source.version],
+  });
 };
 
 export const checkRemoteGitExist = async (
@@ -182,14 +192,16 @@ export const checkRemoteGitExist = async (
 ): Promise<void> => {
   // Checking for git remote
   if (!fs.existsSync(sourcePath)) {
-    throw new Error(`${sourcePath} does not exist`);
+    throw buildError(errorStatusCode.GIT_OPS_ERR, {
+      errorKey: "infra-git-source-no-exist",
+      values: [sourcePath],
+    });
   }
 
   const result = await simpleGit(sourcePath).listRemote([source]);
   if (!result) {
     logger.error(result);
-    throw new Error(`Unable to clone the source remote repository. \
-The remote repo may not exist or you do not have the rights to access it`);
+    throw buildError(errorStatusCode.GIT_OPS_ERR, "infra-err-git-clone-failed");
   }
 
   logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
@@ -222,8 +234,8 @@ export const gitCheckout = async (
 export const validateRemoteSource = async (
   sourceConfig: SourceInformation
 ): Promise<void> => {
-  const source = sourceConfig.source!;
-  const version = sourceConfig.version!;
+  const source = sourceConfig.source;
+  const version = sourceConfig.version;
 
   // Converting source name to storable folder name
   const sourceFolder = getSourceFolderNameFromURL(source);
@@ -287,13 +299,25 @@ export const validateRemoteSource = async (
             version
           );
         } else {
-          throw new Error(
-            `Unable to determine error from supported retry cases ${err.message}`
+          throw buildError(
+            errorStatusCode.GIT_OPS_ERR,
+            "infra-err-validating-remote-git-after-retry",
+            err
           );
         }
       } catch (retryError) {
-        throw new Error(`Failure error thrown during retry ${retryError}`);
+        throw buildError(
+          errorStatusCode.GIT_OPS_ERR,
+          "infra-err-retry-validating-remote-git",
+          err
+        );
       }
+    } else {
+      throw buildError(
+        errorStatusCode.GIT_OPS_ERR,
+        "infra-err-validating-remote-git",
+        err
+      );
     }
   }
 };
@@ -336,6 +360,10 @@ export const generateConfigWithParentEqProjectPath = async (
     writeTfvarsFile(spkTfvarsObject, parentDirectory, SPK_TFVARS);
     await copyTfTemplate(templatePath, parentDirectory, true);
   } else {
+    // Consider the case where the only common configuration is just
+    // backend configuration, and no common variable configuration.
+    // Thus, it is not "necessary" for a parent definition.yaml to
+    // have a variables block in a multi-cluster.
     logger.warn(`Variables are not defined in the definition.yaml`);
   }
   if (parentInfraConfig.backend) {
@@ -343,6 +371,11 @@ export const generateConfigWithParentEqProjectPath = async (
     checkTfvars(parentDirectory, BACKEND_TFVARS);
     writeTfvarsFile(backendTfvarsObject, parentDirectory, BACKEND_TFVARS);
   } else {
+    // Not all templates will require a remote backend
+    // (i.e Bedrock's azure-simple).
+    // If a remote backend is not configured for a template,
+    // it will be impossible to be able to use spk infra in a
+    // pipeline, but this can still work locally.
     logger.warn(
       `A remote backend configuration is not defined in the definition.yaml`
     );
@@ -366,11 +399,11 @@ export const generateConfig = async (
   outputPath: string
 ): Promise<void> => {
   const parentDirectory = getParentGeneratedFolder(parentPath, outputPath);
-  const sourceFolder = getSourceFolderNameFromURL(sourceConfig.source!);
+  const sourceFolder = getSourceFolderNameFromURL(sourceConfig.source);
   const templatePath = path.join(
     spkTemplatesPath,
     sourceFolder,
-    sourceConfig.template!
+    sourceConfig.template
   );
   const childDirectory =
     projectPath === parentPath
@@ -393,7 +426,9 @@ export const generateConfig = async (
     }
 
     combineVariable(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       parentInfraConfig.variables!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       leafInfraConfig.variables!,
       childDirectory,
       SPK_TFVARS

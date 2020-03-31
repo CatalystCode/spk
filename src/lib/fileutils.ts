@@ -19,6 +19,9 @@ import {
   MaintainersFile,
   User,
 } from "../types";
+import { readYaml, write } from "../config";
+import { build as buildError } from "../lib/errorBuilder";
+import { errorStatusCode } from "../lib/errorStatusCode";
 
 /**
  * Read given pipeline file as json object.
@@ -312,7 +315,7 @@ export const serviceBuildAndUpdatePipeline = (
                   `repourl=\${url##*@}`,
                   `get_spk_version`,
                   `download_spk`,
-                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name --pr $pr_id --repository $repourl`,
+                  `./spk/spk deployment create  -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name --pr $pr_id --repository $repourl`,
                   `fi`,
                 ]),
                 displayName:
@@ -471,6 +474,36 @@ export const updateTriggerBranchesForServiceBuildAndUpdatePipeline = (
 };
 
 /**
+ * Appends a variable group an Azure pipeline yaml
+ * @param dir The directory where the pipeline yaml file is
+ * @param pipelineFile The name of the pipeline yaml file
+ * @param variableGroupName The name of the variable group to be added
+ */
+export const appendVariableGroupToPipelineYaml = (
+  dir: string,
+  fileName: string,
+  variableGroupName: string
+): void => {
+  try {
+    const pipelineFile = readYaml(
+      path.join(dir, fileName)
+    ) as AzurePipelinesYaml;
+    pipelineFile.variables = pipelineFile.variables || [];
+
+    pipelineFile.variables.push({ group: variableGroupName });
+
+    logger.info(`Updating '${dir}/${fileName}'.`);
+    write(pipelineFile, dir, fileName);
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.FILE_IO_ERR,
+      "fileutils-append-variable-group-to-pipeline-yaml",
+      err
+    );
+  }
+};
+
+/**
  * Returns a the Manifest Generation Pipeline as defined here: https://github.com/microsoft/bedrock/blob/master/gitops/azure-devops/ManifestGeneration.md#add-azure-pipelines-build-yaml
  */
 const manifestGenerationPipelineYaml = (): string => {
@@ -481,6 +514,7 @@ const manifestGenerationPipelineYaml = (): string => {
         include: ["master"],
       },
     },
+    variables: [],
     pool: {
       vmImage: VM_IMAGE,
     },

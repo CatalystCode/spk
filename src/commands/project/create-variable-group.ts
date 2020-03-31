@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/camelcase */
+
 import { VariableGroup } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import commander from "commander";
 import path from "path";
@@ -190,6 +190,16 @@ export const create = (
   logger.info(
     `Creating Variable Group from group definition '${variableGroupName}'`
   );
+
+  if (
+    !registryName ||
+    !hldRepoUrl ||
+    !servicePrincipalId ||
+    !servicePrincipalPassword ||
+    !tenantId
+  ) {
+    throw Error("Required values were missing");
+  }
 
   const vars: VariableGroupDataVariable = {
     ACR_NAME: {
