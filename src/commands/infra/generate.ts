@@ -20,7 +20,7 @@ import {
   spkTemplatesPath,
 } from "./infra_common";
 import { copyTfTemplate } from "./scaffold";
-import { build as buildError } from "../../lib/errorBuilder";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 interface CommandOptions {
@@ -38,72 +38,6 @@ export enum DefinitionYAMLExistence {
   BOTH_EXIST,
   PARENT_ONLY,
 }
-
-/**
- * Creates "generated" directory if it does not already exists
- *
- * @param projectPath path to the project directory
- */
-export const createGenerated = (projectPath: string): void => {
-  mkdirp.sync(projectPath);
-  logger.info(`Created generated directory: ${projectPath}`);
-};
-
-export const checkRemoteGitExist = async (
-  sourcePath: string,
-  source: string,
-  safeLoggingUrl: string
-): Promise<void> => {
-  // Checking for git remote
-  if (!fs.existsSync(sourcePath)) {
-    throw buildError(errorStatusCode.GIT_OPS_ERR, {
-      errorKey: "infra-git-source-no-exist",
-      values: [sourcePath],
-    });
-  }
-
-  const result = await simpleGit(sourcePath).listRemote([source]);
-  if (!result) {
-    logger.error(result);
-    throw buildError(errorStatusCode.GIT_OPS_ERR, "infra-err-git-clone-failed");
-  }
-
-  logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
-};
-
-export const gitFetchPull = async (
-  sourcePath: string,
-  safeLoggingUrl: string
-): Promise<void> => {
-  // Make sure we have the latest version of all releases cached locally
-  await simpleGit(sourcePath).fetch("all");
-  await simpleGit(sourcePath).pull("origin", "master");
-  logger.info(`${safeLoggingUrl} already cloned. Performing 'git pull'...`);
-};
-
-export const gitCheckout = async (
-  sourcePath: string,
-  version: string
-): Promise<void> => {
-  // Checkout tagged version
-  logger.info(`Checking out template version: ${version}`);
-  await simpleGit(sourcePath).checkout(version);
-};
-
-/**
- * Performs a 'git clone...'
- *
- * @param source git url to clone
- * @param sourcePath location to clone repo to
- */
-export const gitClone = async (
-  git: simpleGit.SimpleGit,
-  source: string,
-  sourcePath: string
-): Promise<void> => {
-  await git.clone(source, `${sourcePath}`);
-  logger.info(`Cloning source repo to .spk/templates was successful.`);
-};
 
 /**
  * Checks if definition.yaml is present locally to provided project path
@@ -137,7 +71,10 @@ export const validateDefinition = (
     return DefinitionYAMLExistence.PARENT_ONLY;
   }
 
-  throw new Error(`${DEFINITION_YAML} was not found in ${parentPath}`);
+  throw buildError(errorStatusCode.ENV_SETTING_ERR, {
+    errorKey: "infra-defn-yaml-not-found",
+    values: [DEFINITION_YAML, parentPath],
+  });
 };
 
 export const getDefinitionYaml = (dir: string): InfraConfigYaml => {
@@ -193,11 +130,76 @@ export const validateTemplateSources = (
     );
     return source;
   }
-  throw new Error(
-    `The ${DEFINITION_YAML} file is invalid. \
-There is a missing field for it's sources. \
-Template: ${source.template} source: ${source.source} version: ${source.version}`
-  );
+  throw buildError(errorStatusCode.INCORRECT_DEFINITION, {
+    errorKey: "infra-defn-yaml-invalid",
+    values: [DEFINITION_YAML, source.template, source.source, source.version],
+  });
+};
+
+/**
+ * Creates "generated" directory if it does not already exists
+ *
+ * @param projectPath path to the project directory
+ */
+export const createGenerated = (projectPath: string): void => {
+  mkdirp.sync(projectPath);
+  logger.info(`Created generated directory: ${projectPath}`);
+};
+
+export const gitFetchPull = async (
+  sourcePath: string,
+  safeLoggingUrl: string
+): Promise<void> => {
+  // Make sure we have the latest version of all releases cached locally
+  await simpleGit(sourcePath).fetch("all");
+  await simpleGit(sourcePath).pull("origin", "master");
+  logger.info(`${safeLoggingUrl} already cloned. Performing 'git pull'...`);
+};
+
+export const gitCheckout = async (
+  sourcePath: string,
+  version: string
+): Promise<void> => {
+  // Checkout tagged version
+  logger.info(`Checking out template version: ${version}`);
+  await simpleGit(sourcePath).checkout(version);
+};
+
+/**
+ * Performs a 'git clone...'
+ *
+ * @param source git url to clone
+ * @param sourcePath location to clone repo to
+ */
+export const gitClone = async (
+  git: simpleGit.SimpleGit,
+  source: string,
+  sourcePath: string
+): Promise<void> => {
+  await git.clone(source, `${sourcePath}`);
+  logger.info(`Cloning source repo to .spk/templates was successful.`);
+};
+
+export const checkRemoteGitExist = async (
+  sourcePath: string,
+  source: string,
+  safeLoggingUrl: string
+): Promise<void> => {
+  // Checking for git remote
+  if (!fs.existsSync(sourcePath)) {
+    throw buildError(errorStatusCode.GIT_OPS_ERR, {
+      errorKey: "infra-git-source-no-exist",
+      values: [sourcePath],
+    });
+  }
+
+  const result = await simpleGit(sourcePath).listRemote([source]);
+  if (!result) {
+    logger.error(result);
+    throw buildError(errorStatusCode.GIT_OPS_ERR, "infra-err-git-clone-failed");
+  }
+
+  logger.info(`Remote source repo: ${safeLoggingUrl} exists.`);
 };
 
 /**
@@ -301,7 +303,7 @@ export const validateRemoteSource = async (
         } else {
           throw buildError(
             errorStatusCode.GIT_OPS_ERR,
-            "infra-err-validating-remote-git",
+            "infra-err-validating-remote-git-after-retry",
             err
           );
         }
@@ -313,7 +315,11 @@ export const validateRemoteSource = async (
         );
       }
     } else {
-      throw err;
+      throw buildError(
+        errorStatusCode.GIT_OPS_ERR,
+        "infra-err-validating-remote-git",
+        err
+      );
     }
   }
 };
@@ -394,6 +400,10 @@ export const generateConfigWithParentEqProjectPath = async (
     writeTfvarsFile(spkTfvarsObject, parentDirectory, SPK_TFVARS);
     await copyTfTemplate(templatePath, parentDirectory, true);
   } else {
+    // Consider the case where the only common configuration is just
+    // backend configuration, and no common variable configuration.
+    // Thus, it is not "necessary" for a parent definition.yaml to
+    // have a variables block in a multi-cluster.
     logger.warn(`Variables are not defined in the definition.yaml`);
   }
   if (parentInfraConfig.backend) {
@@ -401,6 +411,11 @@ export const generateConfigWithParentEqProjectPath = async (
     checkTfvars(parentDirectory, BACKEND_TFVARS);
     writeTfvarsFile(backendTfvarsObject, parentDirectory, BACKEND_TFVARS);
   } else {
+    // Not all templates will require a remote backend
+    // (i.e Bedrock's azure-simple).
+    // If a remote backend is not configured for a template,
+    // it will be impossible to be able to use spk infra in a
+    // pipeline, but this can still work locally.
     logger.warn(
       `A remote backend configuration is not defined in the definition.yaml`
     );
@@ -582,8 +597,9 @@ export const execute = async (
     );
     await exitFn(0);
   } catch (err) {
-    logger.error("Error occurred while generating project deployment files");
-    logger.error(err);
+    logError(
+      buildError(errorStatusCode.CMD_EXE_ERR, "infra-generate-cmd-failed", err)
+    );
     await exitFn(1);
   }
 };
