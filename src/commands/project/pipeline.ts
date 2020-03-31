@@ -56,9 +56,12 @@ export interface CommandOptions {
 export const checkDependencies = (projectPath: string): void => {
   const file: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (file.exist === false) {
-    throw new Error(PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-err-init-dependency"
+    );
   } else if (file.hasVariableGroups === false) {
-    throw new Error(PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE);
+    throw buildError(errorStatusCode.VALIDATION_ERR, "project-err-cvg");
   }
 };
 
@@ -77,11 +80,17 @@ export const fetchValidateValues = (
   spkConfig: ConfigYaml | undefined
 ): CommandOptions => {
   if (!spkConfig) {
-    throw new Error("SPK Config is missing");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-err-spk-config-missing"
+    );
   }
   const azureDevops = spkConfig?.azure_devops;
   if (!opts.repoUrl) {
-    throw Error(`Repo url not defined`);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-err-repo-url-undefined"
+    );
   }
 
   const values: CommandOptions = {
@@ -111,7 +120,10 @@ export const fetchValidateValues = (
   const error = validateForRequiredValues(decorator, map);
 
   if (error.length > 0) {
-    throw Error("invalid option values");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-err-invalid-options"
+    );
   }
 
   validateProjectNameThrowable(values.devopsProject!);
@@ -164,10 +176,16 @@ const createPipeline = async (
       definition
     );
   } catch (err) {
-    logger.error(
-      `Error occurred during pipeline creation for ${values.pipelineName}`
+    const errorInfo = buildError(
+      errorStatusCode.EXE_FLOW_ERR,
+      {
+        errorKey: "project-err-pipeline-create",
+        values: [values.pipelineName],
+      },
+      err
     );
-    throw err; // catch by other catch block
+    logError(errorInfo);
+    throw errorInfo;
   }
 };
 
@@ -193,9 +211,10 @@ export const installLifecyclePipeline = async (
   );
   if (typeof pipeline.id === "undefined") {
     const builtDefnString = JSON.stringify(pipeline);
-    throw Error(
-      `Invalid BuildDefinition created, parameter 'id' is missing from ${builtDefnString}`
-    );
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "project-err-invalid-build-definition",
+      values: [builtDefnString],
+    });
   }
   logger.info(`Created pipeline for ${values.pipelineName}`);
   logger.info(`Pipeline ID: ${pipeline.id}`);
