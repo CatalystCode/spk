@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { build as buildError, log as logError } from "./errorBuilder";
+import { build as buildError } from "./errorBuilder";
 import GitUrlParse from "git-url-parse";
 import path from "path";
 import url from "url";
