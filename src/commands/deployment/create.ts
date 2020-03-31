@@ -10,11 +10,7 @@ import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
 import decorator from "./create.decorator.json";
-import {
-  build as buildError,
-  log as logError,
-  build,
-} from "../../lib/errorBuilder";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 /**
