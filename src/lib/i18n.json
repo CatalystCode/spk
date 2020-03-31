@@ -45,7 +45,7 @@
     "fileutils-generate-default-hld-component-yaml": "Could not generate default HLD component YAML.",
     "fileutils-generate-git-ignore-file": "Could not generate .gitignore file in {0}.",
 
-    "git-checkout-commit-push-create-PR-link": "Could not checkout, commit, push or create pull request"
+    "git-checkout-commit-push-create-PR-link": "Could not checkout, commit, push or create pull request",
 
     "introspect-create-cmd-failed": "Deployment create command was not successfully executed.",
     "introspect-create-cmd-no-ops": "No action could be performed for specified arguments.",
