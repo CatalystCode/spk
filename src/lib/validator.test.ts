@@ -116,8 +116,10 @@ const testValidatePrereqs = (
   if (global) {
     const config = Config();
     expect(config.infra).toBeDefined();
+
     if (config.infra) {
       expect(config.infra.checks).toBeDefined();
+
       if (config.infra.checks) {
         expect(config.infra.checks[cmd]).toBe(expectedResult);
       }
