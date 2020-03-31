@@ -234,41 +234,29 @@ export const execute = async (
   projectPath: string,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
-  if (!opts.repoUrl || !opts.pipelineName) {
-    logError(
-      buildError(errorStatusCode.VALIDATION_ERR, {
+  try {
+    if (!opts.repoUrl || !opts.pipelineName) {
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
         errorKey: "project-err-missing-values",
         values: ["repo url and/or pipeline name"],
-      })
-    );
-    await exitFn(1);
-    return;
-  }
-  const gitUrlType = await isGitHubUrl(opts.repoUrl);
-  if (gitUrlType) {
-    logError(
-      buildError(errorStatusCode.VALIDATION_ERR, {
+      });
+    }
+    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    if (gitUrlType) {
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
         errorKey: "project-err-github-repo",
         values: [opts.repoUrl],
-      })
-    );
-    await exitFn(1);
-    return;
-  }
-  if (!projectPath) {
-    logError(
-      buildError(errorStatusCode.VALIDATION_ERR, {
+      });
+    }
+    if (!projectPath) {
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
         errorKey: "project-err-missing-values",
         values: ["project path"],
-      })
-    );
-    await exitFn(1);
-    return;
-  }
+      });
+    }
 
-  logger.verbose(`project path: ${projectPath}`);
+    logger.verbose(`project path: ${projectPath}`);
 
-  try {
     checkDependencies(projectPath);
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
