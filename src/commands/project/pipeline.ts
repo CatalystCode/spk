@@ -58,10 +58,13 @@ export const checkDependencies = (projectPath: string): void => {
   if (file.exist === false) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "project-err-init-dependency"
+      "project-install-life-cycle-pipeline-err-init-dependency"
     );
   } else if (file.hasVariableGroups === false) {
-    throw buildError(errorStatusCode.VALIDATION_ERR, "project-err-cvg");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-install-life-cycle-pipeline-err-cvg"
+    );
   }
 };
 
@@ -82,14 +85,14 @@ export const fetchValidateValues = (
   if (!spkConfig) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "project-err-spk-config-missing"
+      "project-install-life-cycle-pipeline-err-spk-config-missing"
     );
   }
   const azureDevops = spkConfig?.azure_devops;
   if (!opts.repoUrl) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "project-err-repo-url-undefined"
+      "project-install-life-cycle-pipeline-err-repo-url-undefined"
     );
   }
 
@@ -122,7 +125,7 @@ export const fetchValidateValues = (
   if (error.length > 0) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "project-err-invalid-options"
+      "project-install-life-cycle-pipeline-err-invalid-options"
     );
   }
 
@@ -179,7 +182,7 @@ const createPipeline = async (
     const errorInfo = buildError(
       errorStatusCode.EXE_FLOW_ERR,
       {
-        errorKey: "project-err-pipeline-create",
+        errorKey: "project-install-life-cycle-pipeline-err-pipeline-create",
         values: [values.pipelineName],
       },
       err
@@ -212,7 +215,8 @@ export const installLifecyclePipeline = async (
   if (typeof pipeline.id === "undefined") {
     const builtDefnString = JSON.stringify(pipeline);
     throw buildError(errorStatusCode.VALIDATION_ERR, {
-      errorKey: "project-err-invalid-build-definition",
+      errorKey:
+        "project-install-life-cycle-pipeline-err-invalid-build-definition",
       values: [builtDefnString],
     });
   }
@@ -237,20 +241,20 @@ export const execute = async (
   try {
     if (!opts.repoUrl || !opts.pipelineName) {
       throw buildError(errorStatusCode.VALIDATION_ERR, {
-        errorKey: "project-err-missing-values",
+        errorKey: "project-install-life-cycle-pipeline-err-missing-values",
         values: ["repo url and/or pipeline name"],
       });
     }
     const gitUrlType = await isGitHubUrl(opts.repoUrl);
     if (gitUrlType) {
       throw buildError(errorStatusCode.VALIDATION_ERR, {
-        errorKey: "project-err-github-repo",
+        errorKey: "project-install-life-cycle-pipeline-err-github-repo",
         values: [opts.repoUrl],
       });
     }
     if (!projectPath) {
       throw buildError(errorStatusCode.VALIDATION_ERR, {
-        errorKey: "project-err-missing-values",
+        errorKey: "project-install-life-cycle-pipeline-err-missing-values",
         values: ["project path"],
       });
     }
