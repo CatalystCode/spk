@@ -37,6 +37,13 @@
     "hld-append-var-group-cmd-failed": "HLD Append Variable Group Command was not successfully executed.",
     "hld-append-var-group-name-missing": "Variable group name was not provided. Provide variable group.",
 
+    "project-install-lifecycle-pipeline-cmd-failed": "Project install lifecycle pipeline was not successfully executed.",
+    "project-err-github-repo": "GitHub repos are not supported. Repo url: {0} is invalid",
+    "project-err-missing-values": "Value for {0} is missing.",
+
+    "git-err-validating-remote-git": "Could not determine origin repository, or it is not a supported type.",
+    "git-err-invalid-repository-url": "Repositiry URL does not begin with http(s).",
+
     "fileutils-append-variable-group-to-pipeline-yaml": "Could not append variable group name to manifest-generation.yaml file in HLD repo. Check this is file exist and if it is YAML format."
   }
 }

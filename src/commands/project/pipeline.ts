@@ -39,6 +39,8 @@ import {
 import { logger } from "../../logger";
 import { BedrockFileInfo, ConfigYaml } from "../../types";
 import decorator from "./pipeline.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
   orgName: string | undefined;
@@ -214,20 +216,33 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   if (!opts.repoUrl || !opts.pipelineName) {
-    logger.error(`Values for repo url and/or pipeline name are missing`);
+    logError(
+      buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-err-missing-values",
+        values: ["repo url and/or pipeline name"],
+      })
+    );
     await exitFn(1);
     return;
   }
   const gitUrlType = await isGitHubUrl(opts.repoUrl);
   if (gitUrlType) {
-    logger.error(
-      `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
+    logError(
+      buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-err-github-repo",
+        values: [opts.repoUrl],
+      })
     );
     await exitFn(1);
     return;
   }
   if (!projectPath) {
-    logger.error("Project Path is missing");
+    logError(
+      buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-err-missing-values",
+        values: ["project path"],
+      })
+    );
     await exitFn(1);
     return;
   }
@@ -254,10 +269,13 @@ export const execute = async (
     await installLifecyclePipeline(values);
     await exitFn(0);
   } catch (err) {
-    logger.error(
-      `Error occurred installing pipeline for project hld lifecycle.`
+    logError(
+      buildError(
+        errorStatusCode.CMD_EXE_ERR,
+        "project-install-lifecycle-pipeline-cmd-failed",
+        err
+      )
     );
-    logger.error(err);
     await exitFn(1);
   }
 };

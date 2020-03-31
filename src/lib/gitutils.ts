@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
+import { build as buildError, log as logError } from "./errorBuilder";
 import GitUrlParse from "git-url-parse";
 import path from "path";
 import url from "url";
+import { errorStatusCode } from "./errorStatusCode";
 import { logger } from "../logger";
 import { exec } from "./shell";
 
@@ -181,8 +183,15 @@ export const getRepositoryName = (originUrl: string): string => {
     logger.debug("github repo found.");
     return name;
   } else {
-    throw Error(
-      "Could not determine origin repository, or it is not a supported type."
+    if (!resource.startsWith("http")) {
+      throw buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "git-err-invalid-repository-url"
+      );
+    }
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "git-err-validating-remote-git"
     );
   }
 };
