@@ -15,8 +15,6 @@ import {
 } from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
-  PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE,
-  PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE,
   PROJECT_PIPELINE_FILENAME,
 } from "../../lib/constants";
 import { AzureDevOpsOpts } from "../../lib/git";
