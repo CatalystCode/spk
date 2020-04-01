@@ -32,6 +32,12 @@ interface CommandVariableName2Opt {
   variableName: string;
 }
 
+/**
+ * Returns variable name associated with an option name.
+ * e.g. servicePrincipalId for --service-principal-id
+ *
+ * @param opt Command option
+ */
 export const argToVariableName = (opt: CommandOption): string => {
   const match = opt.arg.match(/\s?--([-\w]+)\s?/);
   if (match) {
@@ -43,13 +49,6 @@ export const argToVariableName = (opt: CommandOption): string => {
   }
   throw Error(`Could locate option name ${opt.arg}`);
 };
-
-// const variableNameToArg = (name: string): string => {
-//   return "--" + name.replace(/([A-Z])/g, (_, m) => {
-//     return "-" + m.toLowerCase();
-//     }
-//   );
-// };
 
 /**
  * Builds a command
@@ -177,6 +176,14 @@ export const exit = (
   });
 };
 
+/**
+ * Returns the command option that match an variable name.
+ * e.g. servicePrincipalId, the option that has name
+ * --service-principal-id shall be returned
+ *
+ * @param decorator command decorator
+ * @param name variable name
+ */
 export const getOption = (
   decorator: CommandBuildElements,
   name: string
@@ -195,6 +202,14 @@ interface CommandValues {
   [key: string]: string | undefined;
 }
 
+/**
+ * Populates (inherit) values from config.yaml of user does
+ * not provide values to inheritable options.
+ *
+ * @param decorator command decorator
+ * @param config config YAML
+ * @param opts option values provided by user.
+ */
 export const populateInheritValueFromConfig = (
   decorator: CommandBuildElements,
   config: ConfigYaml,
@@ -207,12 +222,17 @@ export const populateInheritValueFromConfig = (
       .forEach((option) => {
         const name = argToVariableName(option);
 
+        // skip if the option already has value provided.
+        // that's do not need to inherit from config.yaml
         if (!hasValue(mapOpts[name])) {
           let cfg: ConfigValues | string | undefined = config as ConfigValues;
 
+          // .filter((o) => !!o.inherit) already check that option.inherit is
+          // defined
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const arr = option.inherit!.split(".");
 
+          // search for value in config.yaml
           while (cfg && typeof config === "object" && arr.length > 0) {
             const k = arr.shift();
             if (k) {
