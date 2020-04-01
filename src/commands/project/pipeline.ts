@@ -52,6 +52,17 @@ export interface CommandOptions {
   yamlFileBranch: string;
 }
 
+export interface ConfigValues {
+  devopsProject: string;
+  repoName: string;
+  orgName: string;
+  personalAccessToken: string;
+  pipelineName: string;
+  repoUrl: string;
+  buildScriptUrl: string;
+  yamlFileBranch: string;
+}
+
 export const checkDependencies = (projectPath: string): void => {
   const file: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (file.exist === false) {
@@ -107,7 +118,7 @@ export const fetchValidateValues = (
   opts: CommandOptions,
   gitOriginUrl: string,
   spkConfig: ConfigYaml | undefined
-): CommandOptions => {
+): ConfigValues => {
   if (!spkConfig) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
@@ -141,7 +152,6 @@ export const fetchValidateValues = (
   });
 
   const error = validateForRequiredValues(decorator, map);
-
   if (error.length > 0) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
@@ -149,10 +159,24 @@ export const fetchValidateValues = (
     );
   }
 
-  validateProjectNameThrowable(values.devopsProject!);
-  validateOrgNameThrowable(values.orgName!);
+  // validateForRequiredValues has validated the following
+  // values are validate, adding || "" is just to
+  // satisfy the no-non-null-assertion eslint rule
+  const configVals: ConfigValues = {
+    orgName: opts.orgName || "",
+    buildScriptUrl: opts.buildScriptUrl || BUILD_SCRIPT_URL,
+    devopsProject: opts.devopsProject || "",
+    repoName: opts.repoName || "",
+    personalAccessToken: opts.personalAccessToken || "",
+    pipelineName: opts.pipelineName || "",
+    repoUrl: opts.repoUrl || "",
+    yamlFileBranch: opts.yamlFileBranch,
+  };
 
-  return values;
+  validateProjectNameThrowable(configVals.devopsProject);
+  validateOrgNameThrowable(configVals.orgName);
+
+  return configVals;
 };
 
 /**
@@ -173,17 +197,17 @@ export const requiredPipelineVariables = (
 };
 
 const createPipeline = async (
-  values: CommandOptions,
+  values: ConfigValues,
   devopsClient: IBuildApi,
   definitionBranch: string
 ): Promise<BuildDefinition> => {
   const definition = definitionForAzureRepoPipeline({
     branchFilters: ["master"], // hld reconcile pipeline is triggered only by merges into the master branch.
     maximumConcurrentBuilds: 1,
-    pipelineName: values.pipelineName!,
-    repositoryName: values.repoName!,
-    repositoryUrl: values.repoUrl!,
-    variables: requiredPipelineVariables(values.buildScriptUrl!),
+    pipelineName: values.pipelineName,
+    repositoryName: values.repoName,
+    repositoryUrl: values.repoUrl,
+    variables: requiredPipelineVariables(values.buildScriptUrl),
     yamlFileBranch: definitionBranch, // Pipeline is defined in master
     yamlFilePath: PROJECT_PIPELINE_FILENAME, // Pipeline definition lives in root directory.
   });
@@ -195,7 +219,7 @@ const createPipeline = async (
   try {
     return await createPipelineForDefinition(
       devopsClient,
-      values.devopsProject!,
+      values.devopsProject,
       definition
     );
   } catch (err) {
@@ -219,11 +243,11 @@ const createPipeline = async (
  * @param exitFn Exit function
  */
 export const installLifecyclePipeline = async (
-  values: CommandOptions
+  values: ConfigValues
 ): Promise<void> => {
   const devopsClient = await getBuildApiClient(
-    values.orgName!,
-    values.personalAccessToken!
+    values.orgName,
+    values.personalAccessToken
   );
   logger.info("Fetched DevOps Client");
 
@@ -242,7 +266,7 @@ export const installLifecyclePipeline = async (
   logger.info(`Created pipeline for ${values.pipelineName}`);
   logger.info(`Pipeline ID: ${pipeline.id}`);
 
-  await queueBuild(devopsClient, values.devopsProject!, pipeline.id);
+  await queueBuild(devopsClient, values.devopsProject, pipeline.id);
 };
 
 /**
@@ -285,9 +309,9 @@ export const execute = async (
       project: values.devopsProject,
     };
     await validateRepository(
-      values.devopsProject!,
+      values.devopsProject,
       PROJECT_PIPELINE_FILENAME,
-      values.yamlFileBranch ? opts.yamlFileBranch : "master",
+      values.yamlFileBranch || "master",
       values.repoName,
       accessOpts
     );
