@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-
+/*eslint semi: "error"*/
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -33,7 +33,7 @@ import {
   validateOrgNameThrowable,
   validateProjectNameThrowable,
 } from "../../lib/validator";
-import { validateRepoUrl } from "../project/pipeline"
+import { validateRepoUrl } from "../project/pipeline";
 import { build as buildError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
