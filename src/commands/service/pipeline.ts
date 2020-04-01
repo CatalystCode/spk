@@ -55,13 +55,14 @@ export const fetchValues = async (
 ): Promise<CommandOptions> => {
   const { azure_devops } = Config();
   const gitOriginUrl = await getOriginUrl();
+  const repoUrl = validateRepoUrl(opts, gitOriginUrl);
 
   opts.orgName = opts.orgName || azure_devops?.org || "";
   opts.personalAccessToken =
     opts.personalAccessToken || azure_devops?.access_token || "";
   opts.devopsProject = opts.devopsProject || azure_devops?.project || "";
   opts.pipelineName = opts.pipelineName || serviceName + "-pipeline";
-  opts.repoName = getRepositoryName(opts.repoUrl);
+  opts.repoName = getRepositoryName(repoUrl);
   opts.repoUrl = opts.repoUrl || getRepositoryUrl(gitOriginUrl);
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
 
