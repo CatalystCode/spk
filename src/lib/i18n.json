@@ -16,15 +16,59 @@
     "storageKeVaultName": "Enter key vault name (have the value as empty and hit enter key to skip)"
   },
   "errors": {
-    "infra-scaffold-cmd-failed": "Scaffold Command was not successfully executed.",
+    "hld-init-cmd-failed": "Hld init command was not successfully executed.",
+    "hld-init-cmd-project-path-missing": "Value for project path was not provided. Provide it.",
+
+    "infra-scaffold-cmd-failed": "Infra scaffold command was not successfully executed.",
     "infra-scaffold-cmd-src-missing": "Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.",
     "infra-scaffold-cmd-values-missing": "Values for name, version and/or 'template were missing. Provide value for values for them.",
+
+    "infra-generate-cmd-failed": "Infra generate command was not successfully executed.",
+
+    "infra-defn-yaml-not-found": "{0} was not found in {1}",
+    "infra-defn-yaml-invalid": "The {0} file is invalid. There are missing fields. template: {1} source: {2} version: {3}.",
+    "infra-unable-read-var-file": "Could read variable file: {0}. Make sure that it exists.",
+
     "infra-err-validating-remote-git": "Could not determine error when validating remote git source.",
     "infra-err-retry-validating-remote-git": "Failure error thrown during retrying validating remote git source.",
     "infra-err-locate-tf-env": "Could not find Terraform environment. Ensure template path {0} exists.",
     "infra-err-tf-path-not-found": "Provided Terraform {0} path is invalid or cannot be found: {1}",
     "infra-err-create-scaffold": "Could not create scaffold",
     "infra-err-git-clone-failed": "Could not clone the source remote repository. The remote repo might not exist or you did not have the rights to access it",
-    "infra-git-source-no-exist": "Source path, {0} did not exist."
+    "infra-git-source-no-exist": "Source path, {0} did not exist.",
+
+    "hld-append-var-group-cmd-failed": "HLD Append Variable Group command was not successfully executed.",
+    "hld-append-var-group-name-missing": "Variable group name was not provided. Provide variable group.",
+
+    "project-pipeline-cmd-failed": "Project install lifecycle pipeline was not successfully executed.",
+    "project-pipeline-err-github-repo": "GitHub repos are not supported. Repo url: {0} is invalid",
+    "project-pipeline-err-missing-values": "Value for {0} is missing.",
+    "project-pipeline-err-init-dependency": "Please run `spk project init` and `spk project cvg` commands before running this command to initialize the project.",
+    "project-pipeline-err-cvg": "Please run `spk project cvg` command before running this command to create a variable group.",
+    "project-pipeline-err-repo-url-undefined": "Repo url not defined",
+    "project-pipeline-err-spk-config-missing": "SPK Config is missing",
+    "project-pipeline-err-invalid-options": "Invalid option values",
+    "project-pipeline-err-pipeline-create": "Error occurred during pipeline creation for {0}",
+    "project-pipeline-err-invalid-build-definition": "Invalid BuildDefinition created, parameter 'id' is missing from {0}",
+
+    "git-err-validating-remote-git": "Could not determine origin repository, or it is not a supported type.",
+    "git-err-invalid-repository-url": "Repositiry URL does not begin with http(s).",
+
+    "fileutils-append-variable-group-to-pipeline-yaml": "Could not append variable group name to manifest-generation.yaml file in HLD repo. Check this is file exist and if it is YAML format.",
+    "fileutils-generate-hld-pipeline-yaml": "Could not generate HLD Azure pipeline YAML.",
+    "fileutils-generate-default-hld-component-yaml": "Could not generate default HLD component YAML.",
+    "fileutils-generate-git-ignore-file": "Could not generate .gitignore file in {0}.",
+
+    "git-checkout-commit-push-create-PR-link": "Could not checkout, commit, push or create pull request",
+
+    "introspect-create-cmd-failed": "Deployment create command was not successfully executed.",
+    "introspect-create-cmd-no-ops": "No action could be performed for specified arguments.",
+    "introspect-create-cmd-missing-values": "Access key, storage account name, partition key and/or table name were not provided. Provide them.",
+    "introspect-create-cmd-cmd-p1-missing-values": "Values for image-tag, commit-id and service options were missing. They are required for updating the details of source pipeline. Provide them.",
+    "introspect-create-cmd-cmd-p2-missing-values": "Values for p2, hld-commit-id, image-tag and env options were missing. They are required For updating the details of image tag release pipeline. Provide them.",
+
+    "deployment-table-update-hld-manifest-pipeline-failed": "Could not update HLD to manifest pipeline.",
+    "deployment-table-update-manifest-commit-id-failed": "Could not update manifest commit Id.",
+    "deployment-table-update-manifest-commit-id-failed-no-generation": "No manifest generation found to update manifest commit {0}."
   }
 }
