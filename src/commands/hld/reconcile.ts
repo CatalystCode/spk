@@ -18,7 +18,7 @@ import * as middleware from "../../lib/traefik/middleware";
 import { logger } from "../../logger";
 import { BedrockFile, BedrockServiceConfig } from "../../types";
 import decorator from "./reconcile.decorator.json";
-import { build as buildError } from "../../lib/errorBuilder";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 /**
@@ -664,8 +664,9 @@ export const execute = async (
     );
     await exitFn(0);
   } catch (err) {
-    logger.error(`An error occurred while reconciling HLD`);
-    logger.error(err);
+    logError(
+      buildError(errorStatusCode.CMD_EXE_ERR, "hld-reconcile-err-cmd-exe", err)
+    );
     await exitFn(1);
   }
 };

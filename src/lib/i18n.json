@@ -28,6 +28,7 @@
     "hld-reconcile-err-fab": "Fabrikate not installed. Please fetch and install the latest version: https://github.com/microsoft/fabrikate/releases",
     "hld-reconcile-err-path": "Could not validate {0} path.",
     "hld-reconcile-err-cmd-failed": "An error occurred executing command: {0}",
+    "hld-reconcile-err-cmd-exe": "An error occurred while reconciling HLD.",
 
     "infra-scaffold-cmd-failed": "Infra scaffold command was not successfully executed.",
     "infra-scaffold-cmd-src-missing": "Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.",
