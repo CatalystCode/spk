@@ -14,9 +14,10 @@ to a new name which is a non trivial and requires code changes in many files.
 The plan is to make the changes in the current repo which will simplify the
 final sync as we validate CI builds side-by-side for sometime in both repos.
 
-## Out of Scope
+## In Scope
 
-All changes in `spk` repo are defferred to post move except renaming the `spk`.
+Only renaming `spk` to a new name and moving the repo to Microsoft org is in
+scope and all other changes are defferred to post move.
 
 ## Design Details
 
