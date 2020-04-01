@@ -45,7 +45,7 @@ export interface CommandOptions {
   devopsProject: string | undefined;
   pipelineName: string;
   repoName: string;
-  repoUrl: string;
+  repoUrl: string | undefined;
   buildScriptUrl: string | undefined;
   yamlFileBranch: string;
 }
@@ -76,6 +76,26 @@ export const checkDependencies = (projectPath: string): void => {
   }
 };
 
+export const validateRepoUrl= (
+  opts: CommandOptions,
+  gitOriginUrl: string
+): string => {
+  try {
+    let repoUrl = ''
+    if (!opts.repoUrl) {
+      if(!getRepositoryUrl(gitOriginUrl)) {
+        throw Error(`Repo url not defined. Are you in a spk project folder?`)
+      } else {
+        return repoUrl = getRepositoryUrl(gitOriginUrl)
+      }
+    } else {
+      return repoUrl = opts.repoUrl
+    }
+  } catch(err){
+    throw new Error(`Unable to obtain and validate the repo url.`)
+  }
+}
+
 /**
  * Returns values that are needed for this command.
  *
@@ -97,13 +117,7 @@ export const fetchValidateValues = (
     );
   }
   const azureDevops = spkConfig?.azure_devops;
-  if (!opts.repoUrl) {
-    throw buildError(
-      errorStatusCode.VALIDATION_ERR,
-      "project-pipeline-err-repo-url-undefined"
-    );
-  }
-
+  const repoUrl = validateRepoUrl(opts,gitOriginUrl)
   const values: CommandOptions = {
     buildScriptUrl: opts.buildScriptUrl || BUILD_SCRIPT_URL,
     devopsProject: opts.devopsProject || azureDevops?.project,
@@ -112,7 +126,7 @@ export const fetchValidateValues = (
     pipelineName:
       opts.pipelineName || getRepositoryName(gitOriginUrl) + "-lifecycle",
     repoName:
-      getRepositoryName(opts.repoUrl) || getRepositoryName(gitOriginUrl),
+      getRepositoryName(repoUrl) || getRepositoryName(gitOriginUrl),
     repoUrl: opts.repoUrl || getRepositoryUrl(gitOriginUrl),
     yamlFileBranch: opts.yamlFileBranch,
   };
@@ -259,17 +273,14 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   try {
-    if (!opts.repoUrl || !opts.pipelineName) {
-      throw buildError(errorStatusCode.VALIDATION_ERR, {
-        errorKey: "project-pipeline-err-missing-values",
-        values: ["repo url and/or pipeline name"],
-      });
-    }
-    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    const gitOriginUrl = await getOriginUrl();
+    const repoUrl = validateRepoUrl(opts, gitOriginUrl)
+    const gitUrlType = await isGitHubUrl(repoUrl);
+    logger.info(`${gitUrlType}`)
     if (gitUrlType) {
       throw buildError(errorStatusCode.VALIDATION_ERR, {
         errorKey: "project-pipeline-err-github-repo",
-        values: [opts.repoUrl],
+        values: [repoUrl],
       });
     }
     if (!projectPath) {
@@ -282,7 +293,7 @@ export const execute = async (
     logger.verbose(`project path: ${projectPath}`);
 
     checkDependencies(projectPath);
-    const gitOriginUrl = await getOriginUrl();
+    //const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
 
     const accessOpts: AzureDevOpsOpts = {
