@@ -33,6 +33,9 @@ import {
   validateOrgNameThrowable,
   validateProjectNameThrowable,
 } from "../../lib/validator";
+import { validateRepoUrl } from "../project/pipeline"
+import { build as buildError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
   orgName: string;
@@ -74,14 +77,14 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   try {
-    if (!opts.repoUrl) {
-      throw Error(`Repo url not defined`);
-    }
-    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    const gitOriginUrl = await getOriginUrl();
+    const repoUrl = validateRepoUrl(opts, gitOriginUrl);
+    const gitUrlType = await isGitHubUrl(repoUrl);
     if (gitUrlType) {
-      throw Error(
-        `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
-      );
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-pipeline-err-github-repo",
+        values: [repoUrl],
+      });
     }
     await fetchValues(serviceName, opts);
     const accessOpts: AzureDevOpsOpts = {
