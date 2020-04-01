@@ -6,8 +6,8 @@
 
 ## Overview
 
-This dcoument describes high level steps to move Bedrock-CLI repo (formerly
-known as `SPK`) to the MIcrosoft organization in GitHub.
+This document describes high level steps to move Bedrock-CLI repo (formerly
+known as `SPK`) to the Microsoft organization in GitHub.
 
 The major change is to rename the CLI tool name in the existing repo from `spk`
 to a new name which is a non trivial and requires code changes in many files.
@@ -75,7 +75,7 @@ scope and all other changes are defferred to post move.
 
 ## Risks & Mitigations
 
-1. Docs and builds as kisted in the above section may break as part of this
+1. Docs and builds as listed in the above section may break as part of this
    move.
 2. The mitigation plan is to keep both repos side-by-side for few days by:
    - create new build definitions in Azure DevOps and validate.
