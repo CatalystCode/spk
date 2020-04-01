@@ -72,7 +72,7 @@ export const execAndLog = async (commandToRun: string): Promise<ExecResult> => {
   const pipeOutputToCurrentShell = true;
   const result = await exec(commandToRun, pipeOutputToCurrentShell);
   if (result.error) {
-    const errorInfo = buildError(
+    throw buildError(
       errorStatusCode.CMD_EXE_ERR,
       {
         errorKey: "hld-reconcile-err-cmd-failed",
@@ -80,8 +80,6 @@ export const execAndLog = async (commandToRun: string): Promise<ExecResult> => {
       },
       result.error
     );
-    logError(errorInfo);
-    throw errorInfo;
   }
   return result;
 };
@@ -117,7 +115,7 @@ export const createRepositoryComponent = async (
   return execCmd(
     `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`
   ).catch((err) => {
-    const errorInfo = buildError(
+    throw buildError(
       errorStatusCode.EXE_FLOW_ERR,
       {
         errorKey: "hld-reconcile-err-repo-create",
@@ -125,8 +123,6 @@ export const createRepositoryComponent = async (
       },
       err
     );
-    logError(errorInfo);
-    throw errorInfo;
   });
 };
 
