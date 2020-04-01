@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -68,59 +66,21 @@ export const fetchValues = async (
   return opts;
 };
 
-export const execute = async (
-  serviceName: string,
-  opts: CommandOptions,
-  exitFn: (status: number) => Promise<void>
-): Promise<void> => {
-  try {
-    if (!opts.repoUrl) {
-      throw Error(`Repo url not defined`);
-    }
-    const gitUrlType = await isGitHubUrl(opts.repoUrl);
-    if (gitUrlType) {
-      throw Error(
-        `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
-      );
-    }
-    await fetchValues(serviceName, opts);
-    const accessOpts: AzureDevOpsOpts = {
-      orgName: opts.orgName,
-      personalAccessToken: opts.personalAccessToken,
-      project: opts.devopsProject,
-    };
-
-    // if a packages dir is supplied, its a mono-repo
-    const pipelinesYamlPath = opts.packagesDir
-      ? // if a packages dir is supplied, concat <packages-dir>/<service-name>
-        path.join(opts.packagesDir, serviceName, SERVICE_PIPELINE_FILENAME)
-      : // if no packages dir, then just concat with the service directory.
-        path.join(serviceName, SERVICE_PIPELINE_FILENAME);
-
-    // By default the version descriptor is for the master branch
-    await validateRepository(
-      opts.devopsProject,
-      pipelinesYamlPath,
-      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
-      opts.repoName,
-      accessOpts
-    );
-    await installBuildUpdatePipeline(pipelinesYamlPath, opts);
-    await exitFn(0);
-  } catch (err) {
-    logger.error(err);
-    await exitFn(1);
-  }
-};
-
-export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(
-    async (serviceName: string, opts: CommandOptions) => {
-      await execute(serviceName, opts, async (status: number) => {
-        await exitCmd(logger, process.exit, status);
-      });
-    }
-  );
+/**
+ * Builds and returns variables required for the Build & Update service pipeline.
+ * @param buildScriptUrl Build Script URL
+ * @returns Object containing the necessary run-time variables for the Build & Update service  pipeline.
+ */
+export const requiredPipelineVariables = (
+  buildScriptUrl: string
+): { [key: string]: BuildDefinitionVariable } => {
+  return {
+    BUILD_SCRIPT_URL: {
+      allowOverride: true,
+      isSecret: false,
+      value: buildScriptUrl,
+    },
+  };
 };
 
 /**
@@ -174,7 +134,7 @@ export const installBuildUpdatePipeline = async (
     );
   } catch (err) {
     logger.error(err); // caller will catch it and exit
-    throw new Error(
+    throw Error(
       `Error occurred during pipeline creation for ${values.pipelineName}`
     );
   }
@@ -196,19 +156,57 @@ export const installBuildUpdatePipeline = async (
   }
 };
 
-/**
- * Builds and returns variables required for the Build & Update service pipeline.
- * @param buildScriptUrl Build Script URL
- * @returns Object containing the necessary run-time variables for the Build & Update service  pipeline.
- */
-export const requiredPipelineVariables = (
-  buildScriptUrl: string
-): { [key: string]: BuildDefinitionVariable } => {
-  return {
-    BUILD_SCRIPT_URL: {
-      allowOverride: true,
-      isSecret: false,
-      value: buildScriptUrl,
-    },
-  };
+export const execute = async (
+  serviceName: string,
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
+  try {
+    if (!opts.repoUrl) {
+      throw Error(`Repo url not defined`);
+    }
+    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    if (gitUrlType) {
+      throw Error(
+        `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
+      );
+    }
+    await fetchValues(serviceName, opts);
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: opts.orgName,
+      personalAccessToken: opts.personalAccessToken,
+      project: opts.devopsProject,
+    };
+
+    // if a packages dir is supplied, its a mono-repo
+    const pipelinesYamlPath = opts.packagesDir
+      ? // if a packages dir is supplied, concat <packages-dir>/<service-name>
+        path.join(opts.packagesDir, serviceName, SERVICE_PIPELINE_FILENAME)
+      : // if no packages dir, then just concat with the service directory.
+        path.join(serviceName, SERVICE_PIPELINE_FILENAME);
+
+    // By default the version descriptor is for the master branch
+    await validateRepository(
+      opts.devopsProject,
+      pipelinesYamlPath,
+      opts.yamlFileBranch ? opts.yamlFileBranch : "master",
+      opts.repoName,
+      accessOpts
+    );
+    await installBuildUpdatePipeline(pipelinesYamlPath, opts);
+    await exitFn(0);
+  } catch (err) {
+    logger.error(err);
+    await exitFn(1);
+  }
+};
+
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(
+    async (serviceName: string, opts: CommandOptions) => {
+      await execute(serviceName, opts, async (status: number) => {
+        await exitCmd(logger, process.exit, status);
+      });
+    }
+  );
 };
