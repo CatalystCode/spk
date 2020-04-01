@@ -18,7 +18,7 @@ import * as middleware from "../../lib/traefik/middleware";
 import { logger } from "../../logger";
 import { BedrockFile, BedrockServiceConfig } from "../../types";
 import decorator from "./reconcile.decorator.json";
-import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { build as buildError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 /**
@@ -154,13 +154,11 @@ export const configureChartForRing = async (
   const fabConfigureCommand = `cd ${normalizedRingPathInHld} && fab set --subcomponent "chart" serviceName="${k8sSvcBackendAndName}"`;
 
   return execCmd(fabConfigureCommand).catch((err) => {
-    const errorInfo = buildError(
+    throw buildError(
       errorStatusCode.EXE_FLOW_ERR,
       "hld-reconcile-err-helm-config",
       err
     );
-    logError(errorInfo);
-    throw errorInfo;
   });
 };
 
@@ -177,7 +175,7 @@ export const createServiceComponent = async (
   return execCmd(
     `cd ${absRepositoryInHldPath} && mkdir -p ${serviceName} config && fab add ${serviceName} --path ./${serviceName} --method local --type component && touch ./config/common.yaml`
   ).catch((err) => {
-    const errorInfo = buildError(
+    throw buildError(
       errorStatusCode.EXE_FLOW_ERR,
       {
         errorKey: "hld-reconcile-err-service-create",
@@ -185,8 +183,6 @@ export const createServiceComponent = async (
       },
       err
     );
-    logError(errorInfo);
-    throw errorInfo;
   });
 };
 
@@ -200,7 +196,7 @@ export const createRingComponent = async (
   const createRingInSvcCommand = `cd ${svcPathInHld} && mkdir -p ${normalizedRingName} config && fab add ${normalizedRingName} --path ./${normalizedRingName} --method local --type component && touch ./config/common.yaml`;
 
   return execCmd(createRingInSvcCommand).catch((err) => {
-    const errorInfo = buildError(
+    throw buildError(
       errorStatusCode.EXE_FLOW_ERR,
       {
         errorKey: "hld-reconcile-err-ring-create",
@@ -208,8 +204,6 @@ export const createRingComponent = async (
       },
       err
     );
-    logError(errorInfo);
-    throw errorInfo;
   });
 };
 
@@ -240,7 +234,7 @@ export const addChartToRing = async (
 
   return execCmd(`cd ${ringPathInHld} && ${addHelmChartCommand}`).catch(
     (err) => {
-      const errorInfo = buildError(
+      throw buildError(
         errorStatusCode.EXE_FLOW_ERR,
         {
           errorKey: "hld-reconcile-err-helm-add",
@@ -248,8 +242,6 @@ export const addChartToRing = async (
         },
         err
       );
-      logError(errorInfo);
-      throw errorInfo;
     }
   );
 };
@@ -262,7 +254,7 @@ export const createStaticComponent = async (
   const createConfigAndStaticComponentCommand = `cd ${ringPathInHld} && mkdir -p config static && fab add static --path ./static --method local --type static && touch ./config/common.yaml`;
 
   return execCmd(createConfigAndStaticComponentCommand).catch((err) => {
-    const errorInfo = buildError(
+    throw buildError(
       errorStatusCode.EXE_FLOW_ERR,
       {
         errorKey: "hld-reconcile-err-static-create",
@@ -270,8 +262,6 @@ export const createStaticComponent = async (
       },
       err
     );
-    logError(errorInfo);
-    throw errorInfo;
   });
 };
 
