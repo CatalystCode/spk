@@ -293,7 +293,6 @@ export const execute = async (
     logger.verbose(`project path: ${projectPath}`);
 
     checkDependencies(projectPath);
-    //const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
 
     const accessOpts: AzureDevOpsOpts = {
