@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-import { build as buildError } from "./errorBuilder";
 import GitUrlParse from "git-url-parse";
 import path from "path";
 import url from "url";
-import { errorStatusCode } from "./errorStatusCode";
 import { logger } from "../logger";
 import { exec } from "./shell";
+import { build as buildError } from "./errorBuilder";
+import { errorStatusCode } from "./errorStatusCode";
 
 /**
  * For git urls that you may want to log only!
@@ -115,21 +114,6 @@ export const pushBranch = async (branchName: string): Promise<void> => {
 };
 
 /**
- * Tries to fetch the Git origin from an AzDo set environment variable, else falls back to fetching it from Git directly.
- * @param absRepoPath The Absolute Path to the Repository to fetch the origin url.
- */
-export const tryGetGitOrigin = async (
-  absRepoPath?: string
-): Promise<string> => {
-  return getAzdoOriginUrl().catch(() => {
-    logger.warn(
-      "Could not get Git Origin for Azure DevOps - are you running 'spk' _not_ in a pipeline?"
-    );
-    return getOriginUrl(absRepoPath);
-  });
-};
-
-/**
  * Gets the origin url.
  * @param absRepositoryPath The Absolute Path to the Repository to fetch the origin
  */
@@ -164,6 +148,21 @@ export const getAzdoOriginUrl = async (): Promise<string> => {
   } catch (error) {
     throw Error(`Unable to get azdo origin URL: ${error}`);
   }
+};
+
+/**
+ * Tries to fetch the Git origin from an AzDo set environment variable, else falls back to fetching it from Git directly.
+ * @param absRepoPath The Absolute Path to the Repository to fetch the origin url.
+ */
+export const tryGetGitOrigin = async (
+  absRepoPath?: string
+): Promise<string> => {
+  return getAzdoOriginUrl().catch(() => {
+    logger.warn(
+      "Could not get Git Origin for Azure DevOps - are you running 'spk' _not_ in a pipeline?"
+    );
+    return getOriginUrl(absRepoPath);
+  });
 };
 
 /**
@@ -338,8 +337,11 @@ export const checkoutCommitPushCreatePRLink = async (
       );
     });
   } catch (err) {
-    logger.error(err);
-    throw err;
+    throw buildError(
+      errorStatusCode.GIT_OPS_ERR,
+      "git-checkout-commit-push-create-PR-link",
+      err
+    );
   }
 };
 
