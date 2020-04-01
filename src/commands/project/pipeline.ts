@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/*eslint semi: "error"*/
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -66,25 +67,32 @@ export const checkDependencies = (projectPath: string): void => {
   }
 };
 
+/**
+ * Returns a git repository url
+ *
+ * @param opts Options object from commander.
+ * @param gitOriginUrl Git origin URL which is used to set values
+ *        for pipeline, repoName and repoUrl
+ */
 export const validateRepoUrl= (
   opts: CommandOptions,
   gitOriginUrl: string
 ): string => {
   try {
-    let repoUrl = ''
+    let repoUrl = '';
     if (!opts.repoUrl) {
       if(!getRepositoryUrl(gitOriginUrl)) {
-        throw Error(`Repo url not defined. Are you in a spk project folder?`)
+        throw Error(`Repo url not defined. Are you in a spk project folder?`);
       } else {
-        return repoUrl = getRepositoryUrl(gitOriginUrl)
+        return repoUrl = getRepositoryUrl(gitOriginUrl);
       }
     } else {
-      return repoUrl = opts.repoUrl
+      return repoUrl = opts.repoUrl;
     }
   } catch(err){
-    throw new Error(`Unable to obtain and validate the repo url.`)
+    throw new Error(`Unable to obtain and validate the repo url.`);
   }
-}
+};
 
 /**
  * Returns values that are needed for this command.
@@ -107,7 +115,7 @@ export const fetchValidateValues = (
     );
   }
   const azureDevops = spkConfig?.azure_devops;
-  const repoUrl = validateRepoUrl(opts,gitOriginUrl)
+  const repoUrl = validateRepoUrl(opts,gitOriginUrl);
   const values: CommandOptions = {
     buildScriptUrl: opts.buildScriptUrl || BUILD_SCRIPT_URL,
     devopsProject: opts.devopsProject || azureDevops?.project,
@@ -251,9 +259,8 @@ export const execute = async (
 ): Promise<void> => {
   try {
     const gitOriginUrl = await getOriginUrl();
-    const repoUrl = validateRepoUrl(opts, gitOriginUrl)
+    const repoUrl = validateRepoUrl(opts, gitOriginUrl);
     const gitUrlType = await isGitHubUrl(repoUrl);
-    logger.info(`${gitUrlType}`)
     if (gitUrlType) {
       throw buildError(errorStatusCode.VALIDATION_ERR, {
         errorKey: "project-pipeline-err-github-repo",
