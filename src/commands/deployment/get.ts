@@ -92,6 +92,89 @@ export const processOutputFormat = (outputFormat: string): OUTPUT_FORMAT => {
 };
 
 /**
+ * Validating the options values from commander.
+ *
+ * @param opts options values from commander
+ * @return validated values
+ * @throws Error if opts.top is not a positive integer
+ */
+export const validateValues = (opts: CommandOptions): ValidatedOptions => {
+  let top = 0; // no limits
+  if (opts.top) {
+    if (isIntegerString(opts.top)) {
+      top = parseInt(opts.top, 10);
+    } else {
+      throw new Error("value for top option has to be a positive number");
+    }
+  }
+
+  return {
+    buildId: opts.buildId,
+    commitId: opts.commitId,
+    deploymentId: opts.deploymentId,
+    env: opts.env,
+    imageTag: opts.imageTag,
+    nTop: top,
+    output: opts.output,
+    outputFormat: processOutputFormat(opts.output),
+    service: opts.service,
+    top: opts.top,
+    watch: opts.watch,
+  };
+};
+
+/**
+ * Initializes the pipelines assuming that the configuration has been loaded
+ */
+export const initialize = async (): Promise<InitObject> => {
+  const config = Config();
+
+  if (
+    !config.introspection ||
+    !config.azure_devops ||
+    !config.introspection.azure ||
+    !config.azure_devops.org ||
+    !config.azure_devops.project ||
+    !config.introspection.azure.account_name ||
+    !config.introspection.azure.table_name ||
+    !config.introspection.azure.key ||
+    !config.introspection.azure.partition_key ||
+    !config.introspection.azure.key
+  ) {
+    throw Error(
+      "You need to run `spk init` and `spk deployment onboard` to configure `spk."
+    );
+  }
+
+  return {
+    clusterPipeline: new AzureDevOpsPipeline(
+      config.azure_devops.org,
+      config.azure_devops.project,
+      false,
+      config.azure_devops.access_token
+    ),
+    hldPipeline: new AzureDevOpsPipeline(
+      config.azure_devops.org,
+      config.azure_devops.project,
+      true,
+      config.azure_devops.access_token
+    ),
+    key: config.introspection.azure.key,
+    srcPipeline: new AzureDevOpsPipeline(
+      config.azure_devops.org,
+      config.azure_devops.project,
+      false,
+      config.azure_devops.access_token
+    ),
+    accountName: config.introspection.azure.account_name,
+    tableName: config.introspection.azure.table_name,
+    partitionKey: config.introspection.azure.partition_key,
+    manifestRepo: config.azure_devops.manifest_repository,
+    accessToken: config.azure_devops.access_token,
+  };
+};
+
+/**
  * Gets cluster sync statuses
  * @param initObj captures keys and objects during the initialization process
  */
@@ -468,57 +551,6 @@ export const getDeployments = (
 };
 
 /**
- * Initializes the pipelines assuming that the configuration has been loaded
- */
-export const initialize = async (): Promise<InitObject> => {
-  const config = Config();
-
-  if (
-    !config.introspection ||
-    !config.azure_devops ||
-    !config.introspection.azure ||
-    !config.azure_devops.org ||
-    !config.azure_devops.project ||
-    !config.introspection.azure.account_name ||
-    !config.introspection.azure.table_name ||
-    !config.introspection.azure.key ||
-    !config.introspection.azure.partition_key ||
-    !config.introspection.azure.key
-  ) {
-    throw Error(
-      "You need to run `spk init` and `spk deployment onboard` to configure `spk."
-    );
-  }
-
-  return {
-    clusterPipeline: new AzureDevOpsPipeline(
-      config.azure_devops.org,
-      config.azure_devops.project,
-      false,
-      config.azure_devops.access_token
-    ),
-    hldPipeline: new AzureDevOpsPipeline(
-      config.azure_devops.org,
-      config.azure_devops.project,
-      true,
-      config.azure_devops.access_token
-    ),
-    key: config.introspection.azure.key,
-    srcPipeline: new AzureDevOpsPipeline(
-      config.azure_devops.org,
-      config.azure_devops.project,
-      false,
-      config.azure_devops.access_token
-    ),
-    accountName: config.introspection.azure.account_name,
-    tableName: config.introspection.azure.table_name,
-    partitionKey: config.introspection.azure.partition_key,
-    manifestRepo: config.azure_devops.manifest_repository,
-    accessToken: config.azure_devops.access_token,
-  };
-};
-
-/**
  * Returns a list of deployments for the specified filters every 5 seconds
  *
  * @param initObject Initialization Object
@@ -536,38 +568,6 @@ export const watchGetDeployments = async (
   setInterval(async () => {
     await getDeployments(initObjects, values);
   }, timeInterval);
-};
-
-/**
- * Validating the options values from commander.
- *
- * @param opts options values from commander
- * @return validated values
- * @throws Error if opts.top is not a positive integer
- */
-export const validateValues = (opts: CommandOptions): ValidatedOptions => {
-  let top = 0; // no limits
-  if (opts.top) {
-    if (isIntegerString(opts.top)) {
-      top = parseInt(opts.top, 10);
-    } else {
-      throw new Error("value for top option has to be a positive number");
-    }
-  }
-
-  return {
-    buildId: opts.buildId,
-    commitId: opts.commitId,
-    deploymentId: opts.deploymentId,
-    env: opts.env,
-    imageTag: opts.imageTag,
-    nTop: top,
-    output: opts.output,
-    outputFormat: processOutputFormat(opts.output),
-    service: opts.service,
-    top: opts.top,
-    watch: opts.watch,
-  };
 };
 
 /**
