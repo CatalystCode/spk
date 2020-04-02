@@ -446,6 +446,7 @@ describe("reconcile tests", () => {
       exec: jest.fn().mockReturnValue(Promise.resolve({})),
       generateAccessYaml: jest.fn(),
       getGitOrigin: jest.fn(),
+      purgeRepositoryComponents: jest.fn(),
       writeFile: jest.fn(),
     };
 
