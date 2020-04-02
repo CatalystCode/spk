@@ -141,6 +141,14 @@
     "pipeline-get-status-err-not-found": "Could not get status of pipeline {0} because it was not found.",
     "pipeline-hld-manifest-create-err": "Could not create HLD to Manifest Pipeline",
     "pipeline-lifecycle-create-err": "Could not create Lifecycle Pipeline",
-    "pipeline-build-create-err": "Could not create Build Pipeline"
+    "pipeline-build-create-err": "Could not create Build Pipeline",
+
+    "var-group-authorize-all-pipelines-err-missing-id": "Could not enable authorization for all pipelines to access variable group because variable group id was missing.",
+    "var-group-authorize-all-pipelines-err": "Could not enable authorization for all pipelines to access variable group, {0}.",
+    "var-group-add-err-project-missing": "Could not add variable group because Azure DevOps Project not defined. Ensure that azure_devops.project is set in config.yaml",
+    "var-group-add-err": "Could not add variable group, {0}.",
+    "var-group-add-with-key-vault-err": "Could not add variable group, {0} with key vault.",
+    "var-group-add-err-vars-missing": "Could not add variable group because variables were not configured.",
+    "var-group-add-with-key-vault-err-missing-provider": "Could not add variable group with key vault because Azure KeyVault provider data was not configured"
   }
 }
