@@ -424,7 +424,7 @@ export const generateConfig = async (
       createGenerated(parentDirectory);
       createGenerated(childDirectory);
     }
-
+    // TODO: Function to check for relative paths: Q - DO during generation or after variables have be add
     combineVariable(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       parentInfraConfig.variables!,
@@ -446,6 +446,17 @@ export const generateConfig = async (
     await copyTfTemplate(templatePath, childDirectory, true);
   } else if (definitionConfig === DefinitionYAMLExistence.PARENT_ONLY) {
     const parentInfraConfig = getDefinitionYaml(parentPath);
+
+    // TODO: Function to check for relative paths: Q - DO during generation or after variables have be add
+
+    // Check to test outsource: terraform registry,
+    // Iterate through 'TF' files / Parse of tf files? (Code Coverage?)
+    // CheckLocal: check source value, is value = ./ or ../ (Local syntax)
+    // ModifyLocal: munge url from YAML, apply url to relative source path
+    // Throw exception if failed
+
+    //
+
     // there will not be a case here when parentPath === projectPath
     // here because if both are the same, we would have
     // DefinitionYAMLExistence.BOTH_EXIST and not
