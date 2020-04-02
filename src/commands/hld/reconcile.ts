@@ -101,6 +101,26 @@ type MiddlewareMap<T = Partial<ReturnType<typeof middleware.create>>> = {
   default?: T;
 };
 
+// In spk hld reconcile, the results should always result in the same artifacts being created based on the state of bedrock.yaml.
+// The only exception is for files under the /config directories and any access.yaml files.
+export const purgeRepositoryComponent = async (
+  execCmd: typeof execAndLog,
+  absHldPath: string,
+  repositoryName: string
+): Promise<ExecResult> => {
+  assertIsStringWithContent(absHldPath, "hld-path");
+  assertIsStringWithContent(repositoryName, "repository-name");
+
+  return execCmd(
+    `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`
+  ).catch((err) => {
+    logger.error(
+      `error creating repository component '${repositoryName}' in path '${absHldPath}'`
+    );
+    throw err;
+  });
+};
+
 export const createRepositoryComponent = async (
   execCmd: typeof execAndLog,
   absHldPath: string,
@@ -453,6 +473,13 @@ export const reconcileHld = async (
   absBedrockPath: string
 ): Promise<void> => {
   const { services: managedServices, rings: managedRings } = bedrockYaml;
+
+  // To support removing services and rings, first remove all files under an application repository directory except anything in a /config directory and any access.yaml files, then we generate all values again.
+  await dependencies.purgeRepositoryComponent(
+    dependencies.exec,
+    absHldPath,
+    normalizedName(repositoryName)
+  );
 
   // Create Repository Component if it doesn't exist.
   // In a pipeline, the repository component is the name of the application repository.
