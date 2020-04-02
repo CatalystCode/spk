@@ -97,6 +97,13 @@
     "deployment-table-update-manifest-commit-id-failed": "Could not update manifest commit Id.",
     "deployment-table-update-manifest-commit-id-failed-no-generation": "No manifest generation found to update manifest commit {0}.",
     "deployment-table-add-src-to-acr-pipeline": "Could not add source to ACR pipeline information to storage table.",
-    "deployment-table-add-acr-to-hld-pipeline": "Could not add ACR to HLD pipeline information to storage table."
+    "deployment-table-add-acr-to-hld-pipeline": "Could not add ACR to HLD pipeline information to storage table.",
+
+    "ring-err-create": "Error occurred while creating ring: {0}",
+    "ring-err-exists": "Ring: {0} already exists in project {1}.",
+    "ring-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
+    "ring-err-name": "No ring name given.",
+    "ring-err-delete": "Error occurred while deleting ring: {0}.",
+    "ring-err-set-default": "Error occurred while setting default ring: {0}"
   }
 }

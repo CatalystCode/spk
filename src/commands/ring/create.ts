@@ -15,6 +15,8 @@ import { hasValue } from "../../lib/validator";
 import { logger } from "../../logger";
 import { BedrockFile, BedrockFileInfo } from "../../types";
 import decorator from "./create.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 /**
  * Check for bedrock.yaml
@@ -28,15 +30,16 @@ export const checkDependencies = (
 ): void => {
   const fileInfo: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
-    throw new Error(PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE);
+    throw buildError(errorStatusCode.VALIDATION_ERR, "ring-err-dependency");
   }
 
   // Check if ring already exists, if it does, warn and exit
   const bedrockFile: BedrockFile = loadBedrockFile(projectPath);
   if (ringName in bedrockFile.rings) {
-    throw new Error(
-      `ring: ${ringName} already exists in project ${BEDROCK_FILENAME}.`
-    );
+    throw buildError(errorStatusCode.EXE_FLOW_ERR, {
+      errorKey: "ring-err-exists",
+      values: [ringName, BEDROCK_FILENAME],
+    });
   }
 };
 
@@ -52,7 +55,7 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   if (!hasValue(ringName)) {
-    logger.error(`No ring name given.`);
+    logError(buildError(errorStatusCode.VALIDATION_ERR, "ring-err-name"));
     await exitFn(1);
     return;
   }
@@ -82,8 +85,16 @@ export const execute = async (
     logger.info(`Successfully created ring: ${ringName} for this project!`);
     await exitFn(0);
   } catch (err) {
-    logger.error(`Error occurred while creating ring: ${ringName}`);
-    logger.error(err);
+    logError(
+      buildError(
+        errorStatusCode.CMD_EXE_ERR,
+        {
+          errorKey: "ring-err-create",
+          values: [ringName],
+        },
+        err
+      )
+    );
     await exitFn(1);
   }
 };
