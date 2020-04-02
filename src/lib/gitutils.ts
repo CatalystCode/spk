@@ -353,22 +353,18 @@ export const checkoutCommitPushCreatePRLink = async (
  * @param gitOriginUrl Git origin URL which is used to set values
  *        for pipeline, repoName and repoUrl
  */
-export const validateRepoUrl= (
+export const validateRepoUrl = (
   opts: CommandOptions,
   gitOriginUrl: string
 ): string => {
-  try {
-    if (opts.repoUrl) {
-      return opts.repoUrl;
-    }
-    const repoUrl = getRepositoryUrl(gitOriginUrl);
-    if (!repoUrl) {
-        throw Error(`Repo url not defined. Are you in a spk project folder?`);
-    }
-    return repoUrl;
-  } catch(err){
-    throw new Error(`Unable to obtain and validate the repo url.`);
+  if (opts.repoUrl) {
+    return opts.repoUrl;
   }
+  const repoUrl = getRepositoryUrl(gitOriginUrl);
+  if (!repoUrl) {
+    throw Error(`Repo url not defined. Are you in a spk project folder?`);
+  }
+  return repoUrl;
 };
 
 /**
