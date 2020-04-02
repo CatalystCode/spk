@@ -10,7 +10,6 @@ import {
 } from "./ioUtil";
 import mockFs from "mock-fs";
 import { disableVerboseLogging, enableVerboseLogging, logger } from "../logger";
-import mock from "mock-fs";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -146,6 +145,8 @@ describe("test getAllFilesInDirectory function", () => {
             master: {
               config: {
                 "common.yaml": "someconfigfile",
+                "prod.yaml": "someconfigfile",
+                "stage.yaml": "someconfigfile",
               },
               static: {
                 "ingressroute.yaml": "ingressroutefile",
@@ -168,10 +169,17 @@ describe("test getAllFilesInDirectory function", () => {
 
   it("gets all files in a populated directory", () => {
     const fileList = getAllFilesInDirectory("hld-repo");
-    expect(fileList).toHaveLength(11);
+    expect(fileList).toHaveLength(13);
     expect(fileList).toContain(
       "hld-repo/bedrock-project-repo/serviceA/master/static/middlewares.yaml"
     );
+
+    const filesToDelete = fileList.filter(
+      (filePath) =>
+        !filePath.match(/access\.yaml$/) && !filePath.match(/config\/.*\.yaml$/)
+    );
+    logger.info("filestoDelete.length: " + filesToDelete.length);
+    logger.info(filesToDelete);
   });
 
   it("returns an empty list when there's no files directory", () => {

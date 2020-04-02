@@ -19,6 +19,7 @@ import { BedrockFile, BedrockServiceConfig } from "../../types";
 import decorator from "./reconcile.decorator.json";
 import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
+import { getAllFilesInDirectory } from "../../lib/ioUtil";
 
 /**
  * IExecResult represents the possible return value of a Promise based wrapper
@@ -103,22 +104,35 @@ type MiddlewareMap<T = Partial<ReturnType<typeof middleware.create>>> = {
 
 // In spk hld reconcile, the results should always result in the same artifacts being created based on the state of bedrock.yaml.
 // The only exception is for files under the /config directories and any access.yaml files.
-export const purgeRepositoryComponent = async (
-  execCmd: typeof execAndLog,
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export const purgeRepositoryComponents = (
   absHldPath: string,
   repositoryName: string
-): Promise<ExecResult> => {
+): void => {
   assertIsStringWithContent(absHldPath, "hld-path");
   assertIsStringWithContent(repositoryName, "repository-name");
 
-  return execCmd(
-    `cd ${absHldPath} && mkdir -p ${repositoryName} && fab add ${repositoryName} --path ./${repositoryName} --method local`
-  ).catch((err) => {
+  const filesToDelete = getAllFilesInDirectory(
+    path.join(absHldPath, repositoryName)
+  ).filter(
+    (filePath) =>
+      !filePath.match(/access\.yaml$/) && !filePath.match(/config\/.*\.yaml$/)
+  );
+
+  try {
+    filesToDelete.forEach((file) => {
+      fs.unlink(file, function (err) {
+        if (err) throw err;
+        console.log(`${file} deleted!`);
+      });
+    });
+  } catch (e) {
     logger.error(
-      `error creating repository component '${repositoryName}' in path '${absHldPath}'`
+      `error purging repository component '${repositoryName}' in path '${absHldPath}'`
     );
-    throw err;
-  });
+    throw e;
+  }
+  return;
 };
 
 export const createRepositoryComponent = async (
@@ -401,6 +415,7 @@ export interface ReconcileDependencies {
   getGitOrigin: typeof tryGetGitOrigin;
   generateAccessYaml: typeof generateAccessYaml;
   createAccessYaml: typeof createAccessYaml;
+  purgeRepositoryComponents: typeof purgeRepositoryComponents;
   createRepositoryComponent: typeof createRepositoryComponent;
   configureChartForRing: typeof configureChartForRing;
   createServiceComponent: typeof createServiceComponent;
@@ -475,8 +490,7 @@ export const reconcileHld = async (
   const { services: managedServices, rings: managedRings } = bedrockYaml;
 
   // To support removing services and rings, first remove all files under an application repository directory except anything in a /config directory and any access.yaml files, then we generate all values again.
-  await dependencies.purgeRepositoryComponent(
-    dependencies.exec,
+  dependencies.purgeRepositoryComponents(
     absHldPath,
     normalizedName(repositoryName)
   );
@@ -676,6 +690,7 @@ export const execute = async (
       exec: execAndLog,
       generateAccessYaml,
       getGitOrigin: tryGetGitOrigin,
+      purgeRepositoryComponents,
       writeFile: fs.writeFileSync,
     };
 
