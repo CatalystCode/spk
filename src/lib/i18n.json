@@ -71,6 +71,12 @@
     "fileutils-generate-git-ignore-file": "Could not generate .gitignore file in {0}.",
 
     "git-checkout-commit-push-create-PR-link": "Could not checkout, commit, push or create pull request",
+    "git-create-repo-no-permissions": "Could not create git repository due to lack of permissions. Add code write permission to the personal access token",
+    "git-create-repo-err": "Could not create git repository",
+    "git-delete-repo-id-missing": "Could not delete repository because repository id is missing.",
+    "git-get-repo-no-permissions": "Could not get git repository due to lack of permissions. Add code read permission to the personal access token",
+    "git-get-repo-azure-err": "Could not get git repository",
+    "git-commit-Push-to_remote-err": "Could not git commit and push to remote source",
 
     "introspect-create-cmd-failed": "Deployment create command was not successfully executed.",
     "introspect-create-cmd-no-ops": "No action could be performed for specified arguments.",
@@ -93,10 +99,49 @@
     "introspect-dashboard-cmd-launch-pre-req-err": "Requirements to launch dashboard were not met",
     "introspect-dashboard-cmd-launch-err": "Could not launch dashboard docker container.",
 
+    "azure-project-get-err-permission": "Could not get Azure project information because access token did not have the permission to read project. Grant read project permission to the token.",
+    "azure-project-get-azure-err": "Could not get Azure project information",
+    "azure-project-create-err-permission": "Could not create Azure project information because access token did not have the permission to create project. Grant write project permission to the token.",
+    "azure-project-create-azure-err": "Could not create Azure project information",
+
     "deployment-table-update-hld-manifest-pipeline-failed": "Could not update HLD to manifest pipeline.",
     "deployment-table-update-manifest-commit-id-failed": "Could not update manifest commit Id.",
     "deployment-table-update-manifest-commit-id-failed-no-generation": "No manifest generation found to update manifest commit {0}.",
     "deployment-table-add-src-to-acr-pipeline": "Could not add source to ACR pipeline information to storage table.",
-    "deployment-table-add-acr-to-hld-pipeline": "Could not add ACR to HLD pipeline information to storage table."
+    "deployment-table-add-acr-to-hld-pipeline": "Could not add ACR to HLD pipeline information to storage table.",
+
+    "storage-client-err-missing-creds": "Could not get storage management client because credential could not be found.",
+    "storage-client-err-missing-sub-id": "Could not get storage management client because subscription id could not be found.",
+
+    "storage-account-cannot-be-created": "Could not create storage account, {0}.",
+    "storage-account-create-err-name-taken": "Could not create storage account because name {0} was not available. Choose a different name.`;",
+    "storage-account-create-azure-err": "Could not create storage account, {0}.",
+    "storage-account-create-err-missing-vals": "Could not create storage account because resource group name, account name or/and location were missing.",
+    "storage-account-validate-azure-err": "Could not validate storage account. {0} in resource group {1}",
+
+    "storage-account-get-err-missing-vals": "Could not get storage account information because resource group name or/and account name were missing.",
+    "storage-account-get-azure-err": "Could not get storage account. {0} in resource group {1}",
+
+    "storage-account-exist-azure-err": "Could not verify if storage account, {0} in resource group, {1} exist.",
+    "storage-account-exist-err-missing-vals": "Could not verify if storage account exist because resource group or/and account name were missing.",
+
+    "storage-account-key-missing-vals": "Could not get storage account key because resource group or/and account name were missing.",
+    "storage-account-key-azure-err": "Could not get storage account key because of azure error",
+    "storage-account-key-err": "Could not get storage account key",
+    "storage-account-keys-err-missing-vals": "Could not get storage account keys because account name or/and resource group were missing.",
+
+    "storage-account-table-create-missing-vals": "Could not create storage table because account name or/and table name were missing.",
+    "storage-account-table-create-err": "Could not create storage table.",
+
+    "resource-group-create-err-missing-vals": "Could not create resource group because name or/and location were missing.",
+    "resource-group-create-err": "Could not create resource group.",
+
+    "pipeline-get-by-name-err": "Could not get pipeline.",
+    "pipeline-del-err": "Could not delete pipeline.",
+    "pipeline-get-by-buildid-err": "Could not get pipeline by build id.",
+    "pipeline-get-status-err-not-found": "Could not get status of pipeline {0} because it was not found.",
+    "pipeline-hld-manifest-create-err": "Could not create HLD to Manifest Pipeline",
+    "pipeline-lifecycle-create-err": "Could not create Lifecycle Pipeline",
+    "pipeline-build-create-err": "Could not create Build Pipeline"
   }
 }
