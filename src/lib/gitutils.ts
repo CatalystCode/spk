@@ -357,14 +357,7 @@ export const validateRepoUrl = (
   opts: CommandOptions,
   gitOriginUrl: string
 ): string => {
-  if (opts.repoUrl) {
-    return opts.repoUrl;
-  }
-  const repoUrl = getRepositoryUrl(gitOriginUrl);
-  if (!repoUrl) {
-    throw Error(`Repo url not defined. Are you in a spk project folder?`);
-  }
-  return repoUrl;
+  return opts.repoUrl || getRepositoryUrl(gitOriginUrl)
 };
 
 /**
