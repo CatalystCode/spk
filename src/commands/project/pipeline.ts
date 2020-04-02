@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/*eslint semi: "error"*/
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -90,7 +89,15 @@ export const validateRepoUrl= (
   gitOriginUrl: string
 ): string => {
   try {
-    let repoUrl = '';
+    if (opts.repoUrl) {
+      return opts.repoUrl;
+    }
+    const repoUrl = getRepositoryUrl(gitOriginUrl);
+    if (!repoUrl) {
+        throw Error(`Repo url not defined. Are you in a spk project folder?`);
+    }
+    return repoUrl;
+    /*let repoUrl = '';
     if (!opts.repoUrl) {
       if(!getRepositoryUrl(gitOriginUrl)) {
         throw Error(`Repo url not defined. Are you in a spk project folder?`);
@@ -99,7 +106,7 @@ export const validateRepoUrl= (
       }
     } else {
       return repoUrl = opts.repoUrl;
-    }
+    }*/
   } catch(err){
     throw new Error(`Unable to obtain and validate the repo url.`);
   }

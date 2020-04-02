@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-/*eslint semi: "error"*/
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
