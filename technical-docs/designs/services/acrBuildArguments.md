@@ -50,10 +50,11 @@ spk service create "fabrikam.acme.frontend" -d "services" -p "chart" -g "https:/
 ```
 
 - Add argument `--build-variables` to take in an array of key-value pairs for
-  all variables to be used in a new variable group. An example would be
+  all variables to be used in a new variable group. This argument will support
+  secret variables if specified. An example would be
 
 ```sh
-spk service create "fabrikam.acme.frontend" -d "services" -p "chart" -g "https://dev.azure.com/bedrock/fabrikam/_git/fabrikam2019" -b "master" --build-variables [version:0.0.1,path:$HOME]
+spk service create "fabrikam.acme.frontend" -d "services" -p "chart" -g "https://dev.azure.com/bedrock/fabrikam/_git/fabrikam2019" -b "master" --build-variables [version:0.0.1,path:$HOME,apikey:key:isSecret]
 ```
 
 As part of the build-update-hld.yaml, where there is the "ACR Build and Publish"
