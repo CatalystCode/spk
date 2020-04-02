@@ -5,10 +5,7 @@ import {
   read as loadBedrockFile,
 } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
-import {
-  BEDROCK_FILENAME,
-  PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE,
-} from "../../lib/constants";
+import { BEDROCK_FILENAME } from "../../lib/constants";
 import { updateTriggerBranchesForServiceBuildAndUpdatePipeline } from "../../lib/fileutils";
 import * as dns from "../../lib/net/dns";
 import { hasValue } from "../../lib/validator";
