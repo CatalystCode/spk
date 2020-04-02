@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   BuildDefinition,
@@ -15,8 +14,6 @@ import {
 } from "../../lib/commandBuilder";
 import {
   BUILD_SCRIPT_URL,
-  PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE,
-  PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE,
   PROJECT_PIPELINE_FILENAME,
 } from "../../lib/constants";
 import { AzureDevOpsOpts } from "../../lib/git";
@@ -39,6 +36,8 @@ import {
 import { logger } from "../../logger";
 import { BedrockFileInfo, ConfigYaml } from "../../types";
 import decorator from "./pipeline.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
   orgName: string | undefined;
@@ -51,12 +50,29 @@ export interface CommandOptions {
   yamlFileBranch: string;
 }
 
+export interface ConfigValues {
+  devopsProject: string;
+  repoName: string;
+  orgName: string;
+  personalAccessToken: string;
+  pipelineName: string;
+  repoUrl: string;
+  buildScriptUrl: string;
+  yamlFileBranch: string;
+}
+
 export const checkDependencies = (projectPath: string): void => {
   const file: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (file.exist === false) {
-    throw new Error(PROJECT_INIT_CVG_DEPENDENCY_ERROR_MESSAGE);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-pipeline-err-init-dependency"
+    );
   } else if (file.hasVariableGroups === false) {
-    throw new Error(PROJECT_CVG_DEPENDENCY_ERROR_MESSAGE);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-pipeline-err-cvg"
+    );
   }
 };
 
@@ -73,13 +89,19 @@ export const fetchValidateValues = (
   opts: CommandOptions,
   gitOriginUrl: string,
   spkConfig: ConfigYaml | undefined
-): CommandOptions => {
+): ConfigValues => {
   if (!spkConfig) {
-    throw new Error("SPK Config is missing");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-pipeline-err-spk-config-missing"
+    );
   }
   const azureDevops = spkConfig?.azure_devops;
   if (!opts.repoUrl) {
-    throw Error(`Repo url not defined`);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-pipeline-err-repo-url-undefined"
+    );
   }
 
   const values: CommandOptions = {
@@ -107,15 +129,31 @@ export const fetchValidateValues = (
   });
 
   const error = validateForRequiredValues(decorator, map);
-
   if (error.length > 0) {
-    throw Error("invalid option values");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-pipeline-err-invalid-options"
+    );
   }
 
-  validateProjectNameThrowable(values.devopsProject!);
-  validateOrgNameThrowable(values.orgName!);
+  // validateForRequiredValues has validated the following
+  // values are validate, adding || "" is just to
+  // satisfy the no-non-null-assertion eslint rule
+  const configVals: ConfigValues = {
+    orgName: values.orgName || "",
+    buildScriptUrl: values.buildScriptUrl || BUILD_SCRIPT_URL,
+    devopsProject: values.devopsProject || "",
+    repoName: values.repoName,
+    personalAccessToken: values.personalAccessToken || "",
+    pipelineName: values.pipelineName || "",
+    repoUrl: values.repoUrl || "",
+    yamlFileBranch: values.yamlFileBranch,
+  };
 
-  return values;
+  validateProjectNameThrowable(configVals.devopsProject);
+  validateOrgNameThrowable(configVals.orgName);
+
+  return configVals;
 };
 
 /**
@@ -136,17 +174,17 @@ export const requiredPipelineVariables = (
 };
 
 const createPipeline = async (
-  values: CommandOptions,
+  values: ConfigValues,
   devopsClient: IBuildApi,
   definitionBranch: string
 ): Promise<BuildDefinition> => {
   const definition = definitionForAzureRepoPipeline({
     branchFilters: ["master"], // hld reconcile pipeline is triggered only by merges into the master branch.
     maximumConcurrentBuilds: 1,
-    pipelineName: values.pipelineName!,
-    repositoryName: values.repoName!,
-    repositoryUrl: values.repoUrl!,
-    variables: requiredPipelineVariables(values.buildScriptUrl!),
+    pipelineName: values.pipelineName,
+    repositoryName: values.repoName,
+    repositoryUrl: values.repoUrl,
+    variables: requiredPipelineVariables(values.buildScriptUrl),
     yamlFileBranch: definitionBranch, // Pipeline is defined in master
     yamlFilePath: PROJECT_PIPELINE_FILENAME, // Pipeline definition lives in root directory.
   });
@@ -158,14 +196,20 @@ const createPipeline = async (
   try {
     return await createPipelineForDefinition(
       devopsClient,
-      values.devopsProject!,
+      values.devopsProject,
       definition
     );
   } catch (err) {
-    logger.error(
-      `Error occurred during pipeline creation for ${values.pipelineName}`
+    const errorInfo = buildError(
+      errorStatusCode.EXE_FLOW_ERR,
+      {
+        errorKey: "project-pipeline-err-pipeline-create",
+        values: [values.pipelineName],
+      },
+      err
     );
-    throw err; // catch by other catch block
+    logError(errorInfo);
+    throw errorInfo;
   }
 };
 
@@ -176,11 +220,11 @@ const createPipeline = async (
  * @param exitFn Exit function
  */
 export const installLifecyclePipeline = async (
-  values: CommandOptions
+  values: ConfigValues
 ): Promise<void> => {
   const devopsClient = await getBuildApiClient(
-    values.orgName!,
-    values.personalAccessToken!
+    values.orgName,
+    values.personalAccessToken
   );
   logger.info("Fetched DevOps Client");
 
@@ -191,14 +235,15 @@ export const installLifecyclePipeline = async (
   );
   if (typeof pipeline.id === "undefined") {
     const builtDefnString = JSON.stringify(pipeline);
-    throw Error(
-      `Invalid BuildDefinition created, parameter 'id' is missing from ${builtDefnString}`
-    );
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "project-pipeline-err-invalid-build-definition",
+      values: [builtDefnString],
+    });
   }
   logger.info(`Created pipeline for ${values.pipelineName}`);
   logger.info(`Pipeline ID: ${pipeline.id}`);
 
-  await queueBuild(devopsClient, values.devopsProject!, pipeline.id);
+  await queueBuild(devopsClient, values.devopsProject, pipeline.id);
 };
 
 /**
@@ -213,28 +258,29 @@ export const execute = async (
   projectPath: string,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
-  if (!opts.repoUrl || !opts.pipelineName) {
-    logger.error(`Values for repo url and/or pipeline name are missing`);
-    await exitFn(1);
-    return;
-  }
-  const gitUrlType = await isGitHubUrl(opts.repoUrl);
-  if (gitUrlType) {
-    logger.error(
-      `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
-    );
-    await exitFn(1);
-    return;
-  }
-  if (!projectPath) {
-    logger.error("Project Path is missing");
-    await exitFn(1);
-    return;
-  }
-
-  logger.verbose(`project path: ${projectPath}`);
-
   try {
+    if (!opts.repoUrl || !opts.pipelineName) {
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-pipeline-err-missing-values",
+        values: ["repo url and/or pipeline name"],
+      });
+    }
+    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    if (gitUrlType) {
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-pipeline-err-github-repo",
+        values: [opts.repoUrl],
+      });
+    }
+    if (!projectPath) {
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-pipeline-err-missing-values",
+        values: ["project path"],
+      });
+    }
+
+    logger.verbose(`project path: ${projectPath}`);
+
     checkDependencies(projectPath);
     const gitOriginUrl = await getOriginUrl();
     const values = fetchValidateValues(opts, gitOriginUrl, Config());
@@ -245,19 +291,22 @@ export const execute = async (
       project: values.devopsProject,
     };
     await validateRepository(
-      values.devopsProject!,
+      values.devopsProject,
       PROJECT_PIPELINE_FILENAME,
-      values.yamlFileBranch ? opts.yamlFileBranch : "master",
+      values.yamlFileBranch || "master",
       values.repoName,
       accessOpts
     );
     await installLifecyclePipeline(values);
     await exitFn(0);
   } catch (err) {
-    logger.error(
-      `Error occurred installing pipeline for project hld lifecycle.`
+    logError(
+      buildError(
+        errorStatusCode.CMD_EXE_ERR,
+        "project-pipeline-cmd-failed",
+        err
+      )
     );
-    logger.error(err);
     await exitFn(1);
   }
 };

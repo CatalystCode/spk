@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import GitUrlParse from "git-url-parse";
 import path from "path";
 import url from "url";
 import { logger } from "../logger";
 import { exec } from "./shell";
+import { build as buildError } from "./errorBuilder";
+import { errorStatusCode } from "./errorStatusCode";
 
 /**
  * For git urls that you may want to log only!
@@ -113,21 +114,6 @@ export const pushBranch = async (branchName: string): Promise<void> => {
 };
 
 /**
- * Tries to fetch the Git origin from an AzDo set environment variable, else falls back to fetching it from Git directly.
- * @param absRepoPath The Absolute Path to the Repository to fetch the origin url.
- */
-export const tryGetGitOrigin = async (
-  absRepoPath?: string
-): Promise<string> => {
-  return getAzdoOriginUrl().catch(() => {
-    logger.warn(
-      "Could not get Git Origin for Azure DevOps - are you running 'spk' _not_ in a pipeline?"
-    );
-    return getOriginUrl(absRepoPath);
-  });
-};
-
-/**
  * Gets the origin url.
  * @param absRepositoryPath The Absolute Path to the Repository to fetch the origin
  */
@@ -165,6 +151,21 @@ export const getAzdoOriginUrl = async (): Promise<string> => {
 };
 
 /**
+ * Tries to fetch the Git origin from an AzDo set environment variable, else falls back to fetching it from Git directly.
+ * @param absRepoPath The Absolute Path to the Repository to fetch the origin url.
+ */
+export const tryGetGitOrigin = async (
+  absRepoPath?: string
+): Promise<string> => {
+  return getAzdoOriginUrl().catch(() => {
+    logger.warn(
+      "Could not get Git Origin for Azure DevOps - are you running 'spk' _not_ in a pipeline?"
+    );
+    return getOriginUrl(absRepoPath);
+  });
+};
+
+/**
  * Will return the name of the repository
  * Currently only AzDo repos are supported
  * @param originUrl
@@ -181,8 +182,15 @@ export const getRepositoryName = (originUrl: string): string => {
     logger.debug("github repo found.");
     return name;
   } else {
-    throw Error(
-      "Could not determine origin repository, or it is not a supported type."
+    if (!resource.startsWith("http")) {
+      throw buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "git-err-invalid-repository-url"
+      );
+    }
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "git-err-validating-remote-git"
     );
   }
 };
@@ -329,8 +337,11 @@ export const checkoutCommitPushCreatePRLink = async (
       );
     });
   } catch (err) {
-    logger.error(err);
-    throw err;
+    throw buildError(
+      errorStatusCode.GIT_OPS_ERR,
+      "git-checkout-commit-push-create-PR-link",
+      err
+    );
   }
 };
 

@@ -2,6 +2,9 @@
 import * as azure from "azure-storage";
 import uuid from "uuid/v4";
 import { logger } from "../../logger";
+import { build as buildError } from "../errorBuilder";
+import { errorStatusCode } from "../errorStatusCode";
+
 /**
  * Deployment Table interface to hold necessary information about a table for deployments
  */
@@ -145,20 +148,28 @@ export const addSrcToACRPipeline = async (
   commitId: string,
   repository?: string
 ): Promise<RowSrcToACRPipeline> => {
-  const entry: RowSrcToACRPipeline = {
-    PartitionKey: tableInfo.partitionKey,
-    RowKey: getRowKey(),
-    commitId,
-    imageTag,
-    p1: pipelineId,
-    service: serviceName,
-  };
-  if (repository) {
-    entry.sourceRepo = repository.toLowerCase();
+  try {
+    const entry: RowSrcToACRPipeline = {
+      PartitionKey: tableInfo.partitionKey,
+      RowKey: getRowKey(),
+      commitId,
+      imageTag,
+      p1: pipelineId,
+      service: serviceName,
+    };
+    if (repository) {
+      entry.sourceRepo = repository.toLowerCase();
+    }
+    await insertToTable(tableInfo, entry);
+    logger.info("Added first pipeline details to the database");
+    return entry;
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_STORAGE_OP_ERR,
+      "deployment-table-add-src-to-acr-pipeline",
+      err
+    );
   }
-  await insertToTable(tableInfo, entry);
-  logger.info("Added first pipeline details to the database");
-  return entry;
 };
 
 /**
@@ -327,33 +338,48 @@ export const updateACRToHLDPipeline = async (
   pr?: string,
   repository?: string
 ): Promise<RowACRToHLDPipeline> => {
-  const entries = await findMatchingDeployments<EntryACRToHLDPipeline>(
-    tableInfo,
-    "imageTag",
-    imageTag
-  );
-
-  // 1. try to find the matching entry.
-  if (entries && entries.length > 0) {
-    const found = await updateMatchingArcToHLDPipelineEntry(
-      entries,
+  try {
+    const entries = await findMatchingDeployments<EntryACRToHLDPipeline>(
       tableInfo,
-      pipelineId,
-      imageTag,
-      hldCommitId,
-      env,
-      pr,
-      repository
+      "imageTag",
+      imageTag
     );
 
-    if (found) {
-      return found;
+    // 1. try to find the matching entry.
+    if (entries && entries.length > 0) {
+      const found = await updateMatchingArcToHLDPipelineEntry(
+        entries,
+        tableInfo,
+        pipelineId,
+        imageTag,
+        hldCommitId,
+        env,
+        pr,
+        repository
+      );
+
+      if (found) {
+        return found;
+      }
+
+      // 2. when cannot find the entry, we take the last row and INSERT it.
+      // TODO: rethink this logic.
+      return await updateLastRowOfArcToHLDPipelines(
+        entries,
+        tableInfo,
+        pipelineId,
+        imageTag,
+        hldCommitId,
+        env,
+        pr,
+        repository
+      );
     }
 
-    // 2. when cannot find the entry, we take the last row and INSERT it.
+    // Fallback: Ideally we should not be getting here, because there should
+    // always be a p1 for any p2 being created.
     // TODO: rethink this logic.
-    return await updateLastRowOfArcToHLDPipelines(
-      entries,
+    return await addNewRowToArcToHLDPipelines(
       tableInfo,
       pipelineId,
       imageTag,
@@ -362,20 +388,13 @@ export const updateACRToHLDPipeline = async (
       pr,
       repository
     );
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_STORAGE_OP_ERR,
+      "deployment-table-add-acr-to-hld-pipeline",
+      err
+    );
   }
-
-  // Fallback: Ideally we should not be getting here, because there should
-  // always be a p1 for any p2 being created.
-  // TODO: rethink this logic.
-  return await addNewRowToArcToHLDPipelines(
-    tableInfo,
-    pipelineId,
-    imageTag,
-    hldCommitId,
-    env,
-    pr,
-    repository
-  );
 };
 
 /**
@@ -400,30 +419,38 @@ export const updateHLDToManifestPipeline = async (
   pr?: string,
   repository?: string
 ): Promise<RowHLDToManifestPipeline> => {
-  let entries = await findMatchingDeployments<EntryHLDToManifestPipeline>(
-    tableInfo,
-    "hldCommitId",
-    hldCommitId
-  );
-
-  // cannot find entries by hldCommitId.
-  // attempt to find entries by pr
-  if ((!entries || entries.length === 0) && pr) {
-    entries = await findMatchingDeployments<EntryHLDToManifestPipeline>(
+  try {
+    let entries = await findMatchingDeployments<EntryHLDToManifestPipeline>(
       tableInfo,
-      "pr",
-      pr
+      "hldCommitId",
+      hldCommitId
+    );
+
+    // cannot find entries by hldCommitId.
+    // attempt to find entries by pr
+    if ((!entries || entries.length === 0) && pr) {
+      entries = await findMatchingDeployments<EntryHLDToManifestPipeline>(
+        tableInfo,
+        "pr",
+        pr
+      );
+    }
+    return updateHLDtoManifestHelper(
+      entries,
+      tableInfo,
+      hldCommitId,
+      pipelineId,
+      manifestCommitId,
+      pr,
+      repository
+    );
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_STORAGE_OP_ERR,
+      "deployment-table-update-hld-manifest-pipeline-failed",
+      err
     );
   }
-  return updateHLDtoManifestHelper(
-    entries,
-    tableInfo,
-    hldCommitId,
-    pipelineId,
-    manifestCommitId,
-    pr,
-    repository
-  );
 };
 
 /**
@@ -664,27 +691,36 @@ export const updateManifestCommitId = async (
   manifestCommitId: string,
   repository?: string
 ): Promise<RowManifest> => {
-  const entries = await findMatchingDeployments<RowManifest>(
-    tableInfo,
-    "p3",
-    pipelineId
-  );
-  // Ideally there should only be one entry for every pipeline id
-  if (entries.length > 0) {
-    const entry = entries[0];
-    entry.manifestCommitId = manifestCommitId;
-    if (repository) {
-      entry.manifestRepo = repository.toLowerCase();
-    }
-    await updateEntryInTable(tableInfo, entry);
-    logger.info(
-      `Update manifest commit Id ${manifestCommitId} for pipeline Id ${pipelineId}`
+  try {
+    const entries = await findMatchingDeployments<RowManifest>(
+      tableInfo,
+      "p3",
+      pipelineId
     );
-    return entry;
+    // Ideally there should only be one entry for every pipeline id
+    if (entries.length > 0) {
+      const entry = entries[0];
+      entry.manifestCommitId = manifestCommitId;
+      if (repository) {
+        entry.manifestRepo = repository.toLowerCase();
+      }
+      await updateEntryInTable(tableInfo, entry);
+      logger.info(
+        `Update manifest commit Id ${manifestCommitId} for pipeline Id ${pipelineId}`
+      );
+      return entry;
+    }
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_STORAGE_OP_ERR,
+      "deployment-table-update-manifest-commit-id-failed",
+      err
+    );
   }
-  throw new Error(
-    `No manifest generation found to update manifest commit ${manifestCommitId}`
-  );
+  throw buildError(errorStatusCode.AZURE_STORAGE_OP_ERR, {
+    errorKey: "deployment-table-update-manifest-commit-id-failed-no-generation",
+    values: [manifestCommitId],
+  });
 };
 
 /**
