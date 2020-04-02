@@ -143,7 +143,7 @@ export const fetchValidateValues = (
     orgName: opts.orgName || "",
     buildScriptUrl: opts.buildScriptUrl || BUILD_SCRIPT_URL,
     devopsProject: opts.devopsProject || "",
-    repoName: opts.repoName || "",
+    repoName: values.repoName,
     personalAccessToken: opts.personalAccessToken || "",
     pipelineName: opts.pipelineName || "",
     repoUrl: opts.repoUrl || "",
