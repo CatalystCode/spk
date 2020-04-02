@@ -5,6 +5,7 @@ import { logger } from "../logger";
 import { exec } from "./shell";
 import { build as buildError } from "./errorBuilder";
 import { errorStatusCode } from "./errorStatusCode";
+import { CommandOptions } from "../commands/project/pipeline";
 
 /**
  * For git urls that you may want to log only!
@@ -342,6 +343,31 @@ export const checkoutCommitPushCreatePRLink = async (
       "git-checkout-commit-push-create-PR-link",
       err
     );
+  }
+};
+
+/**
+ * Returns a git repository url
+ *
+ * @param opts Options object from commander.
+ * @param gitOriginUrl Git origin URL which is used to set values
+ *        for pipeline, repoName and repoUrl
+ */
+export const validateRepoUrl= (
+  opts: CommandOptions,
+  gitOriginUrl: string
+): string => {
+  try {
+    if (opts.repoUrl) {
+      return opts.repoUrl;
+    }
+    const repoUrl = getRepositoryUrl(gitOriginUrl);
+    if (!repoUrl) {
+        throw Error(`Repo url not defined. Are you in a spk project folder?`);
+    }
+    return repoUrl;
+  } catch(err){
+    throw new Error(`Unable to obtain and validate the repo url.`);
   }
 };
 

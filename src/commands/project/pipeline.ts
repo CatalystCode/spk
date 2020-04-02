@@ -23,6 +23,7 @@ import {
   getRepositoryName,
   getRepositoryUrl,
   isGitHubUrl,
+  validateRepoUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -74,41 +75,6 @@ export const checkDependencies = (projectPath: string): void => {
       errorStatusCode.VALIDATION_ERR,
       "project-pipeline-err-cvg"
     );
-  }
-};
-
-/**
- * Returns a git repository url
- *
- * @param opts Options object from commander.
- * @param gitOriginUrl Git origin URL which is used to set values
- *        for pipeline, repoName and repoUrl
- */
-export const validateRepoUrl= (
-  opts: CommandOptions,
-  gitOriginUrl: string
-): string => {
-  try {
-    if (opts.repoUrl) {
-      return opts.repoUrl;
-    }
-    const repoUrl = getRepositoryUrl(gitOriginUrl);
-    if (!repoUrl) {
-        throw Error(`Repo url not defined. Are you in a spk project folder?`);
-    }
-    return repoUrl;
-    /*let repoUrl = '';
-    if (!opts.repoUrl) {
-      if(!getRepositoryUrl(gitOriginUrl)) {
-        throw Error(`Repo url not defined. Are you in a spk project folder?`);
-      } else {
-        return repoUrl = getRepositoryUrl(gitOriginUrl);
-      }
-    } else {
-      return repoUrl = opts.repoUrl;
-    }*/
-  } catch(err){
-    throw new Error(`Unable to obtain and validate the repo url.`);
   }
 };
 

@@ -19,6 +19,7 @@ import {
   getRepositoryName,
   getRepositoryUrl,
   isGitHubUrl,
+  validateRepoUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -32,7 +33,6 @@ import {
   validateOrgNameThrowable,
   validateProjectNameThrowable,
 } from "../../lib/validator";
-import { validateRepoUrl } from "../project/pipeline";
 import { build as buildError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
