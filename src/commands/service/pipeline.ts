@@ -18,6 +18,7 @@ import {
   getRepositoryName,
   getRepositoryUrl,
   isGitHubUrl,
+  validateRepoUrl
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -31,6 +32,8 @@ import {
   validateOrgNameThrowable,
   validateProjectNameThrowable,
 } from "../../lib/validator";
+import { build as buildError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
   orgName: string;
@@ -50,13 +53,14 @@ export const fetchValues = async (
 ): Promise<CommandOptions> => {
   const { azure_devops } = Config();
   const gitOriginUrl = await getOriginUrl();
+  const repoUrl = validateRepoUrl(opts, gitOriginUrl);
 
   opts.orgName = opts.orgName || azure_devops?.org || "";
   opts.personalAccessToken =
     opts.personalAccessToken || azure_devops?.access_token || "";
   opts.devopsProject = opts.devopsProject || azure_devops?.project || "";
   opts.pipelineName = opts.pipelineName || serviceName + "-pipeline";
-  opts.repoName = getRepositoryName(opts.repoUrl);
+  opts.repoName = getRepositoryName(repoUrl);
   opts.repoUrl = opts.repoUrl || getRepositoryUrl(gitOriginUrl);
   opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
 
@@ -162,14 +166,14 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   try {
-    if (!opts.repoUrl) {
-      throw Error(`Repo url not defined`);
-    }
-    const gitUrlType = await isGitHubUrl(opts.repoUrl);
+    const gitOriginUrl = await getOriginUrl();
+    const repoUrl = validateRepoUrl(opts, gitOriginUrl);
+    const gitUrlType = await isGitHubUrl(repoUrl);
     if (gitUrlType) {
-      throw Error(
-        `GitHub repos are not supported. Repo url: ${opts.repoUrl} is invalid`
-      );
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "project-pipeline-err-github-repo",
+        values: [repoUrl],
+      });
     }
     await fetchValues(serviceName, opts);
     const accessOpts: AzureDevOpsOpts = {
