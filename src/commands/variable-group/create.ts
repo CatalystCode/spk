@@ -35,7 +35,7 @@ export const validateValues = (opts: CommandOptions): void => {
   if (!opts.file) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "variable-group-create-cmd-err-file"
+      "variable-group-create-cmd-err-file-missing"
     );
   }
   const config = Config();
@@ -43,7 +43,7 @@ export const validateValues = (opts: CommandOptions): void => {
 
   if (!hasValue(opts.orgName) && !azure?.org) {
     throw buildError(errorStatusCode.VALIDATION_ERR, {
-      errorKey: "variable-group-create-cmd-err-org",
+      errorKey: "variable-group-create-cmd-err-org-missing",
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       values: [getCmdOption(decorator, "org-name")!.arg],
     });
@@ -56,7 +56,7 @@ export const validateValues = (opts: CommandOptions): void => {
 
   if (!hasValue(opts.devopsProject) && !azure?.project) {
     throw buildError(errorStatusCode.VALIDATION_ERR, {
-      errorKey: "variable-group-create-cmd-err-project",
+      errorKey: "variable-group-create-cmd-err-project-missing",
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       values: [getCmdOption(decorator, "devops-project")!.arg],
     });
