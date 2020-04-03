@@ -71,7 +71,7 @@ export const getMissingFilenames = (
 };
 
 /**
- * Get all files/filepaths in this directory and subdirectories.
+ * Returns all files/filepaths in this directory and subdirectories.
  *
  * @param dir directory to search
  * @param files list of files

@@ -271,7 +271,7 @@ describe("purgeRepositoryComponents", () => {
       throw Error("some error");
     });
 
-    expect(() => purgeRepositoryComponents(hldPath, repositoryName)).toThrow;
+    expect(() => purgeRepositoryComponents(hldPath, repositoryName)).toThrow();
   });
 });
 

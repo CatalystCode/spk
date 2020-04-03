@@ -102,9 +102,12 @@ type MiddlewareMap<T = Partial<ReturnType<typeof middleware.create>>> = {
   default?: T;
 };
 
-// In spk hld reconcile, the results should always result in the same artifacts being created based on the state of bedrock.yaml.
-// The only exception is for files under the /config directories and any access.yaml files.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+/**
+ * In spk hld reconcile, the results should always result in the same artifacts being created based on the state of bedrock.yaml.
+ * The only exception is for files under the /config directories and any access.yaml files.
+ * @param absHldPath Absolute path to the local HLD repository directory
+ * @param repositoryName Name of the bedrock project repository/directory inside of the HLD repository
+ */
 export const purgeRepositoryComponents = (
   absHldPath: string,
   repositoryName: string
@@ -116,7 +119,7 @@ export const purgeRepositoryComponents = (
     path.join(absHldPath, repositoryName)
   ).filter(
     (filePath) =>
-      !filePath.match(/access\.yaml$/) && !filePath.match(/config\/.*\.yaml$/)
+      !filePath.endsWith("access.yaml") && !filePath.match(/config\/.*\.yaml$/)
   );
 
   try {
@@ -126,11 +129,15 @@ export const purgeRepositoryComponents = (
         console.log(`${file} deleted!`);
       });
     });
-  } catch (e) {
-    logger.error(
-      `error purging repository component '${repositoryName}' in path '${absHldPath}'`
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.FILE_IO_ERR,
+      {
+        errorKey: "hld-reconcile-err-purge-repo-comps",
+        values: [repositoryName, absHldPath],
+      },
+      err
     );
-    throw e;
   }
   return;
 };
