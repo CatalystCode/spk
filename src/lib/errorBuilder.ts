@@ -9,6 +9,11 @@ interface ErrorParam {
   values: string[];
 }
 
+/**
+ * Returns error message
+ *
+ * @param errorInstance Error instance
+ */
 export const getErrorMessage = (errorInstance: string | ErrorParam): string => {
   let key = "";
   let values: string[] | undefined = undefined;
