@@ -106,7 +106,8 @@
     "azure-project-get-err-permission": "Could not get Azure project information because access token did not have the permission to read project. Grant read project permission to the token.",
     "azure-project-get-azure-err": "Could not get Azure project information",
     "azure-project-create-err-permission": "Could not create Azure project information because access token did not have the permission to create project. Grant write project permission to the token.",
-    "azure-project-create-azure-err": "Could not create Azure project information",
+    "azure-project-create-azure-err": "Could not create Azure project",
+    "azure-project-create-err-timeout": "Could not create Azure project {0} because it times out after 2 minutes.",
 
     "deployment-table-update-hld-manifest-pipeline-failed": "Could not update HLD to manifest pipeline.",
     "deployment-table-update-manifest-commit-id-failed": "Could not update manifest commit Id.",

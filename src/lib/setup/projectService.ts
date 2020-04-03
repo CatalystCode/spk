@@ -77,7 +77,10 @@ export const createProject = async (
       }
     }
     if (!created) {
-      throw new Error(`Project, ${name} was not created within 2 minutes.`);
+      throw buildError(errorStatusCode.AZURE_PROJECT_ERR, {
+        errorKey: "azure-project-create-err-timeout",
+        values: [name],
+      });
     }
   } catch (err) {
     if (err.statusCode === 401) {
