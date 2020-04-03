@@ -5,6 +5,7 @@ import { logger } from "../logger";
 import { exec } from "./shell";
 import { build as buildError } from "./errorBuilder";
 import { errorStatusCode } from "./errorStatusCode";
+import { CommandOptions } from "../commands/project/pipeline";
 
 /**
  * For git urls that you may want to log only!
@@ -182,8 +183,15 @@ export const getRepositoryName = (originUrl: string): string => {
     logger.debug("github repo found.");
     return name;
   } else {
-    throw Error(
-      "Could not determine origin repository, or it is not a supported type."
+    if (!resource.startsWith("http")) {
+      throw buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "git-err-invalid-repository-url"
+      );
+    }
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "git-err-validating-remote-git"
     );
   }
 };
@@ -336,6 +344,20 @@ export const checkoutCommitPushCreatePRLink = async (
       err
     );
   }
+};
+
+/**
+ * Returns a git repository url
+ *
+ * @param opts Options object from commander.
+ * @param gitOriginUrl Git origin URL which is used to set values
+ *        for pipeline, repoName and repoUrl
+ */
+export const validateRepoUrl = (
+  opts: CommandOptions,
+  gitOriginUrl: string
+): string => {
+  return opts.repoUrl || getRepositoryUrl(gitOriginUrl);
 };
 
 /**

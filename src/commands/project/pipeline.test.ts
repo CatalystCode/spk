@@ -14,8 +14,9 @@ import {
   checkDependencies,
   execute,
   fetchValidateValues,
-  CommandOptions,
+  ConfigValues,
   installLifecyclePipeline,
+  CommandOptions,
 } from "./pipeline";
 import { deepClone } from "../../lib/util";
 
@@ -29,7 +30,7 @@ afterAll(() => {
 
 const gitUrl = "https://github.com/CatalystCode/spk.git";
 
-const mockValues: CommandOptions = {
+const mockValues: ConfigValues = {
   buildScriptUrl: "buildScriptUrl",
   devopsProject: "azDoProject",
   orgName: "orgName",
@@ -40,7 +41,7 @@ const mockValues: CommandOptions = {
   yamlFileBranch: "master",
 };
 
-jest.spyOn(azdo, "validateRepository").mockReturnValue(Promise.resolve());
+jest.spyOn(azdo, "validateRepository").mockResolvedValue();
 
 const mockMissingValues: CommandOptions = {
   buildScriptUrl: undefined,
@@ -96,7 +97,7 @@ describe("test fetchValidateValues function", () => {
       fetchValidateValues(mockMissingValues, gitUrl, {
         azure_devops: {},
       });
-    }).toThrow(`Repo url not defined`);
+    }).toThrow(`project-pipeline-err-invalid-options: Invalid option values`);
   });
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
     expect(() => {
@@ -227,7 +228,7 @@ describe("installLifecyclePipeline and execute tests", () => {
       expect(e).toBeDefined();
       const builtDefnString = JSON.stringify({ fakeProperty: "temp" });
       expect(e.message).toBe(
-        `Invalid BuildDefinition created, parameter 'id' is missing from ${builtDefnString}`
+        `project-pipeline-err-invalid-build-definition: Invalid BuildDefinition created, parameter 'id' is missing from ${builtDefnString}`
       );
     }
   });
