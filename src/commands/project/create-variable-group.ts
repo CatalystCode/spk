@@ -7,13 +7,13 @@ import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
   exit as exitCmd,
+  populateInheritValueFromConfig,
   validateForRequiredValues,
 } from "../../lib/commandBuilder";
 import {
   PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE,
   PROJECT_PIPELINE_FILENAME,
 } from "../../lib/constants";
-import { AzureDevOpsOpts } from "../../lib/git";
 import { addVariableGroup } from "../../lib/pipelines/variableGroup";
 import {
   hasValue,
@@ -30,7 +30,7 @@ import {
 import decorator from "./create-variable-group.decorator.json";
 
 // values that we need to pull out from command operator
-interface CommandOptions {
+export interface CommandOptions {
   registryName: string | undefined;
   servicePrincipalId: string | undefined;
   servicePrincipalPassword: string | undefined;
@@ -41,16 +41,22 @@ interface CommandOptions {
   devopsProject: string | undefined;
 }
 
+interface ConfigValues {
+  hldRepoUrl: string;
+  orgName: string;
+  personalAccessToken: string;
+  devopsProject: string;
+  registryName: string;
+  servicePrincipalId: string;
+  servicePrincipalPassword: string;
+  tenant: string;
+}
+
 export const checkDependencies = (projectPath: string): void => {
   const fileInfo: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
     throw new Error(PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE);
   }
-};
-
-export const validateValues = (projectName: string, orgName: string): void => {
-  validateProjectNameThrowable(projectName);
-  validateOrgNameThrowable(orgName);
 };
 
 /**
@@ -66,49 +72,34 @@ export const validateValues = (projectName: string, orgName: string): void => {
  */
 export const create = (
   variableGroupName: string,
-  registryName: string | undefined,
-  hldRepoUrl: string | undefined,
-  servicePrincipalId: string | undefined,
-  servicePrincipalPassword: string | undefined,
-  tenantId: string | undefined,
-  accessOpts: AzureDevOpsOpts
+  values: ConfigValues
 ): Promise<VariableGroup> => {
   logger.info(
     `Creating Variable Group from group definition '${variableGroupName}'`
   );
 
-  if (
-    !registryName ||
-    !hldRepoUrl ||
-    !servicePrincipalId ||
-    !servicePrincipalPassword ||
-    !tenantId
-  ) {
-    throw Error("Required values were missing");
-  }
-
   const vars: VariableGroupDataVariable = {
     ACR_NAME: {
-      value: registryName,
+      value: values.registryName,
     },
     HLD_REPO: {
-      value: hldRepoUrl,
+      value: values.hldRepoUrl,
     },
     PAT: {
       isSecret: true,
-      value: accessOpts.personalAccessToken,
+      value: values.personalAccessToken,
     },
     SP_APP_ID: {
       isSecret: true,
-      value: servicePrincipalId,
+      value: values.servicePrincipalId,
     },
     SP_PASS: {
       isSecret: true,
-      value: servicePrincipalPassword,
+      value: values.servicePrincipalPassword,
     },
     SP_TENANT: {
       isSecret: true,
-      value: tenantId,
+      value: values.tenant,
     },
   };
   const variableGroupData: VariableGroupData = {
@@ -117,7 +108,11 @@ export const create = (
     type: "Vsts",
     variables: vars,
   };
-  return addVariableGroup(variableGroupData, accessOpts);
+  return addVariableGroup(variableGroupData, {
+    orgName: values.orgName,
+    personalAccessToken: values.personalAccessToken,
+    project: values.devopsProject,
+  });
 };
 
 /**
@@ -143,7 +138,7 @@ export const setVariableGroupInBedrockFile = (
   // Get bedrock.yaml
   const bedrockFile = Bedrock(rootProjectPath);
 
-  if (typeof bedrockFile === "undefined") {
+  if (!bedrockFile) {
     throw Error(`Bedrock file does not exist.`);
   }
 
@@ -182,7 +177,7 @@ export const updateLifeCyclePipeline = (rootProjectPath: string): void => {
     path.join(absProjectRoot, fileName)
   ) as AzurePipelinesYaml;
 
-  if (typeof pipelineFile === "undefined") {
+  if (!pipelineFile) {
     throw new Error("${fileName} file does not exist in ${absProjectRoot}.");
   }
 
@@ -206,6 +201,27 @@ export const updateLifeCyclePipeline = (rootProjectPath: string): void => {
   write(pipelineFile, absProjectRoot, fileName);
 };
 
+export const validateValues = (opts: CommandOptions): ConfigValues => {
+  populateInheritValueFromConfig(decorator, Config(), opts);
+  validateForRequiredValues(decorator, opts, true);
+
+  // validateForRequiredValues already check required values
+  // || "" is just to satisfy eslint rule.
+  validateProjectNameThrowable(opts.devopsProject || "");
+  validateOrgNameThrowable(opts.orgName || "");
+
+  return {
+    hldRepoUrl: opts.hldRepoUrl || "",
+    orgName: opts.orgName || "",
+    personalAccessToken: opts.personalAccessToken || "",
+    devopsProject: opts.devopsProject || "",
+    registryName: opts.registryName || "",
+    servicePrincipalId: opts.servicePrincipalId || "",
+    servicePrincipalPassword: opts.servicePrincipalPassword || "",
+    tenant: opts.tenant || "",
+  };
+};
+
 /**
  * Executes the command.
  *
@@ -227,58 +243,9 @@ export const execute = async (
     logger.verbose(`project path: ${projectPath}`);
 
     checkDependencies(projectPath);
+    const values = validateValues(opts);
 
-    const { azure_devops } = Config();
-
-    const {
-      registryName,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-      hldRepoUrl = azure_devops?.hld_repository,
-      orgName = azure_devops?.org,
-      personalAccessToken = azure_devops?.access_token,
-      devopsProject = azure_devops?.project,
-    } = opts;
-
-    const accessOpts: AzureDevOpsOpts = {
-      orgName,
-      personalAccessToken,
-      project: devopsProject,
-    };
-
-    logger.debug(`access options: ${JSON.stringify(accessOpts)}`);
-
-    const errors = validateForRequiredValues(decorator, {
-      devopsProject,
-      hldRepoUrl,
-      orgName,
-      personalAccessToken,
-      registryName,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-    });
-
-    if (errors.length !== 0) {
-      await exitFn(1);
-      return;
-    }
-
-    // validateForRequiredValues assure that devopsProject
-    // and orgName are not empty string
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    validateValues(devopsProject!, orgName!);
-
-    const variableGroup = await create(
-      variableGroupName,
-      registryName,
-      hldRepoUrl,
-      servicePrincipalId,
-      servicePrincipalPassword,
-      tenant,
-      accessOpts
-    );
+    const variableGroup = await create(variableGroupName, values);
 
     // set the variable group name
     // variableGroup.name is set at this point that's it should have value
