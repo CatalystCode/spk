@@ -17,6 +17,9 @@
   },
   "errors": {
     "setup-cmd-failed": "Setup command was not successfully executed.",
+    "setup-cmd-prompt-err-no-subscriptions": "No subscriptions found.",
+    "setup-cmd-prompt-err-subscription-missing": "Subscription Identifier was missing.",
+    "setup-cmd-prompt-err-input-file-missing": "{0} did not exist or not accessible. Make sure that it is accessible.",
 
     "hld-init-cmd-failed": "Hld init command was not successfully executed.",
     "hld-init-cmd-project-path-missing": "Value for project path was not provided. Provide it.",
