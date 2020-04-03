@@ -1,6 +1,11 @@
 import { Command } from "../command";
 
-const subfolders = ["create-variable-group", "init", "pipeline"];
+const subfolders = [
+  "create-variable-group",
+  "init",
+  "pipeline",
+  "get-display-name",
+];
 
 export const commandDecorator = Command(
   "project",

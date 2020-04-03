@@ -418,6 +418,12 @@
     ],
     "markdown": "## Description\n\nCreate new variable group in Azure DevOps project\n\n## Command Prerequisites\n\nIn addition to an existing\n[Azure DevOps project](https://azure.microsoft.com/en-us/services/devops/), to\nlink secrets from an Azure key vault as variables in Variable Group, you will\nneed an existing key vault containing your secrets and the Service Principal for\nauthorization with Azure Key Vault.\n\n1. Use existng or\n   [create a service principal either in Azure Portal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)\n   or\n   [with Azure CLI](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest).\n2. Use existing or\n   [create a Azure Container Registry in Azure Portal](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal)\n   or\n   [with Azure CLI](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-azure-cli).\n"
   },
+  "project get-display-name": {
+    "command": "get-display-name",
+    "alias": "gdn",
+    "description": "Gets display name for a service",
+    "options": []
+  },
   "project init": {
     "command": "init",
     "alias": "i",

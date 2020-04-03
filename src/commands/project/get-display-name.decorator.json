@@ -1,0 +1,6 @@
+{
+  "command": "get-display-name",
+  "alias": "gdn",
+  "description": "Gets display name for a service",
+  "options": []
+}
