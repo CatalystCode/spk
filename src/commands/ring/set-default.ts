@@ -19,7 +19,10 @@ import { errorStatusCode } from "../../lib/errorStatusCode";
 export const checkDependencies = (projectPath: string): void => {
   const fileInfo: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
-    throw buildError(errorStatusCode.VALIDATION_ERR, "ring-err-dependency");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "ring-set-default-cmd-err-dependency"
+    );
   }
 };
 
@@ -55,7 +58,7 @@ export const execute = async (
       buildError(
         errorStatusCode.EXE_FLOW_ERR,
         {
-          errorKey: "ring-err-set-default",
+          errorKey: "ring-set-default-cmd-failed",
           values: [ringName],
         },
         err

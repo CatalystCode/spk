@@ -16,7 +16,10 @@ import { errorStatusCode } from "../../lib/errorStatusCode";
 export const checkDependencies = (projectPath: string): void => {
   const fileInfo: BedrockFileInfo = bedrock.fileInfo(projectPath);
   if (fileInfo.exist === false) {
-    throw buildError(errorStatusCode.VALIDATION_ERR, "ring-err-dependency");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "ring-delete-cmd-err-dependency"
+    );
   }
 };
 
@@ -65,7 +68,7 @@ export const execute = async (
       buildError(
         errorStatusCode.EXE_FLOW_ERR,
         {
-          errorKey: "ring-err-delete",
+          errorKey: "ring-delete-cmd-failed",
           values: [ringName],
         },
         err

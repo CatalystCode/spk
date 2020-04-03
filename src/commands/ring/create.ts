@@ -27,14 +27,17 @@ export const checkDependencies = (
 ): void => {
   const fileInfo: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
-    throw buildError(errorStatusCode.VALIDATION_ERR, "ring-err-dependency");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "ring-create-cmd-err-dependency"
+    );
   }
 
   // Check if ring already exists, if it does, warn and exit
   const bedrockFile: BedrockFile = loadBedrockFile(projectPath);
   if (ringName in bedrockFile.rings) {
     throw buildError(errorStatusCode.EXE_FLOW_ERR, {
-      errorKey: "ring-err-exists",
+      errorKey: "ring-create-cmd-err-ring-exists",
       values: [ringName, BEDROCK_FILENAME],
     });
   }
@@ -52,7 +55,12 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   if (!hasValue(ringName)) {
-    logError(buildError(errorStatusCode.VALIDATION_ERR, "ring-err-name"));
+    logError(
+      buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "ring-create-cmd-err-name-missing"
+      )
+    );
     await exitFn(1);
     return;
   }
@@ -86,7 +94,7 @@ export const execute = async (
       buildError(
         errorStatusCode.CMD_EXE_ERR,
         {
-          errorKey: "ring-err-create",
+          errorKey: "ring-create-cmd-failed",
           values: [ringName],
         },
         err
