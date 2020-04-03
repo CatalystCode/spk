@@ -24,6 +24,9 @@ export const execute = async (
     // one directory up.
     while (!fs.existsSync(currentDirectory)) {
       const split = currentDirectory.split("/");
+      if (split.length < 2) {
+        break;
+      }
       currentDirectory = currentDirectory.replace(
         split[split.length - 2] + "/",
         ""
