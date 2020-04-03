@@ -6,6 +6,7 @@ import { Bedrock, Config } from "../../config";
 import {
   build as buildCmd,
   exit as exitCmd,
+  populateInheritValueFromConfig,
   validateForRequiredValues,
 } from "../../lib/commandBuilder";
 import { createPullRequest } from "../../lib/git/azure";
@@ -121,12 +122,9 @@ export const execute = async (
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
   try {
-    const { azure_devops } = Config();
-    opts.orgName = opts.orgName || azure_devops?.org;
-    opts.personalAccessToken =
-      opts.personalAccessToken || azure_devops?.access_token!;
     opts.description =
       opts.description || "This is automated PR generated via SPK";
+    populateInheritValueFromConfig(decorator, Config(), opts);
 
     ////////////////////////////////////////////////////////////////////////
     // Give defaults
@@ -150,19 +148,12 @@ export const execute = async (
 
     // Default the remote to the git origin
     opts.remoteUrl = await getRemoteUrl(opts.remoteUrl);
-    const errors = validateForRequiredValues(decorator, {
-      orgName: opts.orgName,
-      personalAccessToken: opts.personalAccessToken,
-      remoteUrl: opts.remoteUrl,
-      sourceBranch: opts.sourceBranch,
-    });
 
-    if (errors.length > 0) {
-      await exitFn(1);
-    } else {
-      await makePullRequest(defaultRings, opts);
-      await exitFn(0);
-    }
+    // error will thrown if validation fails.
+    validateForRequiredValues(decorator, opts, true);
+
+    await makePullRequest(defaultRings, opts);
+    await exitFn(0);
   } catch (err) {
     logger.error(err);
     await exitFn(1);
