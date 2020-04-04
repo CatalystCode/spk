@@ -107,8 +107,9 @@ export const fetchValidateValues = (
       getRepositoryName(repoUrl) || getRepositoryName(gitOriginUrl)),
     (opts.repoUrl = opts.repoUrl || getRepositoryUrl(gitOriginUrl));
   opts.yamlFileBranch = opts.yamlFileBranch || "master";
-  (opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL),
-    populateInheritValueFromConfig(decorator, Config(), opts);
+  opts.buildScriptUrl = opts.buildScriptUrl || BUILD_SCRIPT_URL;
+
+  populateInheritValueFromConfig(decorator, Config(), opts);
 
   // error will be thrown if validation fails
   validateForRequiredValues(decorator, opts, true);
