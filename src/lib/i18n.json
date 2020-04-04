@@ -86,6 +86,12 @@
     "introspect-validate-cmd-valid-exception": "Error was caught during validation.",
     "introspect-validate-cmd-write-pipeline": "Error writing data to service introspection.",
 
+    "introspect-get-cmd-failed": "Deployment validate get was not successfully executed.",
+    "introspect-get-cmd-err-validation-top-num": "Could not execute command because value for top option {0} is not apositive number. Provide a positive number for port.",
+    "introspect-get-cmd-missing-vals": "Configuration for storage account and DevOps pipeline were missing. Initialize the spk tool with the right configuration.",
+    "introspect-get-cmd-cluster-sync-stat-err": "Could not get cluster sync status.",
+    "introspect-get-cmd-get-deployments-err": "Could not get deployments",
+
     "introspect-dashboard-cmd-failed": "Deployment dashboard command was not successfully executed.",
     "introspect-dashboard-cmd-invalid-port": "value for port option has to be a valid port number. Enter a valid port number.",
     "introspect-dashboard-cmd-missing-vals": "Configuration for storage account and DevOps pipeline were missing. Initialize the spk tool with the right configuration.",
