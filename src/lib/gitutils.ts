@@ -295,10 +295,10 @@ export const getPullRequestLink = async (
       logger.debug("github repo found.");
       return `https://github.com/${organization}/${name}/compare/${baseBranch}...${newBranch}?expand=1`;
     } else {
-      throw buildError(
-        errorStatusCode.GIT_OPS_ERR,
-        "git-err-get-pull-request-link-unknown-type"
+      logger.error(
+        "Could not determine origin repository, or it is not a supported type."
       );
+      return "Could not determine origin repository, or it is not a supported provider. Please check for the newly pushed branch and open a PR manually.";
     }
   } catch (err) {
     throw buildError(

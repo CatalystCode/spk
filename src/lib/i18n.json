@@ -83,7 +83,6 @@
     "git-err-get-repo-url": "Could not get repo URL because origin repository could not be determine or it is not a supported type.",
     "git-err-get-repo-url-unknown-protocol": "Could not get repo URL because invalid protocol, {0} found in git remote {1}. Expected one of 'ssh' or 'https'.",
     "git-err-get-pull-request-link-unknown-prototype": "Could not get pull request URL because invalid protocol, {0} found in git remote {1}. Expected one of 'ssh' or 'https'.",
-    "git-err-get-pull-request-link-unknown-type": "Could not get pull request URL because the origin repository could be determine, or it was not a supported provider. Check for the newly pushed branch and open a PR manually.",
     "git-err-get-pull-request-link-err": "Could not get pull request URL",
 
     "git-err-validating-remote-git": "Could not determine origin repository, or it is not a supported type.",
