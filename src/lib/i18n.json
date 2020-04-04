@@ -21,6 +21,12 @@
     "setup-cmd-prompt-err-subscription-missing": "Subscription Identifier was missing.",
     "setup-cmd-prompt-err-input-file-missing": "{0} did not exist or not accessible. Make sure that it is accessible.",
 
+    "spk-config-yaml-err-readyaml": "Could not load file, {0}.",
+    "spk-config-yaml-var-undefined": "Environment variable needs to be defined for {0} since it's referenced in the config file.",
+    "spk-config-yaml-load-err": "Could not load configuration.",
+    "bedrock-config-invalid": "Invalid helm configuration found in {0}.",
+    "config-file-not-defined": "Pipeline yaml file name is undefined.",
+
     "hld-init-cmd-failed": "Hld init command was not successfully executed.",
     "hld-init-cmd-project-path-missing": "Value for project path was not provided. Provide it.",
 
@@ -73,6 +79,7 @@
     "fileutils-generate-hld-pipeline-yaml": "Could not generate HLD Azure pipeline YAML.",
     "fileutils-generate-default-hld-component-yaml": "Could not generate default HLD component YAML.",
     "fileutils-generate-git-ignore-file": "Could not generate .gitignore file in {0}.",
+    "fileutils-update-ring-trigger-svc-file-not-found": "Could not update ring trigger because {0} was not in path {1}.",
 
     "git-checkout-commit-push-create-PR-link": "Could not checkout, commit, push or create pull request",
     "git-create-repo-no-permissions": "Could not create git repository due to lack of permissions. Add code write permission to the personal access token",
@@ -228,6 +235,8 @@
     "azure-client-get-web-api-err-missing-org": "Could not get azure web API because organization name was missing. Provide it.",
     "azure-client-get-rest-client-err": "Could not get REST client.",
     "azure-client-get-build-client-err": "Could not get build client.",
-    "azure-client-get-task-agent-client-err": "Could not get task agent client."
+    "azure-client-get-task-agent-client-err": "Could not get task agent client.",
+
+    "commander-err-cannot-locate-opt": "Could locate option name {0}"
   }
 }

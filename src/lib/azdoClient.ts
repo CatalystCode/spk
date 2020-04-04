@@ -65,7 +65,8 @@ export const getWebApi = async (
   );
 
   const authHandler = getPersonalAccessTokenHandler(personalAccessToken);
-  return new WebApi(orgUrl, authHandler);
+  connection = new WebApi(orgUrl, authHandler);
+  return connection;
 };
 
 export const invalidateWebApi = (): void => {
