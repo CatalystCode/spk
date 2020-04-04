@@ -72,6 +72,20 @@
     "project-pipeline-err-pipeline-create": "Error occurred during pipeline creation for {0}",
     "project-pipeline-err-invalid-build-definition": "Invalid BuildDefinition created, parameter 'id' is missing from {0}",
 
+    "git-err-show-current-branch": "Could not get the current branch of git. Ensure 'git branch --show-current' returns a proper response.",
+    "git-err-checkout": "Could not checkout git branch, {0}.",
+    "git-err-delete-branch": "Could not delete branch, {0}.",
+    "git-err-add-commit": "Could not commit changes in {0} to branch, {1}.",
+    "git-err-push": "Could not push to branch, {0}.",
+    "git-err-get-orgin-url": "Could not get git origin URL.",
+    "git-err-azdo-get-orgin-url": "Could not get Azure git origin URL.",
+    "git-err-azdo-get-orgin-url-no-pipeline": "Could not get Azure git origin URL because there was not running in a pipeline - no AzDO variables.",
+    "git-err-get-repo-url": "Could not get repo URL because origin repository could not be determine or it is not a supported type.",
+    "git-err-get-repo-url-unknown-protocol": "Could not get repo URL because invalid protocol, {0} found in git remote {1}. Expected one of 'ssh' or 'https'.",
+    "git-err-get-pull-request-link-unknown-prototype": "Could not get pull request URL because invalid protocol, {0} found in git remote {1}. Expected one of 'ssh' or 'https'.",
+    "git-err-get-pull-request-link-unknown-type": "Could not get pull request URL because the origin repository could be determine, or it was not a supported provider. Check for the newly pushed branch and open a PR manually.",
+    "git-err-get-pull-request-link-err": "Could not get pull request URL",
+
     "git-err-validating-remote-git": "Could not determine origin repository, or it is not a supported type.",
     "git-err-invalid-repository-url": "Repositiry URL does not begin with http(s).",
 
@@ -236,6 +250,11 @@
     "azure-client-get-rest-client-err": "Could not get REST client.",
     "azure-client-get-build-client-err": "Could not get build client.",
     "azure-client-get-task-agent-client-err": "Could not get task agent client.",
+
+    "bedrock-yaml-ring-set-default-not-found": "Could not set default ring because ring {0} is not defined in {1}.",
+    "bedrock-yaml-ring-remove-not-found": "Could not remove ring because ring {0} is not defined in {1}.",
+    "bedrock-yaml-ring-remove-default": "Could not remove ring because ring {0} was set to isDefault. Set another default ring with 'spk ring set-default' first before attempting to delete",
+    "bedrock-yaml-ring-validation-err-many-rings": "There were one than on rings ({0}) with 'isDefault: true'",
 
     "commander-err-cannot-locate-opt": "Could locate option name {0}"
   }
