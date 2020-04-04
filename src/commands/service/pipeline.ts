@@ -18,7 +18,7 @@ import {
   getRepositoryName,
   getRepositoryUrl,
   isGitHubUrl,
-  validateRepoUrl
+  validateRepoUrl,
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
