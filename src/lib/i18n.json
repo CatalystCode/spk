@@ -145,9 +145,13 @@
     "pipeline-del-err": "Could not delete pipeline.",
     "pipeline-get-by-buildid-err": "Could not get pipeline by build id.",
     "pipeline-get-status-err-not-found": "Could not get status of pipeline {0} because it was not found.",
-    "pipeline-hld-manifest-create-err": "Could not create HLD to Manifest Pipeline",
-    "pipeline-lifecycle-create-err": "Could not create Lifecycle Pipeline",
-    "pipeline-build-create-err": "Could not create Build Pipeline",
+    "pipeline-hld-manifest-create-err": "Could not create HLD to Manifest Pipeline.",
+    "pipeline-lifecycle-create-err": "Could not create Lifecycle Pipeline.",
+    "pipeline-build-create-err": "Could not create Build Pipeline.",
+    "pipeline-queue-build-err": "Could not queue a build in pipeline.",
+    "pipeline-err-create-pipeline-for-defn": "Could not create pipeline for definition.",
+    "pipeline-err-create-def-githib-pipeline": "Could not create definition for Github repository pipeline",
+    "pipeline-err-create-def-azure-repo-pipeline": "Could not create definition for Azure Git repository pipeline",
 
     "var-group-authorize-all-pipelines-err-missing-id": "Could not enable authorization for all pipelines to access variable group because variable group id was missing.",
     "var-group-authorize-all-pipelines-err": "Could not enable authorization for all pipelines to access variable group, {0}.",
@@ -210,6 +214,20 @@
     "validation-err-storage-key-vault-end-char": "Storage Key Vault was invalid as it must end with letter or digit.",
     "validation-err-storage-key-vault-hyphen": "Storage Key Vault was invalid as it cannot contain consecutive hyphens.",
     "validation-err-storage-key-vault-length": "Storage Key Vault was invalid as it has to be between 3 and 24 characters long.",
-    "validation-err-storage-access-key-missing": "Storage Access Key was missing. Provide it."
+    "validation-err-storage-access-key-missing": "Storage Access Key was missing. Provide it.",
+
+    "service-endpoint-err-validation": "Missing mandatory values ({0}) for service endpoint.",
+    "service-endpoint-err-create-params": "Could not create parameters for service endpoint.",
+    "service-endpoint-err-add": "Could not add service endpoint.",
+    "service-endpoint-err-add-endpoint": "Could not add service endpoint.",
+    "service-endpoint-err-get-endpoint-multiple": "Found {0} service endpoints by name {1}.",
+    "service-endpoint-err-create-missing-name": "Could not create service endpoint because name was missing.",
+    "service-endpoint-err-create": "Could not create service endpoint.",
+
+    "azure-client-get-web-api-err-missing-access-token": "Could not get azure web API because personal access token was missing. Provide it.",
+    "azure-client-get-web-api-err-missing-org": "Could not get azure web API because organization name was missing. Provide it.",
+    "azure-client-get-rest-client-err": "Could not get REST client.",
+    "azure-client-get-build-client-err": "Could not get build client.",
+    "azure-client-get-task-agent-client-err": "Could not get task agent client."
   }
 }
