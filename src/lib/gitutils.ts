@@ -164,7 +164,10 @@ export const getOriginUrl = async (
 export const getAzdoOriginUrl = async (): Promise<string> => {
   try {
     if (!process.env.APP_REPO_URL) {
-      throw new Error("Not running in a pipeline - no AzDO variables.");
+      throw buildError(
+        errorStatusCode.GIT_OPS_ERR,
+        "git-err-azdo-get-orgin-url-no-pipeline"
+      );
     }
 
     const originUrl = process.env.APP_REPO_URL;
