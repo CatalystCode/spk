@@ -152,7 +152,9 @@ describe("create", () => {
       await create("", "", "", "", "", "", accessOpts);
       expect(true).toBeFalsy();
     } catch (e) {
-      expect(e.message).toBe("Required values were missing");
+      expect(e.message).toBe(
+        "project-create-variable-group-cmd-err-values-missing: Required values are missing. Provide values for registry-name|hld-repo-url|service-principal-id|service-principal-password|tenant."
+      );
     }
   });
 
