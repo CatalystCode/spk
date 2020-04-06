@@ -24,7 +24,8 @@ steps:
 ```
 
 running `spk hld append-variable-group my-vg` with a variable group name, in
-this case `my-vg`, will add it under the `variables` section:
+this case `my-vg`, will add it under the `variables` section if it does not
+already exist:
 
 ```yaml
 # GENERATED WITH SPK VERSION 0.5.8
