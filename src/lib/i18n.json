@@ -266,9 +266,9 @@
 
     "azure-client-get-web-api-err-missing-access-token": "Could not get azure web API because personal access token was missing. Provide it.",
     "azure-client-get-web-api-err-missing-org": "Could not get azure web API because organization name was missing. Provide it.",
-    "azure-client-get-rest-client-err": "Could not get REST client.",
-    "azure-client-get-build-client-err": "Could not get build client.",
-    "azure-client-get-task-agent-client-err": "Could not get task agent client.",
+    "azure-client-get-rest-client-err": "Could not get REST client. Check the Azure credential",
+    "azure-client-get-build-client-err": "Could not get build client. Check the Azure DevOps credential",
+    "azure-client-get-task-agent-client-err": "Could not get task agent client. Check the Azure DevOps credential.",
 
     "bedrock-yaml-ring-set-default-not-found": "Could not set default ring because ring {0} is not defined in {1}.",
     "bedrock-yaml-ring-remove-not-found": "Could not remove ring because ring {0} is not defined in {1}.",
