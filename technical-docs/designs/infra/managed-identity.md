@@ -26,7 +26,7 @@ managed identities in AKS using a proposed new Bedrock environment that
 leverages a modified cobalt project test harness in order for test pod identity
 within an AKS cluster using agile CI/CD and test validation.
 
-### Issues Addressed:
+### Scenarios Addressed:
 
 1. [As an SRE, I want Enable MSI Support for aks-gitops module](https://github.com/microsoft/bedrock/issues/994)
 2. [As an Operator, I want automated testing validation for MSI verified within Bedrock](https://github.com/microsoft/bedrock/issues/1197)
@@ -81,7 +81,7 @@ including:
 ![](infratestflow.png)
 
 The proposed new Infrastructure Devops Flow for Terraform Testing can be
-separated by 4 key functionalities:
+separated by 4 key steps:
 
 1. Test Suite Initialization - Provisioning global artifacts, secrets and
    dependencies needed for targeted whitelisted test matrix.
@@ -99,8 +99,8 @@ separated by 4 key functionalities:
 ### 3.2 Creation of Managed Identity enable AKS Gitops Environments
 
 A new AKS Bedrock template with Managed Identity enabled, (`azure-MI`), will be
-added the the collection of sample environments. This template will be an
-upgraded derivative of the `azure-simple` template, with a new dependency on
+added the collection of environment templates. This template will be an upgraded
+derivative of the `azure-simple` template, with a new dependency on
 `azure-common-infra` and will contain the following:
 
 - Managed Identity System Level for AKS
