@@ -75,19 +75,17 @@ export const createTestServiceBuildAndUpdatePipelineYaml = (
               },
               {
                 script: generateYamlScript([
-                  `. ./build.sh --source-only`,
-                  `get_spk_version`,
-                  `download_spk`,
                   `export BUILD_REPO_NAME=${BUILD_REPO_NAME(serviceName)}`,
                   `tag_name="$BUILD_REPO_NAME:${IMAGE_TAG}"`,
                   `commitId=$(Build.SourceVersion)`,
                   `commitId=$(echo "\${commitId:0:7}")`,
-                  `currentDirectory=$(pwd)`,
-                  `cd ${relativeServiceForDockerfile}`,
-                  `service=$($currentDirectory/spk/spk project get-display-name)`,
-                  `cd $currentDirectory`,
+                  `service=$(Build.Repository.Name)`,
+                  `service=\${service##*/}`,
                   `url=$(git remote --verbose | grep origin | grep fetch | cut -f2 | cut -d' ' -f1)`,
                   `repourl=\${url##*@}`,
+                  `. ./build.sh --source-only`,
+                  `get_spk_version`,
+                  `download_spk`,
                   `./spk/spk deployment create -n $(INTROSPECTION_ACCOUNT_NAME) -k $(INTROSPECTION_ACCOUNT_KEY) -t $(INTROSPECTION_TABLE_NAME) -p $(INTROSPECTION_PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service --repository $repourl`,
                 ]),
                 displayName:
@@ -288,23 +286,20 @@ export const createTestBedrockYaml = (
       qa: {},
       testing: {},
     },
-    services: [
-      {
-        path: "./",
+    services: {
+      "./": {
         helm: service1HelmConfig,
         k8sBackendPort: 80,
       },
-      {
-        path: "./packages/service1",
+      "./packages/service1": {
         helm: service2HelmConfig,
         k8sBackendPort: 80,
       },
-      {
-        path: "./zookeeper",
+      "./zookeeper": {
         helm: zookeeperHelmConfig,
         k8sBackendPort: 80,
       },
-    ],
+    },
     variableGroups: [],
     version: "1.0",
   };
