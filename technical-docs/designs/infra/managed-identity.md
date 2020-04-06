@@ -243,6 +243,7 @@ Risks & Limitations:
 - With an incoming change to an azure provider module, how will this be applied
   to an existing terraform deployment. If fail, should we redeploy a new
   `azure-MI` environment for QA?
+- How long does it take to deploy MI and Keyvault in a pipeline?
 
 ## 6. Documentation
 
