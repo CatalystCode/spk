@@ -27,7 +27,7 @@ import { logger } from "../../logger";
 import decorator from "./get.decorator.json";
 import { IPullRequest } from "spektate/lib/repository/IPullRequest";
 
-const promises: Promise<IPullRequest | undefined>[] = [];
+const promises: Promise<void>[] = [];
 const pullRequests: { [id: string]: IPullRequest } = {};
 /**
  * Output formats to display service details
@@ -229,22 +229,23 @@ export const getClusterSyncStatuses = async (
  * @param deployment deployment for which PR has to be fetched
  * @param initObj initialization object
  */
-export const fetchPRInformation = (
+export const fetchPRInformation = async (
   deployment: IDeployment,
   initObj: InitObject
-): void => {
+): Promise<void> => {
   if (deployment.hldRepo && deployment.pr) {
     const repo = getRepositoryFromURL(deployment.hldRepo);
     const strPr = deployment.pr.toString();
 
     if (repo) {
-      const promise = fetchPR(repo, strPr, initObj.accessToken);
-      promise.then((pr) => {
+      try {
+        const pr = await fetchPR(repo, strPr, initObj.accessToken);
         if (pr) {
           pullRequests[strPr] = pr;
         }
-      });
-      promises.push(promise);
+      } catch (err) {
+        logger.warn(`Could not get PR ${strPr} information: ` + err);
+      }
     }
   }
 };
@@ -259,7 +260,9 @@ export const getPRs = (
   deployments: IDeployment[] | undefined,
   initObj: InitObject
 ): void => {
-  (deployments || []).forEach((d) => fetchPRInformation(d, initObj));
+  (deployments || []).forEach((d) => {
+    promises.push(fetchPRInformation(d, initObj));
+  });
 };
 
 /**
