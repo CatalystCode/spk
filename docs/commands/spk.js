@@ -14,6 +14,42 @@ var inheritTemplate =
   '<p class="cmd-inherit">inherit @@inherit@@ from spk config.yaml</p>';
 var relTemplate =
   '<li><a class="preserve-view button is-small has-border-none has-inner-focus has-flex-justify-content-start is-full-width has-text-wrap is-text-left">@@value@@</a></li>';
+var changeTemplate =
+  '<div class="change-container"><div class="change-header">@@version@@</div><div class="change-content">@@changes@@</div></div>';
+var commandAddedTemplate =
+  '<div class="change-item-header">Commands Added</div><ul class="change-list">@@changes@@</ul>';
+var commandRemovedTemplate =
+  '<div class="change-item-header">Commands Removed</div><ul class="change-list">@@changes@@</ul>';
+var optionAddedTemplate =
+  '<div class="change-option-header">Options Added</div><ul class="change-list">@@changes@@</ul>';
+var optionRemovedTemplate =
+  '<div class="change-option-header">Options Removed</div><ul class="change-list">@@changes@@</ul>';
+var optionChangedTemplate =
+  '<div class="change-option-header">Options Changed</div><ul class="change-list">@@changes@@</ul>';
+
+var dataCache = {};
+
+function argToVariableName(arg) {
+  var match = arg.match(/\s?--([-\w]+)\s?/);
+  if (match) {
+    return match[1]
+      .replace(/\.?(-[a-z])/g, (_, y) => {
+        return y.toUpperCase();
+      })
+      .replace(/-/g, "");
+  }
+  return null;
+}
+
+function showChangesView() {
+  $("#content").css("display", "none");
+  $("#changes").css("display", "flex");
+}
+
+function showCommandView() {
+  $("#content").css("display", "flex");
+  $("#changes").css("display", "none");
+}
 
 function sanitize(str) {
   return str.replace("<", "&lt;").replace(">", "&gt;");
@@ -188,9 +224,282 @@ var subheaderItems = function () {
   });
 };
 
+function fetchData(version, fn) {
+  if (version in dataCache) {
+    fn(dataCache[version]);
+  } else {
+    var url =
+      version === "master" ? "./data.json" : "./data" + version + ".json";
+
+    $.getJSON(url, function (json) {
+      dataCache[version] = json;
+      fn(json);
+    });
+  }
+}
+
+function compareVersionNew(prev, cur) {
+  var prevKeys = Object.keys(prev);
+  var results = Object.keys(cur).filter(function (k) {
+    return prevKeys.indexOf(k) === -1;
+  });
+  return results.length > 0 ? results : undefined;
+}
+
+function compareVersionRemoved(prev, cur) {
+  var curKeys = Object.keys(cur);
+  var results = Object.keys(prev).filter(function (k) {
+    return curKeys.indexOf(k) === -1;
+  });
+  return results.length > 0 ? results : undefined;
+}
+
+function compareArgsNew(prev, cur) {
+  var prevKeys = prev.map(function (opt) {
+    return opt.arg;
+  });
+
+  return cur
+    .filter(function (opt) {
+      return prevKeys.indexOf(opt.arg) === -1;
+    })
+    .map(function (opt) {
+      return opt.arg;
+    });
+}
+
+function compareArgsRemoved(prev, cur) {
+  var curKeys = cur.map(function (opt) {
+    return opt.arg;
+  });
+  return prev
+    .filter(function (opt) {
+      return curKeys.indexOf(opt.arg) === -1;
+    })
+    .map(function (opt) {
+      return opt.arg;
+    });
+}
+
+function compareArgsChanged(prev, cur) {
+  var optionsPrev = prev.options || [];
+  var optionsCur = cur.options || [];
+  var changes = {};
+  var aliases = {};
+  var aliasChanged = [];
+  var aliasesRm = {};
+
+  var removed = compareArgsRemoved(optionsPrev, optionsCur);
+  if (removed.length > 0) {
+    removed.forEach(function (r) {
+      var m = r.match(/^-([a-zA-Z]),\s/);
+      if (m) {
+        var varName = argToVariableName(r);
+        aliases[varName] = m[1];
+        aliasesRm[varName] = r;
+      }
+    });
+  }
+
+  var added = (compareArgsNew(optionsPrev, optionsCur) || []).filter(function (
+    add
+  ) {
+    var m = add.match(/^-([a-zA-Z]),\s/);
+    if (m) {
+      var varName = argToVariableName(add);
+      if (varName in aliases) {
+        var idx = removed.indexOf(aliasesRm[varName]);
+        removed.splice(idx, 1);
+        aliasChanged.push(
+          'change "' + aliasesRm[varName] + '" to "' + add + '"'
+        );
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if (removed.length > 0) {
+    changes.removed = removed;
+  }
+
+  if (added.length > 0) {
+    changes.added = added;
+  }
+
+  if (aliasChanged.length > 0) {
+    changes.changed = aliasChanged;
+  }
+
+  return Object.keys(changes).length > 0 ? changes : null;
+}
+
+function compareVersionChanged(prev, cur) {
+  var changes = {};
+  var curKeys = Object.keys(cur);
+  var commonKeys = Object.keys(prev).filter(function (k) {
+    return curKeys.indexOf(k) !== -1;
+  });
+
+  commonKeys.forEach(function (k) {
+    var newCmd = cur[k];
+    var prevCmd = prev[k];
+
+    if (newCmd.alias !== prevCmd.alias) {
+      changes["alias"] = {
+        prev: prevCmd.alias,
+        newCmd: newCmd.alias,
+      };
+    }
+
+    var optChanges = compareArgsChanged(prevCmd, newCmd);
+    if (optChanges) {
+      changes[k] = {
+        options: optChanges,
+      };
+    }
+  });
+
+  return Object.keys(changes).length > 0 ? changes : undefined;
+}
+
+function compareVersion(prev, cur) {
+  var prevData = dataCache[prev];
+  var curData = dataCache[cur];
+  var data = {};
+
+  var added = compareVersionNew(prevData, curData);
+  if (added) {
+    data.added = added;
+  }
+
+  var removed = compareVersionRemoved(prevData, curData);
+  if (removed) {
+    data.removed = removed;
+  }
+
+  var changed = compareVersionChanged(prevData, curData);
+  if (changed) {
+    data.changed = changed;
+  }
+
+  return Object.keys(data).length > 0 ? data : undefined;
+}
+
+function compareVersions() {
+  var versions = Object.keys(dataCache);
+  versions.sort();
+  var cur = versions.shift();
+  var dataChanges = {};
+
+  versions.forEach(function (ver) {
+    dataChanges[ver] = compareVersion(cur, ver);
+    cur = ver;
+  });
+  versions.reverse();
+
+  $("#changes").append(
+    versions
+      .map(function (v) {
+        var oChanges = dataChanges[v];
+        var changes = "no changes";
+        if (oChanges) {
+          changes = "";
+          if (oChanges.added) {
+            changes = commandAddedTemplate.replace(
+              "@@changes@@",
+              oChanges.added
+                .map(function (add) {
+                  return "<li>spk " + add + "</li>";
+                })
+                .join("")
+            );
+          }
+          if (oChanges.removed) {
+            changes += commandRemovedTemplate.replace(
+              "@@changes@@",
+              oChanges.removed
+                .map(function (rm) {
+                  return "<li>spk " + rm + "</li>";
+                })
+                .join("")
+            );
+          }
+          if (oChanges.changed) {
+            var optionChanges = "";
+            Object.keys(oChanges.changed).forEach(function (k) {
+              optionChanges +=
+                '<div class="option-change"><div class="option-change-title">' +
+                k +
+                "</div>";
+              if (oChanges.changed[k].options) {
+                var options = oChanges.changed[k].options;
+
+                if (options.added) {
+                  optionChanges += optionAddedTemplate.replace(
+                    "@@changes@@",
+                    options.added
+                      .map(function (add) {
+                        return "<li>" + add + "</li>";
+                      })
+                      .join("")
+                  );
+                }
+                if (options.removed) {
+                  optionChanges += optionRemovedTemplate.replace(
+                    "@@changes@@",
+                    options.removed
+                      .map(function (rm) {
+                        return "<li>" + rm + "</li>";
+                      })
+                      .join("")
+                  );
+                }
+                if (options.changed) {
+                  optionChanges += optionChangedTemplate.replace(
+                    "@@changes@@",
+                    options.changed
+                      .map(function (chg) {
+                        return "<li>" + chg + "</li>";
+                      })
+                      .join("")
+                  );
+                }
+              }
+              optionChanges += "</div>";
+            });
+
+            changes +=
+              '<div class="change-item-header">Commands Changed</div>' +
+              optionChanges;
+          }
+        }
+        return changeTemplate
+          .replace("@@version@@", v)
+          .replace("@@changes@@", changes);
+      })
+      .join("")
+  );
+}
+
+function fetchAllData() {
+  var cached = Object.keys(dataCache);
+  var missings = releases.filter(function (r) {
+    return cached.indexOf(r) === -1;
+  });
+  var cnt = missings.length;
+  missings.forEach(function (miss) {
+    fetchData(miss, function () {
+      cnt--;
+      if (cnt === 0) {
+        compareVersions();
+      }
+    });
+  });
+}
+
 function loadCommands() {
-  var url = version === "master" ? "./data.json" : "./data" + version + ".json";
-  $.getJSON(url, function (json) {
+  fetchData(version, function (json) {
     data = json;
     subheaderItems();
     populateListing();
@@ -199,6 +508,7 @@ function loadCommands() {
       filter = $(this).val().trim().toLowerCase();
       populateListing();
     });
+    fetchAllData();
   });
 }
 
