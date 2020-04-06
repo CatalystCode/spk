@@ -103,6 +103,7 @@ describe("test fetchValidateValues function", () => {
  -o, --org-name <organization-name>
  -d, --devops-project <devops-project>. Provide them.`);
   });
+
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
     expect(() => {
       fetchValidateValues(nullValues, gitUrl, {
