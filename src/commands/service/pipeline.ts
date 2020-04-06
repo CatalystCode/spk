@@ -6,7 +6,7 @@ import {
 import commander from "commander";
 import path from "path";
 import { Config } from "../../config";
-import { validateRepository } from "../../lib/azdoClient";
+import { validateRepository } from "../../lib/git/azure";
 import {
   build as buildCmd,
   exit as exitCmd,
