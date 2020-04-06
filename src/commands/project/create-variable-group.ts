@@ -10,10 +10,8 @@ import {
   populateInheritValueFromConfig,
   validateForRequiredValues,
 } from "../../lib/commandBuilder";
-import {
-  PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE,
-  PROJECT_PIPELINE_FILENAME,
-} from "../../lib/constants";
+import { PROJECT_PIPELINE_FILENAME } from "../../lib/constants";
+import { AzureDevOpsOpts } from "../../lib/git";
 import { addVariableGroup } from "../../lib/pipelines/variableGroup";
 import {
   hasValue,
@@ -28,6 +26,8 @@ import {
   VariableGroupDataVariable,
 } from "../../types";
 import decorator from "./create-variable-group.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 // values that we need to pull out from command operator
 export interface CommandOptions {
@@ -55,7 +55,10 @@ interface ConfigValues {
 export const checkDependencies = (projectPath: string): void => {
   const fileInfo: BedrockFileInfo = bedrockFileInfo(projectPath);
   if (fileInfo.exist === false) {
-    throw new Error(PROJECT_INIT_DEPENDENCY_ERROR_MESSAGE);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-create-variable-group-cmd-err-dependency"
+    );
   }
 };
 
@@ -126,10 +129,16 @@ export const setVariableGroupInBedrockFile = (
   variableGroupName: string
 ): void => {
   if (!hasValue(rootProjectPath)) {
-    throw new Error("Project root path is not valid");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-create-variable-group-cmd-err-root-invalid"
+    );
   }
   if (!hasValue(variableGroupName)) {
-    throw new Error("Variable Group Name is not valid");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-create-variable-group-cmd-err-variable-group-invalid"
+    );
   }
 
   const absProjectRoot = path.resolve(rootProjectPath);
@@ -139,7 +148,10 @@ export const setVariableGroupInBedrockFile = (
   const bedrockFile = Bedrock(rootProjectPath);
 
   if (!bedrockFile) {
-    throw Error(`Bedrock file does not exist.`);
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-create-variable-group-cmd-err-bedrock-file-missing"
+    );
   }
 
   logger.verbose(
@@ -165,7 +177,10 @@ export const setVariableGroupInBedrockFile = (
  */
 export const updateLifeCyclePipeline = (rootProjectPath: string): void => {
   if (!hasValue(rootProjectPath)) {
-    throw Error("Project root path is not valid");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "project-create-variable-group-cmd-err-root-invalid"
+    );
   }
 
   const fileName = PROJECT_PIPELINE_FILENAME;
@@ -178,7 +193,10 @@ export const updateLifeCyclePipeline = (rootProjectPath: string): void => {
   ) as AzurePipelinesYaml;
 
   if (!pipelineFile) {
-    throw new Error("${fileName} file does not exist in ${absProjectRoot}.");
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "project-create-variable-group-cmd-err-file-missing",
+      values: [fileName, absProjectRoot],
+    });
   }
 
   logger.verbose(`${fileName} content: \n ${JSON.stringify(pipelineFile)}`);
@@ -264,8 +282,13 @@ export const execute = async (
     );
     await exitFn(0);
   } catch (err) {
-    logger.error(`Error occurred while creating variable group`);
-    logger.error(err);
+    logError(
+      buildError(
+        errorStatusCode.CMD_EXE_ERR,
+        "project-create-variable-group-cmd-failed",
+        err
+      )
+    );
     await exitFn(1);
   }
 };
