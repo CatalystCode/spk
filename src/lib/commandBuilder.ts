@@ -49,7 +49,10 @@ export const argToVariableName = (opt: CommandOption): string => {
       })
       .replace(/-/g, "");
   }
-  throw Error(`Could locate option name ${opt.arg}`);
+  throw buildError(errorStatusCode.COMMANDER_ERR, {
+    errorKey: "commander-err-cannot-locate-opt",
+    values: [opt.arg],
+  });
 };
 
 /**
