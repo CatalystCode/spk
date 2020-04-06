@@ -3,14 +3,17 @@ import uuid from "uuid/v4";
 import { Config } from "../../config";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { getErrorMessage } from "../errorBuilder";
+import { AzureDevOpsOpts } from "../git";
 import * as gitutils from "../gitutils";
 import {
   createPullRequest,
   generatePRUrl,
   getGitOrigin,
   GitAPI,
+  repositoryHasFile,
+  validateRepository,
 } from "./azure";
-
+import * as azure from "./azure";
 jest.mock("azure-devops-node-api");
 jest.mock("../../config");
 
@@ -189,6 +192,94 @@ describe("test generatePRUrl function", async () => {
       generatePRUrl({
         repository: {},
       })
+    ).rejects.toThrow();
+  });
+});
+
+describe("validateRepository", () => {
+  test("repository exists", async () => {
+    const getRepositoryFunc = jest.spyOn(azure, "GitAPI");
+    getRepositoryFunc.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { getRepository: () => ({ id: "3839fjfkj" }) } as any
+    );
+
+    const getItemFunc = jest.spyOn(azure, "GitAPI");
+    getItemFunc.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { getItem: () => ({ commitId: "3839fjfkj" }) } as any
+    );
+
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+
+    await expect(
+      validateRepository(
+        "my-project",
+        "myFile",
+        "master",
+        "my-repo",
+        accessOpts
+      )
+    ).resolves.not.toThrow();
+  });
+  test("repository does not exist", async () => {
+    const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
+    createPullRequestFunc.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { getRepository: () => null } as any
+    );
+
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+    await expect(
+      validateRepository(
+        "my-project",
+        "myFile",
+        "master",
+        "my-repo",
+        accessOpts
+      )
+    ).rejects.toThrow();
+  });
+});
+
+describe("repositoryHasFile", () => {
+  test("repository contains the given file", async () => {
+    const createPullRequestFunc = jest.spyOn(azure, "GitAPI");
+    createPullRequestFunc.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { getItem: () => ({ commitId: "3839fjfkj" }) } as any
+    );
+
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+    await expect(
+      repositoryHasFile("testFile.txt", "master", "test-repo", accessOpts)
+    ).resolves.not.toThrow();
+  });
+  test("repository does not contain the given file", async () => {
+    jest.spyOn(azure, "GitAPI").mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { getItem: () => null } as any
+    );
+    const accessOpts: AzureDevOpsOpts = {
+      orgName: "testOrg",
+      personalAccessToken: "mytoken",
+      project: "testProject",
+    };
+
+    await expect(
+      repositoryHasFile("testFile2.txt", "master", "test-repo", accessOpts)
     ).rejects.toThrow();
   });
 });
