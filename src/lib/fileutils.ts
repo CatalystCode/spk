@@ -739,6 +739,9 @@ const hldLifecyclePipelineYaml = (): string => {
       branches: {
         include: ["master"],
       },
+      paths: {
+        include: ["bedrock.yaml"],
+      },
     },
     variables: [],
     pool: {
