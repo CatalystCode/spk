@@ -37,6 +37,7 @@ import {
 } from "./create-variable-group";
 import * as createVariableGrp from "./create-variable-group";
 import * as fileutils from "../../lib/fileutils";
+import { getErrorMessage } from "../../lib/errorBuilder";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -153,7 +154,7 @@ describe("create", () => {
       expect(true).toBeFalsy();
     } catch (e) {
       expect(e.message).toBe(
-        "project-create-variable-group-cmd-err-values-missing: Required values are missing. Provide values for registry-name|hld-repo-url|service-principal-id|service-principal-password|tenant."
+        getErrorMessage("project-create-variable-group-cmd-err-values-missing")
       );
     }
   });

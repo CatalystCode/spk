@@ -320,7 +320,8 @@ export const execute = async (
     logError(
       buildError(
         errorStatusCode.CMD_EXE_ERR,
-        "project-create-variable-group-cmd-failed"
+        "project-create-variable-group-cmd-failed",
+        err
       )
     );
     await exitFn(1);
