@@ -5,7 +5,7 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import commander from "commander";
 import { Config } from "../../config";
-import { validateRepository } from "../../lib/azdoClient";
+import { validateRepository } from "../../lib/git/azure";
 import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
@@ -22,7 +22,7 @@ import {
   getRepositoryName,
   getRepositoryUrl,
   isGitHubUrl,
-  validateRepoUrl
+  validateRepoUrl,
 } from "../../lib/gitutils";
 import {
   createPipelineForDefinition,
@@ -98,7 +98,7 @@ export const fetchValidateValues = (
     );
   }
   const azureDevops = spkConfig?.azure_devops;
-  const repoUrl = validateRepoUrl(opts,gitOriginUrl);
+  const repoUrl = validateRepoUrl(opts, gitOriginUrl);
   const values: CommandOptions = {
     buildScriptUrl: opts.buildScriptUrl || BUILD_SCRIPT_URL,
     devopsProject: opts.devopsProject || azureDevops?.project,
@@ -106,8 +106,7 @@ export const fetchValidateValues = (
     personalAccessToken: opts.personalAccessToken || azureDevops?.access_token,
     pipelineName:
       opts.pipelineName || getRepositoryName(gitOriginUrl) + "-lifecycle",
-    repoName:
-      getRepositoryName(repoUrl) || getRepositoryName(gitOriginUrl),
+    repoName: getRepositoryName(repoUrl) || getRepositoryName(gitOriginUrl),
     repoUrl: opts.repoUrl || getRepositoryUrl(gitOriginUrl),
     yamlFileBranch: opts.yamlFileBranch,
   };

@@ -1,8 +1,9 @@
 import * as config from "../../config";
-import * as azdo from "../../lib/azdoClient";
+import * as azureGit from "../../lib/git/azure";
 import { BUILD_SCRIPT_URL } from "../../lib/constants";
 import { getRepositoryName } from "../../lib/gitutils";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
+import { getErrorMessage } from "../../lib/errorBuilder";
 jest.mock("../../lib/pipelines/pipelines");
 
 import {
@@ -58,7 +59,7 @@ afterAll(() => {
   disableVerboseLogging();
 });
 
-jest.spyOn(azdo, "validateRepository").mockResolvedValue();
+jest.spyOn(azureGit, "validateRepository").mockResolvedValue();
 
 describe("test emptyStringIfUndefined function", () => {
   it("pass in undefined", () => {
@@ -81,18 +82,19 @@ const orgNameTest = (hasVal: boolean): void => {
     hldUrl: "https://dev.azure.com/mocked/fabrikam/_git/hld",
     manifestUrl: "https://dev.azure.com/mocked/fabrikam/_git/materialized",
     orgName: hasVal ? "org Name" : "",
-    personalAccessToken: "",
+    personalAccessToken: "somesecret",
     pipelineName: "",
     yamlFileBranch: "",
   };
 
   if (hasVal) {
     expect(() => populateValues(data)).toThrow(
-      "Organization names must start with a letter or number, followed by letters, numbers or hyphens, and must end with a letter or number."
+      getErrorMessage("validation-err-org-name")
     );
   } else {
     expect(() => populateValues(data)).toThrow(
-      "value for -o, --org-name <organization-name> is missing"
+      `The following arguments are required:
+ -o, --org-name <organization-name>`
     );
   }
 };
@@ -106,7 +108,7 @@ const projectNameTest = (hasVal: boolean): void => {
     hldUrl: "https://dev.azure.com/mocked/fabrikam/_git/hld",
     manifestUrl: "https://dev.azure.com/mocked/fabrikam/_git/materialized",
     orgName: "orgName",
-    personalAccessToken: "",
+    personalAccessToken: "somesecret",
     pipelineName: "",
     yamlFileBranch: "",
   };
@@ -117,7 +119,8 @@ const projectNameTest = (hasVal: boolean): void => {
     );
   } else {
     expect(() => populateValues(data)).toThrow(
-      "value for -d, --devops-project <devops-project> is missing"
+      `The following arguments are required:
+ -d, --devops-project <devops-project>`
     );
   }
 };
@@ -175,7 +178,7 @@ describe("test populateValues function", () => {
         hldUrl: "https://github.com/fabrikam/hld",
         manifestUrl: "https://github.com/fabrikam/materialized",
         orgName: "orgName",
-        personalAccessToken: "",
+        personalAccessToken: "somevalue",
         pipelineName: "",
         yamlFileBranch: "",
       })
