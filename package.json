@@ -1,6 +1,6 @@
 {
   "name": "spk",
-  "version": "0.5.8",
+  "version": "0.6.0",
   "description": "The missing Bedrock CLI",
   "author": "Bedrock Team (https://aka.ms/bedrock)",
   "contributors": [],
@@ -97,7 +97,7 @@
     "open": "^6.4.0",
     "shelljs": "^0.8.3",
     "simple-git": "^1.126.0",
-    "spektate": "^1.0.4",
+    "spektate": "^1.0.6",
     "ssh-url": "^0.1.5",
     "uuid": "^3.3.3",
     "winston": "^3.2.1"

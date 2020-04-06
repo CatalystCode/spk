@@ -9,13 +9,16 @@ import { create as createACR } from "../lib/azure/containerRegistryService";
 import { create as createResourceGroup } from "../lib/azure/resourceService";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
 import {
+  HLD_REPO,
+  MANIFEST_REPO,
   RequestContext,
   RESOURCE_GROUP,
   RESOURCE_GROUP_LOCATION,
+  STORAGE_PARTITION_KEY,
   WORKSPACE,
 } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
-import { getGitApi } from "../lib/setup/gitService";
+import { getAzureRepoUrl, getGitApi } from "../lib/setup/gitService";
 import {
   createBuildPipeline,
   createHLDtoManifestPipeline,
@@ -36,6 +39,10 @@ import {
 import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
 import decorator from "./setup.decorator.json";
+import { createStorage } from "../lib/setup/azureStorage";
+import { build as buildError, log as logError } from "../lib/errorBuilder";
+import { errorStatusCode } from "../lib/errorStatusCode";
+import { ConfigYaml } from "../types";
 
 interface CommandOptions {
   file: string | undefined;
@@ -52,30 +59,58 @@ interface APIError {
  * @param answers Answers provided to the commander
  */
 export const createSPKConfig = (rc: RequestContext): void => {
-  const data = rc.toCreateAppRepo
-    ? {
-        azure_devops: {
-          access_token: rc.accessToken,
-          org: rc.orgName,
-          project: rc.projectName,
-        },
-        introspection: {
-          azure: {
-            service_principal_id: rc.servicePrincipalId,
-            service_principal_secret: rc.servicePrincipalPassword,
-            subscription_id: rc.subscriptionId,
-            tenant_id: rc.servicePrincipalTenantId,
-          },
-        },
-      }
-    : {
-        azure_devops: {
-          access_token: rc.accessToken,
-          org: rc.orgName,
-          project: rc.projectName,
-        },
-      };
-  fs.writeFileSync(defaultConfigFile(), yaml.safeDump(data));
+  const data: ConfigYaml = {
+    azure_devops: {
+      access_token: rc.accessToken,
+      org: rc.orgName,
+      project: rc.projectName,
+      hld_repository: getAzureRepoUrl(rc.orgName, rc.projectName, HLD_REPO),
+      manifest_repository: getAzureRepoUrl(
+        rc.orgName,
+        rc.projectName,
+        MANIFEST_REPO
+      ),
+    },
+  };
+  if (!rc.toCreateAppRepo) {
+    fs.writeFileSync(defaultConfigFile(), yaml.safeDump(data));
+    return;
+  }
+
+  data.introspection = {
+    dashboard: {
+      image: "mcr.microsoft.com/k8s/bedrock/spektate:latest",
+      name: "spektate",
+    },
+    azure: {
+      service_principal_id: rc.servicePrincipalId,
+      service_principal_secret: rc.servicePrincipalPassword,
+      subscription_id: rc.subscriptionId,
+      tenant_id: rc.servicePrincipalTenantId,
+    },
+  };
+
+  if (data.introspection && data.introspection.azure) {
+    // to due to eslint error
+    const azure = data.introspection.azure;
+    if (rc.storageAccountName) {
+      azure.account_name = rc.storageAccountName;
+    }
+    if (rc.storageAccountAccessKey) {
+      azure.key = rc.storageAccountAccessKey;
+    }
+    if (rc.storageTableName) {
+      azure.table_name = rc.storageTableName;
+    }
+    azure.partition_key = STORAGE_PARTITION_KEY;
+  }
+
+  fs.writeFileSync(
+    defaultConfigFile(),
+    yaml.safeDump(data, {
+      lineWidth: 5000,
+    })
+  );
 };
 
 export const getErrorMessage = (
@@ -114,6 +149,7 @@ export const createAppRepoTasks = async (
       RESOURCE_GROUP,
       RESOURCE_GROUP_LOCATION
     );
+    await createStorage(rc);
     rc.createdACR = await createACR(
       rc.servicePrincipalId,
       rc.servicePrincipalPassword,
@@ -130,7 +166,10 @@ export const createAppRepoTasks = async (
 
     if (approved) {
       await createBuildPipeline(buildAPI, rc);
-      return true;
+
+      if (await promptForApprovingHLDPullRequest(rc)) {
+        return true;
+      }
     }
 
     logger.warn("HLD Pull Request is not approved.");
@@ -155,8 +194,7 @@ export const execute = async (
 
   try {
     requestContext = opts.file ? getAnswerFromFile(opts.file) : await prompt();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rc = requestContext!;
+    const rc = requestContext;
     createDirectory(WORKSPACE, true);
     createSPKConfig(rc);
 
@@ -171,9 +209,12 @@ export const execute = async (
     await createHLDtoManifestPipeline(buildAPI, rc);
     await createAppRepoTasks(gitAPI, buildAPI, rc);
 
+    createSPKConfig(rc); // to write storage account information.
     createSetupLog(rc);
     await exitFn(0);
   } catch (err) {
+    logError(buildError(errorStatusCode.CMD_EXE_ERR, "setup-cmd-failed", err));
+
     const msg = getErrorMessage(requestContext, err);
 
     // requestContext will not be created if input validation failed
@@ -181,8 +222,6 @@ export const execute = async (
       requestContext.error = msg;
     }
     createSetupLog(requestContext);
-
-    logger.error(msg);
     await exitFn(1);
   }
 };
