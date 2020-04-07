@@ -36,11 +36,14 @@ export const execute = async (
         "service-get-display-name-bedrock-yaml-missing-err"
       );
     }
-    for (const serviceIndex in bedrockFile.services) {
-      if (opts.path === bedrockFile.services[serviceIndex].path) {
-        console.log(bedrockFile.services[serviceIndex].displayName);
-        await exitFn(0);
-      }
+
+    const serviceIndex = Object.keys(bedrockFile.services).find(
+      (index) => opts.path === bedrockFile.services[+index].path
+    );
+
+    if (serviceIndex) {
+      console.log(bedrockFile.services[+serviceIndex].displayName);
+      await exitFn(0);
     }
 
     throw buildError(errorStatusCode.ENV_SETTING_ERR, {

@@ -26,7 +26,9 @@ describe("get display name", () => {
     jest.spyOn(fs, "existsSync").mockReturnValue(true);
     jest.spyOn(bedrockYaml, "read").mockReturnValue(defaultBedrockFileObject);
     jest.spyOn(process, "cwd").mockReturnValue("bedrock.yaml/");
+    const consoleSpy = jest.spyOn(console, "log");
     execute({ path: "./packages/service1" }, exitFn);
+    expect(consoleSpy).toHaveBeenCalledWith("service1");
     expect(exitFn).toBeCalledTimes(3);
   });
 });
