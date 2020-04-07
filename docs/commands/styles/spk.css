@@ -157,6 +157,7 @@ a:visited {
   color: rgb(0, 101, 179);
   width: 95%;
   height: 30px;
+  cursor: pointer;
 }
 
 .change-item-header {

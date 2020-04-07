@@ -15,7 +15,7 @@ var inheritTemplate =
 var relTemplate =
   '<li><a class="preserve-view button is-small has-border-none has-inner-focus has-flex-justify-content-start is-full-width has-text-wrap is-text-left">@@value@@</a></li>';
 var changeTemplate =
-  '<div class="change-container"><div class="change-header">@@version@@</div><div class="change-content">@@changes@@</div></div>';
+  '<div class="change-container"><div class="change-header" id="change_rel_@@id-version@@">@@version@@</div><div class="change-content">@@changes@@</div></div>';
 var commandAddedTemplate =
   '<div class="change-item-header">Commands Added</div><ul class="change-list">@@changes@@</ul>';
 var commandRemovedTemplate =
@@ -197,15 +197,20 @@ function populateListing() {
   }
   if (window.location.hash) {
     var hashTag = window.location.hash.substring(1); // remove #
-    var idx = hashTag.indexOf(sepVersion);
-    if (idx !== -1) {
-      hashTag = hashTag.substring(idx + 1);
-    }
-    var key = hashTag.replace(/_/g, " ");
-    if (cmdKeys.indexOf(key) !== -1) {
-      showDetails(key);
+
+    if (hashTag.startsWith("change_rel_")) {
+      showChangesView();
     } else {
-      showDetails(cmdKeys[0]);
+      var idx = hashTag.indexOf(sepVersion);
+      if (idx !== -1) {
+        hashTag = hashTag.substring(idx + 1);
+      }
+      var key = hashTag.replace(/_/g, " ");
+      if (cmdKeys.indexOf(key) !== -1) {
+        showDetails(key);
+      } else {
+        showDetails(cmdKeys[0]);
+      }
     }
   } else {
     showDetails(cmdKeys[0]);
@@ -377,6 +382,88 @@ function compareVersion(prev, cur) {
   return Object.keys(data).length > 0 ? data : undefined;
 }
 
+function getChangesHTML(oChanges) {
+  changes = "";
+  if (oChanges.added) {
+    changes = commandAddedTemplate.replace(
+      "@@changes@@",
+      oChanges.added
+        .map(function (add) {
+          return "<li>spk " + sanitize(add) + "</li>";
+        })
+        .join("")
+    );
+  }
+  if (oChanges.removed) {
+    changes += commandRemovedTemplate.replace(
+      "@@changes@@",
+      oChanges.removed
+        .map(function (rm) {
+          return "<li>spk " + sanitize(rm) + "</li>";
+        })
+        .join("")
+    );
+  }
+  if (oChanges.changed) {
+    var optionChanges = "";
+    Object.keys(oChanges.changed).forEach(function (k) {
+      optionChanges +=
+        '<div class="option-change"><div class="option-change-title">' +
+        k +
+        "</div>";
+
+      if (oChanges.changed[k].command) {
+        optionChanges += commandValueChangedTemplate.replace(
+          "@@changes@@",
+          sanitize(oChanges.changed[k].command)
+        );
+      }
+
+      if (oChanges.changed[k].options) {
+        var options = oChanges.changed[k].options;
+
+        if (options.added) {
+          optionChanges += optionAddedTemplate.replace(
+            "@@changes@@",
+            options.added
+              .map(function (add) {
+                return "<li>" + sanitize(add) + "</li>";
+              })
+              .join("")
+          );
+        }
+        if (options.removed) {
+          optionChanges += optionRemovedTemplate.replace(
+            "@@changes@@",
+            options.removed
+              .map(function (rm) {
+                return "<li>" + sanitize(rm) + "</li>";
+              })
+              .join("")
+          );
+        }
+        if (options.changed) {
+          optionChanges += optionChangedTemplate.replace(
+            "@@changes@@",
+            options.changed
+              .map(function (chg) {
+                return "<li>" + sanitize(chg) + "</li>";
+              })
+              .join("")
+          );
+        }
+      }
+      optionChanges += "</div>";
+    });
+
+    return (
+      changes +
+      '<div class="change-item-header">Commands Changed</div>' +
+      optionChanges
+    );
+  }
+}
+
 function compareVersions() {
   var versions = Object.keys(dataCache);
   versions.sort();
@@ -393,92 +480,27 @@ function compareVersions() {
     versions
       .map(function (v) {
         var oChanges = dataChanges[v];
-        var changes = "no changes";
-        if (oChanges) {
-          changes = "";
-          if (oChanges.added) {
-            changes = commandAddedTemplate.replace(
-              "@@changes@@",
-              oChanges.added
-                .map(function (add) {
-                  return "<li>spk " + sanitize(add) + "</li>";
-                })
-                .join("")
-            );
-          }
-          if (oChanges.removed) {
-            changes += commandRemovedTemplate.replace(
-              "@@changes@@",
-              oChanges.removed
-                .map(function (rm) {
-                  return "<li>spk " + sanitize(rm) + "</li>";
-                })
-                .join("")
-            );
-          }
-          if (oChanges.changed) {
-            var optionChanges = "";
-            Object.keys(oChanges.changed).forEach(function (k) {
-              optionChanges +=
-                '<div class="option-change"><div class="option-change-title">' +
-                k +
-                "</div>";
-
-              if (oChanges.changed[k].command) {
-                optionChanges += commandValueChangedTemplate.replace(
-                  "@@changes@@",
-                  sanitize(oChanges.changed[k].command)
-                );
-              }
-
-              if (oChanges.changed[k].options) {
-                var options = oChanges.changed[k].options;
-
-                if (options.added) {
-                  optionChanges += optionAddedTemplate.replace(
-                    "@@changes@@",
-                    options.added
-                      .map(function (add) {
-                        return "<li>" + sanitize(add) + "</li>";
-                      })
-                      .join("")
-                  );
-                }
-                if (options.removed) {
-                  optionChanges += optionRemovedTemplate.replace(
-                    "@@changes@@",
-                    options.removed
-                      .map(function (rm) {
-                        return "<li>" + sanitize(rm) + "</li>";
-                      })
-                      .join("")
-                  );
-                }
-                if (options.changed) {
-                  optionChanges += optionChangedTemplate.replace(
-                    "@@changes@@",
-                    options.changed
-                      .map(function (chg) {
-                        return "<li>" + sanitize(chg) + "</li>";
-                      })
-                      .join("")
-                  );
-                }
-              }
-              optionChanges += "</div>";
-            });
-
-            changes +=
-              '<div class="change-item-header">Commands Changed</div>' +
-              optionChanges;
-          }
-        }
+        var changes = oChanges ? getChangesHTML(oChanges) : "no changes";
         return changeTemplate
-          .replace("@@version@@", v)
+          .replace(/@@id-version@@/g, v.replace(/\./g, "_"))
+          .replace(/@@version@@/g, v)
           .replace("@@changes@@", changes);
       })
       .join("")
   );
+  if (window.location.hash && window.location.hash.startsWith("#change_rel_")) {
+    try {
+      var oDiv = $(window.location.hash);
+      if (oDiv && oDiv[0]) {
+        oDiv[0].scrollIntoView();
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  $(".change-header").click(function () {
+    window.location.hash = "#" + $(this).prop("id");
+  });
 }
 
 function fetchAllData() {
