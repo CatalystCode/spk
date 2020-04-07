@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
@@ -273,6 +271,26 @@ describe("Validate Git URLs", () => {
   });
 });
 
+const writeSampleMaintainersFileToDir = async (
+  maintainersFilePath: string
+): Promise<void> => {
+  await promisify(fs.writeFile)(
+    maintainersFilePath,
+    createTestMaintainersYaml(),
+    "utf8"
+  );
+};
+
+const writeSampleBedrockFileToDir = async (
+  bedrockFilePath: string
+): Promise<void> => {
+  await promisify(fs.writeFile)(
+    bedrockFilePath,
+    createTestBedrockYaml(),
+    "utf8"
+  );
+};
+
 describe("Adding a service to a repo directory", () => {
   let randomTmpDir = "";
   beforeEach(() => {
@@ -424,8 +442,10 @@ describe("Adding a service to a repo directory", () => {
     for (const service of bedrockConfig.services) {
       if (service.displayName === serviceName) {
         expect(service.middlewares).toBeDefined();
-        expect(Array.isArray(service.middlewares)).toBe(true);
-        expect(service.middlewares!.length).toBe(0);
+        if (service.middlewares) {
+          expect(Array.isArray(service.middlewares)).toBe(true);
+          expect(service.middlewares.length).toBe(0);
+        }
       }
     }
   });
@@ -464,23 +484,3 @@ describe("Adding a service to a repo directory", () => {
     }
   });
 });
-
-const writeSampleMaintainersFileToDir = async (
-  maintainersFilePath: string
-): Promise<void> => {
-  await promisify(fs.writeFile)(
-    maintainersFilePath,
-    createTestMaintainersYaml(),
-    "utf8"
-  );
-};
-
-const writeSampleBedrockFileToDir = async (
-  bedrockFilePath: string
-): Promise<void> => {
-  await promisify(fs.writeFile)(
-    bedrockFilePath,
-    createTestBedrockYaml(),
-    "utf8"
-  );
-};

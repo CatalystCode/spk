@@ -1,4 +1,4 @@
-import * as azdo from "../../lib/azdoClient";
+import * as azdoGit from "../../lib/git/azure";
 import { create as createBedrockYaml } from "../../lib/bedrockYaml";
 import { createTempDir } from "../../lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
@@ -41,7 +41,7 @@ const mockValues: ConfigValues = {
   yamlFileBranch: "master",
 };
 
-jest.spyOn(azdo, "validateRepository").mockResolvedValue();
+jest.spyOn(azdoGit, "validateRepository").mockResolvedValue();
 
 const mockMissingValues: CommandOptions = {
   buildScriptUrl: undefined,
@@ -97,8 +97,13 @@ describe("test fetchValidateValues function", () => {
       fetchValidateValues(mockMissingValues, gitUrl, {
         azure_devops: {},
       });
-    }).toThrow(`project-pipeline-err-invalid-options: Invalid option values`);
+    })
+      .toThrow(`validation-err-missing-vals: These mandatory options were missing:
+ -a, --personal-access-token <personal-access-token>
+ -o, --org-name <organization-name>
+ -d, --devops-project <devops-project>. Provide them.`);
   });
+
   it("SPK Config's azure_devops do not have value and command line does not have values", () => {
     expect(() => {
       fetchValidateValues(nullValues, gitUrl, {
