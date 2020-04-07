@@ -182,7 +182,7 @@ export const addSrcToACRPipeline = async (
  * @param env environment name
  * @param pr Pull request Id (if available)
  */
-export const updateMatchingArcToHLDPipelineEntry = async (
+export const updateMatchingACRToHLDPipelineEntry = async (
   entries: EntryACRToHLDPipeline[],
   tableInfo: DeploymentTable,
   pipelineId: string,
@@ -240,7 +240,7 @@ export const updateMatchingArcToHLDPipelineEntry = async (
  * @param env environment name
  * @param pr Pull request Id (if available)
  */
-export const updateLastRowOfArcToHLDPipelines = async (
+export const updateLastRowOfACRToHLDPipelines = async (
   entries: EntryACRToHLDPipeline[],
   tableInfo: DeploymentTable,
   pipelineId: string,
@@ -288,7 +288,7 @@ export const updateLastRowOfArcToHLDPipelines = async (
  * @param env environment name
  * @param pr Pull request Id (if available)
  */
-export const addNewRowToArcToHLDPipelines = async (
+export const addNewRowToACRToHLDPipelines = async (
   tableInfo: DeploymentTable,
   pipelineId: string,
   imageTag: string,
@@ -345,9 +345,9 @@ export const updateACRToHLDPipeline = async (
       imageTag
     );
 
-    // 1. try to find the matching entry.
     if (entries && entries.length > 0) {
-      const found = await updateMatchingArcToHLDPipelineEntry(
+      // If there is a corresponding src -> acr pipeline, update it
+      const found = await updateMatchingACRToHLDPipelineEntry(
         entries,
         tableInfo,
         pipelineId,
@@ -362,9 +362,9 @@ export const updateACRToHLDPipeline = async (
         return found;
       }
 
-      // 2. when cannot find the entry, we take the last row and INSERT it.
-      // TODO: rethink this logic.
-      return await updateLastRowOfArcToHLDPipelines(
+      // If there's no src -> acr but a matching image tag and/or multiple p1 pipelines for this,
+      // copy one of them and amend info to create a new instance of deployment
+      return await updateLastRowOfACRToHLDPipelines(
         entries,
         tableInfo,
         pipelineId,
@@ -376,10 +376,8 @@ export const updateACRToHLDPipeline = async (
       );
     }
 
-    // Fallback: Ideally we should not be getting here, because there should
-    // always be a p1 for any p2 being created.
-    // TODO: rethink this logic.
-    return await addNewRowToArcToHLDPipelines(
+    // If a corresponding src -> acr is not found, insert a new entry
+    return await addNewRowToACRToHLDPipelines(
       tableInfo,
       pipelineId,
       imageTag,
@@ -639,6 +637,7 @@ export const updateHLDtoManifestHelper = async (
   repository?: string
 ): Promise<RowHLDToManifestPipeline> => {
   if (entries && entries.length > 0) {
+    // If a src -> acr and acr -> hld pipeline is found for this run, update it
     const updated = await updateHLDtoManifestEntry(
       entries,
       tableInfo,
@@ -653,8 +652,8 @@ export const updateHLDtoManifestHelper = async (
       return updated;
     }
 
-    // 2. when cannot find the entry, we take the last row and INSERT it.
-    // TODO: rethink this logic.
+    // If there are multiple acr -> hld pipelines or some information is missing,
+    // copy one of them and amend info to create a new instance of deployment
     return await updateLastHLDtoManifestEntry(
       entries,
       tableInfo,
@@ -666,9 +665,8 @@ export const updateHLDtoManifestHelper = async (
     );
   }
 
-  // Fallback: Ideally we should not be getting here, because there should
-  // always matching entry
-  // TODO: rethink this logic.
+  // When no matching entry exists in storage for this hld -> manifest pipeline, it must be
+  // a manual change merged into HLD. Add new entry to storage.
   return await addNewRowToHLDtoManifestPipeline(
     tableInfo,
     hldCommitId,
