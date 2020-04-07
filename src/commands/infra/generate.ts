@@ -498,22 +498,13 @@ export const singleDefinitionGeneration = async (
  *
  * @param tfFile path to the terraform file in child directory
  */
-export const checkModuleSource = (tfFile: string): boolean => {
-  const reg = new RegExp(/\b(source)/g);
-  const tfData = fsExtra.readFileSync(tfFile, "utf8")
-
-  tfData.split(/\r?\n/).forEach(function(line){
-    if ((reg.exec(line)) != null){
-      const splitLine = line.split(" ");
-      const moduleSource = splitLine[4].replace(/['"]+/g, '');
-      // Check to see if source value is a local source path
-      if (moduleSource.startsWith(`./`) || moduleSource.startsWith(`../`)){
-          logger.info(`Relative Path detected returning true`)
-          return true
-      }
-    }
-  });
-  return false
+export const checkModuleSource = (tfData: string): boolean => {
+  const matches = tfData.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm);
+  if (matches != null) {
+    logger.info(`Local module source values detected: ${matches}`);
+    return true;
+  }
+  return false;
 };
 
 /**
@@ -523,42 +514,27 @@ export const checkModuleSource = (tfFile: string): boolean => {
  */
 export const moduleSourceModify = (
   fileSource: SourceInformation,
-  tfFile: string
-  ): void => {
-  // const reg = new RegExp(/\b(source)/g);
-  // const tfData = fsExtra.readFileSync(tfFile, "utf8")
-  // var result;
-  // try{
-  //   tfData.split(/\r?\n/).forEach(function(line){
-  //     if ((result = reg.exec(line)) != null){
-  //       var splitLine = line.split(" ");
-  //       let moduleSource = new RegExp(splitLine[4].replace(/['"]+/g, ''), "g");
-  //       // Modify the file 
-  //       var switcher= line.replace(moduleSource,'test')
-  //       logger.info(`Here is the line: ${line}`);
-  //       logger.info(`Here is the switcher: ${switcher}`);
-  //       logger.info(`Here is the fileSource:source: ${fileSource.source}`);
-  //       fsExtra.writeFileSync(tfFile, switcher,'utf8')
-  //     }
-  //   });
-  // } catch(err){
-  //     throw err;
-  // }
+  tfData: string
+): string => {
   const reg = new RegExp(/\b(source)/g);
-  const tfData = fsExtra.readFileSync(tfFile, "utf8")
-  let result;
-  tfData.split(/\r?\n/).forEach(function(line){
-    if ((reg.exec(line)) != null){
+
+  let result = "";
+  tfData.split(/\r?\n/).forEach(function (line) {
+    if (reg.exec(line) != null) {
       const splitLine = line.split(" ");
-      const moduleSource = new RegExp(splitLine[4].replace(/['"]+/g, ''), "g");
-      // Modify the file 
-      const switcher= line.replace(moduleSource,'test')
+      const moduleSource = new RegExp(splitLine[4].replace(/['"]+/g, ""), "g");
+      // Modify the file
+      const switcher = line.replace(moduleSource, "test");
       logger.info(`Here is the line: ${line}`);
       logger.info(`Here is the switcher: ${switcher}`);
       logger.info(`Here is the fileSource:source: ${fileSource.source}`);
-      fsExtra.writeFileSync(tfFile, switcher,'utf8')
+      //fsExtra.writeFileSync(tfFile, switcher,'utf8')
     }
+    result += line + "\n";
   });
+  logger.info(`The INPUT: ${tfData}`);
+  logger.info(`The RESULTS: ${result}`);
+  return result;
 };
 
 /**
@@ -635,24 +611,29 @@ export const generateConfig = async (
       templatePath
     );
   }
-    // TODO: Function to check for relative paths: 
-    const files = await fsExtra.readdirSync(childDirectory, 'utf-8')
-    // Check to test outsource: terraform registry,
-    // Iterate through 'TF' files / Parse of tf files? (Code Coverage?)
-    for (const file of files){
-      if(path.extname(file) === ".tf"){
-        const containsLocalSource = await checkModuleSource(path.join(childDirectory, file))
-        if (containsLocalSource){
-            logger.warn(`This is the containing file: ${file}`)
-            await moduleSourceModify(sourceConfig, path.join(childDirectory, file))
-        }
+  // TODO: Function to check for relative paths:
+  // CheckLocal: check source value, is value = ./ or ../ (Local syntax)
+  // ModifyLocal: munge url from YAML, apply url to relative source path
+  // Throw exception if failed
+  const files = await fsExtra.readdirSync(childDirectory, "utf-8");
+  // Check to test outsource: terraform registry,
+  // Iterate through 'TF' files / Parse of tf files? (Code Coverage?)
+  for (const file of files) {
+    if (path.extname(file) === ".tf") {
+      const tfData = fsExtra.readFileSync(
+        path.join(childDirectory, file),
+        "utf8"
+      );
+      const containsLocalSource = await checkModuleSource(tfData);
+      if (containsLocalSource) {
+        logger.warn(
+          `Local relative paths for module source values detected in terraform file: ${file}`
+        );
+        const mungeData = await moduleSourceModify(sourceConfig, tfData);
       }
-      logger.warn(`This is the file: ${file}`)
     }
-    // CheckLocal: check source value, is value = ./ or ../ (Local syntax)
-    // ModifyLocal: munge url from YAML, apply url to relative source path
-    // Throw exception if failed
-
+    logger.warn(`This is the file: ${file}`);
+  }
 };
 
 export const execute = async (
