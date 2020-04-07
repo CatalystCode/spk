@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import commander from "commander";
 import fs from "fs";
 import path from "path";
@@ -21,6 +20,8 @@ import {
 import { logger } from "../../logger";
 import { VariableGroupData } from "../../types";
 import decorator from "./create.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 interface CommandOptions {
   file: string | undefined;
@@ -31,16 +32,20 @@ interface CommandOptions {
 
 export const validateValues = (opts: CommandOptions): void => {
   if (!opts.file) {
-    throw Error("You need to specify a file with variable group manifest");
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "variable-group-create-cmd-err-file-missing"
+    );
   }
   const config = Config();
   const azure = config.azure_devops;
 
   if (!hasValue(opts.orgName) && !azure?.org) {
-    throw Error(
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "variable-group-create-cmd-err-org-missing",
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      `value for ${getCmdOption(decorator, "org-name")!.arg} is missing`
-    );
+      values: [getCmdOption(decorator, "org-name")!.arg],
+    });
   }
 
   if (hasValue(opts.orgName)) {
@@ -49,10 +54,11 @@ export const validateValues = (opts: CommandOptions): void => {
   }
 
   if (!hasValue(opts.devopsProject) && !azure?.project) {
-    throw Error(
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "variable-group-create-cmd-err-project-missing",
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      `value for ${getCmdOption(decorator, "devops-project")!.arg} is missing`
-    );
+      values: [getCmdOption(decorator, "devops-project")!.arg],
+    });
   }
 
   if (hasValue(opts.devopsProject)) {
@@ -61,12 +67,43 @@ export const validateValues = (opts: CommandOptions): void => {
   }
 
   if (!hasValue(opts.personalAccessToken) && !azure?.access_token) {
-    throw Error(
-      `value for ${
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        getCmdOption(decorator, "personal-access-token")!.arg
-      } is missing`
-    );
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "variable-group-create-cmd-err-access-token",
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      values: [getCmdOption(decorator, "personal-access-token")!.arg],
+    });
+  }
+};
+
+/**
+ * Loads variable group manifest from a given filename
+ *
+ * @param filepath file to read manifest
+ * @param accessOpts Azure DevOps access options from command options to override spk config
+ */
+export const create = async (
+  filepath: string,
+  accessOpts: AzureDevOpsOpts
+): Promise<void> => {
+  logger.info(
+    `Creating Variable Group from group definition '${path.resolve(filepath)}'`
+  );
+
+  fs.statSync(filepath);
+  const data = readYaml<VariableGroupData>(filepath);
+  logger.debug(`Variable Group Yaml data: ${JSON.stringify(data)}`);
+
+  // validate variable group type
+  if (data.type === "AzureKeyVault") {
+    await addVariableGroupWithKeyVaultMap(data, accessOpts);
+  } else if (data.type === "Vsts") {
+    await addVariableGroup(data, accessOpts);
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    throw buildError(errorStatusCode.EXE_FLOW_ERR, {
+      errorKey: "variable-group-create-cmd-err-create",
+      values: [data.type],
+    });
   }
 };
 
@@ -95,39 +132,14 @@ export const commandDecorator = (command: commander.Command): void => {
       );
       await exitCmd(logger, process.exit, 0);
     } catch (err) {
-      logger.error(`Error occurred while creating variable group`);
-      logger.error(err);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      logError(
+        buildError(
+          errorStatusCode.CMD_EXE_ERR,
+          "variable-group-create-cmd-failed"
+        )
+      );
       await exitCmd(logger, process.exit, 1);
     }
   });
-};
-
-/**
- * Loads variable group manifest from a given filename
- *
- * @param filepath file to read manifest
- * @param accessOpts Azure DevOps access options from command options to override spk config
- */
-export const create = async (
-  filepath: string,
-  accessOpts: AzureDevOpsOpts
-): Promise<void> => {
-  logger.info(
-    `Creating Variable Group from group definition '${path.resolve(filepath)}'`
-  );
-
-  fs.statSync(filepath);
-  const data = readYaml<VariableGroupData>(filepath);
-  logger.debug(`Variable Group Yaml data: ${JSON.stringify(data)}`);
-
-  // validate variable group type
-  if (data.type === "AzureKeyVault") {
-    await addVariableGroupWithKeyVaultMap(data, accessOpts);
-  } else if (data.type === "Vsts") {
-    await addVariableGroup(data, accessOpts);
-  } else {
-    throw new Error(
-      `Variable Group type "${data.type}" is not supported. Only "Vsts" and "AzureKeyVault" are valid types and case sensitive.`
-    );
-  }
 };

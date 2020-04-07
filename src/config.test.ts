@@ -10,12 +10,13 @@ import {
   loadConfiguration,
   saveConfiguration,
   updateVariableWithLocalEnv,
-  write,
 } from "./config";
 import { createTempDir } from "./lib/ioUtil";
 import { disableVerboseLogging, enableVerboseLogging } from "./logger";
 import { BedrockFile } from "./types";
+import { getErrorMessage } from "./lib/errorBuilder";
 import { getVersionMessage } from "./lib/fileutils";
+import * as bedrockYaml from "./lib/bedrockYaml";
 
 beforeAll(() => {
   enableVerboseLogging();
@@ -40,15 +41,16 @@ describe("Test updateVariableWithLocalEnv function", () => {
     ).toBe("world - world : world1");
   });
   it("negative test", () => {
-    try {
+    expect(() => {
       updateVariableWithLocalEnv(
         "${env:hello2} - ${env:hello} : ${env:hello1}"
       );
-    } catch (e) {
-      expect(e.message).toBe(
-        "Environment variable needs to be defined for hello2 since it's referenced in the config file."
-      );
-    }
+    }).toThrow(
+      getErrorMessage({
+        errorKey: "spk-config-yaml-var-undefined",
+        values: ["hello2"],
+      })
+    );
   });
 });
 
@@ -59,8 +61,9 @@ describe("Bedrock", () => {
     shell.mkdir("-p", randomTmpDir);
     const validBedrockYaml: BedrockFile = {
       rings: {},
-      services: {
-        "foo/a": {
+      services: [
+        {
+          path: "foo/a",
           helm: {
             chart: {
               chart: "elastic",
@@ -72,7 +75,8 @@ describe("Bedrock", () => {
           pathPrefix: "servicepath",
           pathPrefixMajorVersion: "v1",
         },
-        "foo/b": {
+        {
+          path: "foo/b",
           helm: {
             chart: {
               git: "foo",
@@ -85,10 +89,11 @@ describe("Bedrock", () => {
           pathPrefix: "servicepath",
           pathPrefixMajorVersion: "v1",
         },
-      },
+      ],
       version: "1.0",
     };
-    write(validBedrockYaml, randomTmpDir);
+
+    bedrockYaml.create(randomTmpDir, validBedrockYaml);
     const expectedFilePath = path.join(randomTmpDir, "bedrock.yaml");
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
@@ -127,7 +132,7 @@ describe("Bedrock", () => {
       version: "1.0",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
-    write(validBedrockYaml, randomTmpDir);
+    bedrockYaml.create(randomTmpDir, validBedrockYaml);
     const expectedFilePath = path.join(randomTmpDir, "bedrock.yaml");
     expect(writeSpy).toBeCalledWith(
       expectedFilePath,
@@ -180,13 +185,9 @@ describe("Initializing a project a config file but no env vars", () => {
 describe("Initializing a project with a non-existent file", () => {
   test("Non-existent file test", () => {
     const filename = path.resolve("./spk-config-test.yaml");
-    try {
+    expect(() => {
       loadConfiguration(filename);
-      // Make sure execution does not get here:
-      expect(true).toBeFalsy();
-    } catch (e) {
-      expect(e.code).toBe("ENOENT");
-    }
+    }).toThrow(getErrorMessage("spk-config-yaml-load-err"));
   });
 });
 

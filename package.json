@@ -1,6 +1,6 @@
 {
   "name": "spk",
-  "version": "0.5.8",
+  "version": "0.6.0",
   "description": "The missing Bedrock CLI",
   "author": "Bedrock Team (https://aka.ms/bedrock)",
   "contributors": [],
@@ -13,7 +13,7 @@
     "md-lint": "find guides -name \\*.md | xargs -n 1 markdown-link-check",
     "format": "prettier --write 'src/**/*.ts{,x}'",
     "test": "jest --rootDir src --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",
-    "test-watch": "jest --watchAll",
+    "test-watch": "jest --rootDir src --watchAll",
     "postinstall": "cd node_modules/azure-devops-node-api && git apply ../../patches/001-azure-devops-node.patch || true",
     "test-coverage-html": "jest --coverage --coverageReporters=html"
   },

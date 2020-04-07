@@ -1,8 +1,10 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
+import { readYaml, write } from "../config";
 import {
   ACCESS_FILENAME,
+  BEDROCK_FILENAME,
   HELM_VERSION,
   HLD_COMPONENT_FILENAME,
   PROJECT_PIPELINE_FILENAME,
@@ -10,8 +12,9 @@ import {
   SERVICE_PIPELINE_FILENAME,
   VERSION_MESSAGE,
   VM_IMAGE,
-  BEDROCK_FILENAME,
 } from "../lib/constants";
+import { build as buildError } from "../lib/errorBuilder";
+import { errorStatusCode } from "../lib/errorStatusCode";
 import { logger } from "../logger";
 import {
   AccessYaml,
@@ -20,9 +23,6 @@ import {
   MaintainersFile,
   User,
 } from "../types";
-import { readYaml, write } from "../config";
-import { build as buildError } from "../lib/errorBuilder";
-import { errorStatusCode } from "../lib/errorStatusCode";
 
 /**
  * Read given pipeline file as json object.
@@ -453,9 +453,10 @@ export const updateTriggerBranchesForServiceBuildAndUpdatePipeline = (
 
   // Check if build-update-hld-pipeline.yaml already exists; if it doesn't, throw error.
   if (!fs.existsSync(pipelineYamlFullPath)) {
-    throw new Error(
-      `Cannot find ${SERVICE_PIPELINE_FILENAME} for service in path '${pipelineYamlFullPath}'. Will not be able to update ring triggers.`
-    );
+    throw buildError(errorStatusCode.FILE_IO_ERR, {
+      errorKey: "fileutils-update-ring-trigger-svc-file-not-found",
+      values: [SERVICE_PIPELINE_FILENAME, pipelineYamlFullPath],
+    });
   }
 
   logger.info(
@@ -495,11 +496,23 @@ export const appendVariableGroupToPipelineYaml = (
       path.join(dir, fileName)
     ) as AzurePipelinesYaml;
     pipelineFile.variables = pipelineFile.variables || [];
+    let variableGroupExists = false;
 
-    pipelineFile.variables.push({ group: variableGroupName });
+    pipelineFile.variables.forEach((variable) => {
+      if ("group" in variable && variable.group === variableGroupName) {
+        variableGroupExists = true;
+        logger.info(
+          `Variable group '${variableGroupName}' already exits in '${dir}/${fileName}'.`
+        );
+      }
+    });
 
-    logger.info(`Updating '${dir}/${fileName}'.`);
-    write(pipelineFile, dir, fileName);
+    if (!variableGroupExists) {
+      pipelineFile.variables.push({ group: variableGroupName });
+
+      logger.info(`Updating '${dir}/${fileName}'.`);
+      write(pipelineFile, dir, fileName);
+    }
   } catch (err) {
     throw buildError(
       errorStatusCode.FILE_IO_ERR,
@@ -737,6 +750,9 @@ const hldLifecyclePipelineYaml = (): string => {
     trigger: {
       branches: {
         include: ["master"],
+      },
+      paths: {
+        include: ["bedrock.yaml"],
       },
     },
     variables: [],

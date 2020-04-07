@@ -2,7 +2,10 @@ import commander from "commander";
 import fs from "fs";
 import { Logger, transports } from "winston";
 import { logger } from "../logger";
+import { ConfigYaml } from "../types";
 import { hasValue } from "./validator";
+import { build as buildError } from "./errorBuilder";
+import { errorStatusCode } from "./errorStatusCode";
 
 /**
  * Command Option
@@ -10,6 +13,7 @@ import { hasValue } from "./validator";
 export interface CommandOption {
   arg: string;
   description: string;
+  inherit?: string;
   required?: boolean;
   defaultValue?: string | boolean;
 }
@@ -29,6 +33,27 @@ interface CommandVariableName2Opt {
   opt: CommandOption;
   variableName: string;
 }
+
+/**
+ * Returns variable name associated with an option name.
+ * e.g. servicePrincipalId for --service-principal-id
+ *
+ * @param opt Command option
+ */
+export const argToVariableName = (opt: CommandOption): string => {
+  const match = opt.arg.match(/\s?--([-\w]+)\s?/);
+  if (match) {
+    return match[1]
+      .replace(/\.?(-[a-z])/g, (_, y) => {
+        return y.toUpperCase();
+      })
+      .replace(/-/g, "");
+  }
+  throw buildError(errorStatusCode.COMMANDER_ERR, {
+    errorKey: "commander-err-cannot-locate-opt",
+    values: [opt.arg],
+  });
+};
 
 /**
  * Builds a command
@@ -63,11 +88,13 @@ export const build = (
  *
  * @param decorator Descriptor for command building
  * @param values Values to be inspected.
+ * @param toThrow Throw exception if there are validation error.
  * @return error messages.
  */
 export const validateForRequiredValues = (
   decorator: CommandBuildElements,
-  values: { [key: string]: string | undefined }
+  opts: unknown,
+  toThrow = false
 ): string[] => {
   // gather the required options
   const required = (decorator.options || []).filter((opt) => opt.required);
@@ -77,23 +104,16 @@ export const validateForRequiredValues = (
     return [];
   }
 
+  const values = opts as CommandValues;
+
   // opt name to variable name mapping
   // example --org-name is orgName
   const mapVariableName2Opt: CommandVariableName2Opt[] = [];
   required.forEach((opt) => {
-    const match = opt.arg.match(/\s?--([-\w]+)\s?/);
-
-    if (match) {
-      const variableName = match[1]
-        .replace(/\.?(-[a-z])/g, (_, y) => {
-          return y.toUpperCase();
-        })
-        .replace(/-/g, "");
-      mapVariableName2Opt.push({
-        opt,
-        variableName,
-      });
-    }
+    mapVariableName2Opt.push({
+      opt,
+      variableName: argToVariableName(opt),
+    });
   });
 
   // figure out which variables have missing values
@@ -104,8 +124,17 @@ export const validateForRequiredValues = (
   // gather the option flags (args) for the missing one
   const errors = missingItems.map((item) => item.opt.arg);
 
+  if (toThrow && errors.length !== 0) {
+    throw buildError(errorStatusCode.VALIDATION_ERR, {
+      errorKey: "validation-err-missing-vals",
+      values: [errors.join("\n ")],
+    });
+  }
+
   if (errors.length !== 0) {
-    logger.error(`the following arguments are required: ${errors.join("\n ")}`);
+    logger.error(
+      `the following arguments are required:\n ${errors.join("\n ")}`
+    );
   }
   return errors;
 };
@@ -157,6 +186,14 @@ export const exit = (
   });
 };
 
+/**
+ * Returns the command option that match an variable name.
+ * e.g. servicePrincipalId, the option that has name
+ * --service-principal-id shall be returned
+ *
+ * @param decorator command decorator
+ * @param name variable name
+ */
 export const getOption = (
   decorator: CommandBuildElements,
   name: string
@@ -165,4 +202,57 @@ export const getOption = (
     const match = opt.arg.match(/\s?--([-\w]+)\s?/);
     return match && match[1] === name;
   });
+};
+
+interface ConfigValues {
+  [key: string]: string | ConfigValues | undefined;
+}
+
+interface CommandValues {
+  [key: string]: string | undefined;
+}
+
+/**
+ * Populates (inherit) values from config.yaml of user does
+ * not provide values to inheritable options.
+ *
+ * @param decorator command decorator
+ * @param config config YAML
+ * @param opts option values provided by user.
+ */
+export const populateInheritValueFromConfig = (
+  decorator: CommandBuildElements,
+  config: ConfigYaml,
+  opts: unknown
+): void => {
+  if (config && decorator.options) {
+    const mapOpts = opts as CommandValues;
+    decorator.options
+      .filter((o) => !!o.inherit)
+      .forEach((option) => {
+        const name = argToVariableName(option);
+
+        // skip if the option already has value provided.
+        // that's do not need to inherit from config.yaml
+        if (!hasValue(mapOpts[name])) {
+          let cfg: ConfigValues | string | undefined = config as ConfigValues;
+
+          // .filter((o) => !!o.inherit) already check that option.inherit is
+          // defined
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const arr = option.inherit!.split(".");
+
+          // search for value in config.yaml
+          while (cfg && typeof config === "object" && arr.length > 0) {
+            const k = arr.shift();
+            if (k) {
+              cfg = (cfg as ConfigValues)[k];
+            }
+          }
+          if (typeof cfg === "string") {
+            mapOpts[name] = cfg;
+          }
+        }
+      });
+  }
 };

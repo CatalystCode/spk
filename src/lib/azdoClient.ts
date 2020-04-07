@@ -6,7 +6,8 @@ import { RestClient } from "typed-rest-client";
 import { Config } from "../config";
 import { logger } from "../logger";
 import { AzureDevOpsOpts } from "./git";
-import { GitAPI } from "./git/azure";
+import { build as buildError } from "./errorBuilder";
+import { errorStatusCode } from "./errorStatusCode";
 
 // Module state Variables
 let connection: WebApi | undefined;
@@ -42,15 +43,17 @@ export const getWebApi = async (
   } = opts;
 
   // PAT and devops URL are required
-  if (typeof personalAccessToken === "undefined") {
-    throw Error(
-      `Unable to parse Azure DevOps Personal Access Token (azure_devops.access_token) from spk config`
+  if (!personalAccessToken) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "azure-client-get-web-api-err-missing-access-token"
     );
   }
 
-  if (typeof orgName === "undefined") {
-    throw Error(
-      `Unable to parse Azure DevOps Organization name (azure_devops.org) from spk config`
+  if (!orgName) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "azure-client-get-web-api-err-missing-org"
     );
   }
 
@@ -62,7 +65,6 @@ export const getWebApi = async (
 
   const authHandler = getPersonalAccessTokenHandler(personalAccessToken);
   connection = new WebApi(orgUrl, authHandler);
-
   return connection;
 };
 
@@ -78,13 +80,21 @@ export const invalidateWebApi = (): void => {
 export const getRestClient = async (
   opts: AzureDevOpsOpts = {}
 ): Promise<RestClient> => {
-  if (typeof restApi !== "undefined") {
+  if (restApi) {
     return restApi;
   }
 
-  const webApi = await getWebApi(opts);
-  restApi = webApi.rest;
-  return restApi;
+  try {
+    const webApi = await getWebApi(opts);
+    restApi = webApi.rest;
+    return restApi;
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "azure-client-get-rest-client-err",
+      err
+    );
+  }
 };
 
 /**
@@ -95,13 +105,21 @@ export const getRestClient = async (
 export const getBuildApi = async (
   opts: AzureDevOpsOpts = {}
 ): Promise<IBuildApi> => {
-  if (typeof buildApi !== "undefined") {
+  if (buildApi) {
     return buildApi;
   }
 
-  const webApi = await getWebApi(opts);
-  buildApi = await webApi.getBuildApi();
-  return buildApi;
+  try {
+    const webApi = await getWebApi(opts);
+    buildApi = await webApi.getBuildApi();
+    return buildApi;
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "azure-client-get-build-client-err",
+      err
+    );
+  }
 };
 
 /**
@@ -113,74 +131,19 @@ export const getBuildApi = async (
 export const getTaskAgentApi = async (
   opts: AzureDevOpsOpts = {}
 ): Promise<ITaskAgentApi> => {
-  if (typeof taskAgentApi !== "undefined") {
+  if (taskAgentApi) {
     return taskAgentApi;
   }
 
-  const webApi = await getWebApi(opts);
-  taskAgentApi = await webApi.getTaskAgentApi();
-  return taskAgentApi;
-};
-
-/**
- * Checks if the repository has a given file.
- * @param fileName The name of the file
- * @param branch The branch name
- * @param repoName The name of the repository
- * @accessOpts The Azure DevOps access options to the repository
- */
-export const repositoryHasFile = async (
-  fileName: string,
-  branch: string,
-  repoName: string,
-  accessOpts: AzureDevOpsOpts
-): Promise<void> => {
-  const gitApi = await GitAPI(accessOpts);
-  const versionDescriptor = { version: branch }; // change to branch
-  const gitItem = await gitApi.getItem(
-    repoName,
-    fileName, // Add path to service
-    accessOpts.project,
-    "",
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    versionDescriptor
-  );
-
-  if (gitItem === null) {
-    throw Error(
-      "Error installing build pipeline. Repository does not have a " +
-        fileName +
-        " file."
+  try {
+    const webApi = await getWebApi(opts);
+    taskAgentApi = await webApi.getTaskAgentApi();
+    return taskAgentApi;
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "azure-client-get-task-agent-client-err",
+      err
     );
   }
-};
-
-/**
- * Validates if a repository exists and if it contains the given file
- * @param project  The Azure DevOps project name
- * @param fileName The name of the file
- * @param branch The branch name
- * @param repoName The name of the repository
- * @param accessOpts The Azure DevOps access options to the repository
- */
-export const validateRepository = async (
-  project: string,
-  fileName: string,
-  branch: string,
-  repoName: string,
-  accessOpts: AzureDevOpsOpts
-): Promise<void> => {
-  const gitApi = await GitAPI(accessOpts);
-  const repo = await gitApi.getRepository(repoName, project);
-
-  if (!repo) {
-    throw Error(
-      `Project '${project}' does not contain repository '${repoName}'.`
-    );
-  }
-
-  await repositoryHasFile(fileName, branch, repoName, accessOpts);
 };

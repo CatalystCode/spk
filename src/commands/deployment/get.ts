@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import Table from "cli-table";
 import commander from "commander";
 import {
@@ -21,12 +20,14 @@ import {
 import { ITag } from "spektate/lib/repository/Tag";
 import { Config } from "../../config";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 import { isIntegerString } from "../../lib/validator";
 import { logger } from "../../logger";
 import decorator from "./get.decorator.json";
 import { IPullRequest } from "spektate/lib/repository/IPullRequest";
 
-const promises: Promise<IPullRequest | undefined>[] = [];
+const promises: Promise<void>[] = [];
 const pullRequests: { [id: string]: IPullRequest } = {};
 /**
  * Output formats to display service details
@@ -79,6 +80,20 @@ export interface ValidatedOptions extends CommandOptions {
 }
 
 /**
+ * Processes the output format based on defaults
+ * @param outputFormat Output format specified by the user
+ */
+export const processOutputFormat = (outputFormat: string): OUTPUT_FORMAT => {
+  if (outputFormat && outputFormat.toLowerCase() === "wide") {
+    return OUTPUT_FORMAT.WIDE;
+  }
+  if (outputFormat && outputFormat.toLowerCase() === "json") {
+    return OUTPUT_FORMAT.JSON;
+  }
+  return OUTPUT_FORMAT.NORMAL;
+};
+
+/**
  * Validating the options values from commander.
  *
  * @param opts options values from commander
@@ -91,7 +106,10 @@ export const validateValues = (opts: CommandOptions): ValidatedOptions => {
     if (isIntegerString(opts.top)) {
       top = parseInt(opts.top, 10);
     } else {
-      throw new Error("value for top option has to be a positive number");
+      throw buildError(errorStatusCode.VALIDATION_ERR, {
+        errorKey: "introspect-get-cmd-err-validation-top-num",
+        values: [opts.top],
+      });
     }
   }
 
@@ -108,191 +126,6 @@ export const validateValues = (opts: CommandOptions): ValidatedOptions => {
     top: opts.top,
     watch: opts.watch,
   };
-};
-
-/**
- * Executes the command, can all exit function with 0 or 1
- * when command completed successfully or failed respectively.
- *
- * @param opts validated option values
- * @param exitFn exit function
- */
-export const execute = async (
-  opts: CommandOptions,
-  exitFn: (status: number) => Promise<void>
-): Promise<void> => {
-  try {
-    const values = validateValues(opts);
-    const initObjects = await initialize();
-    if (opts.watch) {
-      await watchGetDeployments(initObjects, values);
-    } else {
-      await getDeployments(initObjects, values);
-      await exitFn(0);
-    }
-  } catch (err) {
-    logger.error(`Error occurred while getting deployment(s)`);
-    logger.error(err);
-    await exitFn(1);
-  }
-};
-
-/**
- * Adds the get command to the commander command object
- * @param command Commander command object to decorate
- */
-export const commandDecorator = (command: commander.Command): void => {
-  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
-    await execute(opts, async (status: number) => {
-      await exitCmd(logger, process.exit, status);
-    });
-  });
-};
-
-/**
- * Processes the output format based on defaults
- * @param outputFormat Output format specified by the user
- */
-export const processOutputFormat = (outputFormat: string): OUTPUT_FORMAT => {
-  if (outputFormat && outputFormat.toLowerCase() === "wide") {
-    return OUTPUT_FORMAT.WIDE;
-  }
-  if (outputFormat && outputFormat.toLowerCase() === "json") {
-    return OUTPUT_FORMAT.JSON;
-  }
-  return OUTPUT_FORMAT.NORMAL;
-};
-
-/**
- * Gets a list of deployments for the specified filters
- * @param initObj captures keys and objects during the initialization process
- * @param values validated command line values
- */
-export const getDeployments = (
-  initObj: InitObject,
-  values: ValidatedOptions
-): Promise<IDeployment[]> => {
-  const syncStatusesPromise = getClusterSyncStatuses(initObj);
-  const deploymentsPromise = getDeploymentsBasedOnFilters(
-    initObj.accountName,
-    initObj.key,
-    initObj.tableName,
-    initObj.partitionKey,
-    initObj.srcPipeline,
-    initObj.hldPipeline,
-    initObj.clusterPipeline,
-    values.env,
-    values.imageTag,
-    values.buildId,
-    values.commitId,
-    values.service,
-    values.deploymentId
-  );
-  return new Promise((resolve, reject) => {
-    Promise.all([deploymentsPromise, syncStatusesPromise])
-      .then(async (tuple: [IDeployment[] | undefined, ITag[] | undefined]) => {
-        const deployments: IDeployment[] | undefined = tuple[0];
-        const syncStatuses: ITag[] | undefined = tuple[1];
-        const displayedDeployments = await displayDeployments(
-          values,
-          deployments,
-          syncStatuses,
-          initObj
-        );
-        resolve(displayedDeployments);
-      })
-      .catch((e) => {
-        reject(new Error(e));
-      });
-  });
-};
-
-/**
- * Displays the deployments based on output format requested and top n
- * @param values validated command line values
- * @param deployments list of deployments to display
- * @param syncStatuses cluster sync statuses,
- * @param initObj initialization object
- */
-export const displayDeployments = (
-  values: ValidatedOptions,
-  deployments: IDeployment[] | undefined,
-  syncStatuses: ITag[] | undefined,
-  initObj: InitObject
-): Promise<IDeployment[]> => {
-  return new Promise((resolve, reject) => {
-    if (values.outputFormat === OUTPUT_FORMAT.WIDE) {
-      getPRs(deployments, initObj);
-    }
-    if (values.outputFormat === OUTPUT_FORMAT.JSON) {
-      console.log(JSON.stringify(deployments, null, 2));
-      resolve(deployments);
-    } else {
-      Promise.all(promises)
-        .then(() => {
-          printDeployments(
-            deployments,
-            values.outputFormat,
-            values.nTop,
-            syncStatuses
-          );
-          resolve(deployments);
-        })
-        .catch((e) => {
-          reject(e);
-        });
-    }
-  });
-};
-
-/**
- * Gets cluster sync statuses
- * @param initObj captures keys and objects during the initialization process
- */
-export const getClusterSyncStatuses = (
-  initObj: InitObject
-): Promise<ITag[] | undefined> => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (initObj.manifestRepo && initObj.manifestRepo.includes("azure.com")) {
-        const manifestUrlSplit = initObj.manifestRepo.split("/");
-        const manifestRepo: IAzureDevOpsRepo = {
-          org: manifestUrlSplit[3],
-          project: manifestUrlSplit[4],
-          repo: manifestUrlSplit[6],
-        };
-        getAzureManifestSyncState(manifestRepo, initObj.accessToken)
-          .then((syncCommits: ITag[]) => {
-            resolve(syncCommits);
-          })
-          .catch((e) => {
-            reject(e);
-          });
-      } else if (
-        initObj.manifestRepo &&
-        initObj.manifestRepo.includes("github.com")
-      ) {
-        const manifestUrlSplit = initObj.manifestRepo.split("/");
-        const manifestRepo: IGitHub = {
-          reponame: manifestUrlSplit[4],
-          username: manifestUrlSplit[3],
-        };
-
-        getGithubManifestSyncState(manifestRepo, initObj.accessToken)
-          .then((syncCommits: ITag[]) => {
-            resolve(syncCommits);
-          })
-          .catch((e) => {
-            reject(e);
-          });
-      } else {
-        resolve();
-      }
-    } catch (err) {
-      logger.error(err);
-      reject(err);
-    }
-  });
 };
 
 /**
@@ -313,8 +146,9 @@ export const initialize = async (): Promise<InitObject> => {
     !config.introspection.azure.partition_key ||
     !config.introspection.azure.key
   ) {
-    throw Error(
-      "You need to run `spk init` and `spk deployment onboard` to configure `spk."
+    throw buildError(
+      errorStatusCode.VALIDATION_ERR,
+      "introspect-get-cmd-missing-vals"
     );
   }
 
@@ -347,23 +181,115 @@ export const initialize = async (): Promise<InitObject> => {
 };
 
 /**
- * Returns a list of deployments for the specified filters every 5 seconds
- *
- * @param initObject Initialization Object
- * @param values Validated values from commander
+ * Gets cluster sync statuses
+ * @param initObj captures keys and objects during the initialization process
  */
-export const watchGetDeployments = async (
-  initObjects: InitObject,
-  values: ValidatedOptions
+export const getClusterSyncStatuses = async (
+  initObj: InitObject
+): Promise<ITag[] | undefined> => {
+  try {
+    if (initObj.manifestRepo && initObj.manifestRepo.includes("azure.com")) {
+      const manifestUrlSplit = initObj.manifestRepo.split("/");
+      const manifestRepo: IAzureDevOpsRepo = {
+        org: manifestUrlSplit[3],
+        project: manifestUrlSplit[4],
+        repo: manifestUrlSplit[6],
+      };
+      return await getAzureManifestSyncState(manifestRepo, initObj.accessToken);
+    } else if (
+      initObj.manifestRepo &&
+      initObj.manifestRepo.includes("github.com")
+    ) {
+      const manifestUrlSplit = initObj.manifestRepo.split("/");
+      const manifestRepo: IGitHub = {
+        reponame: manifestUrlSplit[4],
+        username: manifestUrlSplit[3],
+      };
+
+      return await getGithubManifestSyncState(
+        manifestRepo,
+        initObj.accessToken
+      );
+    } else {
+      return undefined;
+    }
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.GIT_OPS_ERR,
+      "introspect-get-cmd-cluster-sync-stat-err",
+      err
+    );
+  }
+};
+
+/**
+ * Fetches pull request data for deployments that complete merge into HLD
+ * by merging a PR
+ *
+ * @param deployment deployment for which PR has to be fetched
+ * @param initObj initialization object
+ */
+export const fetchPRInformation = async (
+  deployment: IDeployment,
+  initObj: InitObject
 ): Promise<void> => {
-  const timeInterval = 5000;
+  if (deployment.hldRepo && deployment.pr) {
+    const repo = getRepositoryFromURL(deployment.hldRepo);
+    const strPr = deployment.pr.toString();
 
-  // Call get deployments once, and then set the timer.
-  await getDeployments(initObjects, values);
+    if (repo) {
+      try {
+        const pr = await fetchPR(repo, strPr, initObj.accessToken);
+        if (pr) {
+          pullRequests[strPr] = pr;
+        }
+      } catch (err) {
+        logger.warn(`Could not get PR ${strPr} information: ` + err);
+      }
+    }
+  }
+};
 
-  setInterval(async () => {
-    await getDeployments(initObjects, values);
-  }, timeInterval);
+/**
+ * Gets PR information for all the deployments.
+ *
+ * @param deployments all deployments to be displayed
+ * @param initObj initialization object
+ */
+export const getPRs = (
+  deployments: IDeployment[] | undefined,
+  initObj: InitObject
+): void => {
+  (deployments || []).forEach((d) => {
+    promises.push(fetchPRInformation(d, initObj));
+  });
+};
+
+/**
+ * Returns a status indicator icon
+ *
+ * @param status Status
+ * @return a status indicator icon
+ */
+export const getStatus = (status: string): string => {
+  if (status === "succeeded") {
+    return "\u2713";
+  } else if (!status) {
+    return "...";
+  }
+  return "\u0445";
+};
+
+/**
+ * Returns a matching sync status for a deployment
+ * @param deployment Deployment object
+ * @param syncStatuses list of sync statuses for manifest
+ */
+export const getClusterSyncStatusForDeployment = (
+  deployment: IDeployment,
+  syncStatuses: ITag[]
+): ITag | undefined => {
+  return syncStatuses.find((tag) => tag.commit === deployment.manifestCommitId);
 };
 
 /**
@@ -544,68 +470,132 @@ export const printDeployments = (
 };
 
 /**
- * Gets PR information for all the deployments.
- *
- * @param deployments all deployments to be displayed
+ * Displays the deployments based on output format requested and top n
+ * @param values validated command line values
+ * @param deployments list of deployments to display
+ * @param syncStatuses cluster sync statuses,
  * @param initObj initialization object
  */
-export const getPRs = (
+export const displayDeployments = async (
+  values: ValidatedOptions,
   deployments: IDeployment[] | undefined,
+  syncStatuses: ITag[] | undefined,
   initObj: InitObject
-): void => {
-  (deployments || []).forEach((d) => fetchPRInformation(d, initObj));
+): Promise<IDeployment[]> => {
+  if (values.outputFormat === OUTPUT_FORMAT.WIDE) {
+    getPRs(deployments, initObj);
+  }
+
+  if (values.outputFormat === OUTPUT_FORMAT.JSON) {
+    console.log(JSON.stringify(deployments, null, 2));
+    return deployments || [];
+  }
+
+  await Promise.all(promises);
+  printDeployments(deployments, values.outputFormat, values.nTop, syncStatuses);
+  return deployments || [];
 };
 
 /**
- * Fetches pull request data for deployments that complete merge into HLD
- * by merging a PR
- *
- * @param deployment deployment for which PR has to be fetched
- * @param initObj initialization object
+ * Gets a list of deployments for the specified filters
+ * @param initObj captures keys and objects during the initialization process
+ * @param values validated command line values
  */
-export const fetchPRInformation = (
-  deployment: IDeployment,
-  initObj: InitObject
-): void => {
-  if (deployment.hldRepo && deployment.pr) {
-    const repo = getRepositoryFromURL(deployment.hldRepo);
-    const strPr = deployment.pr.toString();
+export const getDeployments = async (
+  initObj: InitObject,
+  values: ValidatedOptions
+): Promise<IDeployment[]> => {
+  try {
+    const syncStatusesPromise = getClusterSyncStatuses(initObj);
+    const deploymentsPromise = getDeploymentsBasedOnFilters(
+      initObj.accountName,
+      initObj.key,
+      initObj.tableName,
+      initObj.partitionKey,
+      initObj.srcPipeline,
+      initObj.hldPipeline,
+      initObj.clusterPipeline,
+      values.env,
+      values.imageTag,
+      values.buildId,
+      values.commitId,
+      values.service,
+      values.deploymentId
+    );
 
-    if (repo) {
-      const promise = fetchPR(repo, strPr, initObj.accessToken);
-      promise.then((pr) => {
-        if (pr) {
-          pullRequests[strPr] = pr;
-        }
-      });
-      promises.push(promise);
+    const tuple: [
+      IDeployment[] | undefined,
+      ITag[] | undefined
+    ] = await Promise.all([deploymentsPromise, syncStatusesPromise]);
+    const deployments: IDeployment[] | undefined = tuple[0];
+    const syncStatuses: ITag[] | undefined = tuple[1];
+
+    return await displayDeployments(values, deployments, syncStatuses, initObj);
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.EXE_FLOW_ERR,
+      "introspect-get-cmd-get-deployments-err",
+      err
+    );
+  }
+};
+
+/**
+ * Returns a list of deployments for the specified filters every 5 seconds
+ *
+ * @param initObject Initialization Object
+ * @param values Validated values from commander
+ */
+export const watchGetDeployments = async (
+  initObjects: InitObject,
+  values: ValidatedOptions
+): Promise<void> => {
+  const timeInterval = 5000;
+
+  // Call get deployments once, and then set the timer.
+  await getDeployments(initObjects, values);
+
+  setInterval(async () => {
+    await getDeployments(initObjects, values);
+  }, timeInterval);
+};
+
+/**
+ * Executes the command, can all exit function with 0 or 1
+ * when command completed successfully or failed respectively.
+ *
+ * @param opts validated option values
+ * @param exitFn exit function
+ */
+export const execute = async (
+  opts: CommandOptions,
+  exitFn: (status: number) => Promise<void>
+): Promise<void> => {
+  try {
+    const values = validateValues(opts);
+    const initObjects = await initialize();
+    if (opts.watch) {
+      await watchGetDeployments(initObjects, values);
+    } else {
+      await getDeployments(initObjects, values);
+      await exitFn(0);
     }
+  } catch (err) {
+    logError(
+      buildError(errorStatusCode.CMD_EXE_ERR, "introspect-get-cmd-failed", err)
+    );
+    await exitFn(1);
   }
 };
 
 /**
- * Returns a matching sync status for a deployment
- * @param deployment Deployment object
- * @param syncStatuses list of sync statuses for manifest
+ * Adds the get command to the commander command object
+ * @param command Commander command object to decorate
  */
-export const getClusterSyncStatusForDeployment = (
-  deployment: IDeployment,
-  syncStatuses: ITag[]
-): ITag | undefined => {
-  return syncStatuses.find((tag) => tag.commit === deployment.manifestCommitId);
-};
-
-/**
- * Returns a status indicator icon
- *
- * @param status Status
- * @return a status indicator icon
- */
-export const getStatus = (status: string): string => {
-  if (status === "succeeded") {
-    return "\u2713";
-  } else if (!status) {
-    return "...";
-  }
-  return "\u0445";
+export const commandDecorator = (command: commander.Command): void => {
+  buildCmd(command, decorator).action(async (opts: CommandOptions) => {
+    await execute(opts, async (status: number) => {
+      await exitCmd(logger, process.exit, status);
+    });
+  });
 };

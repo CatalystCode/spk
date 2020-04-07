@@ -224,14 +224,14 @@ cd "$TEST_WORKSPACE/$mono_repo_dir"
 
 # helm_repo_url="$AZDO_ORG_URL/$AZDO_PROJECT/_git/$helm_charts_dir"
 local_repo_url="$AZDO_ORG_URL/$AZDO_PROJECT/_git/$mono_repo_dir"
-spk service create $FrontEnd -d $services_dir -p "chart" -g $local_repo_url -b master >> $TEST_WORKSPACE/log.txt
-# spk service create $FrontEnd -d $services_dir -p "$FrontEnd/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
+spk service create $FrontEnd $FrontEnd -d $services_dir -p "chart" -g $local_repo_url -b master >> $TEST_WORKSPACE/log.txt
+# spk service create $FrontEnd $FrontEnd -d $services_dir -p "$FrontEnd/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
 file_we_expect=(".gitignore" "build-update-hld.yaml" "Dockerfile" )
 validate_directory $directory_to_check "${file_we_expect[@]}"
 
 # TODO uncomment this when helm chart fixed
-# spk service create $BackEnd -d $services_dir -p "$BackEnd/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
+# spk service create $BackEnd $BackEnd -d $services_dir -p "$BackEnd/chart" -g $helm_repo_url -b master >> $TEST_WORKSPACE/log.txt
 # validate_directory "$services_full_dir/$BackEnd" "${file_we_expect[@]}"
 
 git add -A
@@ -356,92 +356,91 @@ validate_file "$TEST_WORKSPACE/$manifests_dir/prod/$mono_repo_dir/$FrontEndCompl
 # Get the current pipeline/build id at this stage. This will be used by the introspection integration test.
 pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organization $AZDO_ORG_URL --project $AZDO_PROJECT | jq '.[0].id')
 
-# ##################################
-# # App Mono Repo create ring
-# ##################################
-# echo "Create ring in mono repo"
-# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 2
-# echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
-# approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+##################################
+# App Mono Repo create ring
+##################################
+echo "Create ring in mono repo"
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 400 15 1
 
-# # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-# echo "Wait for fabrikam-hld-to-fabrikam-manifests pipeline"
-# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 500 15 4
-# ring_name=qa-ring
+# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+echo "Wait for fabrikam-hld-to-fabrikam-manifests pipeline"
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 500 15 3
+ring_name=qa-ring
 
-# cd $TEST_WORKSPACE
-# cd $mono_repo_dir
+cd $TEST_WORKSPACE
+cd $mono_repo_dir
 
-# echo "Create ring"
-# git checkout master
-# git pull origin master
-# spk ring create $ring_name
-# git add -A
-# git commit -m "Adding test ring"
-# git push -u origin --all
+echo "Create ring"
+git checkout master
+git pull origin master
+spk ring create $ring_name
+git add -A
+git commit -m "Adding test ring"
+git push -u origin --all
 
-# # Wait for the lifecycle pipeline to finish and approve the pull request
-# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 3
-# echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
-# approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
+# Wait for the lifecycle pipeline to finish and approve the pull request
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 2
+echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
+approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
 
-# # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 5
+# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 4
 
-# # Verify the file was added in the manifest repository
-# cd $TEST_WORKSPACE
-# cd $manifests_dir
+# Verify the file was added in the manifest repository
+cd $TEST_WORKSPACE
+cd $manifests_dir
 
-# git pull origin master
+git pull origin master
 
-# ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/$ring_name"
-# if [ ! -d "$ring_dir" ]; then
-#   echo "Directory '$ring_dir' does not exist"
-#   exit 1
-# fi
+ring_dir="prod/$mono_repo_dir/fabrikam-acme-frontend/$ring_name"
+if [ ! -d "$ring_dir" ]; then
+  echo "Directory '$ring_dir' does not exist"
+  exit 1
+fi
 
-# echo "Validating ingress routes"
+echo "Validating ingress routes"
 
-# validate_file "$ring_dir/static.yaml" "'PathPrefix(\`/fabrikam-acme-frontend\`) && Headers(\`Ring\`, \`qa-ring\`)'"
+validate_file "$ring_dir/static.yaml" "'PathPrefix(\`/fabrikam-acme-frontend\`) && Headers(\`Ring\`, \`qa-ring\`)'"
 
-# echo "Successfully created a ring."
+echo "Successfully created a ring."
 
-# ##################################
-# # App Mono Repo update ring
-# ##################################
-# echo "Update ring."
-# cd $TEST_WORKSPACE
-# cd $mono_repo_dir
-# git branch $ring_name
-# git checkout $ring_name
-# cd services/$FrontEnd
-# echo "Ring doc" >> ringDoc.md
-# git add ringDoc.md
-# git commit -m "Adding ring doc file"
-# git push --set-upstream origin $ring_name
+##################################
+# App Mono Repo update ring
+##################################
+echo "Update ring."
+cd $TEST_WORKSPACE
+cd $mono_repo_dir
+git branch $ring_name
+git checkout $ring_name
+cd services/$FrontEnd
+echo "Ring doc" >> ringDoc.md
+git add ringDoc.md
+git commit -m "Adding ring doc file"
+git push --set-upstream origin $ring_name
 
-# # Verify frontend service pipeline run was successful
-# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15 3
-# #complete merge
-# echo "Finding pull request that $frontend_pipeline_name pipeline created..."
-# approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Updating fabrikam.acme.frontend image tag to qa-ring"
+# Verify frontend service pipeline run was successful
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15 3
+#complete merge
+echo "Finding pull request that $frontend_pipeline_name pipeline created..."
+approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Updating fabrikam.acme.frontend image tag to qa-ring"
 
-# # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-# echo "Wait for hld to fabrikam manifests"
-# verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 6
+# Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
+echo "Wait for hld to fabrikam manifests"
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 5
 
-# echo "Validating ring image tag in manifest repo"
-# cd $TEST_WORKSPACE/$hld_dir
-# git pull
-# cd $mono_repo_dir/$FrontEndCompliant/$ring_name/config
-# image_repository=$(grep -A3 'image:' common.yaml | tail -n3 | awk '{print $2}' | head -n1 )
-# image_tag=$(grep -A3 'image:' common.yaml | tail -n2 | awk '{print $2}' | head -n 1)
-# cd $TEST_WORKSPACE/$manifests_dir
-# git pull
-# validate_commit $image_tag
-# validate_file "$TEST_WORKSPACE/$manifests_dir/prod/$mono_repo_dir/$FrontEndCompliant/$ring_name/chart.yaml" "image: $image_repository:$image_tag"
+echo "Validating ring image tag in manifest repo"
+cd $TEST_WORKSPACE/$hld_dir
+git pull
+cd $mono_repo_dir/$FrontEndCompliant/$ring_name/config
+image_repository=$(grep -A3 'image:' common.yaml | tail -n3 | awk '{print $2}' | head -n1 )
+image_tag=$(grep -A3 'image:' common.yaml | tail -n2 | awk '{print $2}' | head -n 1)
+echo "Image Repo and Tag: $image_repository:$image_tag"
+cd $TEST_WORKSPACE/$manifests_dir
+git pull
+validate_commit $image_tag
+validate_file "$TEST_WORKSPACE/$manifests_dir/prod/$mono_repo_dir/$FrontEndCompliant/$ring_name/chart.yaml" "image: $image_repository:$image_tag"
 
-# echo "Successfully updated a ring."
+echo "Successfully updated a ring."
 # --------------------------------
 
 echo "Successfully reached the end of the service validations scripts."
@@ -450,11 +449,9 @@ echo "Successfully reached the end of the service validations scripts."
 # SPK Introspection Validation START
 ##################################
 
-pipeline1id=$(az pipelines build list --definition-ids $pipeline_id --organization $AZDO_ORG_URL --project $AZDO_PROJECT | jq '.[0].id')
-
 # Verify hld to manifest pipeline run was successful, to verify the full end-end capture of
 # introspection data
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 3
+verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 5
 
 cd $TEST_WORKSPACE
 cd ..

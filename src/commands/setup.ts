@@ -1,4 +1,5 @@
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
+import { ICoreApi } from "azure-devops-node-api/CoreApi";
 import { IGitApi } from "azure-devops-node-api/GitApi";
 import commander from "commander";
 import fs from "fs";
@@ -40,6 +41,8 @@ import { create as createSetupLog } from "../lib/setup/setupLog";
 import { logger } from "../logger";
 import decorator from "./setup.decorator.json";
 import { createStorage } from "../lib/setup/azureStorage";
+import { build as buildError, log as logError } from "../lib/errorBuilder";
+import { errorStatusCode } from "../lib/errorStatusCode";
 import { ConfigYaml } from "../types";
 
 interface CommandOptions {
@@ -49,6 +52,12 @@ interface CommandOptions {
 interface APIError {
   message: string;
   statusCode: number;
+}
+
+interface APIClients {
+  coreAPI: ICoreApi;
+  gitAPI: IGitApi;
+  buildAPI: IBuildApi;
 }
 
 /**
@@ -177,6 +186,49 @@ export const createAppRepoTasks = async (
   }
 };
 
+export const getAPIClients = async (): Promise<APIClients> => {
+  const webAPI = await getWebApi();
+  let coreAPI: ICoreApi;
+  let gitAPI: IGitApi;
+  let buildAPI: IBuildApi;
+
+  try {
+    coreAPI = await webAPI.getCoreApi();
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "setup-cmd-core-api-err",
+      err
+    );
+  }
+
+  try {
+    gitAPI = await getGitApi(webAPI);
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "setup-cmd-git-api-err",
+      err
+    );
+  }
+
+  try {
+    buildAPI = await getBuildApi();
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_CLIENT,
+      "setup-cmd-build-api-err",
+      err
+    );
+  }
+
+  return {
+    coreAPI,
+    gitAPI,
+    buildAPI,
+  };
+};
+
 /**
  * Executes the command, can all exit function with 0 or 1
  * when command completed successfully or failed respectively.
@@ -196,10 +248,7 @@ export const execute = async (
     createDirectory(WORKSPACE, true);
     createSPKConfig(rc);
 
-    const webAPI = await getWebApi();
-    const coreAPI = await webAPI.getCoreApi();
-    const gitAPI = await getGitApi(webAPI);
-    const buildAPI = await getBuildApi();
+    const { coreAPI, gitAPI, buildAPI } = await getAPIClients();
 
     await createProjectIfNotExist(coreAPI, rc);
     await hldRepo(gitAPI, rc);
@@ -211,6 +260,8 @@ export const execute = async (
     createSetupLog(rc);
     await exitFn(0);
   } catch (err) {
+    logError(buildError(errorStatusCode.CMD_EXE_ERR, "setup-cmd-failed", err));
+
     const msg = getErrorMessage(requestContext, err);
 
     // requestContext will not be created if input validation failed
@@ -218,8 +269,6 @@ export const execute = async (
       requestContext.error = msg;
     }
     createSetupLog(requestContext);
-
-    logger.error(msg);
     await exitFn(1);
   }
 };
