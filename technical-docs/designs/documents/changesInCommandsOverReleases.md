@@ -3,9 +3,10 @@
 Reference: Operational Document for command changes over releases<br> Authors:
 Andre Briggs, Dennis Seah
 
-| Revision | Date         | Author      | Remarks       |
-| -------: | ------------ | ----------- | ------------- |
-|      0.1 | Apr-05, 2020 | Dennis Seah | Initial Draft |
+| Revision | Date         | Author      | Remarks                            |
+| -------: | ------------ | ----------- | ---------------------------------- |
+|      0.1 | Apr-05, 2020 | Dennis Seah | Initial Draft                      |
+|      1.0 | Apr-07, 2020 | Dennis Seah | Bump revision up 1.0 after review. |
 
 ## 1. Overview
 
