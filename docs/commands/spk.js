@@ -20,6 +20,8 @@ var commandAddedTemplate =
   '<div class="change-item-header">Commands Added</div><ul class="change-list">@@changes@@</ul>';
 var commandRemovedTemplate =
   '<div class="change-item-header">Commands Removed</div><ul class="change-list">@@changes@@</ul>';
+var commandValueChangedTemplate =
+  '<div class="change-option-header">Command Values Changed</div><ul class="change-list">@@changes@@</ul>';
 var optionAddedTemplate =
   '<div class="change-option-header">Options Added</div><ul class="change-list">@@changes@@</ul>';
 var optionRemovedTemplate =
@@ -52,7 +54,7 @@ function showCommandView() {
 }
 
 function sanitize(str) {
-  return str.replace("<", "&lt;").replace(">", "&gt;");
+  return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function getExistingVersions() {
@@ -238,7 +240,7 @@ function fetchData(version, fn) {
   }
 }
 
-function compareVersionNew(prev, cur) {
+function compareVersionDiff(prev, cur) {
   var prevKeys = Object.keys(prev);
   var results = Object.keys(cur).filter(function (k) {
     return prevKeys.indexOf(k) === -1;
@@ -246,15 +248,7 @@ function compareVersionNew(prev, cur) {
   return results.length > 0 ? results : undefined;
 }
 
-function compareVersionRemoved(prev, cur) {
-  var curKeys = Object.keys(cur);
-  var results = Object.keys(prev).filter(function (k) {
-    return curKeys.indexOf(k) === -1;
-  });
-  return results.length > 0 ? results : undefined;
-}
-
-function compareArgsNew(prev, cur) {
+function compareArgsDiff(prev, cur) {
   var prevKeys = prev.map(function (opt) {
     return opt.arg;
   });
@@ -262,19 +256,6 @@ function compareArgsNew(prev, cur) {
   return cur
     .filter(function (opt) {
       return prevKeys.indexOf(opt.arg) === -1;
-    })
-    .map(function (opt) {
-      return opt.arg;
-    });
-}
-
-function compareArgsRemoved(prev, cur) {
-  var curKeys = cur.map(function (opt) {
-    return opt.arg;
-  });
-  return prev
-    .filter(function (opt) {
-      return curKeys.indexOf(opt.arg) === -1;
     })
     .map(function (opt) {
       return opt.arg;
@@ -289,7 +270,7 @@ function compareArgsChanged(prev, cur) {
   var aliasChanged = [];
   var aliasesRm = {};
 
-  var removed = compareArgsRemoved(optionsPrev, optionsCur);
+  var removed = compareArgsDiff(optionsCur, optionsPrev);
   if (removed.length > 0) {
     removed.forEach(function (r) {
       var m = r.match(/^-([a-zA-Z]),\s/);
@@ -301,7 +282,9 @@ function compareArgsChanged(prev, cur) {
     });
   }
 
-  var added = (compareArgsNew(optionsPrev, optionsCur) || []).filter(function (
+  // to figure out the change in options by comparing
+  // old vs new
+  var added = (compareArgsDiff(optionsPrev, optionsCur) || []).filter(function (
     add
   ) {
     var m = add.match(/^-([a-zA-Z]),\s/);
@@ -344,19 +327,27 @@ function compareVersionChanged(prev, cur) {
   commonKeys.forEach(function (k) {
     var newCmd = cur[k];
     var prevCmd = prev[k];
+    var modified = {};
+
+    if (newCmd.command !== prevCmd.command) {
+      modified["command"] = prevCmd.command + " to " + newCmd.command;
+    }
 
     if (newCmd.alias !== prevCmd.alias) {
-      changes["alias"] = {
+      modified["alias"] = {
         prev: prevCmd.alias,
         newCmd: newCmd.alias,
       };
     }
 
     var optChanges = compareArgsChanged(prevCmd, newCmd);
+
     if (optChanges) {
-      changes[k] = {
-        options: optChanges,
-      };
+      modified.options = optChanges;
+    }
+
+    if (Object.keys(modified).length > 0) {
+      changes[k] = modified;
     }
   });
 
@@ -368,12 +359,12 @@ function compareVersion(prev, cur) {
   var curData = dataCache[cur];
   var data = {};
 
-  var added = compareVersionNew(prevData, curData);
+  var added = compareVersionDiff(prevData, curData);
   if (added) {
     data.added = added;
   }
 
-  var removed = compareVersionRemoved(prevData, curData);
+  var removed = compareVersionDiff(curData, prevData);
   if (removed) {
     data.removed = removed;
   }
@@ -410,7 +401,7 @@ function compareVersions() {
               "@@changes@@",
               oChanges.added
                 .map(function (add) {
-                  return "<li>spk " + add + "</li>";
+                  return "<li>spk " + sanitize(add) + "</li>";
                 })
                 .join("")
             );
@@ -420,7 +411,7 @@ function compareVersions() {
               "@@changes@@",
               oChanges.removed
                 .map(function (rm) {
-                  return "<li>spk " + rm + "</li>";
+                  return "<li>spk " + sanitize(rm) + "</li>";
                 })
                 .join("")
             );
@@ -432,6 +423,14 @@ function compareVersions() {
                 '<div class="option-change"><div class="option-change-title">' +
                 k +
                 "</div>";
+
+              if (oChanges.changed[k].command) {
+                optionChanges += commandValueChangedTemplate.replace(
+                  "@@changes@@",
+                  sanitize(oChanges.changed[k].command)
+                );
+              }
+
               if (oChanges.changed[k].options) {
                 var options = oChanges.changed[k].options;
 
@@ -440,7 +439,7 @@ function compareVersions() {
                     "@@changes@@",
                     options.added
                       .map(function (add) {
-                        return "<li>" + add + "</li>";
+                        return "<li>" + sanitize(add) + "</li>";
                       })
                       .join("")
                   );
@@ -450,7 +449,7 @@ function compareVersions() {
                     "@@changes@@",
                     options.removed
                       .map(function (rm) {
-                        return "<li>" + rm + "</li>";
+                        return "<li>" + sanitize(rm) + "</li>";
                       })
                       .join("")
                   );
@@ -460,7 +459,7 @@ function compareVersions() {
                     "@@changes@@",
                     options.changed
                       .map(function (chg) {
-                        return "<li>" + chg + "</li>";
+                        return "<li>" + sanitize(chg) + "</li>";
                       })
                       .join("")
                   );
