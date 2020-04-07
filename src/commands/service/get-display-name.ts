@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/camelcase */
-import commander, { CommandOptions } from "commander";
+import commander from "commander";
 import * as fs from "fs";
 import { read as readBedrockYaml } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
 import decorator from "./get-display-name.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
+
+export interface CommandOptions {
+  path: string | undefined;
+}
 
 /**
  * Executes the command, can all exit function with 0 or 1
@@ -18,31 +24,33 @@ export const execute = async (
   opts: CommandOptions,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
-  let currentDirectory = process.cwd() + "/bedrock.yaml";
+  // The assumption is that this command should be ran from the directory where bedrock.yaml exists
   try {
-    // First, find a bedrock.yaml file in this directory and if not, iterate by
-    // one directory up.
-    while (!fs.existsSync(currentDirectory)) {
-      const split = currentDirectory.split("/");
-      if (split.length < 2) {
-        break;
-      }
-      currentDirectory = currentDirectory.replace(
-        split[split.length - 2] + "/",
-        ""
+    if (!opts.path) {
+      throw buildError(
+        errorStatusCode.EXE_FLOW_ERR,
+        "service-get-display-name-path-missing-param-err"
       );
     }
-    currentDirectory = currentDirectory.replace("/bedrock.yaml", "");
-    const bedrockFile = readBedrockYaml(currentDirectory);
-    const servicePath = process.cwd().replace(currentDirectory, ".");
+    const bedrockFile = readBedrockYaml(process.cwd());
+    if (!bedrockFile) {
+      throw buildError(
+        errorStatusCode.CMD_EXE_ERR,
+        "service-get-display-name-bedrock-yaml-missing-err"
+      );
+    }
+    logger.info(JSON.stringify(bedrockFile, null, 4));
     for (const serviceIndex in bedrockFile.services) {
-      if (servicePath === bedrockFile.services[serviceIndex].path) {
+      if (opts.path === bedrockFile.services[serviceIndex].path) {
         console.log(bedrockFile.services[serviceIndex].displayName);
         await exitFn(0);
       }
     }
-    // Ideally, we should not be getting here, so throw an error.
-    throw new Error("Display name for current directory could not be found.");
+
+    throw buildError(errorStatusCode.CMD_EXE_ERR, {
+      errorKey: "service-get-display-name-err",
+      values: [opts.path],
+    });
   } catch (err) {
     logger.error(err);
     await exitFn(1);

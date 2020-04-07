@@ -20,15 +20,17 @@ afterAll(() => {
 describe("get display name", () => {
   it("positive test", async () => {
     const exitFn = jest.fn();
-    execute({}, exitFn);
+    execute({ path: "test" }, exitFn);
     expect(exitFn).toBeCalledTimes(1);
+    execute({ path: undefined }, exitFn);
+    expect(exitFn).toBeCalledTimes(2);
     const defaultBedrockFileObject = createTestBedrockYaml(
       false
     ) as BedrockFile;
     jest.spyOn(fs, "existsSync").mockReturnValue(true);
     jest.spyOn(bedrockYaml, "read").mockReturnValue(defaultBedrockFileObject);
     jest.spyOn(process, "cwd").mockReturnValue("bedrock.yaml/");
-    execute({}, exitFn);
-    expect(exitFn).toBeCalledTimes(2);
+    execute({ path: "./packages/service1" }, exitFn);
+    expect(exitFn).toBeCalledTimes(3);
   });
 });
