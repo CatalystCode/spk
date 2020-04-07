@@ -59,15 +59,21 @@ populated by a targeted template test.
 
 Bedrock infrastructure integration tests have problematic gaps that do not
 account for terraform unit testing, state validation to live environments and
-staged release management for Bedrock versioning. In this design we wish to
-provide a single template leveraging MSI that verifies a new Infrastructure
-Testing Workflow that improves on the current Bedrock test harness.
+staged release management for Bedrock versioning. Bedrock test harness does not
+contain module targeted fail fast resource definition validation outside the
+scope of an environment `terraform plan`. In addition, integration tests are
+validated through new deployments that require extensive time to provision.
+Furthermore, releases of features contain no issue reporting benchmark,
+automated deployment validation, or guidance process for merging into master. In
+this design we wish to provide a single template leveraging MSI that verifies a
+new Infrastructure Testing Workflow that improves on the current Bedrock test
+harness.
 
 This design is intended to address expected core testing functionality
 including:
 
 - Support deployment of application-hosting infrastructure that will eventually
-  house the actual application service components Capture basic metrics and
+  house the actual application service components capture basic metrics and
   telemetry from the deployment process for monitoring of ongoing pipeline
   performance and diagnosis of any deployment failures
 - Support deployment into multiple staging environments
@@ -99,8 +105,8 @@ separated by 4 key steps:
 ### 3.2 Creation of Managed Identity enable AKS Gitops Environments
 
 A new AKS Bedrock template with Managed Identity enabled, (`azure-MI`), will be
-added the collection of environment templates. This template will be an upgraded
-derivative of the `azure-simple` template, with a new dependency on
+added to the collection of environment templates. This template will be an
+upgraded derivative of the `azure-simple` template, with a new dependency on
 `azure-common-infra` and will contain the following:
 
 - Managed Identity System Level for AKS
@@ -177,10 +183,12 @@ Pending a successful `terraform apply`, using a go script and terratest go
 library, this design will create an integration test for the respective
 environment template that verifies
 
+- Access to cluster through MI
 - Flux namespace
-- Access to cluster using Pod Identity
+- Access to voting app using Pod Identity
 - Access to key using flex-volume
-- 400 response on Voting App
+  ([Unable to use Env Vars](https://github.com/Azure/kubernetes-keyvault-flexvol/issues/28))
+- 200 response on Voting App
 
 #### Acceptance Test
 
