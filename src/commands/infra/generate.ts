@@ -517,18 +517,18 @@ export const moduleSourceModify = (
   tfData: string
 ): string => {
   const reg = new RegExp(/\b(source)/g);
-
   let result = "";
   tfData.split(/\r?\n/).forEach(function (line) {
-    if (reg.exec(line) != null) {
-      const splitLine = line.split(" ");
-      const moduleSource = new RegExp(splitLine[4].replace(/['"]+/g, ""), "g");
+    if (line.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm) != null) {
+      const splitLine = line.split(/\s+/);
+      const moduleSource = new RegExp(splitLine[3].replace(/['"]+/g, ""), "g");
       // Modify the file
       const switcher = line.replace(moduleSource, "test");
       logger.info(`Here is the line: ${line}`);
       logger.info(`Here is the switcher: ${switcher}`);
       logger.info(`Here is the fileSource:source: ${fileSource.source}`);
       //fsExtra.writeFileSync(tfFile, switcher,'utf8')
+      line = switcher;
     }
     result += line + "\n";
   });
