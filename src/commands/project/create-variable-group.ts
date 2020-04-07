@@ -3,7 +3,7 @@ import commander from "commander";
 import path from "path";
 import { echo } from "shelljs";
 import { Bedrock, Config, readYaml, write } from "../../config";
-import { fileInfo as bedrockFileInfo } from "../../lib/bedrockYaml";
+import * as bedrockYaml from "../../lib/bedrockYaml";
 import {
   build as buildCmd,
   exit as exitCmd,
@@ -53,7 +53,7 @@ interface ConfigValues {
 }
 
 export const checkDependencies = (projectPath: string): void => {
-  const fileInfo: BedrockFileInfo = bedrockFileInfo(projectPath);
+  const fileInfo: BedrockFileInfo = bedrockYaml.fileInfo(projectPath);
   if (fileInfo.exist === false) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
@@ -167,7 +167,7 @@ export const setVariableGroupInBedrockFile = (
   ];
 
   // Write out
-  write(bedrockFile, absProjectRoot);
+  bedrockYaml.create(absProjectRoot, bedrockFile);
 };
 
 /**
