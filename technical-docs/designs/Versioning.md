@@ -8,11 +8,12 @@ Reference: Versioning and release guidance Authors: Andre Briggs
 
 ## 1. Overview
 
-Customers of the Bedrock CLI should have guidance on how release
+Consumers of the Bedrock CLI should have guidance on what the versioning and
+release strategy is.
 
 ## 2. Out of Scope
 
-This document does not coveer what a customer should do if they want a new
+This document does not cover what a customer should do if they want a new
 feature in an older version of the Bedrock CLI.
 
 ## 3. Proposal
