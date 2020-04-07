@@ -25,14 +25,14 @@ export const execute = async (
   try {
     if (!opts.path) {
       throw buildError(
-        errorStatusCode.CMD_EXE_ERR,
+        errorStatusCode.VALIDATION_ERR,
         "service-get-display-name-path-missing-param-err"
       );
     }
     const bedrockFile = readBedrockYaml(process.cwd());
     if (!bedrockFile) {
       throw buildError(
-        errorStatusCode.CMD_EXE_ERR,
+        errorStatusCode.FILE_IO_ERR,
         "service-get-display-name-bedrock-yaml-missing-err"
       );
     }
@@ -43,14 +43,14 @@ export const execute = async (
       }
     }
 
-    throw buildError(errorStatusCode.CMD_EXE_ERR, {
+    throw buildError(errorStatusCode.ENV_SETTING_ERR, {
       errorKey: "service-get-display-name-err",
       values: [opts.path],
     });
   } catch (err) {
     logError(
       buildError(
-        errorStatusCode.CMD_EXE_ERR,
+        errorStatusCode.VALIDATION_ERR,
         "service-get-display-name-generic-err",
         err
       )
