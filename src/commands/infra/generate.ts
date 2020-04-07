@@ -22,6 +22,7 @@ import {
 import { copyTfTemplate } from "./scaffold";
 import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
+import { promises } from "dns";
 
 interface CommandOptions {
   project: string | undefined;
@@ -359,7 +360,7 @@ export const generateTfvars = (
  * Checks if an spk.tfvars already exists
  *
  * @param generatedPath Path to the spk.tfvars file
- * @param tfvarsFilename Name of .tfvars file
+ * @param tfvarsFilename Name of .tfvars fileb
  */
 export const checkTfvars = (
   generatedPath: string,
@@ -493,6 +494,74 @@ export const singleDefinitionGeneration = async (
 };
 
 /**
+ * Checks to see if module sources are local
+ *
+ * @param tfFile path to the terraform file in child directory
+ */
+export const checkModuleSource = (tfFile: string): boolean => {
+  const reg = new RegExp(/\b(source)/g);
+  const tfData = fsExtra.readFileSync(tfFile, "utf8")
+
+  tfData.split(/\r?\n/).forEach(function(line){
+    if ((reg.exec(line)) != null){
+      const splitLine = line.split(" ");
+      const moduleSource = splitLine[4].replace(/['"]+/g, '');
+      // Check to see if source value is a local source path
+      if (moduleSource.startsWith(`./`) || moduleSource.startsWith(`../`)){
+          logger.info(`Relative Path detected returning true`)
+          return true
+      }
+    }
+  });
+  return false
+};
+
+/**
+ * Checks to see if module sources are local
+ *
+ * @param sourceConfig Array of source configuration
+ */
+export const moduleSourceModify = (
+  fileSource: SourceInformation,
+  tfFile: string
+  ): void => {
+  // const reg = new RegExp(/\b(source)/g);
+  // const tfData = fsExtra.readFileSync(tfFile, "utf8")
+  // var result;
+  // try{
+  //   tfData.split(/\r?\n/).forEach(function(line){
+  //     if ((result = reg.exec(line)) != null){
+  //       var splitLine = line.split(" ");
+  //       let moduleSource = new RegExp(splitLine[4].replace(/['"]+/g, ''), "g");
+  //       // Modify the file 
+  //       var switcher= line.replace(moduleSource,'test')
+  //       logger.info(`Here is the line: ${line}`);
+  //       logger.info(`Here is the switcher: ${switcher}`);
+  //       logger.info(`Here is the fileSource:source: ${fileSource.source}`);
+  //       fsExtra.writeFileSync(tfFile, switcher,'utf8')
+  //     }
+  //   });
+  // } catch(err){
+  //     throw err;
+  // }
+  const reg = new RegExp(/\b(source)/g);
+  const tfData = fsExtra.readFileSync(tfFile, "utf8")
+  let result;
+  tfData.split(/\r?\n/).forEach(function(line){
+    if ((reg.exec(line)) != null){
+      const splitLine = line.split(" ");
+      const moduleSource = new RegExp(splitLine[4].replace(/['"]+/g, ''), "g");
+      // Modify the file 
+      const switcher= line.replace(moduleSource,'test')
+      logger.info(`Here is the line: ${line}`);
+      logger.info(`Here is the switcher: ${switcher}`);
+      logger.info(`Here is the fileSource:source: ${fileSource.source}`);
+      fsExtra.writeFileSync(tfFile, switcher,'utf8')
+    }
+  });
+};
+
+/**
  * Creates "generated" directory if it does not already exists
  *
  * @param parentPath Path to the parent definition.yaml file
@@ -534,7 +603,6 @@ export const generateConfig = async (
       createGenerated(parentDirectory);
       createGenerated(childDirectory);
     }
-    // TODO: Function to check for relative paths: Q - DO during generation or after variables have be add
     combineVariable(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       parentInfraConfig.variables!,
@@ -556,17 +624,6 @@ export const generateConfig = async (
     await copyTfTemplate(templatePath, childDirectory, true);
   } else if (definitionConfig === DefinitionYAMLExistence.PARENT_ONLY) {
     const parentInfraConfig = getDefinitionYaml(parentPath);
-
-    // TODO: Function to check for relative paths: Q - DO during generation or after variables have be add
-
-    // Check to test outsource: terraform registry,
-    // Iterate through 'TF' files / Parse of tf files? (Code Coverage?)
-    // CheckLocal: check source value, is value = ./ or ../ (Local syntax)
-    // ModifyLocal: munge url from YAML, apply url to relative source path
-    // Throw exception if failed
-
-    //
-
     // there will not be a case here when parentPath === projectPath
     // here because if both are the same, we would have
     // DefinitionYAMLExistence.BOTH_EXIST and not
@@ -578,6 +635,24 @@ export const generateConfig = async (
       templatePath
     );
   }
+    // TODO: Function to check for relative paths: 
+    const files = await fsExtra.readdirSync(childDirectory, 'utf-8')
+    // Check to test outsource: terraform registry,
+    // Iterate through 'TF' files / Parse of tf files? (Code Coverage?)
+    for (const file of files){
+      if(path.extname(file) === ".tf"){
+        const containsLocalSource = await checkModuleSource(path.join(childDirectory, file))
+        if (containsLocalSource){
+            logger.warn(`This is the containing file: ${file}`)
+            await moduleSourceModify(sourceConfig, path.join(childDirectory, file))
+        }
+      }
+      logger.warn(`This is the file: ${file}`)
+    }
+    // CheckLocal: check source value, is value = ./ or ../ (Local syntax)
+    // ModifyLocal: munge url from YAML, apply url to relative source path
+    // Throw exception if failed
+
 };
 
 export const execute = async (
