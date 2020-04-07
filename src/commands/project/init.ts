@@ -2,6 +2,7 @@ import commander from "commander";
 import fs from "fs";
 import path from "path";
 import { Bedrock, write } from "../../config";
+import * as bedrockYaml from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import {
   generateGitIgnoreFile,
@@ -12,6 +13,8 @@ import { exec } from "../../lib/shell";
 import { logger } from "../../logger";
 import { BedrockFile, MaintainersFile } from "../../types";
 import decorator from "./init.decorator.json";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { errorStatusCode } from "../../lib/errorStatusCode";
 
 // values that we need to pull out from command operator
 interface CommandOptions {
@@ -38,7 +41,7 @@ const generateBedrockFile = (
       },
       {}
     ),
-    services: {},
+    services: [],
     version: getVersion(),
   };
 
@@ -50,7 +53,7 @@ const generateBedrockFile = (
     );
   } else {
     // Write out
-    write(baseBedrockFile, absProjectPath);
+    bedrockYaml.create(absProjectPath, baseBedrockFile);
   }
 };
 
@@ -172,8 +175,9 @@ export const execute = async (
     await initialize(projectPath, { defaultRing });
     await exitFn(0);
   } catch (err) {
-    logger.error(`Error occurred while initializing project ${projectPath}`);
-    logger.error(err);
+    logError(
+      buildError(errorStatusCode.EXE_FLOW_ERR, "project-init-cmd-failed", err)
+    );
     await exitFn(1);
   }
 };

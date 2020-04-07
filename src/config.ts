@@ -3,14 +3,17 @@ import fs from "fs";
 import yaml from "js-yaml";
 import * as os from "os";
 import path from "path";
+import { build as buildError } from "./lib/errorBuilder";
+import { errorStatusCode } from "./lib/errorStatusCode";
 import { writeVersion } from "./lib/fileutils";
 import { logger } from "./logger";
 import {
   AzurePipelinesYaml,
-  BedrockFile,
   ConfigYaml,
   MaintainersFile,
+  BedrockFile,
 } from "./types";
+import * as bedrockYaml from "./lib/bedrockYaml";
 
 ////////////////////////////////////////////////////////////////////////////////
 // State
@@ -32,7 +35,10 @@ export const readYaml = <T>(filepath: string): T => {
     const contents = fs.readFileSync(filepath, "utf8");
     return yaml.safeLoad(contents) as T;
   }
-  throw Error(`Unable to load file '${filepath}'`);
+  throw buildError(errorStatusCode.FILE_IO_ERR, {
+    errorKey: "spk-config-yaml-err-readyaml",
+    values: [filepath],
+  });
 };
 
 /**
@@ -48,10 +54,10 @@ export const updateVariableWithLocalEnv = (value: string): string => {
       if (process.env[matches[1]]) {
         value = value.replace(matches[0], process.env[matches[1]] as string);
       } else {
-        logger.error(`Env variable needs to be defined for ${matches[1]}`);
-        throw Error(
-          `Environment variable needs to be defined for ${matches[1]} since it's referenced in the config file.`
-        );
+        throw buildError(errorStatusCode.ENV_SETTING_ERR, {
+          errorKey: "spk-config-yaml-var-undefined",
+          values: [matches[1]],
+        });
       }
       matches = regexp.exec(value);
     }
@@ -117,8 +123,11 @@ export const loadConfiguration = (
     const data = readYaml<ConfigYaml>(filepath);
     spkConfig = loadConfigurationFromLocalEnv(data || {});
   } catch (err) {
-    logger.verbose(`An error occurred while loading configuration\n ${err}`);
-    throw err;
+    throw buildError(
+      errorStatusCode.FILE_IO_ERR,
+      "spk-config-yaml-load-err",
+      err
+    );
   }
 };
 
@@ -148,6 +157,8 @@ export const Config = (): ConfigYaml => {
 };
 
 /**
+ * **DEPRECATED**: Use `read()` from bedrockYaml lib
+ *
  * Returns the current bedrock.yaml file for the project
  *
  * Does some validations against the file; if errors occur, an Exception is
@@ -158,7 +169,7 @@ export const Config = (): ConfigYaml => {
  */
 export const Bedrock = (fileDirectory = process.cwd()): BedrockFile => {
   const bedrockYamlPath = path.join(fileDirectory, "bedrock.yaml");
-  const bedrock = readYaml<BedrockFile>(bedrockYamlPath);
+  const bedrock = bedrockYaml.read(fileDirectory);
   const { services } = bedrock;
 
   // validate service helm configurations
@@ -188,13 +199,18 @@ export const Bedrock = (fileDirectory = process.cwd()): BedrockFile => {
     for (const error of helmErrors) {
       logger.error(error);
     }
-    throw Error(`invalid helm configuration found in ${bedrockYamlPath}`);
+    throw buildError(errorStatusCode.ENV_SETTING_ERR, {
+      errorKey: "bedrock-config-invalid",
+      values: [bedrockYamlPath],
+    });
   }
 
   return { ...bedrock };
 };
 
 /**
+ * **DEPRECATED**: Use `read()` from bedrockYaml lib
+ *
  * Async wrapper for the Bedrock() function
  * Use this if preferring to use Promise based control flow over try/catch as
  * Bedrock() can throw and Error
@@ -225,22 +241,17 @@ export const MaintainersAsync = async (
 ): Promise<MaintainersFile> => Maintainers(fileDirectory);
 
 /**
- * Helper to write out a bedrock.yaml or maintainers.yaml file to the project root
+ * Helper to write out a maintainers.yaml or azure-pipelines.yaml file to the project root
  *
  * @param file config file object to serialize and write out
  */
 export const write = (
-  file: BedrockFile | MaintainersFile | AzurePipelinesYaml,
+  file: MaintainersFile | AzurePipelinesYaml,
   targetDirectory = process.cwd(),
   fileName?: string
 ): void => {
   const asYaml = yaml.safeDump(file, { lineWidth: Number.MAX_SAFE_INTEGER });
-  if ("rings" in file) {
-    // Is bedrock.yaml
-    fileName = "bedrock.yaml";
-    writeVersion(path.join(targetDirectory, fileName));
-    return fs.appendFileSync(path.join(targetDirectory, fileName), asYaml);
-  } else if ("services" in file) {
+  if ("services" in file) {
     // Is maintainers file
     fileName = "maintainers.yaml";
     writeVersion(path.join(targetDirectory, fileName));
@@ -248,7 +259,7 @@ export const write = (
   } else {
     // Is azure pipelines yaml file
     if (typeof fileName === "undefined") {
-      throw new Error(`Pipeline yaml file name is undefined`);
+      throw buildError(errorStatusCode.EXE_FLOW_ERR, "config-file-not-defined");
     }
 
     writeVersion(path.join(targetDirectory, fileName));
