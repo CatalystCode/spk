@@ -3,7 +3,7 @@ import { read as readBedrockYaml } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
 import decorator from "./get-display-name.decorator.json";
-import { build as buildError } from "../../lib/errorBuilder";
+import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
@@ -25,7 +25,7 @@ export const execute = async (
   try {
     if (!opts.path) {
       throw buildError(
-        errorStatusCode.EXE_FLOW_ERR,
+        errorStatusCode.CMD_EXE_ERR,
         "service-get-display-name-path-missing-param-err"
       );
     }
@@ -48,7 +48,13 @@ export const execute = async (
       values: [opts.path],
     });
   } catch (err) {
-    logger.error(err);
+    logError(
+      buildError(
+        errorStatusCode.CMD_EXE_ERR,
+        "service-get-display-name-generic-err",
+        err
+      )
+    );
     await exitFn(1);
   }
 };
