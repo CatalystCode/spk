@@ -496,11 +496,23 @@ export const appendVariableGroupToPipelineYaml = (
       path.join(dir, fileName)
     ) as AzurePipelinesYaml;
     pipelineFile.variables = pipelineFile.variables || [];
+    let variableGroupExists = false;
 
-    pipelineFile.variables.push({ group: variableGroupName });
+    pipelineFile.variables.forEach((variable) => {
+      if ("group" in variable && variable.group === variableGroupName) {
+        variableGroupExists = true;
+        logger.info(
+          `Variable group '${variableGroupName}' already exits in '${dir}/${fileName}'.`
+        );
+      }
+    });
 
-    logger.info(`Updating '${dir}/${fileName}'.`);
-    write(pipelineFile, dir, fileName);
+    if (!variableGroupExists) {
+      pipelineFile.variables.push({ group: variableGroupName });
+
+      logger.info(`Updating '${dir}/${fileName}'.`);
+      write(pipelineFile, dir, fileName);
+    }
   } catch (err) {
     throw buildError(
       errorStatusCode.FILE_IO_ERR,
@@ -738,6 +750,9 @@ const hldLifecyclePipelineYaml = (): string => {
     trigger: {
       branches: {
         include: ["master"],
+      },
+      paths: {
+        include: ["bedrock.yaml"],
       },
     },
     variables: [],
