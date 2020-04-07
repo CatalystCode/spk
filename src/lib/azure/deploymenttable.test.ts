@@ -2,7 +2,7 @@ import uuid from "uuid";
 import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import * as deploymenttable from "./deploymenttable";
 import {
-  addNewRowToArcToHLDPipelines,
+  addNewRowToACRToHLDPipelines,
   addNewRowToHLDtoManifestPipeline,
   addSrcToACRPipeline,
   deleteFromTable,
@@ -19,9 +19,9 @@ import {
   updateHLDtoManifestHelper,
   updateHLDToManifestPipeline,
   updateLastHLDtoManifestEntry,
-  updateLastRowOfArcToHLDPipelines,
+  updateLastRowOfACRToHLDPipelines,
   updateManifestCommitId,
-  updateMatchingArcToHLDPipelineEntry,
+  updateMatchingACRToHLDPipelineEntry,
 } from "./deploymenttable";
 
 const mockedTableInfo: DeploymentTable = {
@@ -211,13 +211,13 @@ describe("test addSrcToACRPipeline function", () => {
   });
 });
 
-describe("test updateMatchingArcToHLDPipelineEntry function", () => {
+describe("test updateMatchingACRToHLDPipelineEntry function", () => {
   it("positive test: matching entry", async (done) => {
     jest
       .spyOn(deploymenttable, "updateEntryInTable")
       .mockReturnValueOnce(Promise.resolve());
     const entries: EntryACRToHLDPipeline[] = [mockedEntryACRToHLDPipeline];
-    const result = await updateMatchingArcToHLDPipelineEntry(
+    const result = await updateMatchingACRToHLDPipelineEntry(
       entries,
       mockedTableInfo,
       mockedPipelineId,
@@ -230,7 +230,7 @@ describe("test updateMatchingArcToHLDPipelineEntry function", () => {
     done();
   });
   it("positive test: no matching entries", async (done) => {
-    const result = await updateMatchingArcToHLDPipelineEntry(
+    const result = await updateMatchingACRToHLDPipelineEntry(
       [],
       mockedTableInfo,
       mockedPipelineId,
@@ -261,7 +261,7 @@ const testUpdateLastRowOfArcToHLDPipelines = async (
 ): Promise<deploymenttable.RowACRToHLDPipeline> => {
   mockInsertIntoTable(positive);
   const entries: EntryACRToHLDPipeline[] = [mockedEntryACRToHLDPipeline];
-  return await updateLastRowOfArcToHLDPipelines(
+  return await updateLastRowOfACRToHLDPipelines(
     entries,
     mockedTableInfo,
     mockedPipelineId,
@@ -272,7 +272,7 @@ const testUpdateLastRowOfArcToHLDPipelines = async (
   );
 };
 
-describe("test updateLastRowOfArcToHLDPipelines function", () => {
+describe("test updateLastRowOfACRToHLDPipelines function", () => {
   it("positive test", async (done) => {
     const result = await testUpdateLastRowOfArcToHLDPipelines();
     expect(result).toBeDefined();
@@ -289,7 +289,7 @@ const testAddNewRowToArcToHLDPipelines = async (
 ): Promise<deploymenttable.RowACRToHLDPipeline> => {
   mockInsertIntoTable(positive);
 
-  return await addNewRowToArcToHLDPipelines(
+  return await addNewRowToACRToHLDPipelines(
     mockedTableInfo,
     mockedPipelineId,
     mockedImageTag,
@@ -299,7 +299,7 @@ const testAddNewRowToArcToHLDPipelines = async (
   );
 };
 
-describe("test addNewRowToArcToHLDPipelines function", () => {
+describe("test addNewRowToACRToHLDPipelines function", () => {
   it("positive test", async (done) => {
     const result = await testAddNewRowToArcToHLDPipelines();
     expect(result).toBeDefined();
@@ -317,13 +317,13 @@ const testUpdateACRToHLDPipeline = async (
 ): Promise<void> => {
   const fnUpdateFound = jest.spyOn(
     deploymenttable,
-    "updateMatchingArcToHLDPipelineEntry"
+    "updateMatchingACRToHLDPipelineEntry"
   );
   const fnUpdateLastEntry = jest.spyOn(
     deploymenttable,
-    "updateLastRowOfArcToHLDPipelines"
+    "updateLastRowOfACRToHLDPipelines"
   );
-  const addNewRow = jest.spyOn(deploymenttable, "addNewRowToArcToHLDPipelines");
+  const addNewRow = jest.spyOn(deploymenttable, "addNewRowToACRToHLDPipelines");
 
   if (noEntry) {
     jest
