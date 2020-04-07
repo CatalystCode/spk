@@ -10,11 +10,7 @@ import {
   saveConfiguration,
 } from "../config";
 import { build as buildCmd, exit as exitCmd } from "../lib/commandBuilder";
-import {
-  build as buildError,
-  log as logError,
-  build,
-} from "../lib/errorBuilder";
+import { build as buildError, log as logError } from "../lib/errorBuilder";
 import { errorStatusCode } from "../lib/errorStatusCode";
 import * as promptBuilder from "../lib/promptBuilder";
 import { deepClone } from "../lib/util";
