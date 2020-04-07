@@ -1,12 +1,9 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/camelcase */
 import commander from "commander";
-import * as fs from "fs";
 import { read as readBedrockYaml } from "../../lib/bedrockYaml";
 import { build as buildCmd, exit as exitCmd } from "../../lib/commandBuilder";
 import { logger } from "../../logger";
 import decorator from "./get-display-name.decorator.json";
-import { build as buildError, log as logError } from "../../lib/errorBuilder";
+import { build as buildError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 
 export interface CommandOptions {
@@ -39,7 +36,6 @@ export const execute = async (
         "service-get-display-name-bedrock-yaml-missing-err"
       );
     }
-    logger.info(JSON.stringify(bedrockFile, null, 4));
     for (const serviceIndex in bedrockFile.services) {
       if (opts.path === bedrockFile.services[serviceIndex].path) {
         console.log(bedrockFile.services[serviceIndex].displayName);
@@ -58,7 +54,7 @@ export const execute = async (
 };
 
 /**
- * Adds the validate command to the commander command object
+ * Adds the get-display-name command to the commander command object
  * @param command Commander command object to decorate
  */
 export const commandDecorator = (command: commander.Command): void => {

@@ -1,8 +1,4 @@
-import {
-  disableVerboseLogging,
-  enableVerboseLogging,
-  logger,
-} from "../../logger";
+import { disableVerboseLogging, enableVerboseLogging } from "../../logger";
 import { execute } from "./get-display-name";
 import * as fs from "fs";
 import { createTestBedrockYaml } from "../../test/mockFactory";
