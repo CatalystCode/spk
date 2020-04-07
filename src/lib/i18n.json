@@ -46,7 +46,7 @@
     "hld-reconcile-err-purge-repo-comps": "Could not purge hld repository component {0} in path {1}.",
 
     "hld-install-manifest-pipeline-cmd-failed": "hld install-manifest-pipeline command was not successfully executed.",
-    "hld-install-manifest-pipeline-cmd-validate-github-repo-err": "Could not {0} or/and {1} were not supported.",
+    "hld-install-manifest-pipeline-cmd-validate-repo-err": "Could not validate repositories. {0} and/or {1} may not be supported.",
 
     "infra-scaffold-cmd-failed": "Infra scaffold command was not successfully executed.",
     "infra-scaffold-cmd-src-missing": "Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.",

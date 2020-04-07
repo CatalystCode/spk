@@ -184,7 +184,7 @@ describe("test populateValues function", () => {
       })
     ).toThrow(
       getErrorMessage({
-        errorKey: "hld-install-manifest-pipeline-cmd-validate-github-repo-err",
+        errorKey: "hld-install-manifest-pipeline-cmd-validate-repo-err",
         values: [
           "https://github.com/fabrikam/hld",
           "https://github.com/fabrikam/materialized",

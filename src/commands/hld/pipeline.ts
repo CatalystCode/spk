@@ -55,7 +55,7 @@ const validateRepos = (hldRepoUrl: string, manifestRepoUrl: string): void => {
   const manifestGitUrlType = isGitHubUrl(manifestRepoUrl);
   if (hldGitUrlType || manifestGitUrlType) {
     throw buildError(errorStatusCode.GIT_OPS_ERR, {
-      errorKey: "hld-install-manifest-pipeline-cmd-validate-github-repo-err",
+      errorKey: "hld-install-manifest-pipeline-cmd-validate-repo-err",
       values: [hldRepoUrl, manifestRepoUrl],
     });
   }
