@@ -34,12 +34,14 @@ export const execute = async (
   projectPath: string,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
-  if (!hasValue(ringName)) {
-    await exitFn(1);
-    return;
-  }
-
   try {
+    if (!hasValue(ringName)) {
+      throw buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "ring-delete-cmd-err-name-missing"
+      );
+    }
+
     logger.info(`Project path: ${projectPath}`);
 
     // Check if bedrock config exists, if not, warn and exit

@@ -21,7 +21,7 @@ export const checkDependencies = (projectPath: string): void => {
   if (fileInfo.exist === false) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "ring-set-default-cmd-err-dependency"
+      "ring--cmd-err-dependency"
     );
   }
 };
@@ -37,12 +37,14 @@ export const execute = async (
   projectPath: string,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
-  if (!hasValue(ringName)) {
-    await exitFn(1);
-    return;
-  }
-
   try {
+    if (!hasValue(ringName)) {
+      throw buildError(
+        errorStatusCode.VALIDATION_ERR,
+        "ring-set-default-cmd-err-name-missing"
+      );
+    }
+
     logger.info(`Project path: ${projectPath}`);
 
     checkDependencies(projectPath);

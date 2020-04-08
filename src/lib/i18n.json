@@ -223,13 +223,17 @@
     "var-group-create-data-err": "Could not create variable group data.",
 
     "ring-create-cmd-failed": "Error occurred while creating ring: {0}",
+    "ring-create-cmd-err-name-missing": "Could not execute this command because ring name was not provided. Provide a ring name.",
     "ring-create-cmd-err-ring-exists": "Could not create ring {0} in project {1} because it already exists. Provide a different name.",
     "ring-create-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "ring-delete-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "ring-set-default-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "ring-create-cmd-err-name-missing": "No ring name was provided. Provide a ring name",
-    "ring-delete-cmd-failed": "Error occurred while deleting ring: {0}.",
+
     "ring-set-default-cmd-failed": "Error occurred while setting default ring: {0}",
+    "ring-set-default-cmd-err-name-missing": "Could not execute this command because ring name was not provided. Provide a ring name.",
+    "ring-set-default-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
+
+    "ring-delete-cmd-failed": "Error occurred while deleting ring: {0}.",
+    "ring-delete-cmd-err-name-missing": "Could not execute this command because ring name was not provided. Provide a ring name.",
+    "ring-delete-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
 
     "variable-group-create-cmd-failed": "Error occurred while creating variable group.",
     "variable-group-create-cmd-err-create": "Could not load variable group. The variable group type '{0}' is not supported. Only 'Vsts' and 'AzureKeyVault' are valid types and case sensitive.",

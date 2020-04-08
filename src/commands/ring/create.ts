@@ -54,18 +54,14 @@ export const execute = async (
   projectPath: string,
   exitFn: (status: number) => Promise<void>
 ): Promise<void> => {
-  if (!hasValue(ringName)) {
-    logError(
-      buildError(
+  try {
+    if (!hasValue(ringName)) {
+      throw buildError(
         errorStatusCode.VALIDATION_ERR,
         "ring-create-cmd-err-name-missing"
-      )
-    );
-    await exitFn(1);
-    return;
-  }
+      );
+    }
 
-  try {
     logger.info(`Project path: ${projectPath}`);
 
     dns.assertIsValid("<ring-name>", ringName);
