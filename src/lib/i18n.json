@@ -16,6 +16,11 @@
     "storageKeVaultName": "Enter key vault name (have the value as empty and hit enter key to skip)"
   },
   "errors": {
+    "init_cmd_failed": "Init command was not successfully executed.",
+    "init_cmd_unable_validate_pat": "Could not validate personal access token because organization, project or access token information were missing. Provide them in config.yaml.",
+    "init_cmd_missing_opts": "Could not execute this command because file that stores configuration was not provided and interactive mode was not set. Provide file name or enable interactive mode.",
+    "init_cmd_both_opts_err": "Could not execute this command because file that stores configuration was provided and interactive mode was set. Provide file name or enable interactive mode.",
+
     "setup-cmd-failed": "Setup command was not successfully executed.",
     "setup-cmd-prompt-err-no-subscriptions": "No subscriptions found.",
     "setup-cmd-prompt-err-subscription-missing": "Subscription Identifier was missing.",
@@ -30,7 +35,7 @@
     "bedrock-config-invalid": "Invalid helm configuration found in {0}.",
     "config-file-not-defined": "Pipeline yaml file name is undefined.",
 
-    "hld-init-cmd-failed": "Hld init command was not successfully executed.",
+    "hld-init-cmd-failed": "hld init command was not successfully executed.",
     "hld-init-cmd-project-path-missing": "Value for project path was not provided. Provide it.",
 
     "hld-reconcile-err-repo-create": "Error creating repository component '{0}' in path '{1}'.",
@@ -44,6 +49,9 @@
     "hld-reconcile-err-cmd-failed": "An error occurred executing command: {0}",
     "hld-reconcile-err-cmd-exe": "An error occurred while reconciling HLD.",
     "hld-reconcile-err-purge-repo-comps": "Could not purge hld repository component {0} in path {1}.",
+
+    "hld-install-manifest-pipeline-cmd-failed": "hld install-manifest-pipeline command was not successfully executed.",
+    "hld-install-manifest-pipeline-cmd-validate-repo-err": "Could not validate repositories. {0} and/or {1} may not be supported.",
 
     "infra-scaffold-cmd-failed": "Infra scaffold command was not successfully executed.",
     "infra-scaffold-cmd-src-missing": "Value for source is required because it cannot be constructed with properties in spk-config.yaml. Provide value for source.",
@@ -123,6 +131,10 @@
     "introspect-create-cmd-missing-values": "Access key, storage account name, partition key and/or table name were not provided. Provide them.",
     "introspect-create-cmd-p1-missing-values": "Values for image-tag, commit-id and service options were missing. They are required for updating the details of source pipeline. Provide them.",
     "introspect-create-cmd-p2-missing-values": "Values for p2, hld-commit-id, image-tag and env options were missing. They are required For updating the details of image tag release pipeline. Provide them.",
+
+    "introspect-onboard-cmd-failed": "Deployment onboard command was not successfully executed.",
+    "introspect-onboard-cmd-location-missing": "Value for --storage-location was missing. Provide it.",
+    "introspect-onboard-cmd-get-storage-access-key-err": "Could not get storage access key for account, {0} in resource group {1}.",
 
     "introspect-validate-cmd-failed": "Deployment validate command was not successfully executed.",
     "introspect-validate-cmd-valid-err": "Validation failed. Missing configuration: {0}",
