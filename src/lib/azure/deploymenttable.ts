@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import * as azure from "azure-storage";
 import uuid from "uuid/v4";
 import { logger } from "../../logger";
@@ -34,6 +33,13 @@ export interface DeploymentEntry {
 }
 
 /**
+ * Generates a RowKey GUID 12 characters long
+ */
+export const getRowKey = (): string => {
+  return uuid().replace("-", "").substring(0, 12);
+};
+
+/**
  * Gets the azure table service
  * @param tableInfo tableInfo object containing necessary table info
  */
@@ -41,6 +47,113 @@ export const getTableService = (
   tableInfo: DeploymentTable
 ): azure.TableService => {
   return azure.createTableService(tableInfo.accountName, tableInfo.accountKey);
+};
+
+/**
+ * Finds matching deployments for a filter name and filter value in the storage
+ * @param tableInfo table info interface containing information about the deployment storage table
+ * @param filterName name of the filter, such as `imageTag`
+ * @param filterValue value of the filter, such as `hello-spk-master-1234`
+ */
+export const findMatchingDeployments = (
+  tableInfo: DeploymentTable,
+  filterName: string,
+  filterValue: string
+): Promise<DeploymentEntry[]> => {
+  const tableService = getTableService(tableInfo);
+  const query: azure.TableQuery = new azure.TableQuery().where(
+    `PartitionKey eq '${tableInfo.partitionKey}'`
+  );
+  query.and(`${filterName} eq '${filterValue}'`);
+
+  // To get around issue https://github.com/Azure/azure-storage-node/issues/545, set below to null
+  const nextContinuationToken:
+    | azure.TableService.TableContinuationToken
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    | any = null;
+
+  return new Promise((resolve, reject) => {
+    tableService.queryEntities<DeploymentEntry>(
+      tableInfo.tableName,
+      query,
+      nextContinuationToken,
+      (error, result) => {
+        if (!error) {
+          resolve(result.entries);
+        } else {
+          reject(error);
+        }
+      }
+    );
+  });
+};
+
+/**
+ * Inserts a new entry into the table.
+ *
+ * @param tableInfo Table Information
+ * @param entry entry to insert
+ */
+export const insertToTable = (
+  tableInfo: DeploymentTable,
+  entry: DeploymentEntry
+): Promise<void> => {
+  const tableService = getTableService(tableInfo);
+
+  return new Promise((resolve, reject) => {
+    tableService.insertEntity(tableInfo.tableName, entry, (err) => {
+      if (!err) {
+        resolve();
+      } else {
+        reject(err);
+      }
+    });
+  });
+};
+
+/**
+ * Deletes self test data from table
+ * @param tableInfo table info object
+ * @param entry entry to be deleted
+ */
+export const deleteFromTable = (
+  tableInfo: DeploymentTable,
+  entry: DeploymentEntry
+): Promise<void> => {
+  const tableService = getTableService(tableInfo);
+
+  return new Promise((resolve, reject) => {
+    tableService.deleteEntity(tableInfo.tableName, entry, {}, (err) => {
+      if (!err) {
+        resolve();
+      } else {
+        reject(err);
+      }
+    });
+  });
+};
+
+/**
+ * Updates an entry in the table.
+ *
+ * @param tableInfo Table Information
+ * @param entry entry to update
+ */
+export const updateEntryInTable = (
+  tableInfo: DeploymentTable,
+  entry: DeploymentEntry
+): Promise<void> => {
+  const tableService = getTableService(tableInfo);
+
+  return new Promise((resolve, reject) => {
+    tableService.replaceEntity(tableInfo.tableName, entry, (err) => {
+      if (!err) {
+        resolve();
+      } else {
+        reject(err);
+      }
+    });
+  });
 };
 
 /**
@@ -266,58 +379,6 @@ export const updateACRToHLDPipeline = async (
 };
 
 /**
- * Updates the HLD to manifest pipeline in storage by finding its
- * corresponding SRC to ACR and ACR to HLD pipelines
- * Depending on whether PR is specified or not, it performs a lookup
- * on commit Id and PR to link it to the previous release.
- *
- * @param tableInfo table info interface containing information about
- *        the deployment storage table
- * @param hldCommitId commit identifier into the HLD repo, used as a
- *        filter to find corresponding deployments
- * @param pipelineId identifier of the HLD to manifest pipeline
- * @param manifestCommitId manifest commit identifier
- * @param pr pull request identifier
- */
-export const updateHLDToManifestPipeline = async (
-  tableInfo: DeploymentTable,
-  hldCommitId: string,
-  pipelineId: string,
-  manifestCommitId?: string,
-  pr?: string,
-  repository?: string
-): Promise<DeploymentEntry> => {
-  try {
-    let entries = await findMatchingDeployments(
-      tableInfo,
-      "hldCommitId",
-      hldCommitId
-    );
-
-    // cannot find entries by hldCommitId.
-    // attempt to find entries by pr
-    if ((!entries || entries.length === 0) && pr) {
-      entries = await findMatchingDeployments(tableInfo, "pr", pr);
-    }
-    return updateHLDtoManifestHelper(
-      entries,
-      tableInfo,
-      hldCommitId,
-      pipelineId,
-      manifestCommitId,
-      pr,
-      repository
-    );
-  } catch (err) {
-    throw buildError(
-      errorStatusCode.AZURE_STORAGE_OP_ERR,
-      "deployment-table-update-hld-manifest-pipeline-failed",
-      err
-    );
-  }
-};
-
-/**
  * Updates HLD -> Manifest build for its corresponding ACR -> HLD release
  * @param entries list of matching entries based on PR / hld commit
  * @param tableInfo table info interface containing information about
@@ -496,6 +557,58 @@ export const updateHLDtoManifestHelper = async (
 };
 
 /**
+ * Updates the HLD to manifest pipeline in storage by finding its
+ * corresponding SRC to ACR and ACR to HLD pipelines
+ * Depending on whether PR is specified or not, it performs a lookup
+ * on commit Id and PR to link it to the previous release.
+ *
+ * @param tableInfo table info interface containing information about
+ *        the deployment storage table
+ * @param hldCommitId commit identifier into the HLD repo, used as a
+ *        filter to find corresponding deployments
+ * @param pipelineId identifier of the HLD to manifest pipeline
+ * @param manifestCommitId manifest commit identifier
+ * @param pr pull request identifier
+ */
+export const updateHLDToManifestPipeline = async (
+  tableInfo: DeploymentTable,
+  hldCommitId: string,
+  pipelineId: string,
+  manifestCommitId?: string,
+  pr?: string,
+  repository?: string
+): Promise<DeploymentEntry> => {
+  try {
+    let entries = await findMatchingDeployments(
+      tableInfo,
+      "hldCommitId",
+      hldCommitId
+    );
+
+    // cannot find entries by hldCommitId.
+    // attempt to find entries by pr
+    if ((!entries || entries.length === 0) && pr) {
+      entries = await findMatchingDeployments(tableInfo, "pr", pr);
+    }
+    return updateHLDtoManifestHelper(
+      entries,
+      tableInfo,
+      hldCommitId,
+      pipelineId,
+      manifestCommitId,
+      pr,
+      repository
+    );
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.AZURE_STORAGE_OP_ERR,
+      "deployment-table-update-hld-manifest-pipeline-failed",
+      err
+    );
+  }
+};
+
+/**
  * Updates manifest commit identifier in the storage for a pipeline identifier in HLD to manifest pipeline
  * @param tableInfo table info interface containing information about the deployment storage table
  * @param pipelineId identifier of the HLD to manifest pipeline, used as a filter to find the deployment
@@ -533,118 +646,4 @@ export const updateManifestCommitId = async (
     errorKey: "deployment-table-update-manifest-commit-id-failed-no-generation",
     values: [manifestCommitId],
   });
-};
-
-/**
- * Finds matching deployments for a filter name and filter value in the storage
- * @param tableInfo table info interface containing information about the deployment storage table
- * @param filterName name of the filter, such as `imageTag`
- * @param filterValue value of the filter, such as `hello-spk-master-1234`
- */
-export const findMatchingDeployments = (
-  tableInfo: DeploymentTable,
-  filterName: string,
-  filterValue: string
-): Promise<DeploymentEntry[]> => {
-  const tableService = getTableService(tableInfo);
-  const query: azure.TableQuery = new azure.TableQuery().where(
-    `PartitionKey eq '${tableInfo.partitionKey}'`
-  );
-  query.and(`${filterName} eq '${filterValue}'`);
-
-  // To get around issue https://github.com/Azure/azure-storage-node/issues/545, set below to null
-  const nextContinuationToken:
-    | azure.TableService.TableContinuationToken
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    | any = null;
-
-  return new Promise((resolve, reject) => {
-    tableService.queryEntities<DeploymentEntry>(
-      tableInfo.tableName,
-      query,
-      nextContinuationToken,
-      (error, result) => {
-        if (!error) {
-          resolve(result.entries);
-        } else {
-          reject(error);
-        }
-      }
-    );
-  });
-};
-
-/**
- * Inserts a new entry into the table.
- *
- * @param tableInfo Table Information
- * @param entry entry to insert
- */
-export const insertToTable = (
-  tableInfo: DeploymentTable,
-  entry: DeploymentEntry
-): Promise<void> => {
-  const tableService = getTableService(tableInfo);
-
-  return new Promise((resolve, reject) => {
-    tableService.insertEntity(tableInfo.tableName, entry, (err) => {
-      if (!err) {
-        resolve();
-      } else {
-        reject(err);
-      }
-    });
-  });
-};
-
-/**
- * Deletes self test data from table
- * @param tableInfo table info object
- * @param entry entry to be deleted
- */
-export const deleteFromTable = (
-  tableInfo: DeploymentTable,
-  entry: DeploymentEntry
-): Promise<void> => {
-  const tableService = getTableService(tableInfo);
-
-  return new Promise((resolve, reject) => {
-    tableService.deleteEntity(tableInfo.tableName, entry, {}, (err) => {
-      if (!err) {
-        resolve();
-      } else {
-        reject(err);
-      }
-    });
-  });
-};
-
-/**
- * Updates an entry in the table.
- *
- * @param tableInfo Table Information
- * @param entry entry to update
- */
-export const updateEntryInTable = (
-  tableInfo: DeploymentTable,
-  entry: DeploymentEntry
-): Promise<void> => {
-  const tableService = getTableService(tableInfo);
-
-  return new Promise((resolve, reject) => {
-    tableService.replaceEntity(tableInfo.tableName, entry, (err) => {
-      if (!err) {
-        resolve();
-      } else {
-        reject(err);
-      }
-    });
-  });
-};
-
-/**
- * Generates a RowKey GUID 12 characters long
- */
-export const getRowKey = (): string => {
-  return uuid().replace("-", "").substring(0, 12);
 };
