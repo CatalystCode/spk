@@ -314,10 +314,10 @@ function verify_pipeline_with_poll_and_source_version () {
     pipeline_id=$(tr '"\""' '"\\"' <<< "$pipeline_result" | jq .id)
     echo "$pipeline_name has pipeline id of $pipeline_id"
 
-    build_run_exists=$(az pipelines build list --definition-ids $pipeline_id --org https://dev.azure.com/edaenasj --p spkintegrationtests | jq -r --arg source_version "$source_version" '.[].sourceVersion | select(. == $source_version) != null')
+    build_run_exists=$(az pipelines build list --definition-ids $pipeline_id --org $AZDO_ORG_URL --p $AZDO_PROJECT | jq -r --arg source_version "$source_version" '.[].sourceVersion | select(. == $source_version) != null')
 
     if [ "$build_run_exists" != "true" ]; then
-        echo "Commit ID $source_version was nof found in pipeline run $pipeline_name."
+        echo "Commit ID $source_version was not found in pipeline run $pipeline_name."
         exit 1
     fi
 
