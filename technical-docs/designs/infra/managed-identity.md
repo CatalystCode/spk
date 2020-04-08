@@ -26,7 +26,7 @@ managed identities in AKS using a proposed new Bedrock environment that
 leverages a modified cobalt project test harness in order for test pod identity
 within an AKS cluster using agile CI/CD and test validation.
 
-### Issues Addressed:
+### Scenarios Addressed:
 
 1. [As an SRE, I want Enable MSI Support for aks-gitops module](https://github.com/microsoft/bedrock/issues/994)
 2. [As an Operator, I want automated testing validation for MSI verified within Bedrock](https://github.com/microsoft/bedrock/issues/1197)
@@ -59,15 +59,21 @@ populated by a targeted template test.
 
 Bedrock infrastructure integration tests have problematic gaps that do not
 account for terraform unit testing, state validation to live environments and
-staged release management for Bedrock versioning. In this design we wish to
-provide a single template leveraging MSI that verifies a new Infrastructure
-Testing Workflow that improves on the current Bedrock test harness.
+staged release management for Bedrock versioning. Bedrock test harness does not
+contain module targeted fail fast resource definition validation outside the
+scope of an environment `terraform plan`. In addition, integration tests are
+validated through new deployments that require extensive time to provision.
+Furthermore, releases of features contain no issue reporting benchmark,
+automated deployment validation, or guidance process for merging into master. In
+this design we wish to provide a single template leveraging MSI that verifies a
+new Infrastructure Testing Workflow that improves on the current Bedrock test
+harness.
 
 This design is intended to address expected core testing functionality
 including:
 
 - Support deployment of application-hosting infrastructure that will eventually
-  house the actual application service components Capture basic metrics and
+  house the actual application service components capture basic metrics and
   telemetry from the deployment process for monitoring of ongoing pipeline
   performance and diagnosis of any deployment failures
 - Support deployment into multiple staging environments
@@ -81,7 +87,7 @@ including:
 ![](infratestflow.png)
 
 The proposed new Infrastructure Devops Flow for Terraform Testing can be
-separated by 4 key functionalities:
+separated by 4 key steps:
 
 1. Test Suite Initialization - Provisioning global artifacts, secrets and
    dependencies needed for targeted whitelisted test matrix.
@@ -99,7 +105,7 @@ separated by 4 key functionalities:
 ### 3.2 Creation of Managed Identity enable AKS Gitops Environments
 
 A new AKS Bedrock template with Managed Identity enabled, (`azure-MI`), will be
-added the the collection of sample environments. This template will be an
+added to the collection of environment templates. This template will be an
 upgraded derivative of the `azure-simple` template, with a new dependency on
 `azure-common-infra` and will contain the following:
 
@@ -177,10 +183,12 @@ Pending a successful `terraform apply`, using a go script and terratest go
 library, this design will create an integration test for the respective
 environment template that verifies
 
+- Access to cluster through MI
 - Flux namespace
-- Access to cluster using Pod Identity
+- Access to voting app using Pod Identity
 - Access to key using flex-volume
-- 400 response on Voting App
+  ([Unable to use Env Vars](https://github.com/Azure/kubernetes-keyvault-flexvol/issues/28))
+- 200 response on Voting App
 
 #### Acceptance Test
 
@@ -243,6 +251,7 @@ Risks & Limitations:
 - With an incoming change to an azure provider module, how will this be applied
   to an existing terraform deployment. If fail, should we redeploy a new
   `azure-MI` environment for QA?
+- How long does it take to deploy MI and Keyvault in a pipeline?
 
 ## 6. Documentation
 
