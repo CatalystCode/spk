@@ -21,7 +21,7 @@ export const checkDependencies = (projectPath: string): void => {
   if (fileInfo.exist === false) {
     throw buildError(
       errorStatusCode.VALIDATION_ERR,
-      "ring--cmd-err-dependency"
+      "ring-set-default-cmd-err-dependency"
     );
   }
 };
