@@ -229,54 +229,6 @@ export const updateMatchingACRToHLDPipelineEntry = async (
 };
 
 /**
- * Creates a new copy of an existing SRC -> ACR entry when a release is created for a
- * corresponding entry that already has an existing release
- * For eg. when the user manually creates a ACR -> HLD release for an existing image tag.
- * @param entries list of entries found
- * @param tableInfo table info object
- * @param pipelineId Id of the ACR -> HLD pipeline
- * @param imageTag image tag name
- * @param hldCommitId HLD commit Id
- * @param env environment name
- * @param pr Pull request Id (if available)
- */
-export const updateLastRowOfACRToHLDPipelines = async (
-  entries: EntryACRToHLDPipeline[],
-  tableInfo: DeploymentTable,
-  pipelineId: string,
-  imageTag: string,
-  hldCommitId: string,
-  env: string,
-  pr?: string,
-  repository?: string
-): Promise<RowACRToHLDPipeline> => {
-  const lastEntry = entries[entries.length - 1];
-  const last: RowACRToHLDPipeline = {
-    PartitionKey: lastEntry.PartitionKey,
-    RowKey: getRowKey(),
-    commitId: lastEntry.commitId,
-    env: env.toLowerCase(),
-    hldCommitId: hldCommitId.toLowerCase(),
-    imageTag: lastEntry.imageTag,
-    p1: lastEntry.p1,
-    p2: pipelineId.toLowerCase(),
-    service: lastEntry.service,
-    sourceRepo: lastEntry.sourceRepo,
-  };
-  if (pr) {
-    last.pr = pr.toLowerCase();
-  }
-  if (repository) {
-    last.hldRepo = repository.toLowerCase();
-  }
-  await insertToTable(tableInfo, last);
-  logger.info(
-    `Added new p2 entry for imageTag ${imageTag} by finding a similar entry`
-  );
-  return last;
-};
-
-/**
  * Adds a new entry for ACR -> HLD pipeline when no corresponding SRC -> ACR pipeline was found
  * to be associated
  * This should only be used in error scenarios or when the corresponding SRC -> ACR build is
@@ -295,18 +247,20 @@ export const addNewRowToACRToHLDPipelines = async (
   hldCommitId: string,
   env: string,
   pr?: string,
-  repository?: string
+  repository?: string,
+  similarEntry?: EntryACRToHLDPipeline
 ): Promise<RowACRToHLDPipeline> => {
   const newEntry: RowACRToHLDPipeline = {
     PartitionKey: tableInfo.partitionKey,
     RowKey: getRowKey(),
-    commitId: "",
+    commitId: similarEntry?.commitId ? similarEntry.commitId : "",
     env: env.toLowerCase(),
     hldCommitId: hldCommitId.toLowerCase(),
     imageTag: imageTag.toLowerCase(),
-    p1: "",
+    p1: similarEntry?.p1 ? similarEntry.p1 : "",
     p2: pipelineId.toLowerCase(),
-    service: "",
+    service: similarEntry?.service ? similarEntry.service : "",
+    sourceRepo: similarEntry?.sourceRepo ? similarEntry.sourceRepo : "",
   };
   if (pr) {
     newEntry.pr = pr.toLowerCase();
@@ -316,7 +270,11 @@ export const addNewRowToACRToHLDPipelines = async (
   }
   await insertToTable(tableInfo, newEntry);
   logger.info(
-    `Added new p2 entry for imageTag ${imageTag} - no matching entry was found.`
+    `Added new p2 entry for imageTag ${imageTag} - ${
+      similarEntry
+        ? "by finding a similar entry"
+        : "no matching entry was found."
+    }`
   );
   return newEntry;
 };
@@ -364,15 +322,15 @@ export const updateACRToHLDPipeline = async (
 
       // If there's no src -> acr but a matching image tag and/or multiple p1 pipelines for this,
       // copy one of them and amend info to create a new instance of deployment
-      return await updateLastRowOfACRToHLDPipelines(
-        entries,
+      return await addNewRowToACRToHLDPipelines(
         tableInfo,
         pipelineId,
         imageTag,
         hldCommitId,
         env,
         pr,
-        repository
+        repository,
+        entries[entries.length - 1]
       );
     }
 
@@ -513,61 +471,6 @@ export const updateHLDtoManifestEntry = async (
 };
 
 /**
- * Creates a new copy of an existing ACR -> HLD entry when a build is created for a
- * corresponding entry that already has an existing build
- * For eg. when the user manually triggers a HLD -> Manifest build for the last existing HLD
- * commit.
- * @param entries list of matching entries based on PR / hld commit
- * @param tableInfo table info interface containing information about
- *        the deployment storage table
- * @param hldCommitId commit identifier into the HLD repo, used as a
- *        filter to find corresponding deployments
- * @param pipelineId identifier of the HLD to manifest pipeline
- * @param manifestCommitId manifest commit identifier
- * @param pr pull request identifier
- */
-export const updateLastHLDtoManifestEntry = async (
-  entries: EntryHLDToManifestPipeline[],
-  tableInfo: DeploymentTable,
-  hldCommitId: string,
-  pipelineId: string,
-  manifestCommitId?: string,
-  pr?: string,
-  repository?: string
-): Promise<RowHLDToManifestPipeline> => {
-  const lastEntry = entries[entries.length - 1];
-  const newEntry: RowHLDToManifestPipeline = {
-    PartitionKey: lastEntry.PartitionKey,
-    RowKey: getRowKey(),
-    commitId: lastEntry.commitId,
-    env: lastEntry.env,
-    hldCommitId: hldCommitId.toLowerCase(),
-    hldRepo: lastEntry.hldRepo,
-    imageTag: lastEntry.imageTag,
-    p1: lastEntry.p1,
-    p2: lastEntry.p2,
-    p3: pipelineId.toLowerCase(),
-    service: lastEntry.service,
-    sourceRepo: lastEntry.sourceRepo,
-  };
-  if (manifestCommitId) {
-    newEntry.manifestCommitId = manifestCommitId.toLowerCase();
-  }
-  if (pr) {
-    newEntry.pr = pr.toLowerCase();
-  }
-  if (repository) {
-    newEntry.manifestRepo = repository.toLowerCase();
-  }
-
-  await insertToTable(tableInfo, newEntry);
-  logger.info(
-    `Added new p3 entry for hldCommitId ${hldCommitId} by finding a similar entry`
-  );
-  return newEntry;
-};
-
-/**
  * Adds a new row to the table when the HLD -> Manifest pipeline is triggered by
  * manually committing into the HLD
  * @param tableInfo table info interface containing information about
@@ -584,19 +487,22 @@ export const addNewRowToHLDtoManifestPipeline = async (
   pipelineId: string,
   manifestCommitId?: string,
   pr?: string,
-  repository?: string
+  repository?: string,
+  similarEntry?: EntryHLDToManifestPipeline
 ): Promise<RowHLDToManifestPipeline> => {
   const newEntry: RowHLDToManifestPipeline = {
     PartitionKey: tableInfo.partitionKey,
     RowKey: getRowKey(),
-    commitId: "",
-    env: "",
+    commitId: similarEntry?.commitId ? similarEntry.commitId : "",
+    env: similarEntry?.env ? similarEntry.env : "",
     hldCommitId: hldCommitId.toLowerCase(),
-    imageTag: "",
-    p1: "",
-    p2: "",
+    hldRepo: similarEntry?.hldRepo ? similarEntry.hldRepo : "",
+    imageTag: similarEntry?.imageTag ? similarEntry.imageTag : "",
+    p1: similarEntry?.p1 ? similarEntry.p1 : "",
+    p2: similarEntry?.p2 ? similarEntry.p2 : "",
     p3: pipelineId.toLowerCase(),
-    service: "",
+    service: similarEntry?.service ? similarEntry.service : "",
+    sourceRepo: similarEntry?.sourceRepo ? similarEntry.sourceRepo : "",
   };
   if (manifestCommitId) {
     newEntry.manifestCommitId = manifestCommitId.toLowerCase();
@@ -609,7 +515,11 @@ export const addNewRowToHLDtoManifestPipeline = async (
   }
   await insertToTable(tableInfo, newEntry);
   logger.info(
-    `Added new p3 entry for hldCommitId ${hldCommitId} - no matching entry was found.`
+    `Added new p3 entry for hldCommitId ${hldCommitId} - ${
+      similarEntry
+        ? "by finding a similar entry"
+        : "no matching entry was found."
+    }`
   );
   return newEntry;
 };
@@ -654,14 +564,14 @@ export const updateHLDtoManifestHelper = async (
 
     // If there are multiple acr -> hld pipelines or some information is missing,
     // copy one of them and amend info to create a new instance of deployment
-    return await updateLastHLDtoManifestEntry(
-      entries,
+    return await addNewRowToHLDtoManifestPipeline(
       tableInfo,
       hldCommitId,
       pipelineId,
       manifestCommitId,
       pr,
-      repository
+      repository,
+      entries[entries.length - 1]
     );
   }
 
