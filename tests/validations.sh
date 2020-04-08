@@ -364,7 +364,10 @@ verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 4
 
 # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
 echo "Wait for fabrikam-hld-to-fabrikam-manifests pipeline"
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 500 15 3
+cd $TEST_WORKSPACE/$hld_dir
+git pull
+hld_repo_commit_id=$(git log --format="%H" -n 1)
+verify_pipeline_with_poll_and_source_version $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 500 15 $hld_repo_commit_id
 ring_name=qa-ring
 
 cd $TEST_WORKSPACE
@@ -379,12 +382,16 @@ git commit -m "Adding test ring"
 git push -u origin --all
 
 # Wait for the lifecycle pipeline to finish and approve the pull request
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 2
+mono_repo_commit_id=$(git log --format="%H" -n 1)
+verify_pipeline_with_poll_and_source_version $AZDO_ORG_URL $AZDO_PROJECT $lifecycle_pipeline_name 300 15 $mono_repo_commit_id
 echo "Finding pull request that $lifecycle_pipeline_name pipeline created..."
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Reconciling HLD"
 
 # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 4
+cd $TEST_WORKSPACE/$hld_dir
+git pull
+hld_repo_commit_id=$(git log --format="%H" -n 1)
+verify_pipeline_with_poll_and_source_version $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 $hld_repo_commit_id
 
 # Verify the file was added in the manifest repository
 cd $TEST_WORKSPACE
@@ -417,16 +424,20 @@ echo "Ring doc" >> ringDoc.md
 git add ringDoc.md
 git commit -m "Adding ring doc file"
 git push --set-upstream origin $ring_name
+mono_repo_commit_id=$(git log --format="%H" -n 1)
 
 # Verify frontend service pipeline run was successful
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15 3
+verify_pipeline_with_poll_and_source_version $AZDO_ORG_URL $AZDO_PROJECT $frontend_pipeline_name 300 15 $mono_repo_commit_id
 #complete merge
 echo "Finding pull request that $frontend_pipeline_name pipeline created..."
 approve_pull_request $AZDO_ORG_URL $AZDO_PROJECT "Updating fabrikam.acme.frontend image tag to qa-ring"
 
 # Wait for fabrikam-hld-to-fabrikam-manifests pipeline to finish
 echo "Wait for hld to fabrikam manifests"
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 5
+cd $TEST_WORKSPACE/$hld_dir
+git pull
+hld_repo_commit_id=$(git log --format="%H" -n 1)
+verify_pipeline_with_poll_and_source_version $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 400 15 $hld_repo_commit_id
 
 echo "Validating ring image tag in manifest repo"
 cd $TEST_WORKSPACE/$hld_dir
@@ -451,7 +462,10 @@ echo "Successfully reached the end of the service validations scripts."
 
 # Verify hld to manifest pipeline run was successful, to verify the full end-end capture of
 # introspection data
-verify_pipeline_with_poll $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 5
+cd $TEST_WORKSPACE/$hld_dir
+git pull
+hld_repo_commit_id=$(git log --format="%H" -n 1)
+verify_pipeline_with_poll_and_source_version $AZDO_ORG_URL $AZDO_PROJECT $hld_to_manifest_pipeline_name 300 15 $hld_repo_commit_id
 
 cd $TEST_WORKSPACE
 cd ..
