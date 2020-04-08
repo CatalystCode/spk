@@ -87,14 +87,8 @@ export const execute = async (
     await exitFn(0);
   } catch (err) {
     logError(
-      buildError(
-        errorStatusCode.CMD_EXE_ERR,
-        {
-          errorKey: "ring-create-cmd-failed",
-          values: [ringName],
-        },
-        err
-      )
+      // cannot include ring name in error message because it may not be defined.
+      buildError(errorStatusCode.CMD_EXE_ERR, "ring-create-cmd-failed", err)
     );
     await exitFn(1);
   }

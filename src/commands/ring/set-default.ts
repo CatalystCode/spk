@@ -57,12 +57,10 @@ export const execute = async (
     await exitFn(0);
   } catch (err) {
     logError(
+      // cannot include ring name in error message because it may not be defined.
       buildError(
         errorStatusCode.EXE_FLOW_ERR,
-        {
-          errorKey: "ring-set-default-cmd-failed",
-          values: [ringName],
-        },
+        "ring-set-default-cmd-failed",
         err
       )
     );
