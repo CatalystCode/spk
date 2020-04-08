@@ -2,10 +2,14 @@ import { WebApi } from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi";
 import { GitRepository } from "azure-devops-node-api/interfaces/TfvcInterfaces";
 import { SimpleGit } from "simple-git/promise";
-import { logger } from "../../logger";
-import { RequestContext, SP_USER_NAME } from "./constants";
+import {
+  approvePullRequest as approvePR,
+  getActivePullRequests,
+} from "../git/azure";
 import { build as buildError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
+import { logger } from "../../logger";
+import { RequestContext, SP_USER_NAME } from "./constants";
 
 let gitAPI: IGitApi | undefined;
 
@@ -33,6 +37,15 @@ export const getAzureRepoUrl = (
   repoName: string
 ): string => {
   return `https://dev.azure.com/${orgName}/${projectName}/_git/${repoName}`;
+};
+
+/**
+ * Returns azure organization URL.
+ *
+ * @param orgName Organization name
+ */
+export const getAzureOrganizationUrl = (orgName: string): string => {
+  return `https://dev.azure.com/${orgName}`;
 };
 
 /**
@@ -197,4 +210,26 @@ export const commitAndPushToRemote = async (
       err
     );
   }
+};
+
+export const approvePullRequest = async (
+  gitApi: IGitApi,
+  rc: RequestContext,
+  repoName: string
+): Promise<void> => {
+  const pullRequests = await getActivePullRequests(
+    gitApi,
+    repoName,
+    rc.projectName
+  );
+  if (pullRequests && pullRequests.length > 0) {
+    const pr = pullRequests[0];
+    if (pr && pr.pullRequestId) {
+      await approvePR(pr.pullRequestId, getAzureOrganizationUrl(rc.orgName));
+    }
+  }
+  throw buildError(
+    errorStatusCode.GIT_OPS_ERR,
+    "setup-cmd-cannot-locate-pr-for-approval"
+  );
 };

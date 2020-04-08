@@ -3,10 +3,13 @@ import { IGitApi } from "azure-devops-node-api/GitApi";
 import AZGitInterfaces, {
   GitPullRequestSearchCriteria,
   GitRepository,
+  PullRequestStatus,
+  GitPullRequest,
 } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { AzureDevOpsOpts } from ".";
 import { Config } from "../../config";
 import { logger } from "../../logger";
+import { exec } from "../../lib/shell";
 import { azdoUrl } from "../azdoClient";
 import { build as buildError } from "../errorBuilder";
 import { errorStatusCode } from "../errorStatusCode";
@@ -399,4 +402,36 @@ export const validateRepository = async (
   }
 
   await repositoryHasFile(fileName, branch, repoName, accessOpts);
+};
+
+export const getActivePullRequests = async (
+  gitAPI: IGitApi,
+  repoName: string,
+  projectName: string,
+  targetRef = "master"
+): Promise<GitPullRequest[]> => {
+  return await gitAPI.getPullRequests(
+    repoName,
+    {
+      targetRefName: `refs/heads/${targetRef}`,
+      status: PullRequestStatus.Active,
+    },
+    projectName
+  );
+};
+
+export const approvePullRequest = async (
+  prId: number,
+  org: string
+): Promise<void> => {
+  try {
+    const result = await exec(`az repos pr show  --id ${prId} --org ${org}`);
+    console.log(result);
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.GIT_OPS_ERR,
+      "git-azure-approve-pull-request-err",
+      err
+    );
+  }
 };

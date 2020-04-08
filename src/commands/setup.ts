@@ -19,7 +19,11 @@ import {
   WORKSPACE,
 } from "../lib/setup/constants";
 import { createDirectory } from "../lib/setup/fsUtil";
-import { getAzureRepoUrl, getGitApi } from "../lib/setup/gitService";
+import {
+  approvePullRequest,
+  getAzureRepoUrl,
+  getGitApi,
+} from "../lib/setup/gitService";
 import {
   createBuildPipeline,
   createHLDtoManifestPipeline,
@@ -249,15 +253,16 @@ export const execute = async (
     createSPKConfig(rc);
 
     const { coreAPI, gitAPI, buildAPI } = await getAPIClients();
+    await approvePullRequest(gitAPI, rc, HLD_REPO);
 
-    await createProjectIfNotExist(coreAPI, rc);
-    await hldRepo(gitAPI, rc);
-    await manifestRepo(gitAPI, rc);
-    await createHLDtoManifestPipeline(buildAPI, rc);
-    await createAppRepoTasks(gitAPI, buildAPI, rc);
+    // await createProjectIfNotExist(coreAPI, rc);
+    // await hldRepo(gitAPI, rc);
+    // await manifestRepo(gitAPI, rc);
+    // await createHLDtoManifestPipeline(buildAPI, rc);
+    // await createAppRepoTasks(gitAPI, buildAPI, rc);
 
-    createSPKConfig(rc); // to write storage account information.
-    createSetupLog(rc);
+    // createSPKConfig(rc); // to write storage account information.
+    // createSetupLog(rc);
     await exitFn(0);
   } catch (err) {
     logError(buildError(errorStatusCode.CMD_EXE_ERR, "setup-cmd-failed", err));

@@ -23,6 +23,7 @@
     "setup-cmd-core-api-err": "Could not get Core API client. Check the Azure credential.",
     "setup-cmd-git-api-err": "Could not get Git API client. Check the Azure DevOps credential.",
     "setup-cmd-build-api-err": "Could not get Build API client. Check the Azure DevOps credential.",
+    "setup-cmd-cannot-locate-pr-for-approval": "Could not locate pull request for approval",
 
     "spk-config-yaml-err-readyaml": "Could not load file, {0}.",
     "spk-config-yaml-var-undefined": "Environment variable needs to be defined for {0} since it's referenced in the config file.",
@@ -103,6 +104,7 @@
     "git-azure-get-match-branch-multiple": "Got more than one matching repositories in Azure DevOps with remote url '{0}' and branches '{1}' and '{2}'.",
     "git-azure-get-match-branch-err": "Could not get matching branch in Azure DevOps",
     "git-azure-create-pull-request-err": "Could not create pull request in Azure DevOps",
+    "git-azure-approve-pull-request-err": "Could not approve pull request in Azure DevOps",
 
     "fileutils-append-variable-group-to-pipeline-yaml": "Could not append variable group name to manifest-generation.yaml file in HLD repo. Check this is file exist and if it is YAML format.",
     "fileutils-generate-hld-pipeline-yaml": "Could not generate HLD Azure pipeline YAML.",
