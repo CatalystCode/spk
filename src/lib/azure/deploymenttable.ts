@@ -15,110 +15,22 @@ export interface DeploymentTable {
   partitionKey: string;
 }
 
-/**
- * Row interface to hold necessary information about SRC -> ACR entry
- */
-export interface RowSrcToACRPipeline {
-  PartitionKey: string;
-  RowKey: string;
-  commitId: string;
-  imageTag: string;
-  p1: string;
-  service: string;
-  sourceRepo?: string;
-}
-
-/**
- * Row interface to add ACR -> HLD entry
- */
-export interface RowACRToHLDPipeline extends RowSrcToACRPipeline {
-  p2: string;
-  hldCommitId: string;
-  env: string;
-  pr?: string;
-  hldRepo?: string;
-}
-
-/**
- * Row interface to hold necessary information about SRC -> ACR entry
- */
-export interface EntrySRCToACRPipeline {
+export interface DeploymentEntry {
   RowKey: string;
   PartitionKey: string;
-  commitId: string;
-  imageTag: string;
-  service: string;
-  sourceRepo?: string;
-  p1: {
-    _: string;
-  };
-  env: {
-    _: string;
-  };
-}
-
-/**
- * Row interface to hold necessary information about ACR -> HLD entry
- */
-export interface EntryACRToHLDPipeline {
-  RowKey: string;
-  PartitionKey: string;
-  commitId: string;
-  imageTag: string;
-  sourceRepo?: string;
-  hldRepo?: string;
-  p1: string;
-  service: string;
-  p2: {
-    _: string;
-  };
-  hldCommitId: {
-    _: string;
-  };
-  env: {
-    _: string;
-  };
-}
-
-/**
- * Row interface to hold necessary information about HLD -> Manifest entry
- */
-export interface RowHLDToManifestPipeline extends RowACRToHLDPipeline {
-  p3: string;
+  commitId?: string;
+  env?: string;
+  imageTag?: string;
+  p1?: string;
+  service?: string;
+  p2?: string;
+  hldCommitId?: string;
+  p3?: string;
   manifestCommitId?: string;
-  manifestRepo?: string;
-}
-
-/**
- * Row interface to hold necessary information about HLD -> Manifest entry
- */
-export interface EntryHLDToManifestPipeline {
-  RowKey: string;
-  PartitionKey: string;
-  commitId: string;
-  env: string;
-  imageTag: string;
-  p1: string;
-  service: string;
-  p2: string;
-  hldCommitId: string;
-  p3: {
-    _: string;
-  };
-  manifestCommitId: {
-    _: string;
-  };
   sourceRepo?: string;
   hldRepo?: string;
   manifestRepo?: string;
-}
-
-/**
- * Row interface to hold necessary information Manifest update entry
- */
-export interface RowManifest extends RowHLDToManifestPipeline {
-  manifestCommitId: string;
-  manifestRepo?: string;
+  pr?: string;
 }
 
 /**
@@ -147,9 +59,9 @@ export const addSrcToACRPipeline = async (
   serviceName: string,
   commitId: string,
   repository?: string
-): Promise<RowSrcToACRPipeline> => {
+): Promise<DeploymentEntry> => {
   try {
-    const entry: RowSrcToACRPipeline = {
+    const entry: DeploymentEntry = {
       PartitionKey: tableInfo.partitionKey,
       RowKey: getRowKey(),
       commitId,
@@ -183,7 +95,7 @@ export const addSrcToACRPipeline = async (
  * @param pr Pull request Id (if available)
  */
 export const updateMatchingACRToHLDPipelineEntry = async (
-  entries: EntryACRToHLDPipeline[],
+  entries: DeploymentEntry[],
   tableInfo: DeploymentTable,
   pipelineId: string,
   imageTag: string,
@@ -191,17 +103,17 @@ export const updateMatchingACRToHLDPipelineEntry = async (
   env: string,
   pr?: string,
   repository?: string
-): Promise<RowACRToHLDPipeline | null> => {
-  const found = (entries || []).find((entry: EntryACRToHLDPipeline) => {
+): Promise<DeploymentEntry | null> => {
+  const found = (entries || []).find((entry: DeploymentEntry) => {
     return (
-      (entry.p2 ? entry.p2._ === pipelineId : true) &&
-      (entry.hldCommitId ? entry.hldCommitId._ === hldCommitId : true) &&
-      (entry.env ? entry.env._ === env : true)
+      (entry.p2 ? entry.p2 === pipelineId : true) &&
+      (entry.hldCommitId ? entry.hldCommitId === hldCommitId : true) &&
+      (entry.env ? entry.env === env : true)
     );
   });
 
   if (found) {
-    const updateEntry: RowACRToHLDPipeline = {
+    const updateEntry: DeploymentEntry = {
       PartitionKey: found.PartitionKey,
       RowKey: found.RowKey,
       commitId: found.commitId,
@@ -221,7 +133,7 @@ export const updateMatchingACRToHLDPipelineEntry = async (
     }
     await updateEntryInTable(tableInfo, updateEntry);
     logger.info(
-      `Added new p2 entry for imageTag ${imageTag} by finding corresponding entry`
+      `Updated p2 entry for imageTag ${imageTag} by finding corresponding entry`
     );
     return updateEntry;
   }
@@ -248,9 +160,9 @@ export const addNewRowToACRToHLDPipelines = async (
   env: string,
   pr?: string,
   repository?: string,
-  similarEntry?: EntryACRToHLDPipeline
-): Promise<RowACRToHLDPipeline> => {
-  const newEntry: RowACRToHLDPipeline = {
+  similarEntry?: DeploymentEntry
+): Promise<DeploymentEntry> => {
+  const newEntry: DeploymentEntry = {
     PartitionKey: tableInfo.partitionKey,
     RowKey: getRowKey(),
     commitId: similarEntry?.commitId ? similarEntry.commitId : "",
@@ -295,9 +207,9 @@ export const updateACRToHLDPipeline = async (
   env: string,
   pr?: string,
   repository?: string
-): Promise<RowACRToHLDPipeline> => {
+): Promise<DeploymentEntry> => {
   try {
-    const entries = await findMatchingDeployments<EntryACRToHLDPipeline>(
+    const entries = await findMatchingDeployments(
       tableInfo,
       "imageTag",
       imageTag
@@ -374,9 +286,9 @@ export const updateHLDToManifestPipeline = async (
   manifestCommitId?: string,
   pr?: string,
   repository?: string
-): Promise<RowHLDToManifestPipeline> => {
+): Promise<DeploymentEntry> => {
   try {
-    let entries = await findMatchingDeployments<EntryHLDToManifestPipeline>(
+    let entries = await findMatchingDeployments(
       tableInfo,
       "hldCommitId",
       hldCommitId
@@ -385,11 +297,7 @@ export const updateHLDToManifestPipeline = async (
     // cannot find entries by hldCommitId.
     // attempt to find entries by pr
     if ((!entries || entries.length === 0) && pr) {
-      entries = await findMatchingDeployments<EntryHLDToManifestPipeline>(
-        tableInfo,
-        "pr",
-        pr
-      );
+      entries = await findMatchingDeployments(tableInfo, "pr", pr);
     }
     return updateHLDtoManifestHelper(
       entries,
@@ -421,24 +329,24 @@ export const updateHLDToManifestPipeline = async (
  * @param pr pull request identifier
  */
 export const updateHLDtoManifestEntry = async (
-  entries: EntryHLDToManifestPipeline[],
+  entries: DeploymentEntry[],
   tableInfo: DeploymentTable,
   hldCommitId: string,
   pipelineId: string,
   manifestCommitId?: string,
   pr?: string,
   repository?: string
-): Promise<RowHLDToManifestPipeline | null> => {
+): Promise<DeploymentEntry | null> => {
   const found = entries.find(
-    (entry: EntryHLDToManifestPipeline) =>
-      (entry.p3 ? entry.p3._ === pipelineId : true) &&
+    (entry: DeploymentEntry) =>
+      (entry.p3 ? entry.p3 === pipelineId : true) &&
       (entry.manifestCommitId
-        ? entry.manifestCommitId._ === manifestCommitId
+        ? entry.manifestCommitId === manifestCommitId
         : true)
   );
 
   if (found) {
-    const entry: RowHLDToManifestPipeline = {
+    const entry: DeploymentEntry = {
       PartitionKey: found.PartitionKey,
       RowKey: found.RowKey,
       commitId: found.commitId,
@@ -488,9 +396,9 @@ export const addNewRowToHLDtoManifestPipeline = async (
   manifestCommitId?: string,
   pr?: string,
   repository?: string,
-  similarEntry?: EntryHLDToManifestPipeline
-): Promise<RowHLDToManifestPipeline> => {
-  const newEntry: RowHLDToManifestPipeline = {
+  similarEntry?: DeploymentEntry
+): Promise<DeploymentEntry> => {
+  const newEntry: DeploymentEntry = {
     PartitionKey: tableInfo.partitionKey,
     RowKey: getRowKey(),
     commitId: similarEntry?.commitId ? similarEntry.commitId : "",
@@ -538,14 +446,14 @@ export const addNewRowToHLDtoManifestPipeline = async (
  * @param pr pull request identifier
  */
 export const updateHLDtoManifestHelper = async (
-  entries: EntryHLDToManifestPipeline[],
+  entries: DeploymentEntry[],
   tableInfo: DeploymentTable,
   hldCommitId: string,
   pipelineId: string,
   manifestCommitId?: string,
   pr?: string,
   repository?: string
-): Promise<RowHLDToManifestPipeline> => {
+): Promise<DeploymentEntry> => {
   if (entries && entries.length > 0) {
     // If a src -> acr and acr -> hld pipeline is found for this run, update it
     const updated = await updateHLDtoManifestEntry(
@@ -598,13 +506,9 @@ export const updateManifestCommitId = async (
   pipelineId: string,
   manifestCommitId: string,
   repository?: string
-): Promise<RowManifest> => {
+): Promise<DeploymentEntry> => {
   try {
-    const entries = await findMatchingDeployments<RowManifest>(
-      tableInfo,
-      "p3",
-      pipelineId
-    );
+    const entries = await findMatchingDeployments(tableInfo, "p3", pipelineId);
     // Ideally there should only be one entry for every pipeline id
     if (entries.length > 0) {
       const entry = entries[0];
@@ -637,11 +541,11 @@ export const updateManifestCommitId = async (
  * @param filterName name of the filter, such as `imageTag`
  * @param filterValue value of the filter, such as `hello-spk-master-1234`
  */
-export const findMatchingDeployments = <T>(
+export const findMatchingDeployments = (
   tableInfo: DeploymentTable,
   filterName: string,
   filterValue: string
-): Promise<T[]> => {
+): Promise<DeploymentEntry[]> => {
   const tableService = getTableService(tableInfo);
   const query: azure.TableQuery = new azure.TableQuery().where(
     `PartitionKey eq '${tableInfo.partitionKey}'`
@@ -655,13 +559,13 @@ export const findMatchingDeployments = <T>(
     | any = null;
 
   return new Promise((resolve, reject) => {
-    tableService.queryEntities(
+    tableService.queryEntities<DeploymentEntry>(
       tableInfo.tableName,
       query,
       nextContinuationToken,
       (error, result) => {
         if (!error) {
-          resolve(result.entries as T[]);
+          resolve(result.entries);
         } else {
           reject(error);
         }
@@ -678,7 +582,7 @@ export const findMatchingDeployments = <T>(
  */
 export const insertToTable = (
   tableInfo: DeploymentTable,
-  entry: RowSrcToACRPipeline | RowACRToHLDPipeline | RowHLDToManifestPipeline
+  entry: DeploymentEntry
 ): Promise<void> => {
   const tableService = getTableService(tableInfo);
 
@@ -700,7 +604,7 @@ export const insertToTable = (
  */
 export const deleteFromTable = (
   tableInfo: DeploymentTable,
-  entry: EntrySRCToACRPipeline
+  entry: DeploymentEntry
 ): Promise<void> => {
   const tableService = getTableService(tableInfo);
 
@@ -723,11 +627,7 @@ export const deleteFromTable = (
  */
 export const updateEntryInTable = (
   tableInfo: DeploymentTable,
-  entry:
-    | RowSrcToACRPipeline
-    | RowACRToHLDPipeline
-    | RowHLDToManifestPipeline
-    | RowManifest
+  entry: DeploymentEntry
 ): Promise<void> => {
   const tableService = getTableService(tableInfo);
 

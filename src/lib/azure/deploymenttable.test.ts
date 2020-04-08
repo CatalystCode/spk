@@ -9,10 +9,8 @@ import {
   findMatchingDeployments,
   getTableService,
   DeploymentTable,
-  EntryACRToHLDPipeline,
+  DeploymentEntry,
   insertToTable,
-  RowHLDToManifestPipeline,
-  RowManifest,
   updateACRToHLDPipeline,
   updateEntryInTable,
   updateHLDtoManifestEntry,
@@ -40,57 +38,41 @@ const mockedPr = uuid();
 const mockedManifestCommitId = uuid();
 const mockedRepository = uuid();
 
-const mockedEntryACRPipeline: deploymenttable.EntrySRCToACRPipeline = {
+const mockedEntryACRPipeline: DeploymentEntry = {
   PartitionKey: uuid(),
   RowKey: uuid(),
   commitId: mockedCommitId,
-  env: {
-    _: mockedEnv,
-  },
-  imageTag: mockedImageTag,
-  p1: {
-    _: mockedPipelineId,
-  },
-  service: mockedServiceName,
-};
-
-const mockedEntryACRToHLDPipeline = {
-  PartitionKey: uuid(),
-  RowKey: uuid(),
-  commitId: mockedCommitId,
-  env: {
-    _: mockedEnv,
-  },
-  hldCommitId: {
-    _: mockedHldCommitId,
-  },
+  env: mockedEnv,
   imageTag: mockedImageTag,
   p1: mockedPipelineId,
-  p2: {
-    _: mockedPipelineId,
-  },
   service: mockedServiceName,
 };
 
-const mockedNonMatchEntryACRToHLDPipeline = {
+const mockedEntryACRToHLDPipeline: DeploymentEntry = {
   PartitionKey: uuid(),
   RowKey: uuid(),
   commitId: mockedCommitId,
-  env: {
-    _: mockedEnv,
-  },
-  hldCommitId: {
-    _: mockedHldCommitId,
-  },
+  env: mockedEnv,
+  hldCommitId: mockedHldCommitId,
   imageTag: mockedImageTag,
   p1: mockedPipelineId,
-  p2: {
-    _: uuid(),
-  },
+  p2: mockedPipelineId,
   service: mockedServiceName,
 };
 
-const mockedRowACRToHLDPipeline = {
+const mockedNonMatchEntryACRToHLDPipeline: DeploymentEntry = {
+  PartitionKey: uuid(),
+  RowKey: uuid(),
+  commitId: mockedCommitId,
+  env: mockedEnv,
+  hldCommitId: mockedHldCommitId,
+  imageTag: mockedImageTag,
+  p1: mockedPipelineId,
+  p2: uuid(),
+  service: mockedServiceName,
+};
+
+const mockedRowACRToHLDPipeline: DeploymentEntry = {
   PartitionKey: uuid(),
   RowKey: uuid(),
   commitId: mockedCommitId,
@@ -109,27 +91,23 @@ const mockedRowHLDToManifestPipeline = Object.assign(
     p3: mockedPipelineId3,
   },
   mockedRowACRToHLDPipeline
-) as RowHLDToManifestPipeline;
+) as DeploymentEntry;
 
-const mockedEntryHLDToManifestPipeline = {
+const mockedEntryHLDToManifestPipeline: DeploymentEntry = {
   PartitionKey: uuid(),
   RowKey: uuid(),
   commitId: mockedCommitId,
   env: mockedEnv,
   hldCommitId: mockedHldCommitId,
   imageTag: mockedImageTag,
-  manifestCommitId: {
-    _: mockedManifestCommitId,
-  },
+  manifestCommitId: mockedManifestCommitId,
   p1: mockedPipelineId,
   p2: mockedPipelineId2,
-  p3: {
-    _: mockedPipelineId3,
-  },
+  p3: mockedPipelineId3,
   service: mockedServiceName,
 };
 
-const mockedManifestRow: RowManifest = Object.assign(
+const mockedManifestRow: DeploymentEntry = Object.assign(
   {
     manifestCommitId: uuid(),
   },
@@ -216,7 +194,7 @@ describe("test updateMatchingACRToHLDPipelineEntry function", () => {
     jest
       .spyOn(deploymenttable, "updateEntryInTable")
       .mockReturnValueOnce(Promise.resolve());
-    const entries: EntryACRToHLDPipeline[] = [mockedEntryACRToHLDPipeline];
+    const entries: DeploymentEntry[] = [mockedEntryACRToHLDPipeline];
     const result = await updateMatchingACRToHLDPipelineEntry(
       entries,
       mockedTableInfo,
@@ -260,9 +238,9 @@ const mockInsertIntoTable = (positive = true): void => {
 
 const testAddNewRowToACRToHLDPipelinesWithSimilarEntry = async (
   positive = true
-): Promise<deploymenttable.RowACRToHLDPipeline> => {
+): Promise<deploymenttable.DeploymentEntry> => {
   mockInsertIntoTable(positive);
-  const entries: EntryACRToHLDPipeline[] = [mockedEntryACRToHLDPipeline];
+  const entries: DeploymentEntry[] = [mockedEntryACRToHLDPipeline];
   return await addNewRowToACRToHLDPipelines(
     mockedTableInfo,
     mockedPipelineId,
@@ -291,7 +269,7 @@ describe("test addNewRowToACRToHLDPipelines function with similar", () => {
 
 const testAddNewRowToACRToHLDPipelines = async (
   positive = true
-): Promise<deploymenttable.RowACRToHLDPipeline> => {
+): Promise<deploymenttable.DeploymentEntry> => {
   mockInsertIntoTable(positive);
 
   return await addNewRowToACRToHLDPipelines(
