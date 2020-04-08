@@ -23,6 +23,7 @@ import { copyTfTemplate } from "./scaffold";
 import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 import { exec } from "../../lib/shell";
+import { file } from "mock-fs";
 
 interface CommandOptions {
   project: string | undefined;
@@ -507,9 +508,9 @@ export const singleDefinitionGeneration = async (
  * @param tfFile path to the terraform file in child directory
  */
 export const checkModuleSource = (tfData: string): boolean => {
+  // Check if the file string matches an instance of a module source value as a local path
   const matches = tfData.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm);
   if (matches != null) {
-    logger.info(`Local module source values detected: ${matches}`);
     return true;
   }
   return false;
@@ -520,28 +521,38 @@ export const checkModuleSource = (tfData: string): boolean => {
  *
  * @param sourceConfig Array of source configuration
  */
-export const moduleSourceModify = (
+export const moduleSourceModify = async (
   fileSource: SourceInformation,
   tfData: string
-): string => {
-  const reg = new RegExp(/\b(source)/g);
+): Promise<string> => {
   let result = "";
-  tfData.split(/\r?\n/).forEach(function (line) {
+  const sourceFolder = getSourceFolderNameFromURL(fileSource.source);
+  const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+  // Split data by line and iterate
+  for (let line of tfData.split(/\r?\n/)) {
+    // Match line to expected module source format
     if (line.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm) != null) {
+      // Split the line into segments, the third element is the source value
       const splitLine = line.split(/\s+/);
+      // Filter on module source value
       const moduleSource = new RegExp(splitLine[3].replace(/['"]+/g, ""), "g");
-      // Modify the file
-      const switcher = line.replace(moduleSource, "test");
-      logger.info(`Here is the line: ${line}`);
-      logger.info(`Here is the switcher: ${switcher}`);
-      logger.info(`Here is the fileSource:source: ${fileSource.source}`);
-      //fsExtra.writeFileSync(tfFile, switcher,'utf8')
-      line = switcher;
+      // Get relative path of terraform module local to the repo
+      const repoModulePath = await simpleGit(
+        path.join(
+          sourcePath,
+          fileSource.template,
+          splitLine[3].replace(/["']/g, "")
+        )
+      ).revparse(["--show-prefix"]);
+      // Concatendate the Git URL with munged data
+      const gitSource = fileSource.source
+        .replace(/(^\w+:|^)\/\//g, "")
+        .concat("?ref=", fileSource.version, "//", repoModulePath);
+      // Replace the line
+      line = line.replace(moduleSource, gitSource);
     }
     result += line + "\n";
-  });
-  logger.info(`The INPUT: ${tfData}`);
-  logger.info(`The RESULTS: ${result}`);
+  }
   return result;
 };
 
@@ -634,13 +645,20 @@ export const generateConfig = async (
       );
       const containsLocalSource = await checkModuleSource(tfData);
       if (containsLocalSource) {
-        logger.warn(
+        logger.info(
           `Local relative paths for module source values detected in terraform file: ${file}`
         );
         const mungeData = await moduleSourceModify(sourceConfig, tfData);
+        logger.info(
+          `Terraform File: ${file} local module source values successfully converted to git source paths`
+        );
+        fsExtra.writeFileSync(
+          path.join(childDirectory, file),
+          mungeData,
+          "utf8"
+        );
       }
     }
-    logger.warn(`This is the file: ${file}`);
   }
 };
 
