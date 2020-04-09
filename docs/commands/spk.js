@@ -17,18 +17,6 @@ var relTemplate =
 
 var dataCache = {};
 
-function argToVariableName(arg) {
-  var match = arg.match(/\s?--([-\w]+)\s?/);
-  if (match) {
-    return match[1]
-      .replace(/\.?(-[a-z])/g, (_, y) => {
-        return y.toUpperCase();
-      })
-      .replace(/-/g, "");
-  }
-  return null;
-}
-
 function showChangesView() {
   $("#content").css("display", "none");
   $("#changes").css("display", "flex");

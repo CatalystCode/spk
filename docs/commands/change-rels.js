@@ -15,6 +15,23 @@ var optionChangedTemplate =
   '<div class="change-option-header">Options Changed</div><ul class="change-list">@@changes@@</ul>';
 
 /**
+ * Returns variable name associate with an argument.
+ * e.g. --service-principal-id -> servicePrincipalId
+ * @param arg arugment
+ */
+function argToVariableName(arg) {
+  var match = arg.match(/\s?--([-\w]+)\s?/);
+  if (match) {
+    return match[1]
+      .replace(/\.?(-[a-z])/g, (_, y) => {
+        return y.toUpperCase();
+      })
+      .replace(/-/g, "");
+  }
+  return null;
+}
+
+/**
  * Compare two versions to figure out what new commands are added
  *
  * @param prev Previous version
