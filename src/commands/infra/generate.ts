@@ -40,6 +40,8 @@ export enum DefinitionYAMLExistence {
   PARENT_ONLY,
 }
 
+const regexSource = /^\s*source\s*=\s*["'](\.\.?\/[^"']*)["']$/gm;
+
 /**
  * Checks if definition.yaml is present locally to provided project path
  *
@@ -508,8 +510,12 @@ export const singleDefinitionGeneration = async (
  */
 export const checkModuleSource = (tfData: string): boolean => {
   // Check if the file string matches an instance of a module source value as a local path
-  const matches = tfData.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm);
+  const matches = tfData.match(regexSource);
   return matches !== null;
+};
+
+export const revparse = async (sPath: string): Promise<string> => {
+  return await simpleGit(sPath).revparse(["--show-prefix"]);
 };
 
 /**
@@ -521,35 +527,47 @@ export const moduleSourceModify = async (
   fileSource: SourceInformation,
   tfData: string
 ): Promise<string> => {
-  let result = "";
-  const sourceFolder = getSourceFolderNameFromURL(fileSource.source);
-  const sourcePath = path.join(spkTemplatesPath, sourceFolder);
-  // Split data by line and iterate
-  for (let line of tfData.split(/\r?\n/)) {
-    // Match line to expected module source format
-    if (line.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm) !== null) {
-      // Split the line into segments, the third element is the source value
-      const splitLine = line.split(/\s+/);
-      // Filter on module source value
-      const moduleSource = new RegExp(splitLine[3].replace(/['"]+/g, ""), "g");
-      // Get relative path of terraform module local to the repo
-      const repoModulePath = await simpleGit(
-        path.join(
-          sourcePath,
-          fileSource.template,
-          splitLine[3].replace(/["']/g, "")
-        )
-      ).revparse(["--show-prefix"]);
-      // Concatenate the Git URL with munged data
-      const gitSource = fileSource.source
-        .replace(/(^\w+:|^)\/\//g, "")
-        .concat("?ref=", fileSource.version, "//", repoModulePath);
-      // Replace the line
-      line = line.replace(moduleSource, gitSource);
+  try {
+    let result = "";
+    const sourceFolder = getSourceFolderNameFromURL(fileSource.source);
+    const sourcePath = path.join(spkTemplatesPath, sourceFolder);
+
+    // Split data by line and iterate
+    for (let line of tfData.split(/\r?\n/)) {
+      // Match line to expected module source format
+      if (line.match(regexSource) !== null) {
+        // Split the line into segments, the third element is the source value
+        const splitLine = line.split(/\s+/);
+        // Filter on module source value
+        const moduleSource = new RegExp(
+          splitLine[3].replace(/['"]+/g, ""),
+          "g"
+        );
+        // Get relative path of terraform module local to the repo
+        const repoModulePath = await revparse(
+          path.join(
+            sourcePath,
+            fileSource.template,
+            splitLine[3].replace(/["']/g, "")
+          )
+        );
+        // Concatenate the Git URL with munged data
+        const gitSource = fileSource.source
+          .replace(/(^\w+:|^)\/\//g, "")
+          .concat("?ref=", fileSource.version, "//", repoModulePath);
+        // Replace the line
+        line = line.replace(moduleSource, gitSource);
+      }
+      result += line + "\n";
     }
-    result += line + "\n";
+    return result;
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.EXE_FLOW_ERR,
+      "infra-module-source-modify-err",
+      err
+    );
   }
-  return result;
 };
 
 /**
@@ -561,30 +579,38 @@ export const inspectGeneratedSources = async (
   childDirectory: string,
   sourceConfig: SourceInformation
 ): Promise<void> => {
-  // Support for local source paths, check template directory .tf files to generate git paths for terraform modules
-  const files = await fsExtra.readdirSync(childDirectory, "utf-8");
-  for (const file of files) {
-    if (path.extname(file) === ".tf") {
-      const tfData = fsExtra.readFileSync(
-        path.join(childDirectory, file),
-        "utf8"
-      );
-      const containsLocalSource = await checkModuleSource(tfData);
-      if (containsLocalSource) {
-        logger.info(
-          `Local relative paths for module source values detected in terraform file: ${file}`
-        );
-        const mungeData = await moduleSourceModify(sourceConfig, tfData);
-        logger.info(
-          `Terraform File: ${file} local module source values successfully converted to git source paths`
-        );
-        fsExtra.writeFileSync(
+  try {
+    // Support for local source paths, check template directory .tf files to generate git paths for terraform modules
+    const files = fsExtra.readdirSync(childDirectory, "utf-8");
+    for (const file of files) {
+      if (path.extname(file) === ".tf") {
+        const tfData = fsExtra.readFileSync(
           path.join(childDirectory, file),
-          mungeData,
           "utf8"
         );
+        const containsLocalSource = checkModuleSource(tfData);
+        if (containsLocalSource) {
+          logger.info(
+            `Local relative paths for module source values detected in terraform file: ${file}`
+          );
+          const mungeData = await moduleSourceModify(sourceConfig, tfData);
+          logger.info(
+            `Terraform File: ${file} local module source values successfully converted to git source paths`
+          );
+          fsExtra.writeFileSync(
+            path.join(childDirectory, file),
+            mungeData,
+            "utf8"
+          );
+        }
       }
     }
+  } catch (err) {
+    throw buildError(
+      errorStatusCode.EXE_FLOW_ERR,
+      "infra-inspect-generated-sources-err",
+      err
+    );
   }
 };
 
