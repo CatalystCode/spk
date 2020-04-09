@@ -159,10 +159,10 @@
     "introspect-dashboard-cmd-launch-pre-req-err": "Requirements to launch dashboard were not met.",
     "introspect-dashboard-cmd-launch-err": "Could not launch dashboard docker container.",
 
-    "service-get-display-name-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
-    "service-get-display-name-bedrock-yaml-missing-err": "Could not find bedrock.yaml in current directory. Make sure to run this from a directory that contains bedrock.yaml.",
-    "service-get-display-name-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
-    "service-get-display-name-generic-err": "Error occurred while getting display name.",
+    "service-get-display-name-cmd-failed": "Service get display name command was not successfully executed.",
+    "service-get-display-name-cmd-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
+    "service-get-display-name-cmd-service-name-not-found-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
+
     "az-cli-login-err": "Could not login through azure cli.",
     "az-cli-create-sp-err": "Could not create service principal with azure cli",
 
@@ -254,8 +254,13 @@
     "project-create-variable-group-cmd-err-bedrock-file-missing": "Bedrock file does not exist. Check that the project directory has been initialized.",
     "project-create-variable-group-cmd-err-file-missing": "The file '{0}' does not exist in project '{1}'.",
     "project-create-variable-group-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "project-create-variable-group-cmd-err-values-missing": "Required values were missing. Provide values for registry-name, hld-repo-url, service-principal-id, service-principal-password, tenant.",
+
     "project-init-cmd-failed": "Project init was not successfully executed.",
+
+    "service-create-revision-cmd-failed": "Service create revision was not successfully executed.",
+    "service-create-revision-cmd-err-pr-source-branch": "A pull request for a branch cannot be made against itself. Ensure your target branch(es) '{0}' do not include your source branch '{1}'",
+    "service-create-revision-cmd-err-default-branch-missing": "Default branch/ring was not found. Specify the default branch/ring in {0} or provide it via --target-branch",
+    "service-create-revision-cmd-err-source-branch-missing": "A source branch was not provided.",
 
     "validation-err-missing-vals": "These mandatory options were missing:\n {0}. Provide them.",
     "validation-err-org-name-missing": "Organization name was missing. Provide it.",
@@ -305,6 +310,7 @@
     "service-endpoint-err-create-missing-name": "Could not create service endpoint because name was missing.",
     "service-endpoint-err-create": "Could not create service endpoint.",
 
+    "azure-client-auth-sp-err": "Could not authenticate with service principal credential.",
     "azure-client-get-web-api-err-missing-access-token": "Could not get azure web API because personal access token was missing. Provide it.",
     "azure-client-get-web-api-err-missing-org": "Could not get azure web API because organization name was missing. Provide it.",
     "azure-client-get-rest-client-err": "Could not get REST client. Check the Azure credential",
