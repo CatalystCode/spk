@@ -159,10 +159,10 @@
     "introspect-dashboard-cmd-launch-pre-req-err": "Requirements to launch dashboard were not met.",
     "introspect-dashboard-cmd-launch-err": "Could not launch dashboard docker container.",
 
-    "service-get-display-name-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
-    "service-get-display-name-bedrock-yaml-missing-err": "Could not find bedrock.yaml in current directory. Make sure to run this from a directory that contains bedrock.yaml.",
-    "service-get-display-name-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
-    "service-get-display-name-generic-err": "Error occurred while getting display name.",
+    "service-get-display-name-cmd-failed": "Service get display name command was not successfully executed.",
+    "service-get-display-name-cmd-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
+    "service-get-display-name-cmd-service-name-not-found-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
+
     "az-cli-login-err": "Could not login through azure cli.",
     "az-cli-create-sp-err": "Could not create service principal with azure cli",
 
@@ -310,6 +310,7 @@
     "service-endpoint-err-create-missing-name": "Could not create service endpoint because name was missing.",
     "service-endpoint-err-create": "Could not create service endpoint.",
 
+    "azure-client-auth-sp-err": "Could not authenticate with service principal credential.",
     "azure-client-get-web-api-err-missing-access-token": "Could not get azure web API because personal access token was missing. Provide it.",
     "azure-client-get-web-api-err-missing-org": "Could not get azure web API because organization name was missing. Provide it.",
     "azure-client-get-rest-client-err": "Could not get REST client. Check the Azure credential",
