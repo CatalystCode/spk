@@ -33,15 +33,17 @@ data, set up a Logic App to delete it. You can use the template
 for this. Edit the values in `parameters` and fill in your `<subscription id>`
 and `resource group` where the storage account is.
 
-To check existing Logic Apps in your subscription, go to the [portal.azure.com](http://portal.azure.com) and search for Logic Apps.
+To check existing Logic Apps in your subscription, go to the
+[portal.azure.com](http://portal.azure.com) and search for Logic Apps.
 
 # Scenarios Exercised So Far
 
-- As a developer create a mono-repo and add services
-- As a developer create variable group with variables
-- As a developer create a pipeline from an existing service
-- As a developer create a service revision from an existing service
-- As a developer create an HLD of a terraform template for infra deployment.
+- As a developer, create a mono-repo and add services.
+- As a developer, create a new ring for a mono-repo.
+- As a developer, create variable group with variables.
+- As a developer, create a pipeline from an existing service.
+- As a developer, create a service revision from an existing service.
+- As a developer, create an HLD of a terraform template for infra deployment.
 
 # Operational Coverage
 
@@ -55,8 +57,8 @@ To check existing Logic Apps in your subscription, go to the [portal.azure.com](
 
 | Command                                | Coverage |
 | -------------------------------------- | -------- |
-| spk project init                       | ✅       |
 | spk project create-variable-group      | ✅       |
+| spk project init                       | ✅       |
 | spk project install-lifecycle-pipeline | ✅       |
 
 ## Service Management
@@ -64,15 +66,25 @@ To check existing Logic Apps in your subscription, go to the [portal.azure.com](
 | Command                            | Coverage |
 | ---------------------------------- | -------- |
 | spk service create                 | ✅       |
-| spk service install-build-pipeline | ✅       |
 | spk service create-revision        | ✅       |
+| spk service install-build-pipeline | ✅       |
+
+## Ring Management
+
+| Command              | Coverage |
+| -------------------- | -------- |
+| spk ring create      | ✅       |
+| spk ring delete      | ✅       |
+| spk ring set-default | 🚫       |
 
 ## HLD Management
 
 | Command                           | Coverage |
 | --------------------------------- | -------- |
+| spk hld append-variable-group     | ✅       |
 | spk hld init                      | ✅       |
 | spk hld install-manifest-pipeline | ✅       |
+| spk hld reconcile                 | ✅       |
 
 ## Variable Group Management
 
