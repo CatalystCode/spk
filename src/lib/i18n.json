@@ -111,6 +111,8 @@
     "git-azure-get-match-branch-multiple": "Got more than one matching repositories in Azure DevOps with remote url '{0}' and branches '{1}' and '{2}'.",
     "git-azure-get-match-branch-err": "Could not get matching branch in Azure DevOps",
     "git-azure-create-pull-request-err": "Could not create pull request in Azure DevOps",
+    "git-azure-repo-no-exist": "Repository {0} did not exist in project {1}.",
+    "git-azure-file-no-exist-in-repo": "File {0} did not exist in {1} branch in repository {2}.",
 
     "fileutils-append-variable-group-to-pipeline-yaml": "Could not append variable group name to manifest-generation.yaml file in HLD repo. Check this is file exist and if it is YAML format.",
     "fileutils-generate-hld-pipeline-yaml": "Could not generate HLD Azure pipeline YAML.",
@@ -157,6 +159,10 @@
     "introspect-dashboard-cmd-launch-pre-req-err": "Requirements to launch dashboard were not met.",
     "introspect-dashboard-cmd-launch-err": "Could not launch dashboard docker container.",
 
+    "service-get-display-name-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
+    "service-get-display-name-bedrock-yaml-missing-err": "Could not find bedrock.yaml in current directory. Make sure to run this from a directory that contains bedrock.yaml.",
+    "service-get-display-name-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
+    "service-get-display-name-generic-err": "Error occurred while getting display name.",
     "az-cli-login-err": "Could not login through azure cli.",
     "az-cli-create-sp-err": "Could not create service principal with azure cli",
 
@@ -222,16 +228,20 @@
     "var-group-add-with-key-vault-err-missing-provider": "Could not add variable group with key vault because Azure KeyVault provider data was not configured",
     "var-group-create-data-err": "Could not create variable group data.",
 
-    "ring-create-cmd-failed": "Error occurred while creating ring: {0}",
+    "ring-create-cmd-failed": "Could not create ring: {0}.",
+    "ring-create-cmd-err-name-missing": "Could not execute this command because ring name was not provided. Provide a ring name.",
     "ring-create-cmd-err-ring-exists": "Could not create ring {0} in project {1} because it already exists. Provide a different name.",
-    "ring-create-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "ring-delete-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "ring-set-default-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
-    "ring-create-cmd-err-name-missing": "No ring name was provided. Provide a ring name",
-    "ring-delete-cmd-failed": "Error occurred while deleting ring: {0}.",
-    "ring-set-default-cmd-failed": "Error occurred while setting default ring: {0}",
+    "ring-create-cmd-err-dependency": "Configuration information was missing. Run `spk project init` command to initialize them.",
 
-    "variable-group-create-cmd-failed": "Error occurred while creating variable group.",
+    "ring-set-default-cmd-failed": "Could not set default ring: {0}.",
+    "ring-set-default-cmd-err-name-missing": "Could not execute this command because ring name was not provided. Provide a ring name.",
+    "ring-set-default-cmd-err-dependency": "Configuration information was missing. Run `spk project init` command to initialize them.",
+
+    "ring-delete-cmd-failed": "Could not delete ring: {0}.",
+    "ring-delete-cmd-err-name-missing": "Could not execute this command because ring name was not provided. Provide a ring name.",
+    "ring-delete-cmd-err-dependency": "Configuration information was missing. Run `spk project init` command to initialize them.",
+
+    "variable-group-create-cmd-failed": "Could not create variable group.",
     "variable-group-create-cmd-err-create": "Could not load variable group. The variable group type '{0}' is not supported. Only 'Vsts' and 'AzureKeyVault' are valid types and case sensitive.",
     "variable-group-create-cmd-err-access-token": "Provide a value for {0}.",
     "variable-group-create-cmd-err-project-missing": "Provide a value for {0}.",
@@ -246,6 +256,11 @@
     "project-create-variable-group-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
 
     "project-init-cmd-failed": "Project init was not successfully executed.",
+
+    "service-create-revision-cmd-failed": "Service create revision was not successfully executed.",
+    "service-create-revision-cmd-err-pr-source-branch": "A pull request for a branch cannot be made against itself. Ensure your target branch(es) '{0}' do not include your source branch '{1}'",
+    "service-create-revision-cmd-err-default-branch-missing": "Default branch/ring was not found. Specify the default branch/ring in {0} or provide it via --target-branch",
+    "service-create-revision-cmd-err-source-branch-missing": "A source branch was not provided.",
 
     "validation-err-missing-vals": "These mandatory options were missing:\n {0}. Provide them.",
     "validation-err-org-name-missing": "Organization name was missing. Provide it.",
