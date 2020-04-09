@@ -320,7 +320,7 @@
     "azure-key-vault-missing-name": "Missing key vault name. Provide it",
     "azure-key-vault-missing-secret-name": "Missing key vault secret name. Provide it",
     "azure-key-vault-missing-secret-value": "Missing key vault secret value. Provide it",
-    "azure-key-vault-client-err": "Could not get Azure key vault client. Check your DevOps credentials.",
+    "azure-key-vault-client-err": "Could not get Azure key vault client. Check your Azure credentials.",
     "azure-key-vault-set-secret-err": "Could not set secret in Azure key vault client.",
     "azure-key-vault-get-secret-err": "Could not get secret from Azure key vault client.",
 
