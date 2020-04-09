@@ -111,6 +111,8 @@
     "git-azure-get-match-branch-multiple": "Got more than one matching repositories in Azure DevOps with remote url '{0}' and branches '{1}' and '{2}'.",
     "git-azure-get-match-branch-err": "Could not get matching branch in Azure DevOps",
     "git-azure-create-pull-request-err": "Could not create pull request in Azure DevOps",
+    "git-azure-repo-no-exist": "Repository {0} did not exist in project {1}.",
+    "git-azure-file-no-exist-in-repo": "File {0} did not exist in {1} branch in repository {2}.",
 
     "fileutils-append-variable-group-to-pipeline-yaml": "Could not append variable group name to manifest-generation.yaml file in HLD repo. Check this is file exist and if it is YAML format.",
     "fileutils-generate-hld-pipeline-yaml": "Could not generate HLD Azure pipeline YAML.",
@@ -157,6 +159,10 @@
     "introspect-dashboard-cmd-launch-pre-req-err": "Requirements to launch dashboard were not met.",
     "introspect-dashboard-cmd-launch-err": "Could not launch dashboard docker container.",
 
+    "service-get-display-name-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
+    "service-get-display-name-bedrock-yaml-missing-err": "Could not find bedrock.yaml in current directory. Make sure to run this from a directory that contains bedrock.yaml.",
+    "service-get-display-name-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
+    "service-get-display-name-generic-err": "Error occurred while getting display name.",
     "az-cli-login-err": "Could not login through azure cli.",
     "az-cli-create-sp-err": "Could not create service principal with azure cli",
 
@@ -250,6 +256,11 @@
     "project-create-variable-group-cmd-err-dependency": "Please run `spk project init` command before running this command to initialize the project.",
     "project-create-variable-group-cmd-err-values-missing": "Required values were missing. Provide values for registry-name, hld-repo-url, service-principal-id, service-principal-password, tenant.",
     "project-init-cmd-failed": "Project init was not successfully executed.",
+
+    "service-create-revision-cmd-failed": "Service create revision was not successfully executed.",
+    "service-create-revision-cmd-err-pr-source-branch": "A pull request for a branch cannot be made against itself. Ensure your target branch(es) '{0}' do not include your source branch '{1}'",
+    "service-create-revision-cmd-err-default-branch-missing": "Default branch/ring was not found. Specify the default branch/ring in {0} or provide it via --target-branch",
+    "service-create-revision-cmd-err-source-branch-missing": "A source branch was not provided.",
 
     "validation-err-missing-vals": "These mandatory options were missing:\n {0}. Provide them.",
     "validation-err-org-name-missing": "Organization name was missing. Provide it.",
