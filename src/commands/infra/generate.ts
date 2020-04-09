@@ -369,7 +369,7 @@ export const generateTfvars = (
  * Checks if an spk.tfvars already exists
  *
  * @param generatedPath Path to the spk.tfvars file
- * @param tfvarsFilename Name of .tfvars fileb
+ * @param tfvarsFilename Name of .tfvars file
  */
 export const checkTfvars = (
   generatedPath: string,
@@ -510,10 +510,7 @@ export const singleDefinitionGeneration = async (
 export const checkModuleSource = (tfData: string): boolean => {
   // Check if the file string matches an instance of a module source value as a local path
   const matches = tfData.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm);
-  if (matches != null) {
-    return true;
-  }
-  return false;
+  return matches !== null;
 };
 
 /**
@@ -531,7 +528,7 @@ export const moduleSourceModify = async (
   // Split data by line and iterate
   for (let line of tfData.split(/\r?\n/)) {
     // Match line to expected module source format
-    if (line.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm) != null) {
+    if (line.match(/^\s*source\s+=\s+["'](\.\.?\/[^"']*)["']$/gm) !== null) {
       // Split the line into segments, the third element is the source value
       const splitLine = line.split(/\s+/);
       // Filter on module source value
@@ -544,7 +541,7 @@ export const moduleSourceModify = async (
           splitLine[3].replace(/["']/g, "")
         )
       ).revparse(["--show-prefix"]);
-      // Concatendate the Git URL with munged data
+      // Concatenate the Git URL with munged data
       const gitSource = fileSource.source
         .replace(/(^\w+:|^)\/\//g, "")
         .concat("?ref=", fileSource.version, "//", repoModulePath);
@@ -630,13 +627,8 @@ export const generateConfig = async (
       templatePath
     );
   }
-  // TODO: Function to check for relative paths:
-  // CheckLocal: check source value, is value = ./ or ../ (Local syntax)
-  // ModifyLocal: munge url from YAML, apply url to relative source path
-  // Throw exception if failed
+  // Support for local source paths, check template directory .tf files to generate git paths for terraform modules
   const files = await fsExtra.readdirSync(childDirectory, "utf-8");
-  // Check to test outsource: terraform registry,
-  // Iterate through 'TF' files / Parse of tf files? (Code Coverage?)
   for (const file of files) {
     if (path.extname(file) === ".tf") {
       const tfData = fsExtra.readFileSync(
