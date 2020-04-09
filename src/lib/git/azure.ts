@@ -9,11 +9,11 @@ import AZGitInterfaces, {
 import { AzureDevOpsOpts } from ".";
 import { Config } from "../../config";
 import { logger } from "../../logger";
-import { exec } from "../../lib/shell";
 import { azdoUrl } from "../azdoClient";
 import { build as buildError } from "../errorBuilder";
 import { errorStatusCode } from "../errorStatusCode";
 import { getOriginUrl, safeGitUrlForLogging } from "../gitutils";
+import { HLD_REPO, RequestContext } from "../setup/constants";
 
 ////////////////////////////////////////////////////////////////////////////////
 // State
@@ -421,12 +421,19 @@ export const getActivePullRequests = async (
 };
 
 export const approvePullRequest = async (
-  prId: number,
-  org: string
+  gitAPI: IGitApi,
+  pullRequest: GitPullRequest,
+  rc: RequestContext
 ): Promise<void> => {
   try {
-    const result = await exec(`az repos pr show  --id ${prId} --org ${org}`);
-    console.log(result);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const res = await gitAPI.updatePullRequest(
+      { autoCompleteSetBy: { id: rc.orgName } },
+      HLD_REPO,
+      pullRequest.pullRequestId!,
+      rc.projectName
+    );
+    console.log(res);
   } catch (err) {
     throw buildError(
       errorStatusCode.GIT_OPS_ERR,

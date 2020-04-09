@@ -225,7 +225,7 @@ export const approvePullRequest = async (
   if (pullRequests && pullRequests.length > 0) {
     const pr = pullRequests[0];
     if (pr && pr.pullRequestId) {
-      await approvePR(pr.pullRequestId, getAzureOrganizationUrl(rc.orgName));
+      await approvePR(gitApi, pr, rc);
     }
   }
   throw buildError(
