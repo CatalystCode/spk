@@ -23,7 +23,6 @@ import { copyTfTemplate } from "./scaffold";
 import { build as buildError, log as logError } from "../../lib/errorBuilder";
 import { errorStatusCode } from "../../lib/errorStatusCode";
 import { exec } from "../../lib/shell";
-import { file } from "mock-fs";
 
 interface CommandOptions {
   project: string | undefined;
@@ -554,6 +553,42 @@ export const moduleSourceModify = async (
 };
 
 /**
+ * Checks to see if module sources are local
+ *
+ * @param sourceConfig Array of source configuration
+ */
+export const inspectGeneratedSources = async (
+  childDirectory: string,
+  sourceConfig: SourceInformation
+): Promise<void> => {
+  // Support for local source paths, check template directory .tf files to generate git paths for terraform modules
+  const files = await fsExtra.readdirSync(childDirectory, "utf-8");
+  for (const file of files) {
+    if (path.extname(file) === ".tf") {
+      const tfData = fsExtra.readFileSync(
+        path.join(childDirectory, file),
+        "utf8"
+      );
+      const containsLocalSource = await checkModuleSource(tfData);
+      if (containsLocalSource) {
+        logger.info(
+          `Local relative paths for module source values detected in terraform file: ${file}`
+        );
+        const mungeData = await moduleSourceModify(sourceConfig, tfData);
+        logger.info(
+          `Terraform File: ${file} local module source values successfully converted to git source paths`
+        );
+        fsExtra.writeFileSync(
+          path.join(childDirectory, file),
+          mungeData,
+          "utf8"
+        );
+      }
+    }
+  }
+};
+
+/**
  * Creates "generated" directory if it does not already exists
  *
  * @param parentPath Path to the parent definition.yaml file
@@ -627,31 +662,8 @@ export const generateConfig = async (
       templatePath
     );
   }
-  // Support for local source paths, check template directory .tf files to generate git paths for terraform modules
-  const files = await fsExtra.readdirSync(childDirectory, "utf-8");
-  for (const file of files) {
-    if (path.extname(file) === ".tf") {
-      const tfData = fsExtra.readFileSync(
-        path.join(childDirectory, file),
-        "utf8"
-      );
-      const containsLocalSource = await checkModuleSource(tfData);
-      if (containsLocalSource) {
-        logger.info(
-          `Local relative paths for module source values detected in terraform file: ${file}`
-        );
-        const mungeData = await moduleSourceModify(sourceConfig, tfData);
-        logger.info(
-          `Terraform File: ${file} local module source values successfully converted to git source paths`
-        );
-        fsExtra.writeFileSync(
-          path.join(childDirectory, file),
-          mungeData,
-          "utf8"
-        );
-      }
-    }
-  }
+  // Modify generated TF files if it contains local sources
+  await inspectGeneratedSources(childDirectory, sourceConfig);
 };
 
 export const execute = async (
