@@ -40,15 +40,6 @@ export const getAzureRepoUrl = (
 };
 
 /**
- * Returns azure organization URL.
- *
- * @param orgName Organization name
- */
-export const getAzureOrganizationUrl = (orgName: string): string => {
-  return `https://dev.azure.com/${orgName}`;
-};
-
-/**
  * Creates git repo
  *
  * @param gitApi Git API Client
@@ -225,7 +216,8 @@ export const approvePullRequest = async (
   if (pullRequests && pullRequests.length > 0) {
     const pr = pullRequests[0];
     if (pr && pr.pullRequestId) {
-      await approvePR(gitApi, pr, rc);
+      await approvePR(pr, rc);
+      return;
     }
   }
   throw buildError(

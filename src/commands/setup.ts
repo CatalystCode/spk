@@ -30,11 +30,7 @@ import {
   createLifecyclePipeline,
 } from "../lib/setup/pipelineService";
 import { createProjectIfNotExist } from "../lib/setup/projectService";
-import {
-  getAnswerFromFile,
-  prompt,
-  promptForApprovingHLDPullRequest,
-} from "../lib/setup/prompt";
+import { getAnswerFromFile, prompt } from "../lib/setup/prompt";
 import {
   appRepo,
   helmRepo,
@@ -173,18 +169,10 @@ export const createAppRepoTasks = async (
     await helmRepo(gitAPI, rc);
     await appRepo(gitAPI, rc);
     await createLifecyclePipeline(buildAPI, rc);
-    const approved = await promptForApprovingHLDPullRequest(rc);
-
-    if (approved) {
-      await createBuildPipeline(buildAPI, rc);
-
-      if (await promptForApprovingHLDPullRequest(rc)) {
-        return true;
-      }
-    }
-
-    logger.warn("HLD Pull Request is not approved.");
-    return false;
+    await approvePullRequest(gitAPI, rc, HLD_REPO);
+    await createBuildPipeline(buildAPI, rc);
+    await approvePullRequest(gitAPI, rc, HLD_REPO);
+    return true;
   } else {
     return false;
   }
@@ -253,16 +241,15 @@ export const execute = async (
     createSPKConfig(rc);
 
     const { coreAPI, gitAPI, buildAPI } = await getAPIClients();
-    await approvePullRequest(gitAPI, rc, HLD_REPO);
 
-    // await createProjectIfNotExist(coreAPI, rc);
-    // await hldRepo(gitAPI, rc);
-    // await manifestRepo(gitAPI, rc);
-    // await createHLDtoManifestPipeline(buildAPI, rc);
-    // await createAppRepoTasks(gitAPI, buildAPI, rc);
+    await createProjectIfNotExist(coreAPI, rc);
+    await hldRepo(gitAPI, rc);
+    await manifestRepo(gitAPI, rc);
+    await createHLDtoManifestPipeline(buildAPI, rc);
+    await createAppRepoTasks(gitAPI, buildAPI, rc);
 
-    // createSPKConfig(rc); // to write storage account information.
-    // createSetupLog(rc);
+    createSPKConfig(rc); // to write storage account information.
+    createSetupLog(rc);
     await exitFn(0);
   } catch (err) {
     logError(buildError(errorStatusCode.CMD_EXE_ERR, "setup-cmd-failed", err));

@@ -13,7 +13,8 @@ import { azdoUrl } from "../azdoClient";
 import { build as buildError } from "../errorBuilder";
 import { errorStatusCode } from "../errorStatusCode";
 import { getOriginUrl, safeGitUrlForLogging } from "../gitutils";
-import { HLD_REPO, RequestContext } from "../setup/constants";
+import { RequestContext } from "../setup/constants";
+import { exec } from "../shell";
 
 ////////////////////////////////////////////////////////////////////////////////
 // State
@@ -24,6 +25,15 @@ let gitApi: IGitApi | undefined; // keep track of the gitApi so it can be reused
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns azure organization URL.
+ *
+ * @param orgName Organization name
+ */
+export const getAzureOrganizationUrl = (orgName: string): string => {
+  return `https://dev.azure.com/${orgName}`;
+};
 
 /**
  * Authenticates using config and credentials from global config and returns
@@ -421,19 +431,39 @@ export const getActivePullRequests = async (
 };
 
 export const approvePullRequest = async (
-  gitAPI: IGitApi,
   pullRequest: GitPullRequest,
   rc: RequestContext
 ): Promise<void> => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const res = await gitAPI.updatePullRequest(
-      { autoCompleteSetBy: { id: rc.orgName } },
-      HLD_REPO,
-      pullRequest.pullRequestId!,
-      rc.projectName
-    );
-    console.log(res);
+    const login = [
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      "login",
+      "--service-principal",
+      "--username",
+      rc.servicePrincipalId!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      "--password",
+      rc.servicePrincipalPassword!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      "--tenant",
+      rc.servicePrincipalTenantId!,
+    ];
+    const autoComplete = [
+      "repos",
+      "pr",
+      "update",
+      "--id",
+      (pullRequest.pullRequestId || "").toString(),
+      "--auto-complete",
+      "true",
+      "--organization",
+      getAzureOrganizationUrl(rc.orgName),
+      "--output",
+      "json",
+    ];
+
+    await exec("az", login);
+    await exec("az", autoComplete);
   } catch (err) {
     throw buildError(
       errorStatusCode.GIT_OPS_ERR,
