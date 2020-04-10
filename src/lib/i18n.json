@@ -161,10 +161,10 @@
     "introspect-dashboard-cmd-launch-pre-req-err": "Requirements to launch dashboard were not met.",
     "introspect-dashboard-cmd-launch-err": "Could not launch dashboard docker container.",
 
-    "service-get-display-name-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
-    "service-get-display-name-bedrock-yaml-missing-err": "Could not find bedrock.yaml in current directory. Make sure to run this from a directory that contains bedrock.yaml.",
-    "service-get-display-name-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
-    "service-get-display-name-generic-err": "Error occurred while getting display name.",
+    "service-get-display-name-cmd-failed": "Service get display name command was not successfully executed.",
+    "service-get-display-name-cmd-path-missing-param-err": "Value for path parameter was missing. This is required for running get-display-command. Provide it.",
+    "service-get-display-name-cmd-service-name-not-found-err": "Could not find a service for path {0}. Make sure that the specified path is valid.",
+
     "az-cli-login-err": "Could not login through azure cli.",
     "az-cli-create-sp-err": "Could not create service principal with azure cli",
 
@@ -303,6 +303,7 @@
     "validation-err-storage-key-vault-hyphen": "Storage Key Vault was invalid as it cannot contain consecutive hyphens.",
     "validation-err-storage-key-vault-length": "Storage Key Vault was invalid as it has to be between 3 and 24 characters long.",
     "validation-err-storage-access-key-missing": "Storage Access Key was missing. Provide it.",
+    "validation-err-rfc1123-compliant": "Invalid {0} '{1}' was provided. Must be RFC1123 compliant and match regex: {2}",
 
     "service-endpoint-err-validation": "Missing mandatory values ({0}) for service endpoint.",
     "service-endpoint-err-create-params": "Could not create parameters for service endpoint.",
@@ -312,11 +313,19 @@
     "service-endpoint-err-create-missing-name": "Could not create service endpoint because name was missing.",
     "service-endpoint-err-create": "Could not create service endpoint.",
 
+    "azure-client-auth-sp-err": "Could not authenticate with service principal credential.",
     "azure-client-get-web-api-err-missing-access-token": "Could not get azure web API because personal access token was missing. Provide it.",
     "azure-client-get-web-api-err-missing-org": "Could not get azure web API because organization name was missing. Provide it.",
     "azure-client-get-rest-client-err": "Could not get REST client. Check the Azure credential",
     "azure-client-get-build-client-err": "Could not get build client. Check the Azure DevOps credential",
     "azure-client-get-task-agent-client-err": "Could not get task agent client. Check the Azure DevOps credential.",
+
+    "azure-key-vault-missing-name": "Missing key vault name. Provide it",
+    "azure-key-vault-missing-secret-name": "Missing key vault secret name. Provide it",
+    "azure-key-vault-missing-secret-value": "Missing key vault secret value. Provide it",
+    "azure-key-vault-client-err": "Could not get Azure key vault client. Check your Azure credentials.",
+    "azure-key-vault-set-secret-err": "Could not set secret in Azure key vault client.",
+    "azure-key-vault-get-secret-err": "Could not get secret from Azure key vault client.",
 
     "bedrock-yaml-ring-set-default-not-found": "Could not set default ring because ring {0} is not defined in {1}.",
     "bedrock-yaml-ring-remove-not-found": "Could not remove ring because ring {0} is not defined in {1}.",
