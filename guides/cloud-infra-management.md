@@ -58,8 +58,8 @@ following:
 `spk` now supports Terraform source templates that use a
 [local repository path](https://www.terraform.io/docs/modules/sources.html#local-paths)
 for references to modules. To obtain the modules for further teraform
-deployment, `spk generate` will shape a module source value from the `source`,
-`tempate`, and `version` arguments passed.
+deployment, `spk infra generate` will shape a module source value from the
+`source`, `tempate`, and `version` arguments passed.
 
 **Example:**
 

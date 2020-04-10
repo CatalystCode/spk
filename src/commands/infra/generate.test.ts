@@ -823,7 +823,6 @@ describe("test checkModuleSource function", () => {
 
 describe("test moduleSourceModify function", () => {
   it("positive test", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     jest
       .spyOn(generate, "revparse")
       .mockResolvedValueOnce("cluster/azure/aks-gitops/");
