@@ -68,6 +68,7 @@ export interface BedrockServiceConfig {
   middlewares?: string[];
   pathPrefix?: string; // pathprefix for ingress route, ie. document-service
   pathPrefixMajorVersion?: string; // api version, will prefix path prefix if provided. ie. 'v1' will result in the endpoint: /v1/document-service
+  serviceBuildVg?: string[] // an optional variable group to link to a service build pipeline
 }
 
 /**@see https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#triggers */

@@ -138,7 +138,8 @@ export const serviceBuildAndUpdatePipeline = (
   serviceName: string,
   relServicePath: string,
   ringBranches: string[],
-  variableGroups?: string[]
+  variableGroups?: string[],
+  serviceBuildVg?: string[]
 ): AzurePipelinesYaml => {
   const relativeServicePathFormatted = sanitizeTriggerPath(relServicePath);
   const relativeServiceForDockerfile = relServicePath.startsWith("./")
@@ -157,7 +158,7 @@ export const serviceBuildAndUpdatePipeline = (
             },
           }),
     },
-    variables: [...(variableGroups ?? []).map((group) => ({ group }))],
+    variables: [...(variableGroups ?? []).map((group) => ({ group })), ...(serviceBuildVg?? []).map((group) => ({ group }))],
     stages: [
       {
         // Build stage
@@ -394,7 +395,8 @@ export const generateServiceBuildAndUpdatePipelineYaml = (
   ringBranches: string[],
   serviceName: string,
   servicePath: string,
-  variableGroups: string[]
+  variableGroups: string[],
+  serviceVgArray: string[]
 ): void => {
   const absProjectRoot = path.resolve(projectRoot);
   const absServicePath = path.resolve(servicePath);
@@ -423,7 +425,8 @@ export const generateServiceBuildAndUpdatePipelineYaml = (
     serviceName,
     path.relative(absProjectRoot, absServicePath),
     ringBranches,
-    variableGroups
+    variableGroups,
+    serviceVgArray
   );
 
   writeVersion(pipelineYamlFullPath);
