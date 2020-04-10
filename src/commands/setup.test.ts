@@ -366,10 +366,10 @@ const testCreateAppRepoTasks = async (): Promise<void> => {
   jest
     .spyOn(pipelineService, "createLifecyclePipeline")
     .mockResolvedValueOnce();
-  jest.spyOn(gitService, "approvePullRequest").mockResolvedValueOnce();
+  jest.spyOn(gitService, "completePullRequest").mockResolvedValueOnce();
 
   jest.spyOn(pipelineService, "createBuildPipeline").mockResolvedValueOnce();
-  jest.spyOn(gitService, "approvePullRequest").mockResolvedValueOnce();
+  jest.spyOn(gitService, "completePullRequest").mockResolvedValueOnce();
 
   const res = await createAppRepoTasks(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

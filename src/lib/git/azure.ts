@@ -430,22 +430,29 @@ export const getActivePullRequests = async (
   );
 };
 
-export const approvePullRequest = async (
+/**
+ * Completes a pull request.
+ *
+ * @param pullRequest pull request
+ * @param rc Request Context
+ */
+export const completePullRequest = async (
   pullRequest: GitPullRequest,
   rc: RequestContext
 ): Promise<void> => {
+  logger.info(`Approving pull request ${pullRequest.pullRequestId}`);
   try {
     const login = [
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       "login",
       "--service-principal",
       "--username",
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       rc.servicePrincipalId!,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       "--password",
-      rc.servicePrincipalPassword!,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      rc.servicePrincipalPassword!,
       "--tenant",
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       rc.servicePrincipalTenantId!,
     ];
     const autoComplete = [
@@ -464,6 +471,7 @@ export const approvePullRequest = async (
 
     await exec("az", login);
     await exec("az", autoComplete);
+    logger.info(`Approved pull request ${pullRequest.pullRequestId}`);
   } catch (err) {
     throw buildError(
       errorStatusCode.GIT_OPS_ERR,

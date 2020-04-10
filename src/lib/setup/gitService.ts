@@ -3,7 +3,7 @@ import { IGitApi } from "azure-devops-node-api/GitApi";
 import { GitRepository } from "azure-devops-node-api/interfaces/TfvcInterfaces";
 import { SimpleGit } from "simple-git/promise";
 import {
-  approvePullRequest as approvePR,
+  completePullRequest as approvePR,
   getActivePullRequests,
 } from "../git/azure";
 import { build as buildError } from "../../lib/errorBuilder";
@@ -203,7 +203,7 @@ export const commitAndPushToRemote = async (
   }
 };
 
-export const approvePullRequest = async (
+export const completePullRequest = async (
   gitApi: IGitApi,
   rc: RequestContext,
   repoName: string

@@ -22,6 +22,7 @@
     "init_cmd_both_opts_err": "Could not execute this command because file that stores configuration was provided and interactive mode was set. Provide file name or enable interactive mode.",
 
     "setup-cmd-failed": "Setup command was not successfully executed.",
+    "setup-cmd-az-cli-err": "az command line was not installed.",
     "setup-cmd-prompt-err-no-subscriptions": "No subscriptions found.",
     "setup-cmd-prompt-err-subscription-missing": "Subscription Identifier was missing.",
     "setup-cmd-prompt-err-input-file-missing": "{0} did not exist or not accessible. Make sure that it is accessible.",
