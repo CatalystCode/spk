@@ -96,11 +96,11 @@ To check existing Logic Apps in your subscription, go to the
 
 | Command                  | Coverage |
 | ------------------------ | -------- |
-| spk deployment get       | 🚫       |
+| spk deployment get       | ✅       |
 | spk deployment onboard   | ✅       |
 | spk deployment validate  | 🚫       |
 | spk deployment dashboard | 🚫       |
-| spk deployment create    | 🚫       |
+| spk deployment create    | ✅       |
 
 ## Infrastructure Management
 
